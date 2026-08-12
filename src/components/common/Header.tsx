@@ -1,0 +1,302 @@
+import React, { useState } from 'react';
+import { useApp } from '../../context/AppContext';
+import { MainTabType } from '../../types';
+import { 
+  Search, 
+  Bell, 
+  Coins, 
+  User, 
+  LayoutDashboard, 
+  Settings, 
+  LogOut, 
+  Sparkles, 
+  CheckCheck,
+  ChevronDown,
+  Bot,
+  Store,
+  Briefcase,
+  GraduationCap,
+  Cpu,
+  Users,
+  Wallet
+} from 'lucide-react';
+
+export const Header: React.FC = () => {
+  const { 
+    activeTab, 
+    setActiveTab, 
+    setSearchOpen, 
+    user, 
+    notifications, 
+    unreadCount, 
+    markAllNotificationsRead,
+    setWorkspaceSubTab,
+    showToast
+  } = useApp();
+
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  const navItems: { id: MainTabType; label: string; icon: React.ReactNode }[] = [
+    { id: 'home', label: '首页', icon: <Sparkles className="w-4 h-4" /> },
+    { id: 'marketplace', label: 'AI集市', icon: <Store className="w-4 h-4" /> },
+    { id: 'tasks', label: '任务大厅', icon: <Briefcase className="w-4 h-4" /> },
+    { id: 'learning', label: '学习中心', icon: <GraduationCap className="w-4 h-4" /> },
+    { id: 'compute', label: '算力工坊', icon: <Cpu className="w-4 h-4" /> },
+    { id: 'community', label: '社区', icon: <Users className="w-4 h-4" /> },
+    { id: 'workspace', label: '工作台', icon: <LayoutDashboard className="w-4 h-4" /> },
+  ];
+
+  return (
+    <header className="sticky top-0 z-50 w-full bg-white/80 border-b border-slate-200/80 backdrop-blur-md shadow-sm select-none">
+      <div className="w-full max-w-[1920px] mx-auto px-8 h-16 flex items-center justify-between gap-6">
+        
+        {/* Left: Brand Logo */}
+        <div 
+          onClick={() => setActiveTab('home')}
+          className="flex items-center gap-3 cursor-pointer group shrink-0"
+        >
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-500 p-0.5 shadow-md shadow-indigo-100 group-hover:scale-105 transition-transform">
+            <div className="w-full h-full bg-white rounded-[10px] flex items-center justify-center">
+              <Bot className="w-5 h-5 text-indigo-600 group-hover:rotate-12 transition-transform" />
+            </div>
+          </div>
+          <div>
+            <div className="text-lg font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-800 font-sans">
+              千机·AI空间
+            </div>
+            <div className="text-[10px] text-indigo-600/90 font-mono tracking-widest uppercase font-bold">
+              QIANJI AI SPACE
+            </div>
+          </div>
+        </div>
+
+        {/* Center Navigation Tabs */}
+        <nav className="flex items-center gap-1.5 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/80">
+          {navItems.map(item => {
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`relative px-4 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 ${
+                  isActive
+                    ? 'text-white bg-indigo-600 shadow-md shadow-indigo-200'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                }`}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Right Controls Area */}
+        <div className="flex items-center gap-4 shrink-0">
+          
+          {/* Global Search Button */}
+          <button
+            onClick={() => setSearchOpen(true)}
+            className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-slate-100/90 hover:bg-slate-200/80 border border-slate-200 text-slate-500 hover:text-slate-900 text-xs font-medium transition shadow-xs group"
+          >
+            <Search className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform" />
+            <span className="hidden lg:inline">全局搜索 Agent / 模型 / 任务...</span>
+            <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-mono bg-white text-slate-500 rounded border border-slate-300 shadow-xs">
+              Ctrl K
+            </kbd>
+          </button>
+
+          {/* Points Balance Button */}
+          <button
+            onClick={() => {
+              setActiveTab('workspace');
+              setWorkspaceSubTab('points');
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold transition cursor-pointer shadow-xs"
+            title="点击前往我的账户"
+          >
+            <Coins className="w-4 h-4 text-amber-500 animate-pulse" />
+            <span>{user.points.toLocaleString()} 积分</span>
+          </button>
+
+          {/* Notifications Dropdown (Bell Icon) */}
+          <div className="relative">
+            <button
+              onClick={() => setNotifOpen(!notifOpen)}
+              className="relative p-2 rounded-xl bg-slate-100/90 hover:bg-slate-200/80 border border-slate-200 text-slate-600 hover:text-slate-900 transition"
+            >
+              <Bell className="w-4 h-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Notification Popover */}
+            {notifOpen && (
+              <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden z-50 animate-fade-in">
+                <div className="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+                  <div className="text-xs font-bold text-slate-800 flex items-center gap-2">
+                    <Bell className="w-3.5 h-3.5 text-indigo-600" />
+                    消息通知 ({notifications.length})
+                  </div>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={markAllNotificationsRead}
+                      className="text-[11px] text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-bold"
+                    >
+                      <CheckCheck className="w-3 h-3" /> 已读全部
+                    </button>
+                  )}
+                </div>
+
+                <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+                  {notifications.map(n => (
+                    <div
+                      key={n.id}
+                      onClick={() => {
+                        if (n.targetTab) setActiveTab(n.targetTab);
+                        setNotifOpen(false);
+                      }}
+                      className={`p-3.5 text-xs cursor-pointer hover:bg-slate-50 transition ${
+                        !n.read ? 'bg-indigo-50/30' : ''
+                      }`}
+                    >
+                      <div className="flex items-center justify-between text-slate-800 font-bold mb-1">
+                        <span>{n.title}</span>
+                        <span className="text-[10px] text-slate-400 font-normal">{n.time}</span>
+                      </div>
+                      <div className="text-slate-600 line-clamp-2 leading-relaxed">
+                        {n.content}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="p-2.5 border-t border-slate-100 bg-slate-50 text-center">
+                  <button
+                    onClick={() => {
+                      setActiveTab('community');
+                      setNotifOpen(false);
+                    }}
+                    className="text-xs text-indigo-600 hover:text-indigo-800 font-bold"
+                  >
+                    查看全部社区通知 →
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* User Profile Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="flex items-center gap-2.5 p-1 pr-2.5 rounded-xl bg-slate-100/90 hover:bg-slate-200/80 border border-slate-200 text-slate-800 transition"
+            >
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="w-7 h-7 rounded-lg object-cover ring-2 ring-indigo-500/30"
+              />
+              <span className="text-xs font-bold max-w-[90px] truncate">{user.name}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            </button>
+
+            {/* User Menu Popover */}
+            {userMenuOpen && (
+              <div className="absolute right-0 mt-3 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-50 animate-fade-in text-xs divide-y divide-slate-100">
+                <div className="p-2.5">
+                  <div className="font-bold text-slate-900 text-sm">{user.name}</div>
+                  <div className="text-indigo-600 font-bold text-[11px] mt-0.5">{user.levelBadge}</div>
+                  <div className="text-slate-400 text-[10px] truncate mt-0.5">{user.email}</div>
+
+                  {/* Balance & Points Card */}
+                  <div className="mt-2.5 p-2.5 rounded-xl bg-slate-50/90 border border-slate-100 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-slate-600">
+                        <Wallet className="w-3.5 h-3.5 text-indigo-600" />
+                        <span className="text-[11px] font-medium">可用余额</span>
+                      </div>
+                      <span className="font-black text-slate-900 text-xs">¥{(user.balance ?? 128.00).toFixed(2)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-slate-600">
+                        <Coins className="w-3.5 h-3.5 text-amber-500" />
+                        <span className="text-[11px] font-medium">账户积分</span>
+                      </div>
+                      <span className="font-extrabold text-amber-600 text-xs">{user.points.toLocaleString()} 分</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setActiveTab('workspace');
+                        setWorkspaceSubTab('points');
+                        setUserMenuOpen(false);
+                      }}
+                      className="w-full mt-1 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[10px] transition text-center flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      我的账户与充值 →
+                    </button>
+                  </div>
+                </div>
+
+                <div className="py-1">
+                  <button
+                    onClick={() => {
+                      setActiveTab('workspace');
+                      setWorkspaceSubTab('overview');
+                      setUserMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 hover:text-indigo-600 hover:bg-slate-50 text-left transition font-medium"
+                  >
+                    <User className="w-3.5 h-3.5 text-indigo-600" />
+                    个人主页
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveTab('workspace');
+                      setWorkspaceSubTab('overview');
+                      setUserMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 hover:text-indigo-600 hover:bg-slate-50 text-left transition font-medium"
+                  >
+                    <LayoutDashboard className="w-3.5 h-3.5 text-indigo-600" />
+                    开发者工作台
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveTab('workspace');
+                      setWorkspaceSubTab('settings');
+                      setUserMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 hover:text-indigo-600 hover:bg-slate-50 text-left transition font-medium"
+                  >
+                    <Settings className="w-3.5 h-3.5 text-indigo-600" />
+                    账户与偏好设置
+                  </button>
+                </div>
+
+                <div className="pt-1">
+                  <button
+                    onClick={() => {
+                      showToast('已安全退出登录');
+                      setUserMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-rose-600 hover:bg-rose-50 text-left transition font-bold"
+                  >
+                    <LogOut className="w-3.5 h-3.5 text-rose-600" />
+                    退出登录
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+        </div>
+
+      </div>
+    </header>
+  );
+};
