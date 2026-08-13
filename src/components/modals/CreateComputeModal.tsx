@@ -1,20 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { GPUInstance, ComputeMode } from '../../types';
+import { RentalGPUCard, GPUInstance } from '../../types';
 import { 
   X, 
   Cpu, 
-  Server, 
   Check, 
-  ArrowRight, 
-  ArrowLeft, 
+  AlertTriangle, 
   HardDrive, 
-  Globe, 
-  ShieldCheck, 
-  Zap, 
   Sparkles, 
-  Layers, 
-  Box 
+  ChevronDown,
+  Layers,
+  Info
 } from 'lucide-react';
 
 export const CreateComputeModal: React.FC = () => {
@@ -27,311 +23,308 @@ export const CreateComputeModal: React.FC = () => {
     showToast 
   } = useApp();
 
-  // Selected Mode
-  const [mode, setMode] = useState<ComputeMode>('container');
+  // Selected GPU Card default: PRO 6000 96GB
+  const defaultCard: RentalGPUCard = {
+    id: 'pro_6000_96g',
+    title: 'PRO 6000 96GB',
+    availableCards: 7,
+    hourlyPrice: 6.19,
+    dayPrice: 145,
+    weekPrice: 987,
+    monthPrice: 4011,
+    topBorderColor: 'border-t-amber-600',
+    gpuModel: 'RTX PRO 6000',
+    vram: '90 GB',
+    cpu: '30 x AMD EPYC 9J14',
+    ram: '120 GB',
+    disk: '1024 GB'
+  };
 
-  // Multi-step Wizard Step (1-indexed)
-  const [step, setStep] = useState<number>(1);
+  const currentCard: RentalGPUCard = createComputePreset?.card || defaultCard;
 
-  // Form selections
-  const [instanceName, setInstanceName] = useState('');
-  const [scene, setScene] = useState<GPUInstance['scene']>('Notebook开发');
-  const [region, setRegion] = useState('华北 · 北京');
-  const [gpuModel, setGpuModel] = useState('RTX 4090 24GB');
+  // Billing Type selected: 'hourly' | 'daily' | 'weekly' | 'monthly'
+  const [billingType, setBillingType] = useState<'hourly' | 'daily' | 'weekly' | 'monthly'>('hourly');
+
+  // Image Category Tab: '官方镜像' | '我的镜像' | '热门镜像'
+  const [imageCategory, setImageCategory] = useState<'官方镜像' | '我的镜像' | '热门镜像'>('官方镜像');
+
+  // Selected Image ID
+  const [selectedImageId, setSelectedImageId] = useState<string>('pytorch_2');
+
+  // GPU count selected (e.g. 1 x RTX PRO 6000)
   const [gpuCount, setGpuCount] = useState<number>(1);
-  const [imageCategory, setImageCategory] = useState<'官方镜像' | '社区热门' | 'App市场'>('官方镜像');
-  const [selectedImage, setSelectedImage] = useState('PyTorch 2.2 + CUDA 12.1 + FlashAttention-2');
-  const [systemDisk, setSystemDisk] = useState('50GB NVMe');
-  const [dataDisk, setDataDisk] = useState('200GB NVMe');
-  const [publicIpType, setPublicIpType] = useState('按固定带宽 (10Mbps)');
-  const [billingType, setBillingType] = useState<GPUInstance['billingType']>('按量计费');
 
-  // Sync state if opened with preset
   useEffect(() => {
-    if (createComputePreset) {
-      if (createComputePreset.mode) setMode(createComputePreset.mode);
-      if (createComputePreset.scene) setScene(createComputePreset.scene);
-      if (createComputePreset.imageName) setSelectedImage(createComputePreset.imageName);
+    if (createComputePreset?.card) {
+      setBillingType('hourly');
     }
   }, [createComputePreset]);
 
   if (!createComputeModalOpen) return null;
 
-  const maxSteps = mode === 'server' ? 5 : 4;
-
-  const handleNextStep = () => {
-    if (step < maxSteps) {
-      setStep(prev => prev + 1);
+  const imagesList = [
+    {
+      id: 'pytorch_2',
+      name: 'PyTorch 2',
+      size: '13.5 GB',
+      usageCount: 7502,
+      isOfficial: true,
+      hasDescription: false
+    },
+    {
+      id: 'comfyui_wan',
+      name: '🧘 ComfyUI v0.19.3 (包含 WAN2.2 Animation)',
+      size: '50.4 GB',
+      usageCount: 789,
+      isOfficial: true,
+      hasDescription: true
+    },
+    {
+      id: 'pytorch_1',
+      name: 'PyTorch 1 (Pro 6000 以及 5090 无法使用)',
+      size: '12.4 GB',
+      usageCount: 551,
+      isOfficial: true,
+      hasDescription: true
+    },
+    {
+      id: 'ubuntu_clean',
+      name: 'Ubuntu 22.04 纯净版',
+      size: '6.9 GB',
+      usageCount: 265,
+      isOfficial: true,
+      hasDescription: true
+    },
+    {
+      id: 'openclaw',
+      name: '🦞 OpenClaw镜像',
+      size: '20.3 GB',
+      usageCount: 162,
+      isOfficial: true,
+      hasDescription: true
+    },
+    {
+      id: 'openclaw_ollama',
+      name: '🦞 OpenClaw + 🦙 Ollama Qwen3.6',
+      size: '49.2 GB',
+      usageCount: 105,
+      isOfficial: true,
+      hasDescription: true
+    },
+    {
+      id: 'remote_desktop',
+      name: '🖥️ 远程桌面',
+      size: '20.5 GB',
+      usageCount: 46,
+      isOfficial: false,
+      hasDescription: true
     }
-  };
+  ];
 
-  const handlePrevStep = () => {
-    if (step > 1) {
-      setStep(prev => prev - 1);
-    }
-  };
+  const selectedImageObj = imagesList.find(img => img.id === selectedImageId) || imagesList[0];
 
-  const handleCompleteCreation = () => {
+  const handleStartUse = () => {
+    let mappedBilling: GPUInstance['billingType'] = '按量计费';
+    if (billingType === 'daily') mappedBilling = '包日';
+    if (billingType === 'weekly') mappedBilling = '包周';
+    if (billingType === 'monthly') mappedBilling = '包月';
+
     launchGpuInstance(
-      scene,
-      gpuModel,
-      selectedImage,
+      'Notebook开发',
+      currentCard.gpuModel,
+      selectedImageObj.name,
       {
-        name: instanceName.trim() || `${scene.toLowerCase()}-${gpuModel.split(' ')[0].toLowerCase()}-inst`,
-        instanceType: mode,
-        region,
+        name: `${currentCard.title.toLowerCase()}-inst`,
+        instanceType: 'container',
         gpuCount,
-        billingType,
-        systemDisk,
-        dataDisk,
-        publicIp: publicIpType
+        vram: currentCard.vram,
+        cpu: currentCard.cpu,
+        ram: currentCard.ram,
+        billingType: mappedBilling,
+        hourlyCost: currentCard.hourlyPrice,
+        systemDisk: '50GB NVMe',
+        dataDisk: currentCard.disk
       }
     );
+
+    showToast(`实例部署成功！已为您启动 ${currentCard.title} (${gpuCount}卡)`);
     setCreateComputeModalOpen(false);
     setCreateComputePreset(null);
-    setStep(1);
   };
 
-  // Pricing Estimator Calculation
-  let basePrice = 2.90;
-  if (gpuModel.includes('T4')) basePrice = 1.25;
-  if (gpuModel.includes('V100') || gpuModel.includes('A10')) basePrice = 8.00;
-  if (gpuModel.includes('A100')) basePrice = 25.00;
-  const totalPrice = (basePrice * gpuCount * (billingType === '包月' ? 0.7 : billingType === '抢占式' ? 0.2 : 1)).toFixed(2);
-
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-fade-in select-none">
-      <div className="w-full max-w-4xl bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[85vh]">
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in select-none">
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-200">
         
-        {/* Modal Top Navigation Bar */}
-        <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
-              <Zap className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-extrabold text-slate-900 text-base">创建 GPU 算力实例向导</h3>
-              <p className="text-[11px] text-slate-500 font-medium">弹性开箱即用 · 秒级拉起深度学习与推理环境</p>
-            </div>
-          </div>
-
-          {/* Mode Switcher Buttons */}
-          <div className="flex items-center gap-1 bg-slate-200/80 p-1 rounded-2xl text-xs font-bold">
-            <button
-              onClick={() => {
-                setMode('container');
-                setStep(1);
-              }}
-              className={`px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer ${
-                mode === 'container' ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Box className="w-3.5 h-3.5" />
-              <span>容器实例 (轻量/秒启动)</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setMode('server');
-                setStep(1);
-              }}
-              className={`px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer ${
-                mode === 'server' ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Server className="w-3.5 h-3.5" />
-              <span>云服务器实例 (完整控制)</span>
-            </button>
-          </div>
-
-          <button
-            onClick={() => {
-              setCreateComputeModalOpen(false);
-              setCreateComputePreset(null);
-            }}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 bg-slate-100"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Multi-Step Wizard Progress Bar */}
-        <div className="px-8 py-3 bg-slate-50/50 border-b border-slate-200 flex items-center justify-between text-xs font-bold">
-          {mode === 'server' ? (
-            <>
-              <div className={`flex items-center gap-1.5 ${step >= 1 ? 'text-indigo-600' : 'text-slate-400'}`}>
-                <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px]">1</span>
-                <span>1. 地域与GPU规格</span>
-              </div>
-              <div className="w-8 h-[1px] bg-slate-200" />
-              <div className={`flex items-center gap-1.5 ${step >= 2 ? 'text-indigo-600' : 'text-slate-400'}`}>
-                <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px]">2</span>
-                <span>2. 操作系统与镜像</span>
-              </div>
-              <div className="w-8 h-[1px] bg-slate-200" />
-              <div className={`flex items-center gap-1.5 ${step >= 3 ? 'text-indigo-600' : 'text-slate-400'}`}>
-                <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px]">3</span>
-                <span>3. 存储与网络</span>
-              </div>
-              <div className="w-8 h-[1px] bg-slate-200" />
-              <div className={`flex items-center gap-1.5 ${step >= 4 ? 'text-indigo-600' : 'text-slate-400'}`}>
-                <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px]">4</span>
-                <span>4. 计费模式</span>
-              </div>
-              <div className="w-8 h-[1px] bg-slate-200" />
-              <div className={`flex items-center gap-1.5 ${step >= 5 ? 'text-indigo-600' : 'text-slate-400'}`}>
-                <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px]">5</span>
-                <span>5. 确认与拉起</span>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className={`flex items-center gap-1.5 ${step >= 1 ? 'text-indigo-600' : 'text-slate-400'}`}>
-                <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px]">1</span>
-                <span>1. GPU卡型与规格</span>
-              </div>
-              <div className="w-12 h-[1px] bg-slate-200" />
-              <div className={`flex items-center gap-1.5 ${step >= 2 ? 'text-indigo-600' : 'text-slate-400'}`}>
-                <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px]">2</span>
-                <span>2. 场景镜像选择</span>
-              </div>
-              <div className="w-12 h-[1px] bg-slate-200" />
-              <div className={`flex items-center gap-1.5 ${step >= 3 ? 'text-indigo-600' : 'text-slate-400'}`}>
-                <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px]">3</span>
-                <span>3. 计费租赁模式</span>
-              </div>
-              <div className="w-12 h-[1px] bg-slate-200" />
-              <div className={`flex items-center gap-1.5 ${step >= 4 ? 'text-indigo-600' : 'text-slate-400'}`}>
-                <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px]">4</span>
-                <span>4. 确认创建</span>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Wizard Main Content Body */}
-        <div className="flex-1 p-6 overflow-y-auto bg-slate-50/50 text-xs text-slate-800">
+        {/* Modal Scrollable Container */}
+        <div className="flex-1 overflow-y-auto">
           
-          {/* STEP 1: Region & Hardware Specs */}
-          {step === 1 && (
-            <div className="space-y-6">
-              <div>
-                <label className="font-extrabold text-slate-900 block mb-2 text-sm">实例名称与使用场景</label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    value={instanceName}
-                    onChange={(e) => setInstanceName(e.target.value)}
-                    placeholder="例如：my-qwen-finetune-01 (选填)"
-                    className="p-3 bg-white border border-slate-200 rounded-xl outline-none focus:border-indigo-600 font-medium"
-                  />
+          {/* Top Banner (Reference Image 2) */}
+          <div className="relative bg-gradient-to-r from-amber-800 via-amber-700 to-amber-900 text-white p-6 overflow-hidden">
+            {/* Background Light Pattern */}
+            <div className="absolute -top-12 -right-12 w-64 h-64 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
 
-                  <div className="flex items-center gap-2">
-                    {(['Notebook开发', '文生图', '大模型微调', '推理服务'] as GPUInstance['scene'][]).map(sc => (
-                      <button
-                        key={sc}
-                        type="button"
-                        onClick={() => setScene(sc)}
-                        className={`flex-1 py-3 px-2 rounded-xl font-bold transition cursor-pointer text-[11px] ${
-                          scene === sc ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
-                        }`}
-                      >
-                        {sc}
-                      </button>
-                    ))}
+            <div className="relative z-10 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {/* NVIDIA Icon Badge */}
+                  <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/20 font-black text-xl text-emerald-400">
+                    <Cpu className="w-6 h-6 text-emerald-400" />
+                  </div>
+                  <h2 className="text-2xl font-black tracking-tight flex items-center gap-2">
+                    <span>{currentCard.gpuModel}</span>
+                    <span className="text-xs bg-amber-500/30 text-amber-100 px-2.5 py-0.5 rounded-full border border-amber-400/40 font-bold">
+                      {currentCard.availableCards} 卡可用
+                    </span>
+                  </h2>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setCreateComputeModalOpen(false);
+                    setCreateComputePreset(null);
+                  }}
+                  className="p-1.5 rounded-lg bg-black/20 hover:bg-black/40 text-white/80 hover:text-white transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Hardware Specs Pills */}
+              <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+                <span className="px-3 py-1 rounded-lg bg-black/30 text-amber-200 backdrop-blur-sm">
+                  显存: <strong className="text-white">{currentCard.vram}</strong>
+                </span>
+                <span className="px-3 py-1 rounded-lg bg-black/30 text-amber-200 backdrop-blur-sm">
+                  CPU: <strong className="text-white">{currentCard.cpu}</strong>
+                </span>
+                <span className="px-3 py-1 rounded-lg bg-black/30 text-amber-200 backdrop-blur-sm">
+                  内存: <strong className="text-white">{currentCard.ram}</strong>
+                </span>
+                <span className="px-3 py-1 rounded-lg bg-black/30 text-amber-200 backdrop-blur-sm">
+                  磁盘: <strong className="text-white">{currentCard.disk}</strong>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Mining Warning Banner (Reference Image 2) */}
+          <div className="bg-amber-50 border-y border-amber-200/80 px-6 py-2.5 text-xs text-amber-900 font-medium flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>Featurize 平台严禁任何形式的挖矿行为，如若发现账号封禁且不退款！</span>
+          </div>
+
+          {/* Main Form Area */}
+          <div className="p-6 space-y-6">
+            
+            {/* Section 1: Billing Method (计费方式) */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-extrabold text-slate-900">计费方式</h3>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {/* Hourly */}
+                <div 
+                  onClick={() => setBillingType('hourly')}
+                  className={`p-4 rounded-xl border transition cursor-pointer relative flex flex-col justify-between ${
+                    billingType === 'hourly' 
+                      ? 'border-emerald-500 bg-white ring-1 ring-emerald-500 shadow-xs' 
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  {billingType === 'hourly' && (
+                    <div className="absolute top-2 right-2 text-emerald-500">
+                      <Check className="w-5 h-5" />
+                    </div>
+                  )}
+                  <div className="text-xs text-slate-600 font-bold">按量</div>
+                  <div className="mt-2 flex items-baseline gap-0.5">
+                    <span className="text-emerald-600 font-bold text-xs">¥</span>
+                    <span className="text-emerald-600 font-black text-2xl font-mono">{currentCard.hourlyPrice.toFixed(2)}</span>
+                    <span className="text-slate-400 text-[11px] font-normal">/小时</span>
+                  </div>
+                </div>
+
+                {/* Daily */}
+                <div 
+                  onClick={() => setBillingType('daily')}
+                  className={`p-4 rounded-xl border transition cursor-pointer relative flex flex-col justify-between ${
+                    billingType === 'daily' 
+                      ? 'border-emerald-500 bg-white ring-1 ring-emerald-500 shadow-xs' 
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  {billingType === 'daily' && (
+                    <div className="absolute top-2 right-2 text-emerald-500">
+                      <Check className="w-5 h-5" />
+                    </div>
+                  )}
+                  <div className="text-xs text-slate-600 font-bold">日租</div>
+                  <div className="mt-2 flex items-baseline gap-0.5">
+                    <span className="text-slate-800 font-bold text-xs">¥</span>
+                    <span className="text-slate-900 font-black text-2xl font-mono">{currentCard.dayPrice}</span>
+                  </div>
+                </div>
+
+                {/* Weekly */}
+                <div 
+                  onClick={() => setBillingType('weekly')}
+                  className={`p-4 rounded-xl border transition cursor-pointer relative flex flex-col justify-between ${
+                    billingType === 'weekly' 
+                      ? 'border-emerald-500 bg-white ring-1 ring-emerald-500 shadow-xs' 
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  {billingType === 'weekly' && (
+                    <div className="absolute top-2 right-2 text-emerald-500">
+                      <Check className="w-5 h-5" />
+                    </div>
+                  )}
+                  <div className="text-xs text-slate-600 font-bold">周租</div>
+                  <div className="mt-2 flex items-baseline gap-0.5">
+                    <span className="text-slate-800 font-bold text-xs">¥</span>
+                    <span className="text-slate-900 font-black text-2xl font-mono">{currentCard.weekPrice}</span>
+                  </div>
+                </div>
+
+                {/* Monthly */}
+                <div 
+                  onClick={() => setBillingType('monthly')}
+                  className={`p-4 rounded-xl border transition cursor-pointer relative flex flex-col justify-between ${
+                    billingType === 'monthly' 
+                      ? 'border-emerald-500 bg-white ring-1 ring-emerald-500 shadow-xs' 
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  {billingType === 'monthly' && (
+                    <div className="absolute top-2 right-2 text-emerald-500">
+                      <Check className="w-5 h-5" />
+                    </div>
+                  )}
+                  <div className="text-xs text-slate-600 font-bold">月租</div>
+                  <div className="mt-2 flex items-baseline gap-0.5">
+                    <span className="text-slate-800 font-bold text-xs">¥</span>
+                    <span className="text-slate-900 font-black text-2xl font-mono">{currentCard.monthPrice}</span>
                   </div>
                 </div>
               </div>
 
-              <div>
-                <label className="font-extrabold text-slate-900 block mb-2 text-sm">部署地域 (Region)</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {['华北 · 北京', '华东 · 上海', '华南 · 广州'].map(r => (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => setRegion(r)}
-                      className={`p-3.5 rounded-2xl border text-left font-bold transition cursor-pointer flex items-center justify-between ${
-                        region === r ? 'border-indigo-600 bg-indigo-50/60 text-indigo-700' : 'border-slate-200 bg-white hover:bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-indigo-600" />
-                        <span>{r}</span>
-                      </div>
-                      <span className="text-[10px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-mono">资源充足</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="font-extrabold text-slate-900 block mb-2 text-sm">GPU 显卡机型选择</label>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 font-mono">
-                  {[
-                    { model: 'RTX 4090 24GB', vram: '24 GB GDDR6X', cpu: '16 核 56GB', price: '2.90 元/时', badge: '生图/LoRA强推' },
-                    { model: 'A100 80GB', vram: '80 GB HBM2e', cpu: '32 核 128GB', price: '25.00 元/时', badge: '百亿大模型训练' },
-                    { model: 'V100/A10 24GB', vram: '24 GB HBM2', cpu: '8 核 32GB', price: '8.00 元/时', badge: '性价比推理' },
-                    { model: 'RTX 3090 24GB', vram: '24 GB GDDR6', cpu: '12 核 48GB', price: '2.50 元/时', badge: '学生入门卡' },
-                    { model: 'T4 16GB', vram: '16 GB GDDR6', cpu: '4 核 16GB', price: '1.25 元/时', badge: '轻量开发' }
-                  ].map((gpu) => (
-                    <div
-                      key={gpu.model}
-                      onClick={() => setGpuModel(gpu.model)}
-                      className={`p-4 rounded-2xl border cursor-pointer transition relative flex flex-col justify-between space-y-2 ${
-                        gpuModel === gpu.model ? 'border-indigo-600 bg-indigo-50/40 ring-2 ring-indigo-500/20' : 'border-slate-200 bg-white hover:bg-slate-100'
-                      }`}
-                    >
-                      <div>
-                        <div className="flex justify-between items-center font-sans font-extrabold text-slate-900">
-                          <span>{gpu.model}</span>
-                          <span className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200 font-mono">{gpu.badge}</span>
-                        </div>
-                        <div className="text-[11px] text-slate-500 mt-1">显存: {gpu.vram} · 搭配: {gpu.cpu}</div>
-                      </div>
-
-                      <div className="pt-2 border-t border-slate-100 flex justify-between items-center text-xs">
-                        <span className="font-bold text-indigo-600 font-sans">{gpu.price}</span>
-                        {gpuModel === gpu.model && <Check className="w-4 h-4 text-indigo-600" />}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="font-extrabold text-slate-900 block mb-2 text-sm">GPU 卡数选择</label>
-                <div className="flex gap-3">
-                  {[1, 2, 4, 8].map(cnt => (
-                    <button
-                      key={cnt}
-                      type="button"
-                      onClick={() => setGpuCount(cnt)}
-                      className={`px-5 py-2.5 rounded-xl font-bold font-mono transition cursor-pointer ${
-                        gpuCount === cnt ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-                      }`}
-                    >
-                      {cnt} 卡 ({cnt * 24}GB NVLink)
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <p className="text-[11px] text-slate-500 leading-relaxed font-normal pt-1">
+                实例实时计费，优先使用代金券抵扣费用，当账户没有余额时实例会自动退回，请保持余额充足。
+                建议在长期租用之前，先使用该方式验证实例环境是否可用，验证成功后再切换为长期租用即可。
+              </p>
             </div>
-          )}
 
-          {/* STEP 2: OS & Image */}
-          {step === 2 && (
-            <div className="space-y-6">
-              <div>
-                <label className="font-extrabold text-slate-900 block mb-2 text-sm">镜像来源分类</label>
-                <div className="flex gap-2">
-                  {(['官方镜像', '社区热门', 'App市场'] as const).map(cat => (
+            {/* Section 2: Choose Image (选择镜像) */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <h3 className="text-sm font-extrabold text-slate-900">选择镜像</h3>
+                <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                  {(['官方镜像', '我的镜像', '热门镜像'] as const).map(cat => (
                     <button
                       key={cat}
-                      type="button"
                       onClick={() => setImageCategory(cat)}
-                      className={`px-4 py-2 rounded-xl font-bold text-xs transition cursor-pointer ${
-                        imageCategory === cat ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                      className={`px-3 py-1 rounded-lg transition cursor-pointer ${
+                        imageCategory === cat ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
                       {cat}
@@ -340,211 +333,92 @@ export const CreateComputeModal: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="font-extrabold text-slate-900 block mb-2 text-sm">预置环境镜像库</label>
-                <div className="space-y-3 font-mono">
-                  {[
-                    { name: 'PyTorch 2.2.0 + CUDA 12.1 + FlashAttention-2', tag: '基础环境', desc: '官方深度学习框架，内嵌 torchvision, DeepSpeed v0.12 与 JupyterLab' },
-                    { name: 'ComfyUI 官方整合包 (Flux.1 & SDXL Base)', tag: '文生图应用', desc: '预装节点与 ControlNet, IP-Adapter, 包含图形管理器与 Web Direct' },
-                    { name: 'vLLM v0.4.2 高吞吐大模型推理引擎', tag: '推理服务', desc: '集成 PagedAttention 技术的 LLM 高吞吐 OpenAI API 兼容服务' },
-                    { name: 'Ollama + OpenWebUI 离线大模型盒', tag: '私有化部署', desc: '开箱即用的大模型对话平台，支持 Llama 3.3, Qwen2.5 一键挂载' }
-                  ].map((img) => (
-                    <div
-                      key={img.name}
-                      onClick={() => setSelectedImage(img.name)}
-                      className={`p-4 rounded-2xl border cursor-pointer transition flex items-center justify-between gap-4 ${
-                        selectedImage === img.name ? 'border-indigo-600 bg-indigo-50/50 ring-2 ring-indigo-500/20' : 'border-slate-200 bg-white hover:bg-slate-100'
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center gap-2 font-sans font-bold text-slate-900 text-sm">
-                          <span>{img.name}</span>
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-indigo-100 text-indigo-700 border border-indigo-200">{img.tag}</span>
-                        </div>
-                        <p className="text-[11px] text-slate-500 font-sans mt-1">{img.desc}</p>
+              {/* Image Radio Item List */}
+              <div className="space-y-2.5">
+                {imagesList.map(img => (
+                  <div
+                    key={img.id}
+                    onClick={() => setSelectedImageId(img.id)}
+                    className={`p-3.5 rounded-xl border transition cursor-pointer flex items-center justify-between gap-3 ${
+                      selectedImageId === img.id
+                        ? 'border-blue-500 bg-white ring-1 ring-blue-500 shadow-xs'
+                        : 'border-slate-200 bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="space-y-1">
+                      <div className="font-extrabold text-slate-900 text-xs flex items-center gap-2">
+                        <span>{img.name}</span>
                       </div>
 
-                      {selectedImage === img.name && <Check className="w-5 h-5 text-indigo-600 shrink-0" />}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 3: Storage & Network (For Server Mode) or Billing (For Container Mode) */}
-          {step === 3 && mode === 'server' && (
-            <div className="space-y-6">
-              <div>
-                <label className="font-extrabold text-slate-900 block mb-2 text-sm">系统盘容量 (System Disk)</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {['40GB SSD', '60GB NVMe', '100GB HighSpeed NVMe'].map(disk => (
-                    <button
-                      key={disk}
-                      type="button"
-                      onClick={() => setSystemDisk(disk)}
-                      className={`p-3.5 rounded-xl border text-left font-bold transition cursor-pointer ${
-                        systemDisk === disk ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white hover:bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      {disk}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="font-extrabold text-slate-900 block mb-2 text-sm">数据持久盘 (Data Disk)</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {['无数据盘', '200GB NVMe (+¥0.5/h)', '1TB HighSpeed NVMe (+¥2.0/h)'].map(ddisk => (
-                    <button
-                      key={ddisk}
-                      type="button"
-                      onClick={() => setDataDisk(ddisk)}
-                      className={`p-3.5 rounded-xl border text-left font-bold transition cursor-pointer ${
-                        dataDisk === ddisk ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white hover:bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      {ddisk}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="font-extrabold text-slate-900 block mb-2 text-sm">公网 IP & 网络带宽</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {['按固定带宽 (10Mbps)', '按使用流量 (100Mbps 峰值)'].map(net => (
-                    <button
-                      key={net}
-                      type="button"
-                      onClick={() => setPublicIpType(net)}
-                      className={`p-3.5 rounded-xl border text-left font-bold transition cursor-pointer ${
-                        publicIpType === net ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white hover:bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      {net}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 3 for Container or STEP 4 for Server: Billing Selection */}
-          {((step === 3 && mode === 'container') || (step === 4 && mode === 'server')) && (
-            <div className="space-y-6">
-              <div>
-                <label className="font-extrabold text-slate-900 block mb-2 text-sm">租赁计费模式选择</label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[
-                    { type: '按量计费', badge: '按秒扣费 / 随时暂停', desc: '灵活度最高，不使用时随时暂停或销毁释放' },
-                    { type: '包月', badge: '7折长租优惠', desc: '适合长周期项目训练与持久推理 API 部署' },
-                    { type: '抢占式', badge: '低至1.5折起', desc: '利用闲置资源，适合可中断的批量实验计算' }
-                  ].map((b) => (
-                    <div
-                      key={b.type}
-                      onClick={() => setBillingType(b.type as GPUInstance['billingType'])}
-                      className={`p-4 rounded-2xl border cursor-pointer transition space-y-2 ${
-                        billingType === b.type ? 'border-indigo-600 bg-indigo-50/50 ring-2 ring-indigo-500/20' : 'border-slate-200 bg-white hover:bg-slate-100'
-                      }`}
-                    >
-                      <div className="flex justify-between items-center font-bold text-slate-900">
-                        <span>{b.type}</span>
-                        <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200 font-mono">{b.badge}</span>
+                      <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                        <span className="px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200 font-mono text-[10px]">
+                          {img.size}
+                        </span>
+                        <span>已使用 {img.usageCount} 次</span>
+                        {img.isOfficial && (
+                          <span className="px-1.5 py-0.2 rounded bg-blue-50 text-blue-600 text-[10px] font-bold border border-blue-200">
+                            官方
+                          </span>
+                        )}
+                        {img.hasDescription && (
+                          <span className="text-slate-400 hover:text-blue-600 cursor-pointer">
+                            查看镜像描述
+                          </span>
+                        )}
                       </div>
-                      <p className="text-[11px] text-slate-500">{b.desc}</p>
                     </div>
-                  ))}
-                </div>
+
+                    {/* Radio circle */}
+                    <div className="shrink-0">
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                        selectedImageId === img.id ? 'border-blue-600 bg-blue-600' : 'border-slate-300'
+                      }`}>
+                        {selectedImageId === img.id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          )}
 
-          {/* FINAL STEP: Summary & Confirmation */}
-          {step === maxSteps && (
-            <div className="space-y-6">
-              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4 font-mono">
-                <div className="font-extrabold text-slate-900 text-sm border-b border-slate-100 pb-3 font-sans flex items-center justify-between">
-                  <span>算力配置订单汇总与确认</span>
-                  <span className="text-xs text-indigo-600 font-mono">{mode === 'server' ? '云服务器实例' : '容器实例'}</span>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-sans">
-                  <div>
-                    <span className="text-slate-400 block text-[10px]">使用场景</span>
-                    <span className="font-bold text-slate-900">{scene}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[10px]">部署地域</span>
-                    <span className="font-bold text-slate-900">{region}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[10px]">GPU 算力规格</span>
-                    <span className="font-bold text-indigo-600">{gpuModel} × {gpuCount}卡</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[10px]">计费租赁模式</span>
-                    <span className="font-bold text-amber-600">{billingType}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-slate-400 block text-[10px]">系统与环境镜像</span>
-                    <span className="font-bold text-slate-800">{selectedImage}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[10px]">系统盘 / 数据盘</span>
-                    <span className="font-bold text-slate-800">{systemDisk} / {dataDisk}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[10px]">预估秒级就绪耗时</span>
-                    <span className="font-bold text-emerald-600">~ 3.2 秒</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
 
         </div>
 
-        {/* Modal Bottom Action Footer Bar */}
-        <div className="p-5 border-t border-slate-200 bg-white flex items-center justify-between">
-          <div className="flex items-center gap-2 font-mono">
-            <span className="text-slate-400 text-xs">预估费用:</span>
-            <span className="text-amber-600 text-lg font-extrabold">¥{totalPrice}</span>
-            <span className="text-slate-400 text-xs">/ 小时</span>
+        {/* Modal Bottom Action Bar (Reference Image 2) */}
+        <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+          {/* Card Selector Dropdown */}
+          <div className="relative">
+            <select
+              value={gpuCount}
+              onChange={(e) => setGpuCount(Number(e.target.value))}
+              className="appearance-none bg-slate-200 hover:bg-slate-300/80 text-slate-800 font-extrabold text-xs px-4 py-2.5 pr-8 rounded-xl outline-none cursor-pointer"
+            >
+              <option value={1}>1 x {currentCard.gpuModel}</option>
+              <option value={2}>2 x {currentCard.gpuModel}</option>
+              <option value={4}>4 x {currentCard.gpuModel}</option>
+            </select>
+            <ChevronDown className="w-4 h-4 text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
+          {/* Action Buttons */}
           <div className="flex items-center gap-3">
-            {step > 1 && (
-              <button
-                type="button"
-                onClick={handlePrevStep}
-                className="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 font-bold text-slate-700 text-xs flex items-center gap-1 cursor-pointer"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>上一步</span>
-              </button>
-            )}
+            <button
+              onClick={() => {
+                setCreateComputeModalOpen(false);
+                setCreateComputePreset(null);
+              }}
+              className="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs cursor-pointer transition"
+            >
+              取消
+            </button>
 
-            {step < maxSteps ? (
-              <button
-                type="button"
-                onClick={handleNextStep}
-                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
-              >
-                <span>下一步</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleCompleteCreation}
-                className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-md"
-              >
-                <Sparkles className="w-4 h-4 fill-current" />
-                <span>立即提交并部署</span>
-              </button>
-            )}
+            <button
+              onClick={handleStartUse}
+              className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs cursor-pointer shadow-md shadow-indigo-500/20 transition"
+            >
+              开始使用
+            </button>
           </div>
         </div>
 

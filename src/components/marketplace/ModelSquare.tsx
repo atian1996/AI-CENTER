@@ -2,336 +2,442 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ModelItem } from '../../types';
 import { 
-  Cpu, 
   Play, 
-  Sparkles, 
   Scale, 
-  Zap, 
-  Send, 
-  X, 
-  Check, 
-  Code2, 
-  ChevronRight,
-  ExternalLink
+  ChevronDown, 
+  ChevronUp, 
+  Layers, 
+  FileText, 
+  Image as ImageIcon, 
+  Music, 
+  Video, 
+  Binary, 
+  Info,
+  Check,
+  Search,
+  Sparkles,
+  Zap,
+  Server
 } from 'lucide-react';
 
 export const ModelSquare: React.FC = () => {
   const { 
     models, 
-    tryoutModel, 
     setTryoutModel, 
+    openModelDetail, 
     selectedCompareModels, 
     toggleCompareModel, 
-    clearCompareModels,
-    showToast
+    showToast 
   } = useApp();
 
-  const [vendorFilter, setVendorFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [compareDrawerOpen, setCompareDrawerOpen] = useState(false);
+  // 1. 左侧多维筛选条件 state (参考截图 1 左侧侧边栏)
+  const [selectedAuthor, setSelectedAuthor] = useState('all');
+  const [selectedProvider, setSelectedProvider] = useState('all');
+  const [selectedInputModality, setSelectedInputModality] = useState('all');
+  const [selectedContextLength, setSelectedContextLength] = useState('all');
 
-  // Model Tryout Dialog state
-  const [tryoutPrompt, setTryoutPrompt] = useState('');
-  const [tryoutResponse, setTryoutResponse] = useState('');
-  const [tryoutLoading, setTryoutLoading] = useState(false);
+  // 展开更多 collapse 状态
+  const [showMoreAuthors, setShowMoreAuthors] = useState(false);
+  const [showMoreProviders, setShowMoreProviders] = useState(false);
 
-  const vendors = ['all', 'Google DeepMind', 'DeepSeek 深度求索', '阿里云 通义千问', 'Black Forest Labs', '智源研究院 BAAI'];
-  const types = ['all', '文本', '图像', 'Embedding'];
+  // 2. 顶部分类 Tabs state (参考截图 1 顶部按钮: 全部 78, 文本 56, 图像 2, 音频 5, 视频 15, 向量 1)
+  const [topTabModality, setTopTabModality] = useState<string>('all');
 
+  // 动态数据源
+  const authorsList = [
+    'Alibaba', 'ByteDance', 'DeepSeek', 'JinaAI', 'Minimax', 'MoonshotAI', 'Qwen', 'Z.ai', 'Google', 'BAAI'
+  ];
+  const providersList = [
+    '无问芯穹', '阿里云', '阿里云百炼', '百度千帆', '百度智能云', '捷查', '腾讯云', '火山引擎'
+  ];
+
+  // 过滤函数
   const filteredModels = models.filter(m => {
-    if (vendorFilter !== 'all' && m.vendor !== vendorFilter) return false;
-    if (typeFilter !== 'all' && m.typeTag !== typeFilter) return false;
+    if (selectedAuthor !== 'all' && m.author !== selectedAuthor && m.vendor !== selectedAuthor) return false;
+    if (selectedProvider !== 'all' && !m.providerList?.includes(selectedProvider)) return false;
+    if (selectedInputModality !== 'all' && !m.inputModalities?.includes(selectedInputModality) && m.typeTag !== selectedInputModality) return false;
+    
+    if (selectedContextLength !== 'all') {
+      if (selectedContextLength === '200K+') {
+        const is200KPlus = m.contextLength.includes('200K') || 
+                           m.contextLength.includes('256K') || 
+                           m.contextLength.includes('1.0M') || 
+                           m.contextLength.includes('1M') ||
+                           m.contextLength.includes('50素材') ||
+                           m.contextLength.includes('50个素材') ||
+                           m.contextLength.includes('500K');
+        if (!is200KPlus) return false;
+      } else if (selectedContextLength === '128K+') {
+        const is128KPlus = m.contextLength.includes('128K') || 
+                           m.contextLength.includes('200K') || 
+                           m.contextLength.includes('256K') || 
+                           m.contextLength.includes('1.0M') || 
+                           m.contextLength.includes('1M');
+        if (!is128KPlus) return false;
+      } else if (selectedContextLength === '32K+') {
+        const is32KPlus = m.contextLength.includes('32K') || 
+                          m.contextLength.includes('128K') || 
+                          m.contextLength.includes('200K') || 
+                          m.contextLength.includes('256K') || 
+                          m.contextLength.includes('1.0M') || 
+                          m.contextLength.includes('1M');
+        if (!is32KPlus) return false;
+      } else if (selectedContextLength === '8K+') {
+        const is8KPlus = m.contextLength.includes('8.0K') || 
+                         m.contextLength.includes('8K') || 
+                         m.contextLength.includes('32K') || 
+                         m.contextLength.includes('128K') || 
+                         m.contextLength.includes('200K') || 
+                         m.contextLength.includes('256K') || 
+                         m.contextLength.includes('1.0M') || 
+                         m.contextLength.includes('1M');
+        if (!is8KPlus) return false;
+      }
+    }
+
+    if (topTabModality !== 'all') {
+      if (topTabModality === '文本' && m.typeTag !== '文本') return false;
+      if (topTabModality === '图像' && m.typeTag !== '图像') return false;
+      if (topTabModality === '视频' && m.typeTag !== '视频') return false;
+      if (topTabModality === '音频' && m.typeTag !== '音频') return false;
+      if (topTabModality === '向量' && m.typeTag !== 'Embedding' && m.typeTag !== '向量') return false;
+    }
+
     return true;
   });
 
-  const handleRunTryout = async () => {
-    if (!tryoutPrompt.trim() || tryoutLoading) return;
-    setTryoutLoading(true);
-    setTryoutResponse('');
-
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: tryoutPrompt,
-          model: tryoutModel?.name.includes('Gemini') ? 'gemini-3.6-flash' : 'gemini-3.6-flash'
-        })
-      });
-      const data = await res.json();
-      setTryoutResponse(data.text || '完成');
-    } catch {
-      setTryoutResponse('模型体验调用超时，请稍后重试。');
-    } finally {
-      setTryoutLoading(false);
-    }
-  };
+  // 各分类统计数量
+  const textCount = models.filter(m => m.typeTag === '文本').length;
+  const imageCount = models.filter(m => m.typeTag === '图像').length;
+  const videoCount = models.filter(m => m.typeTag === '视频').length;
+  const audioCount = models.filter(m => m.typeTag === '音频').length;
+  const vectorCount = models.filter(m => m.typeTag === 'Embedding' || m.typeTag === '向量').length;
 
   return (
-    <div className="space-y-6 select-none">
+    <div className="flex flex-col lg:flex-row gap-6 select-none items-start">
       
-      {/* Top Filter Bar & Compare Entry */}
-      <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Vendor Filter */}
-          <select
-            value={vendorFilter}
-            onChange={(e) => setVendorFilter(e.target.value)}
-            className="bg-slate-50 text-slate-800 border border-slate-200 font-bold rounded-xl px-3 py-1.5 text-xs outline-none cursor-pointer focus:bg-white"
-          >
-            <option value="all">全部厂商</option>
-            {vendors.filter(v => v !== 'all').map(v => (
-              <option key={v} value={v}>{v}</option>
-            ))}
-          </select>
+      {/* 1. 左侧多维筛选侧边栏 Panel (统一高质感 Slate 卡片) */}
+      <div className="w-full lg:w-60 bg-white rounded-2xl border border-slate-200/80 p-4 shrink-0 space-y-5 text-xs shadow-2xs font-medium">
+        
+        {/* 作者 Author Filter */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-slate-900 font-extrabold text-xs">
+            <span>作者</span>
+            {selectedAuthor !== 'all' && (
+              <button onClick={() => setSelectedAuthor('all')} className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold hover:underline cursor-pointer">
+                重置
+              </button>
+            )}
+          </div>
 
-          {/* Type Filter */}
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="bg-slate-50 text-slate-800 border border-slate-200 font-bold rounded-xl px-3 py-1.5 text-xs outline-none cursor-pointer focus:bg-white"
-          >
-            <option value="all">全部模态</option>
-            {types.filter(t => t !== 'all').map(t => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Compare Models Floating Action */}
-        <div className="flex items-center gap-3">
-          {selectedCompareModels.length > 0 && (
+          <div className="space-y-1 text-slate-600">
             <button
-              onClick={() => setCompareDrawerOpen(true)}
-              className="px-4 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-xs flex items-center gap-2 animate-bounce-short cursor-pointer"
+              onClick={() => setSelectedAuthor('all')}
+              className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer flex items-center justify-between ${
+                selectedAuthor === 'all' ? 'bg-indigo-50/80 text-indigo-700 font-extrabold' : 'hover:bg-slate-50 text-slate-700'
+              }`}
             >
-              <Scale className="w-4 h-4" />
-              <span>并列对比模型 ({selectedCompareModels.length}/3)</span>
+              <span>全部</span>
+              {selectedAuthor === 'all' && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
             </button>
-          )}
+            {(showMoreAuthors ? authorsList : authorsList.slice(0, 6)).map(author => (
+              <button
+                key={author}
+                onClick={() => setSelectedAuthor(author)}
+                className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer truncate flex items-center justify-between ${
+                  selectedAuthor === author ? 'bg-indigo-50/80 text-indigo-700 font-extrabold' : 'hover:bg-slate-50 text-slate-700'
+                }`}
+              >
+                <span className="truncate">{author}</span>
+                {selectedAuthor === author && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setShowMoreAuthors(!showMoreAuthors)}
+              className="text-[11px] text-slate-400 hover:text-slate-700 py-1 px-2.5 flex items-center gap-1 cursor-pointer font-bold transition"
+            >
+              {showMoreAuthors ? (
+                <>收起 <ChevronUp className="w-3 h-3" /></>
+              ) : (
+                <>+12 更多作者 <ChevronDown className="w-3 h-3" /></>
+              )}
+            </button>
+          </div>
         </div>
+
+        <div className="h-px bg-slate-100"></div>
+
+        {/* 服务商 Provider Filter */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-slate-900 font-extrabold text-xs">
+            <span>服务商</span>
+            {selectedProvider !== 'all' && (
+              <button onClick={() => setSelectedProvider('all')} className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold hover:underline cursor-pointer">
+                重置
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-1 text-slate-600">
+            <button
+              onClick={() => setSelectedProvider('all')}
+              className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer flex items-center justify-between ${
+                selectedProvider === 'all' ? 'bg-indigo-50/80 text-indigo-700 font-extrabold' : 'hover:bg-slate-50 text-slate-700'
+              }`}
+            >
+              <span>全部</span>
+              {selectedProvider === 'all' && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
+            </button>
+            {(showMoreProviders ? providersList : providersList.slice(0, 5)).map(provider => (
+              <button
+                key={provider}
+                onClick={() => setSelectedProvider(provider)}
+                className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer truncate flex items-center justify-between ${
+                  selectedProvider === provider ? 'bg-indigo-50/80 text-indigo-700 font-extrabold' : 'hover:bg-slate-50 text-slate-700'
+                }`}
+              >
+                <span className="truncate">{provider}</span>
+                {selectedProvider === provider && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setShowMoreProviders(!showMoreProviders)}
+              className="text-[11px] text-slate-400 hover:text-slate-700 py-1 px-2.5 flex items-center gap-1 cursor-pointer font-bold transition"
+            >
+              {showMoreProviders ? (
+                <>收起 <ChevronUp className="w-3 h-3" /></>
+              ) : (
+                <>+16 更多服务商 <ChevronDown className="w-3 h-3" /></>
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="h-px bg-slate-100"></div>
+
+        {/* 输入模态 Input Modality Filter */}
+        <div className="space-y-2">
+          <div className="text-slate-900 font-extrabold text-xs">输入模态</div>
+          <div className="space-y-1 text-slate-600">
+            {['all', '文本', '图像', '音频', '视频', '向量'].map(mod => (
+              <button
+                key={mod}
+                onClick={() => setSelectedInputModality(mod)}
+                className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer flex items-center justify-between ${
+                  selectedInputModality === mod ? 'bg-indigo-50/80 text-indigo-700 font-extrabold' : 'hover:bg-slate-50 text-slate-700'
+                }`}
+              >
+                <span>{mod === 'all' ? '全部模态' : mod}</span>
+                {selectedInputModality === mod && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="h-px bg-slate-100"></div>
+
+        {/* 上下文长度 Context Length Filter */}
+        <div className="space-y-2">
+          <div className="text-slate-900 font-extrabold text-xs">上下文长度</div>
+          <div className="space-y-1 text-slate-600">
+            {['all', '8K+', '32K+', '128K+', '200K+'].map(ctx => (
+              <button
+                key={ctx}
+                onClick={() => setSelectedContextLength(ctx)}
+                className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer flex items-center justify-between ${
+                  selectedContextLength === ctx ? 'bg-indigo-50/80 text-indigo-700 font-extrabold' : 'hover:bg-slate-50 text-slate-700'
+                }`}
+              >
+                <span>{ctx === 'all' ? '全部长度' : ctx}</span>
+                {selectedContextLength === ctx && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
+              </button>
+            ))}
+          </div>
+        </div>
+
       </div>
 
-      {/* Model Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredModels.map(m => {
-          const isCompared = selectedCompareModels.some(cm => cm.id === m.id);
-
-          return (
-            <div
-              key={m.id}
-              className="group rounded-2xl bg-white border border-slate-200/80 hover:border-cyan-400 p-6 shadow-xs hover:shadow-xl hover:shadow-cyan-500/10 transition-all duration-300 flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div>
-                    <h3 className="text-base font-bold text-slate-900 group-hover:text-cyan-700 transition-colors">
-                      {m.name}
-                    </h3>
-                    <div className="text-xs text-slate-400 font-medium mt-0.5">{m.vendor}</div>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-cyan-50 text-cyan-700 border border-cyan-200 shrink-0">
-                    {m.typeTag}
-                  </span>
-                </div>
-
-                <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-4">
-                  {m.description}
-                </p>
-
-                {/* Specs Box */}
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5 text-xs mb-4">
-                  <div className="flex items-center justify-between text-slate-600 font-medium">
-                    <span>上下文长度:</span>
-                    <span className="text-slate-900 font-mono font-bold">{m.contextLength}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-slate-600 font-medium">
-                    <span>计费价格 (输入/输出):</span>
-                    <span className="text-amber-700 font-mono font-bold">{m.priceInput}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-slate-600 font-medium">
-                    <span>典型响应延迟:</span>
-                    <span className="text-emerald-700 font-mono font-bold">~{m.latencyMs} ms</span>
-                  </div>
-                </div>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                  {m.tags.map((t, idx) => (
-                    <span key={idx} className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Card Footer Actions */}
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
+      {/* 2. 右侧主框架 Area */}
+      <div className="flex-1 space-y-5 w-full">
+        
+        {/* Top Pills Tabs (精细 Indigo 主色配合与阴影效果) */}
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs font-extrabold">
+            {[
+              { id: 'all', label: '全部', count: models.length, icon: Layers },
+              { id: '文本', label: '文本', count: textCount, icon: FileText },
+              { id: '图像', label: '图像', count: imageCount, icon: ImageIcon },
+              { id: '音频', label: '音频', count: audioCount, icon: Music },
+              { id: '视频', label: '视频', count: videoCount, icon: Video },
+              { id: '向量', label: '向量', count: vectorCount, icon: Binary },
+            ].map(tab => {
+              const Icon = tab.icon;
+              const isActive = topTabModality === tab.id;
+              return (
                 <button
-                  onClick={() => toggleCompareModel(m)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1 cursor-pointer ${
-                    isCompared
-                      ? 'bg-cyan-50 text-cyan-700 border-cyan-300'
-                      : 'bg-slate-100 text-slate-600 hover:text-slate-900 border-slate-200'
+                  key={tab.id}
+                  onClick={() => setTopTabModality(tab.id)}
+                  className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+                    isActive
+                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 font-black'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-bold'
                   }`}
                 >
-                  <Scale className="w-3.5 h-3.5" />
-                  {isCompared ? '已加入对比' : '对比'}
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{tab.label}</span>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                    isActive ? 'bg-indigo-500/30 text-white' : 'bg-slate-200/60 text-slate-600'
+                  }`}>
+                    {tab.count}
+                  </span>
                 </button>
+              );
+            })}
+          </div>
 
-                <button
-                  onClick={() => {
-                    setTryoutModel(m);
-                    setTryoutPrompt('');
-                    setTryoutResponse('');
-                  }}
-                  className="px-3.5 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition cursor-pointer"
-                >
-                  <Play className="w-3.5 h-3.5 fill-white" /> 在线体验
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+          <div className="text-xs text-slate-500 font-medium px-3">
+            符合条件模型：<span className="text-indigo-600 font-extrabold font-mono text-sm">{filteredModels.length}</span> 款
+          </div>
+        </div>
 
-      {/* Model Tryout Dialog Modal */}
-      {tryoutModel && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-fade-in">
-          <div className="w-full max-w-2xl bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden flex flex-col">
-            <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-cyan-50 border border-cyan-200 flex items-center justify-center text-cyan-600">
-                  <Cpu className="w-5 h-5" />
-                </div>
+        {/* Model Cards Grid Matrix (双列精细卡片) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredModels.map(m => {
+            const isCompared = selectedCompareModels.some(cm => cm.id === m.id);
+
+            return (
+              <div
+                key={m.id}
+                onClick={() => openModelDetail(m)}
+                className="group rounded-2xl bg-white border border-slate-200/80 hover:border-indigo-300 p-5 shadow-2xs hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 flex flex-col justify-between cursor-pointer relative"
+              >
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">在线调用体验: {tryoutModel.name}</h3>
-                  <div className="text-[11px] text-slate-500 font-medium">{tryoutModel.vendor} · {tryoutModel.contextLength}</div>
+                  {/* Card Header: Brand Icon + Title + Tokens Usage Badge */}
+                  <div className="flex items-start justify-between gap-3 mb-2.5">
+                    <div className="flex items-center gap-2.5 truncate">
+                      <div className="w-7 h-7 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+                        {m.vendor.slice(0, 1)}
+                      </div>
+                      <h3 className="text-sm font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
+                        {m.vendor}: {m.name}
+                      </h3>
+                    </div>
+
+                    <span className="text-[11px] font-mono bg-slate-100 text-slate-500 px-2 py-0.5 rounded-lg font-medium shrink-0 border border-slate-200/60">
+                      {m.totalTokensUsed || '1.11B tokens'}
+                    </span>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 font-medium mb-4 h-9">
+                    {m.description}
+                  </p>
+
+                  {/* Specs Pill Bar */}
+                  <div className="p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center justify-between text-[11px] font-mono mb-4">
+                    <div className="text-slate-700 font-bold flex items-center gap-1">
+                      <span className="text-indigo-600">{m.contextLength}</span>
+                      <span className="text-slate-400 font-normal">context</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {m.typeTag === '图像' ? (
+                        <>
+                          <span className="text-slate-500">
+                            输出 <strong className="text-emerald-600 font-bold">{m.priceOutput}</strong>
+                          </span>
+                          <span className="text-slate-500">
+                            输入 <strong className="text-emerald-600 font-bold">{m.priceInput}</strong>
+                          </span>
+                        </>
+                      ) : m.typeTag === '视频' ? (
+                        <>
+                          <span className="text-slate-500">
+                            <strong className="text-emerald-600 font-bold">{m.priceInput}</strong>
+                          </span>
+                          <span className="text-slate-500">
+                            <strong className="text-emerald-600 font-bold">{m.priceOutput}</strong>
+                          </span>
+                        </>
+                      ) : m.typeTag === '音频' ? (
+                        <>
+                          {m.priceInput !== '免费' && (
+                            <span className="text-slate-500">
+                              输入 <strong className="text-emerald-600 font-bold">{m.priceInput}</strong>
+                            </span>
+                          )}
+                          <span className="text-slate-500">
+                            输出 <strong className="text-emerald-600 font-bold">{m.priceOutput}</strong>
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-slate-500">
+                            输入 <strong className="text-emerald-600 font-bold">{m.priceInput}</strong>
+                          </span>
+                          <span className="text-slate-500">
+                            输出 <strong className="text-emerald-600 font-bold">{m.priceOutput}</strong>
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <button
-                onClick={() => setTryoutModel(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 bg-slate-100"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
 
-            <div className="p-6 space-y-4 text-xs">
-              <div className="space-y-1.5">
-                <label className="text-slate-800 font-bold">输入体验 Prompt 测试文本：</label>
-                <textarea
-                  rows={3}
-                  value={tryoutPrompt}
-                  onChange={(e) => setTryoutPrompt(e.target.value)}
-                  placeholder="例如：请用一段优雅的 Python 代码示范如何实现 LRU 缓存逻辑..."
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-cyan-500 font-medium"
-                />
-              </div>
-
-              <div className="flex justify-end">
-                <button
-                  onClick={handleRunTryout}
-                  disabled={tryoutLoading}
-                  className="px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold flex items-center gap-2 shadow-xs cursor-pointer"
+                {/* Card Action Buttons Footer */}
+                <div 
+                  onClick={(e) => e.stopPropagation()} 
+                  className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2"
                 >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>{tryoutLoading ? '模型生成中...' : '发送请求体验'}</span>
-                </button>
-              </div>
+                  <button
+                    onClick={() => toggleCompareModel(m)}
+                    className={`px-3 py-1.5 rounded-xl text-[11px] font-bold border transition flex items-center gap-1.5 cursor-pointer ${
+                      isCompared
+                        ? 'bg-indigo-50 text-indigo-700 border-indigo-200 font-extrabold'
+                        : 'bg-white text-slate-600 hover:text-slate-900 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Scale className="w-3.5 h-3.5" />
+                    <span>{isCompared ? '已加入对比' : '对比'}</span>
+                  </button>
 
-              {tryoutResponse && (
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-                  <div className="text-slate-700 font-bold flex items-center gap-1.5 text-[11px]">
-                    <Sparkles className="w-3.5 h-3.5 text-cyan-600" /> 模型输出响应:
-                  </div>
-                  <div className="text-slate-800 leading-relaxed font-sans whitespace-pre-wrap">
-                    {tryoutResponse}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => openModelDetail(m)}
+                      className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition cursor-pointer flex items-center gap-1"
+                    >
+                      <Info className="w-3.5 h-3.5" />
+                      <span>查看详情</span>
+                    </button>
 
-      {/* Model Comparison Drawer / Modal */}
-      {compareDrawerOpen && (
-        <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-fade-in">
-          <div className="w-full max-w-5xl bg-white border border-slate-200 rounded-3xl shadow-2xl p-6 space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-              <div className="flex items-center gap-2 text-base font-bold text-slate-900">
-                <Scale className="w-5 h-5 text-cyan-600" />
-                模型能力指标多维对比
-              </div>
-              <button
-                onClick={() => setCompareDrawerOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 bg-slate-100"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              {selectedCompareModels.map(m => (
-                <div key={m.id} className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
-                  <div className="border-b border-slate-200 pb-3">
-                    <div className="text-sm font-black text-cyan-700">{m.name}</div>
-                    <div className="text-slate-500 font-medium mt-0.5">{m.vendor}</div>
-                  </div>
-
-                  <div className="space-y-2 text-slate-700 font-medium">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">模态类型</span>
-                      <span className="font-bold">{m.typeTag}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">上下文</span>
-                      <span className="font-mono font-bold text-slate-900">{m.contextLength}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">输入价格</span>
-                      <span className="font-mono text-amber-700 font-bold">{m.priceInput}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">典型延迟</span>
-                      <span className="font-mono text-emerald-700 font-bold">{m.latencyMs} ms</span>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-slate-200 pt-3">
-                    <div className="text-[11px] font-bold text-slate-500 mb-2">基准 Benchmark:</div>
-                    <div className="space-y-1">
-                      {m.benchmarks.map((b, idx) => (
-                        <div key={idx} className="flex justify-between text-[11px]">
-                          <span className="text-slate-500">{b.name}</span>
-                          <span className="font-mono text-cyan-700 font-bold">{b.score}</span>
-                        </div>
-                      ))}
-                    </div>
+                    {/* 只有文本类型的模型才支持在线体验 */}
+                    {m.typeTag === '文本' ? (
+                      <button
+                        onClick={() => setTryoutModel(m)}
+                        className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-extrabold shadow-sm flex items-center gap-1.5 transition cursor-pointer"
+                      >
+                        <Play className="w-3 h-3 fill-white" />
+                        <span>在线体验</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => openModelDetail(m)}
+                        className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 text-[11px] font-bold border border-slate-200/60 transition cursor-pointer"
+                      >
+                        API 调用
+                      </button>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
-
-            <div className="flex justify-between items-center pt-2">
-              <button
-                onClick={clearCompareModels}
-                className="text-xs text-slate-500 hover:text-slate-800 font-medium"
-              >
-                清空所有对比项
-              </button>
-              <button
-                onClick={() => setCompareDrawerOpen(false)}
-                className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold"
-              >
-                完成对比
-              </button>
-            </div>
-          </div>
+              </div>
+            );
+          })}
         </div>
-      )}
+
+      </div>
 
     </div>
   );
 };
+

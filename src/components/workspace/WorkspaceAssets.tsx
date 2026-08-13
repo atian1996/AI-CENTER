@@ -36,7 +36,8 @@ export const WorkspaceAssets: React.FC = () => {
     showToast, 
     openModal,
     setSelectedMainTab,
-    toggleFavoriteAgent
+    toggleFavoriteAgent,
+    openAgentDetail
   } = useApp();
 
   const [activeAssetTab, setActiveAssetTab] = useState<'agents' | 'datasets' | 'skills' | 'favorites'>('agents');
@@ -137,108 +138,195 @@ export const WorkspaceAssets: React.FC = () => {
 
       {/* 1. SubTab: 我的 Agent */}
       {activeAssetTab === 'agents' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           
-          {/* Status Filters */}
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-1.5 text-xs font-bold">
-              {[
-                { key: 'all', label: '全部' },
-                { key: 'published', label: '已上架' },
-                { key: 'reviewing', label: '审核中' },
-                { key: 'draft', label: '草稿' },
-              ].map((f) => (
-                <button
-                  key={f.key}
-                  onClick={() => setStatusFilter(f.key)}
-                  className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${
-                    statusFilter === f.key 
-                      ? 'bg-slate-900 text-white' 
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
+          {/* Section 1: 已购 Agent 列表 */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                <Bot className="w-4 h-4 text-indigo-600" />
+                <span>已购 Agent 资产 ({userAgents.filter(a => a.isPurchased).length})</span>
+              </h3>
+              <button
+                onClick={() => setSelectedMainTab('marketplace')}
+                className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span>在 Agent 商店中探索更多 →</span>
+              </button>
             </div>
 
-            <div className="relative w-64">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="搜索 Agent 名称或描述..."
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-indigo-600"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {userAgents.filter(a => a.isPurchased).map(ag => (
+                <div
+                  key={ag.id}
+                  className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md transition space-y-3 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xl font-bold shadow-xs">
+                          {ag.avatar}
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-slate-900 line-clamp-1">{ag.name}</h4>
+                          <div className="text-[10px] text-slate-400 font-medium flex items-center gap-1 mt-0.5">
+                            <span className="text-indigo-600 font-bold">{ag.priceModel || (ag.priceType === 'free' ? '免费' : '按Token计费')}</span>
+                            <span>•</span>
+                            <span>{ag.version || 'v1.0.0'}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700">
+                        已授权
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-slate-600 font-medium line-clamp-2 leading-relaxed">
+                      {ag.description}
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 pt-3 border-t border-slate-100">
+                    <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                      <span>今日调用: <strong className="text-indigo-600 font-bold">{ag.todayTokenUsage || 1234} Token</strong></span>
+                      <span>开发者: <strong className="text-slate-800">{ag.developer || ag.author}</strong></span>
+                    </div>
+
+                    {/* Action buttons: [对话] [API] [用量] */}
+                    <div className="flex items-center gap-1.5 pt-1">
+                      <button
+                        onClick={() => openAgentDetail(ag)}
+                        className="flex-1 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-extrabold transition flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <Bot className="w-3.5 h-3.5" />
+                        <span>对话</span>
+                      </button>
+                      <button
+                        onClick={() => setWorkspaceSubTab('apikeys')}
+                        className="flex-1 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <Key className="w-3.5 h-3.5 text-slate-500" />
+                        <span>API</span>
+                      </button>
+                      <button
+                        onClick={() => showToast(`【${ag.name}】今日调用量: ${ag.todayTokenUsage || 1234} Token | 本月累计调用: ${(ag.todayTokenUsage || 1234) * 18} Token`)}
+                        className="flex-1 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <BarChart2 className="w-3.5 h-3.5 text-slate-500" />
+                        <span>用量</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Agent Cards List */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {userAgents.map((ag) => (
-              <div 
-                key={ag.id} 
-                className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs hover:shadow-md transition space-y-3 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xl font-bold shadow-2xs">
-                        {ag.avatar}
-                      </div>
-                      <div>
-                        <h3 className="text-xs font-black text-slate-900 line-clamp-1">{ag.name}</h3>
-                        <div className="text-[10px] text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
-                          <span>{ag.version || 'v1.0.0'}</span>
-                          <span>•</span>
-                          <span>{ag.baseModel || 'Gemini 3.6 Flash'}</span>
+          {/* Section 2: 我开发的 Agent */}
+          <div className="pt-4 border-t border-slate-200 space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                <Wrench className="w-4 h-4 text-slate-700" />
+                <span>我开发的 Agent ({userAgents.filter(a => !a.isPurchased || a.isDeveloped || a.id.startsWith('ag_custom')).length})</span>
+              </h3>
+
+              {/* Status Tabs: [已上架] [审核中] [已下架] */}
+              <div className="flex items-center gap-1.5 text-xs font-bold">
+                {[
+                  { key: 'all', label: '全部' },
+                  { key: 'published', label: '已上架' },
+                  { key: 'reviewing', label: '审核中' },
+                  { key: 'draft', label: '草稿/下架' },
+                ].map(f => (
+                  <button
+                    key={f.key}
+                    onClick={() => setStatusFilter(f.key)}
+                    className={`px-3 py-1 rounded-xl transition cursor-pointer ${
+                      statusFilter === f.key ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {userAgents.filter(a => !a.isPurchased || a.isDeveloped || a.id.startsWith('ag_custom')).map(ag => (
+                <div
+                  key={ag.id}
+                  className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md transition space-y-3 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-xl font-bold shadow-xs">
+                          {ag.avatar}
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-slate-900 line-clamp-1">{ag.name}</h4>
+                          <div className="text-[10px] text-slate-400 font-medium flex items-center gap-1 mt-0.5">
+                            <span>{ag.version || 'v1.0.0'}</span>
+                            <span>•</span>
+                            <span>{ag.baseModel || 'Gemini 3.6 Flash'}</span>
+                          </div>
                         </div>
                       </div>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 text-indigo-700">
+                        我的开发
+                      </span>
                     </div>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700">
-                      已上架
-                    </span>
+
+                    <p className="text-[11px] text-slate-600 font-medium line-clamp-2 leading-relaxed">
+                      {ag.description}
+                    </p>
                   </div>
 
-                  <p className="text-[11px] text-slate-600 font-medium line-clamp-2 leading-relaxed">
-                    {ag.description}
-                  </p>
-                </div>
+                  <div className="space-y-3 pt-3 border-t border-slate-100">
+                    <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                      <span>总调用: <strong className="text-slate-800">{ag.usageCount.toLocaleString()} 次</strong></span>
+                      <span>评分: <strong className="text-amber-600">{ag.rating} ★</strong></span>
+                    </div>
 
-                <div className="space-y-3 pt-3 border-t border-slate-100">
-                  <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-                    <span>调用量: <strong className="text-slate-800">{ag.usageCount.toLocaleString()}</strong> 次</span>
-                    <span>评分: <strong className="text-amber-600">{ag.rating} ★</strong> ({ag.ratingCount})</span>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 pt-1">
-                    <button
-                      onClick={() => showToast(`编辑 Agent【${ag.name}】`)}
-                      className="flex-1 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer"
-                    >
-                      <Edit3 className="w-3 h-3" />
-                      <span>编辑</span>
-                    </button>
-                    <button
-                      onClick={() => setWorkspaceSubTab('apikeys')}
-                      className="py-1.5 px-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer"
-                      title="API Key"
-                    >
-                      <Key className="w-3 h-3" />
-                      <span>Key</span>
-                    </button>
-                    <button
-                      onClick={() => setSelectedMainTab('marketplace')}
-                      className="py-1.5 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer"
-                      title="在大集市中查看"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
+                    <div className="flex items-center gap-1.5 pt-1">
+                      <button
+                        onClick={() => showToast(`编辑 Agent【${ag.name}】`)}
+                        className="flex-1 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>编辑</span>
+                      </button>
+                      <button
+                        onClick={() => setWorkspaceSubTab('apikeys')}
+                        className="py-1.5 px-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <Key className="w-3.5 h-3.5" />
+                        <span>Key</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Section 3: 【创建 Agent】（主入口） */}
+          <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-800 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="text-base font-black flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-300" />
+                <span>【创建 Agent】定制个人/企业专有智能体</span>
               </div>
-            ))}
+              <p className="text-xs text-indigo-100 font-medium">
+                低代码快速编排 System Prompt、绑定多源知识库与自定义 API 插件，一键发布到商店变现或内部调用
+              </p>
+            </div>
+            <button
+              onClick={() => openModal('createAgent')}
+              className="px-6 py-3 rounded-xl bg-white text-indigo-700 hover:bg-indigo-50 text-xs font-black shadow-md cursor-pointer shrink-0 transition"
+            >
+              + 立即创建 Agent
+            </button>
           </div>
 
         </div>

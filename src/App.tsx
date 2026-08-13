@@ -6,6 +6,7 @@ import { MarketplaceView } from './components/marketplace/MarketplaceView';
 import { TasksView } from './components/tasks/TasksView';
 import { LearningView } from './components/learning/LearningView';
 import { ComputeView } from './components/compute/ComputeView';
+import { CreativeView } from './components/creative/CreativeView';
 import { CommunityView } from './components/community/CommunityView';
 import { WorkspaceView } from './components/workspace/WorkspaceView';
 
@@ -15,12 +16,34 @@ import { CreateComputeModal } from './components/modals/CreateComputeModal';
 import { InstanceDetailModal } from './components/compute/InstanceDetailModal';
 import { ComputeHistoryModal } from './components/compute/ComputeHistoryModal';
 import { AgentSandboxModal } from './components/modals/AgentSandboxModal';
+import { AgentDetailViewModal } from './components/marketplace/AgentDetailViewModal';
+import { SubscribeModal } from './components/marketplace/SubscribeModal';
+import { QuotaExhaustedModal } from './components/marketplace/QuotaExhaustedModal';
 import { ModelTryoutModal } from './components/modals/ModelTryoutModal';
+import { ModelDetailModal } from './components/modals/ModelDetailModal';
 import { ModelCompareBar } from './components/modals/ModelCompareBar';
 import { Toast } from './components/common/Toast';
 
 const AppContent: React.FC = () => {
-  const { activeTab } = useApp();
+  const { 
+    activeTab, 
+    detailModalAgent, 
+    setDetailModalAgent, 
+    subscribeModalAgent, 
+    setSubscribeModalAgent,
+    quotaModalAgent,
+    setQuotaModalAgent,
+    subscriptions,
+    setSubscriptions,
+    payPerTokenAgents,
+    setPayPerTokenAgents,
+    trialCountLeft,
+    setTrialCountLeft,
+    detailModel,
+    setDetailModel,
+    setTryoutModel,
+    showToast
+  } = useApp();
 
   return (
     <div className="min-h-screen w-full bg-slate-50/90 text-slate-800 font-sans selection:bg-indigo-500 selection:text-white flex flex-col bg-tech-grid relative">
@@ -35,8 +58,9 @@ const AppContent: React.FC = () => {
         {activeTab === 'home' && <HomeView />}
         {activeTab === 'marketplace' && <MarketplaceView />}
         {activeTab === 'tasks' && <TasksView />}
-        {activeTab === 'learning' && <LearningView />}
         {activeTab === 'compute' && <ComputeView />}
+        {activeTab === 'learning' && <LearningView />}
+        {activeTab === 'creative' && <CreativeView />}
         {activeTab === 'community' && <CommunityView />}
         {activeTab === 'workspace' && <WorkspaceView />}
       </main>
@@ -65,8 +89,65 @@ const AppContent: React.FC = () => {
       <CreateComputeModal />
       <InstanceDetailModal />
       <ComputeHistoryModal />
+      
+      {/* Global Agent Modals */}
+      {detailModalAgent && (
+        <AgentDetailViewModal
+          agent={detailModalAgent}
+          isOpen={!!detailModalAgent}
+          onClose={() => setDetailModalAgent(null)}
+          onOpenSubscribeModal={(ag) => setSubscribeModalAgent(ag)}
+          onOpenQuotaModal={(ag) => setQuotaModalAgent(ag)}
+          userSubscription={subscriptions[detailModalAgent.id]}
+          isPayPerTokenMode={!!payPerTokenAgents[detailModalAgent.id]}
+          trialCountLeft={trialCountLeft}
+          setTrialCountLeft={setTrialCountLeft}
+          setPayPerTokenMode={(enabled) => {
+            setPayPerTokenAgents(prev => ({ ...prev, [detailModalAgent.id]: enabled }));
+          }}
+        />
+      )}
+
+      {subscribeModalAgent && (
+        <SubscribeModal
+          agent={subscribeModalAgent}
+          isOpen={!!subscribeModalAgent}
+          onClose={() => setSubscribeModalAgent(null)}
+          currentTrialLeft={trialCountLeft}
+          onSuccess={(newSub) => {
+            setSubscriptions(prev => ({ ...prev, [newSub.agentId]: newSub }));
+          }}
+        />
+      )}
+
+      {quotaModalAgent && (
+        <QuotaExhaustedModal
+          agent={quotaModalAgent}
+          isOpen={!!quotaModalAgent}
+          onClose={() => setQuotaModalAgent(null)}
+          onSelectPayPerToken={() => {
+            setPayPerTokenAgents(prev => ({ ...prev, [quotaModalAgent.id]: true }));
+            showToast('已开启“按 Token 扣费”继续使用模式！');
+            const ag = quotaModalAgent;
+            setQuotaModalAgent(null);
+            setDetailModalAgent(ag);
+          }}
+          onSelectSubscribe={() => {
+            const ag = quotaModalAgent;
+            setQuotaModalAgent(null);
+            setSubscribeModalAgent(ag);
+          }}
+        />
+      )}
+
       <AgentSandboxModal />
       <ModelTryoutModal />
+      <ModelDetailModal
+        model={detailModel}
+        isOpen={!!detailModel}
+        onClose={() => setDetailModel(null)}
+        onOpenTryout={(model) => setTryoutModel(model)}
+      />
       <ModelCompareBar />
       <Toast />
     </div>

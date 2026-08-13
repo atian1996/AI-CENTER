@@ -1,123 +1,124 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
-  GraduationCap, 
-  Bot, 
-  ShieldCheck, 
-  BrainCircuit, 
-  Terminal, 
-  Award, 
-  ArrowRight,
-  ExternalLink,
+  Palette, 
+  Wand2, 
+  BarChart3, 
+  ShieldAlert, 
+  Landmark, 
+  Rocket, 
+  ArrowRight, 
+  ExternalLink, 
   Sparkles
 } from 'lucide-react';
 
-interface AcademyCard {
+interface CreativeCard {
   id: string;
   title: string;
   englishTitle: string;
   badge: string;
+  slogan: string;
   description: string;
   icon: React.ReactNode;
-  themeColor: 'cyan' | 'purple' | 'indigo' | 'emerald' | 'amber';
+  themeColor: 'purple' | 'cyan' | 'emerald' | 'amber' | 'indigo';
   url?: string;
 }
 
-export const LearningView: React.FC = () => {
+export const CreativeView: React.FC = () => {
   const { showToast } = useApp();
 
-  const academyCards: AcademyCard[] = [
+  const creativeCards: CreativeCard[] = [
     {
-      id: 'youth_ai',
-      title: '青少年人工智能',
-      englishTitle: 'Youth AI Exploration',
-      badge: '启蒙教育',
-      description: '专为青少年打造的人工智能与编程启蒙课程体系，结合智能硬件与计算思维训练，通过趣味化互动实验激发下一代科学与算法创造力。',
-      icon: <Bot className="w-7 h-7 text-cyan-600" />,
-      themeColor: 'cyan'
+      id: 'ai_design',
+      title: 'AI创意方案',
+      englishTitle: 'AI Creative Solutions',
+      badge: '视觉与生成',
+      slogan: '用AI设计看得见的未来',
+      description: '从AIGC内容生成到软硬件产品方案，用AI工具把想法变成可落地的设计。无论是营销素材、概念原型还是产品蓝图，这里都是创意方案的孵化场。',
+      icon: <Wand2 className="w-7 h-7 text-purple-600" />,
+      themeColor: 'purple',
+      url: 'https://adworld.xctf.org.cn/competitions-hall/competitions'
     },
     {
-      id: 'security_awareness',
-      title: '网络安全意识教育',
-      englishTitle: 'Security Awareness',
-      badge: '安全通识',
-      description: '全员普及型网络安全通识与攻防演练，涵盖社交工程防范、数据隐私合规、钓鱼邮件识别与日常办公商业秘密保护防线。',
-      icon: <ShieldCheck className="w-7 h-7 text-purple-600" />,
-      themeColor: 'purple'
+      id: 'ai_data_science',
+      title: 'AI数据科学',
+      englishTitle: 'AI Data Science',
+      badge: '数据建模',
+      slogan: '用数据训练更聪明的模型',
+      description: '给你一个训练集，你来构建预测模型——销量预测、分类识别、时序 forecasting……在真实数据集中打磨算法，用测试集分数验证你的实力。这里是数据科学家的实战练兵场。',
+      icon: <BarChart3 className="w-7 h-7 text-cyan-600" />,
+      themeColor: 'cyan',
+      url: 'https://adworld.xctf.org.cn/competitions-hall/competitions'
     },
     {
-      id: 'ai_practice',
-      title: '人工智能实训',
-      englishTitle: 'AI Hands-on CyberLab',
-      badge: '云端 GPU 实训',
-      description: '基于真实工业级 GPU 算力的云端实训环境，涵盖大模型微调、RAG 知识库检索增强、Agent 智能体开发与云端高并发部署实操。',
-      icon: <BrainCircuit className="w-7 h-7 text-indigo-600" />,
-      themeColor: 'indigo',
-      url: 'http://10.4.5.3/page/mg/course'
-    },
-    {
-      id: 'cyber_security_practice',
-      title: '网络安全实训',
-      englishTitle: 'Cyber Security CyberRange',
-      badge: '攻防靶场',
-      description: '提供真实网络拓扑与安全漏洞场景，涵盖 Web 渗透测试、CTF 攻防竞赛题库、二进制 PWN 漏洞挖掘与红蓝对抗实战演练。',
-      icon: <Terminal className="w-7 h-7 text-emerald-600" />,
+      id: 'ai_security',
+      title: 'AI安全挑战',
+      englishTitle: 'AI Security Challenge',
+      badge: '攻防对抗',
+      slogan: '用AI对抗AI，守护数字世界',
+      description: '在真实的模拟攻防中，用智能体（Agent）去发现漏洞、破解谜题、抵御攻击。网络安全没有标准答案，只有不断进化的挑战。',
+      icon: <ShieldAlert className="w-7 h-7 text-emerald-600" />,
       themeColor: 'emerald',
-      url: 'http://10.30.130.11/page/mg/oj/all-course'
+      url: 'https://adworld.xctf.org.cn/competitions-hall/competitions'
     },
     {
-      id: 'certification',
-      title: '培训&人才认证',
-      englishTitle: 'Training & Certification',
-      badge: '权威认证',
-      description: '联合权威机构打造的数字技术人才认证体系，提供精准考前强化培训、智能在线监考评估与上链加密防伪技术人才技能证书。',
-      icon: <Award className="w-7 h-7 text-amber-600" />,
-      themeColor: 'amber',
-      url: 'https://adworld.xctf.org.cn/home'
+      id: 'gov_humanities',
+      title: '政务人文',
+      englishTitle: 'Gov & Humanities',
+      badge: '智慧文化',
+      slogan: '用创意点亮城市人文',
+      description: '挖掘本地文化故事、辅助政务宣传创意、用AI视角重新发现城市的美好。这里是科技与人文的交汇处。',
+      icon: <Landmark className="w-7 h-7 text-amber-600" />,
+      themeColor: 'amber'
+    },
+    {
+      id: 'ai_application',
+      title: 'AI应用创意',
+      englishTitle: 'AI Application Showcase',
+      badge: '场景落地',
+      slogan: '用AI解决真实世界的问题',
+      description: '从智能助手到行业应用，看AI如何落地到实际场景中。这里汇集了各种脑洞大开的AI项目，等你来探索和借鉴。',
+      icon: <Rocket className="w-7 h-7 text-indigo-600" />,
+      themeColor: 'indigo',
+      url: 'http://10.4.5.3/page/mg/project-hall'
     }
   ];
 
-  const handleEnterCard = (card: AcademyCard) => {
+  const handleEnterCard = (card: CreativeCard) => {
     if (card.url) {
       showToast(`正在前往【${card.title}】外部平台...`);
       window.open(card.url, '_blank', 'noopener,noreferrer');
     } else {
-      showToast(`已成功进入【${card.title}】课程体系！`);
+      showToast(`【${card.title}】板块即将开放，敬请期待！`);
     }
   };
 
-  // Color theme mapping for clean inline badges, subtle borders, and gradient buttons
-  const getThemeStyles = (color: AcademyCard['themeColor']) => {
+  const getThemeStyles = (color: CreativeCard['themeColor']) => {
     switch (color) {
-      case 'cyan':
-        return {
-          cardBorder: 'border-cyan-200/80 hover:border-cyan-400',
-          bgGlow: 'bg-cyan-500/10',
-          badgeBg: 'bg-cyan-50 text-cyan-700 border-cyan-200',
-          btn: 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-cyan-500/20',
-          iconBg: 'bg-cyan-50 border-cyan-100'
-        };
       case 'purple':
         return {
           cardBorder: 'border-purple-200/80 hover:border-purple-400',
           bgGlow: 'bg-purple-500/10',
           badgeBg: 'bg-purple-50 text-purple-700 border-purple-200',
+          sloganColor: 'text-purple-600',
           btn: 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-500/20',
           iconBg: 'bg-purple-50 border-purple-100'
         };
-      case 'indigo':
+      case 'cyan':
         return {
-          cardBorder: 'border-indigo-200/80 hover:border-indigo-400',
-          bgGlow: 'bg-indigo-500/10',
-          badgeBg: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-          btn: 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-indigo-500/20',
-          iconBg: 'bg-indigo-50 border-indigo-100'
+          cardBorder: 'border-cyan-200/80 hover:border-cyan-400',
+          bgGlow: 'bg-cyan-500/10',
+          badgeBg: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+          sloganColor: 'text-cyan-600',
+          btn: 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-cyan-500/20',
+          iconBg: 'bg-cyan-50 border-cyan-100'
         };
       case 'emerald':
         return {
           cardBorder: 'border-emerald-200/80 hover:border-emerald-400',
           bgGlow: 'bg-emerald-500/10',
           badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+          sloganColor: 'text-emerald-600',
           btn: 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-500/20',
           iconBg: 'bg-emerald-50 border-emerald-100'
         };
@@ -126,8 +127,18 @@ export const LearningView: React.FC = () => {
           cardBorder: 'border-amber-200/80 hover:border-amber-400',
           bgGlow: 'bg-amber-500/10',
           badgeBg: 'bg-amber-50 text-amber-800 border-amber-200',
+          sloganColor: 'text-amber-600',
           btn: 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white shadow-amber-500/20',
           iconBg: 'bg-amber-50 border-amber-100'
+        };
+      case 'indigo':
+        return {
+          cardBorder: 'border-indigo-200/80 hover:border-indigo-400',
+          bgGlow: 'bg-indigo-500/10',
+          badgeBg: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+          sloganColor: 'text-indigo-600',
+          btn: 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-indigo-500/20',
+          iconBg: 'bg-indigo-50 border-indigo-100'
         };
     }
   };
@@ -138,30 +149,30 @@ export const LearningView: React.FC = () => {
       {/* 顶部极简页头 Header */}
       <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20 shrink-0">
-            <GraduationCap className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-purple-600/20 shrink-0">
+            <Palette className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-black text-slate-900 tracking-tight">人才学院</h1>
-              <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[11px] font-bold flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-indigo-600" />
-                <span>Talent Academy</span>
+              <h1 className="text-xl font-black text-slate-900 tracking-tight">创意空间</h1>
+              <span className="px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 text-[11px] font-bold flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-purple-600" />
+                <span>Creative Space</span>
               </span>
             </div>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              打造专业的人工智能与网络安全人才培育基地，提供全流程实战与认证服务
+              激发 AI 创新灵感，涵盖设计生成、数据科学、安全挑战与产业落地场景
             </p>
           </div>
         </div>
       </div>
 
-      {/* 5大卡片陈列区：顶部3张，底部2张 */}
+      {/* 5大卡片陈列区：顶部3张，底部2张 (与人才学院完全一致的 3+2 双排排版) */}
       <div className="space-y-6">
         
         {/* 第一排：3个卡片 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {academyCards.slice(0, 3).map(card => {
+          {creativeCards.slice(0, 3).map(card => {
             const styles = getThemeStyles(card.themeColor);
             return (
               <div 
@@ -188,13 +199,18 @@ export const LearningView: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* 标题 */}
-                  <h2 className="text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors">
-                    {card.title}
-                  </h2>
+                  {/* 标题与口号 */}
+                  <div>
+                    <h2 className="text-xl font-black text-slate-900 group-hover:text-purple-600 transition-colors">
+                      {card.title}
+                    </h2>
+                    <p className={`text-xs font-bold ${styles.sloganColor} mt-1`}>
+                      {card.slogan}
+                    </p>
+                  </div>
 
-                  {/* 简介描述 */}
-                  <p className="text-xs text-slate-600 leading-relaxed font-normal min-h-[56px]">
+                  {/* 详细描述 */}
+                  <p className="text-xs text-slate-600 leading-relaxed font-normal min-h-[64px]">
                     {card.description}
                   </p>
                 </div>
@@ -215,9 +231,9 @@ export const LearningView: React.FC = () => {
           })}
         </div>
 
-        {/* 第二排：2个大卡片 (宽卡片布局) */}
+        {/* 第二排：2个大卡片 (宽卡片排版，完全对齐人才学院) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {academyCards.slice(3, 5).map(card => {
+          {creativeCards.slice(3, 5).map(card => {
             const styles = getThemeStyles(card.themeColor);
             return (
               <div 
@@ -244,13 +260,18 @@ export const LearningView: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* 标题 */}
-                  <h2 className="text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors">
-                    {card.title}
-                  </h2>
+                  {/* 标题与口号 */}
+                  <div>
+                    <h2 className="text-xl font-black text-slate-900 group-hover:text-purple-600 transition-colors">
+                      {card.title}
+                    </h2>
+                    <p className={`text-xs font-bold ${styles.sloganColor} mt-1`}>
+                      {card.slogan}
+                    </p>
+                  </div>
 
-                  {/* 简介描述 */}
-                  <p className="text-xs text-slate-600 leading-relaxed font-normal min-h-[56px]">
+                  {/* 详细描述 */}
+                  <p className="text-xs text-slate-600 leading-relaxed font-normal min-h-[64px]">
                     {card.description}
                   </p>
                 </div>

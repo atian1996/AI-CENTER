@@ -17,6 +17,7 @@ import {
   Briefcase,
   GraduationCap,
   Cpu,
+  Palette,
   Users,
   Wallet
 } from 'lucide-react';
@@ -41,8 +42,9 @@ export const Header: React.FC = () => {
     { id: 'home', label: '首页', icon: <Sparkles className="w-4 h-4" /> },
     { id: 'marketplace', label: 'AI集市', icon: <Store className="w-4 h-4" /> },
     { id: 'tasks', label: '任务大厅', icon: <Briefcase className="w-4 h-4" /> },
-    { id: 'learning', label: '学习中心', icon: <GraduationCap className="w-4 h-4" /> },
     { id: 'compute', label: '算力工坊', icon: <Cpu className="w-4 h-4" /> },
+    { id: 'learning', label: '人才学院', icon: <GraduationCap className="w-4 h-4" /> },
+    { id: 'creative', label: '创意空间', icon: <Palette className="w-4 h-4" /> },
     { id: 'community', label: '社区', icon: <Users className="w-4 h-4" /> },
     { id: 'workspace', label: '工作台', icon: <LayoutDashboard className="w-4 h-4" /> },
   ];

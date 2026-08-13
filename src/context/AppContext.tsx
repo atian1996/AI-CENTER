@@ -5,12 +5,14 @@ import {
   WorkspaceSubTab, 
   UserProfile, 
   AgentItem, 
+  AgentSubscriptionItem,
   ModelItem, 
   DatasetItem, 
   SkillPluginItem,
   TaskItem, 
   CourseItem, 
   GPUInstance, 
+  RentalGPUCard,
   FeedPost, 
   AppNotification, 
   OnboardingTask,
@@ -84,8 +86,25 @@ interface AppContextType {
   openModal: (modalType: string) => void;
   sandboxAgent: AgentItem | null;
   setSandboxAgent: (agent: AgentItem | null) => void;
+  detailModalAgent: AgentItem | null;
+  setDetailModalAgent: React.Dispatch<React.SetStateAction<AgentItem | null>>;
+  subscribeModalAgent: AgentItem | null;
+  setSubscribeModalAgent: React.Dispatch<React.SetStateAction<AgentItem | null>>;
+  quotaModalAgent: AgentItem | null;
+  setQuotaModalAgent: React.Dispatch<React.SetStateAction<AgentItem | null>>;
+  trialCountLeft: number;
+  setTrialCountLeft: React.Dispatch<React.SetStateAction<number>>;
+  subscriptions: Record<string, AgentSubscriptionItem>;
+  setSubscriptions: React.Dispatch<React.SetStateAction<Record<string, AgentSubscriptionItem>>>;
+  payPerTokenAgents: Record<string, boolean>;
+  setPayPerTokenAgents: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  openAgentDetail: (agent: AgentItem) => void;
+  openAgentSubscribe: (agent: AgentItem) => void;
   tryoutModel: ModelItem | null;
   setTryoutModel: (model: ModelItem | null) => void;
+  detailModel: ModelItem | null;
+  setDetailModel: React.Dispatch<React.SetStateAction<ModelItem | null>>;
+  openModelDetail: (model: ModelItem) => void;
   selectedCompareModels: ModelItem[];
   toggleCompareModel: (model: ModelItem) => void;
   clearCompareModels: () => void;
@@ -97,8 +116,8 @@ interface AppContextType {
   setPublishTaskModalOpen: (open: boolean) => void;
   createComputeModalOpen: boolean;
   setCreateComputeModalOpen: (open: boolean) => void;
-  createComputePreset: { mode?: 'container' | 'server'; scene?: GPUInstance['scene']; imageName?: string } | null;
-  setCreateComputePreset: (preset: { mode?: 'container' | 'server'; scene?: GPUInstance['scene']; imageName?: string } | null) => void;
+  createComputePreset: { mode?: 'container' | 'server'; scene?: GPUInstance['scene']; imageName?: string; card?: RentalGPUCard } | null;
+  setCreateComputePreset: (preset: { mode?: 'container' | 'server'; scene?: GPUInstance['scene']; imageName?: string; card?: RentalGPUCard } | null) => void;
   detailInstance: GPUInstance | null;
   setDetailInstance: (inst: GPUInstance | null) => void;
   historyModalOpen: boolean;
@@ -106,12 +125,13 @@ interface AppContextType {
 
   // Interactive Operations
   addAgent: (agent: Omit<AgentItem, 'id' | 'rating' | 'ratingCount' | 'usageCount' | 'createdAt'>) => void;
+  purchaseAgent: (agentId: string) => void;
   addTask: (task: Omit<TaskItem, 'id' | 'bidCount' | 'publishTime' | 'status'>) => void;
   launchGpuInstance: (scene: GPUInstance['scene'], gpuModel: string, imageName: string, customOpts?: Partial<GPUInstance>) => void;
   toggleGpuInstanceStatus: (id: string) => void;
   restartGpuInstance: (id: string) => void;
   deleteGpuInstance: (id: string) => void;
-  createPost: (content: string, board: FeedPost['board'], images?: string[]) => void;
+  createPost: (content: string, board: FeedPost['board'], images?: string[], title?: string, tags?: string[]) => void;
   likePost: (postId: string) => void;
 
   // Toast System
@@ -148,14 +168,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>(mockApiKeys);
 
   // Modals & Selection
-  const [sandboxAgent, setSandboxAgent] = useState<AgentItem | null>(null);
+  const [sandboxAgentState, setSandboxAgentState] = useState<AgentItem | null>(null);
+  const [detailModalAgent, setDetailModalAgent] = useState<AgentItem | null>(null);
+  const [subscribeModalAgent, setSubscribeModalAgent] = useState<AgentItem | null>(null);
+  const [quotaModalAgent, setQuotaModalAgent] = useState<AgentItem | null>(null);
+  const [trialCountLeft, setTrialCountLeft] = useState<number>(25);
+  const [subscriptions, setSubscriptions] = useState<Record<string, AgentSubscriptionItem>>({});
+  const [payPerTokenAgents, setPayPerTokenAgents] = useState<Record<string, boolean>>({});
+
+  const setSandboxAgent = (agent: AgentItem | null) => {
+    setSandboxAgentState(agent);
+    if (agent) {
+      setDetailModalAgent(agent);
+    }
+  };
+
+  const openAgentDetail = (agent: AgentItem) => {
+    setDetailModalAgent(agent);
+  };
+
+  const openAgentSubscribe = (agent: AgentItem) => {
+    setSubscribeModalAgent(agent);
+  };
+
   const [tryoutModel, setTryoutModel] = useState<ModelItem | null>(null);
+  const [detailModel, setDetailModel] = useState<ModelItem | null>(null);
+
+  const openModelDetail = (model: ModelItem) => {
+    setDetailModel(model);
+  };
+
   const [selectedCompareModels, setSelectedCompareModels] = useState<ModelItem[]>([]);
 
   const [createAgentModalOpen, setCreateAgentModalOpen] = useState<boolean>(false);
   const [publishTaskModalOpen, setPublishTaskModalOpen] = useState<boolean>(false);
   const [createComputeModalOpen, setCreateComputeModalOpen] = useState<boolean>(false);
-  const [createComputePreset, setCreateComputePreset] = useState<{ mode?: 'container' | 'server'; scene?: GPUInstance['scene']; imageName?: string } | null>(null);
+  const [createComputePreset, setCreateComputePreset] = useState<{ mode?: 'container' | 'server'; scene?: GPUInstance['scene']; imageName?: string; card?: RentalGPUCard } | null>(null);
   const [detailInstance, setDetailInstance] = useState<GPUInstance | null>(null);
   const [historyModalOpen, setHistoryModalOpen] = useState<boolean>(false);
 
@@ -163,8 +211,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const setSelectedMainTab = (tab: MainTabType) => setActiveTab(tab);
 
-  const userAgents = agents.filter(a => a.author === user.name || a.id.startsWith('ag_custom') || a.id === 'ag_01' || a.id === 'ag_02');
+  const userAgents = agents.filter(a => a.author === user.name || a.id.startsWith('ag_custom') || a.isDeveloped || a.isPurchased);
   const favorites = agents.filter(a => favoriteAgentIds.includes(a.id));
+
+  const purchaseAgent = (agentId: string) => {
+    setAgents(prev => prev.map(a => a.id === agentId ? { ...a, isPurchased: true } : a));
+    showToast('已成功添加使用权限，可在工作台/我的Agent中随时管理！');
+  };
 
   const toggleFavoriteAgent = (agentId: string) => {
     setFavoriteAgentIds(prev => {
@@ -390,18 +443,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('已成功释放销毁算力实例');
   };
 
-  const createPost = (content: string, board: FeedPost['board'], images?: string[]) => {
+  const createPost = (content: string, board: FeedPost['board'], images?: string[], title?: string, tags?: string[]) => {
     const newPost: FeedPost = {
       id: `pst_${Date.now()}`,
+      title,
       author: user.name,
       authorAvatar: user.avatar,
       authorTag: user.identityTag,
       content,
       images,
       board,
+      tags,
       likesCount: 0,
       commentsCount: 0,
       sharesCount: 0,
+      viewsCount: 1,
       time: '刚刚',
       isLiked: false
     };
@@ -462,10 +518,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createApiKey,
       revokeApiKey,
       openModal,
-      sandboxAgent,
+      sandboxAgent: sandboxAgentState,
       setSandboxAgent,
+      detailModalAgent,
+      setDetailModalAgent,
+      subscribeModalAgent,
+      setSubscribeModalAgent,
+      quotaModalAgent,
+      setQuotaModalAgent,
+      trialCountLeft,
+      setTrialCountLeft,
+      subscriptions,
+      setSubscriptions,
+      payPerTokenAgents,
+      setPayPerTokenAgents,
+      openAgentDetail,
+      openAgentSubscribe,
       tryoutModel,
       setTryoutModel,
+      detailModel,
+      setDetailModel,
+      openModelDetail,
       selectedCompareModels,
       toggleCompareModel,
       clearCompareModels,
@@ -482,6 +555,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       historyModalOpen,
       setHistoryModalOpen,
       addAgent,
+      purchaseAgent,
       addTask,
       launchGpuInstance,
       toggleGpuInstanceStatus,

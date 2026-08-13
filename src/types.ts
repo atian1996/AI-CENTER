@@ -6,8 +6,9 @@ export type MainTabType =
   | 'home' 
   | 'marketplace' 
   | 'tasks' 
-  | 'learning' 
   | 'compute' 
+  | 'learning' 
+  | 'creative'
   | 'community' 
   | 'workspace';
 
@@ -99,27 +100,11 @@ export interface AppNotification {
   targetId?: string;
 }
 
-// Agent 资产
-export interface AgentItem {
-  id: string;
-  name: string;
-  avatar: string;
-  description: string;
-  category: AgentCategory;
-  rating: number; // 1-5
-  ratingCount: number;
-  priceType: 'free' | 'points' | 'cash';
-  priceValue: number; // 0 或 积分值 或 元
-  usageCount: number;
-  tags: string[]; // ['热门', '新上', '官方']
-  author: string;
-  authorAvatar: string;
-  baseModel: string;
-  version: string;
-  techDocs: string;
-  createdAt: string;
-  isFavorite?: boolean;
-}
+// Agent 资产分类与形态筛选
+export type TechFormType = 'Chatbot' | 'Agent' | 'Chatflow' | 'Workflow' | '文本生成';
+export type AppSceneType = '内容创作' | '数据分析' | '智能客服' | '办公助理' | '编程开发' | '营销推广' | '教育培训' | '行业垂直';
+export type IndustryDomainType = '政务' | '制造' | '零售' | '金融' | '医疗' | '教育' | '文旅' | '通用' | '企业' | '物流';
+export type PriceModeFilterType = 'all' | 'free' | 'token';
 
 export interface AgentComment {
   id: string;
@@ -130,11 +115,95 @@ export interface AgentComment {
   date: string;
 }
 
+export interface AgentVersionLog {
+  version: string;
+  date: string;
+  log: string;
+}
+
+export interface AgentItem {
+  id: string;
+  name: string;
+  avatar: string;
+  description: string;
+  category: AgentCategory;
+  rating: number; // 1-5
+  ratingCount: number;
+  priceType: 'free' | 'points' | 'cash' | 'token';
+  priceValue: number; // 0 或 积分值 或 元
+  priceModel?: '免费' | '按Token计费';
+  priceText?: string; // 如 "¥0.50 / 万Token"
+  techForm?: TechFormType;
+  scene?: AppSceneType;
+  industry?: IndustryDomainType;
+  servicedCount?: number; // 如 1234
+  developer?: string; // 如 "张三科技"
+  giftTokenText?: string; // 如 "新用户赠送 10万Token体验额度（7天有效）"
+  capabilityDesc?: string[];
+  applicableScenes?: string[];
+  inputExample?: string;
+  outputExample?: string;
+  useGuide?: string;
+  versionLogs?: AgentVersionLog[];
+  comments?: AgentComment[];
+  usageCount: number;
+  tags: string[]; // ['热门', '新上', '官方']
+  author: string;
+  authorAvatar?: string;
+  baseModel?: string;
+  version?: string;
+  techDocs?: string;
+  createdAt?: string;
+  isFavorite?: boolean;
+  todayTokenUsage?: number;
+  isPurchased?: boolean;
+  isDeveloped?: boolean;
+  publishStatus?: 'published' | 'reviewing' | 'offline';
+}
+
+// Agent 订阅套餐定义
+export interface SubscriptionPackage {
+  id: 'week' | 'month' | 'quarter' | 'year';
+  name: string;
+  price: number;
+  tokenAmountText: string;
+  tokenAmountVal: number; // 单位：万Token
+  unitPriceText: string; // 换算每万Token单价
+  validityDays: number;
+  isRecommended?: boolean;
+  tag?: string;
+  targetAudience: string;
+}
+
+// 用户订阅的 Agent 记录
+export interface AgentSubscriptionItem {
+  agentId: string;
+  agentName: string;
+  tier: 'week' | 'month' | 'quarter' | 'year';
+  tierName: string;
+  price: number;
+  tokenAmountVal: number;
+  tokensLeftVal: number;
+  expireDate: string;
+  subscribedAt: string;
+}
+
 // 模型
 export interface ModelItem {
   id: string;
   name: string;
   vendor: string; // 如 'DeepSeek', 'Google', '阿里', '智谱'
+  author?: string; // 作者品牌，如 'DeepSeek', 'MoonshotAI', 'ByteDance', 'Alibaba', 'Z.ai', 'Qwen', 'MiniMax'
+  providerList?: string[]; // 提供商列表，如 ['无问芯穹', '阿里云百炼', '百度千帆', '百度智能云', '腾讯云']
+  modelCodeName?: string; // 如 'deepseek-v4-pro-0813'
+  versionName?: string; // 如 'DeepSeek V4 Pro 0813 版本'
+  totalTokensUsed?: string; // 如 '1.11B tokens', '10.31B tokens'
+  protocol?: string; // 如 'OpenAI Completions'
+  inputModalities?: string[]; // ['文本', '图像', '视频']
+  outputModalities?: string[]; // ['文本']
+  cachedPrice?: string; // 如 '¥0.025 /M tokens'
+  throughputTps?: number; // 如 76
+  availabilityPercent?: number; // 如 99.9
   typeTag: ModelTypeTag;
   contextLength: string; // 如 '128K', '1M'
   priceInput: string; // ¥0.002 / 1k tokens
@@ -234,6 +303,22 @@ export interface LearningPathItem {
 // 算力工坊
 export type ComputeMode = 'container' | 'server'; // 容器实例 | 云服务器实例
 
+export interface RentalGPUCard {
+  id: string;
+  title: string;
+  availableCards: number;
+  hourlyPrice: number;
+  dayPrice: number;
+  weekPrice: number;
+  monthPrice: number;
+  topBorderColor: string; // border-t-amber-600等
+  gpuModel: string;
+  vram: string;
+  cpu: string;
+  ram: string;
+  disk: string;
+}
+
 export interface InstanceFileItem {
   name: string;
   size: string;
@@ -318,19 +403,32 @@ export interface ComputeImageItem {
 }
 
 // 社区
+export type CommunityBoard = 
+  | '干货分享' 
+  | '求助答疑' 
+  | '前沿观察' 
+  | '赚钱交流' 
+  | '同行交流' 
+  | '娱乐灌水';
+
 export interface FeedPost {
   id: string;
+  title?: string;
   author: string;
   authorAvatar: string;
   authorTag: string;
   content: string;
   images?: string[];
-  board: '干货分享' | '求助答疑' | '交友扩列' | '娱乐灌水' | '前沿知识' | '赚钱交流';
+  board: CommunityBoard;
   likesCount: number;
   commentsCount: number;
   sharesCount: number;
+  viewsCount?: number;
   time: string;
   isLiked?: boolean;
+  isCollected?: boolean;
+  isTop?: boolean;
+  tags?: string[];
   commentsList?: { id: string; author: string; avatar: string; content: string; time: string }[];
 }
 
