@@ -166,24 +166,22 @@ export const HomeView: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // 自定义 Banner 列表数据（高级科技感浅色/玻璃态风格与极佳视觉对比度）
+  // 自定义 Banner 列表数据（明亮通透的科技全景风格）
   const bannerList = [
     {
       id: 'b1',
       title: '发现 AI 智能体的无限可能',
-      subtitle: '全栈 Agent 资产即开即用，融合多模型推理、知识库检索与外部工具调用，加速业务创新',
+      subtitle: '全栈 Agent 资产即开即用，融合多模型推理、知识库检索与工具调用，加速业务智能化跃迁',
       badge: 'Agent 商店 · 精选资产',
       techTag: 'NEURAL AGENT MATRIX',
-      buttonText: '探索 Agent 商店',
       targetTab: 'marketplace' as const,
       subMarketplaceTab: 'agent' as const,
-      bgGradient: 'from-indigo-50/95 via-blue-50/40 to-slate-50/90',
-      borderColor: 'border-indigo-200/90',
-      badgeBg: 'bg-indigo-100/90 text-indigo-800 border-indigo-200',
-      btnGradient: 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200',
-      image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
-      heroMetric: { title: '在线智能体', val: '350+ 款', sub: '覆盖18个行业' },
-      floatingTag: '⚡ 支持多Agent协作'
+      baseGradient: 'from-slate-900 via-indigo-950/90 to-indigo-900/60',
+      badgeBg: 'bg-indigo-500/25 text-indigo-200 border-indigo-400/40',
+      image: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1600&auto=format&fit=crop&q=80',
+      heroMetric: { title: '精选智能体', val: '350+ 款' },
+      tag1: '极速纳秒级路由',
+      tag2: '企业级安全沙箱'
     },
     {
       id: 'b2',
@@ -191,16 +189,14 @@ export const HomeView: React.FC = () => {
       subtitle: '一键秒级拉起 RTX 5090、PRO 6000 与 H100 实例，预装 JupyterLab、ComfyUI 与微调环境',
       badge: '算力工坊 · 极速启动',
       techTag: 'GPU COMPUTE CLUSTER',
-      buttonText: '立即启动算力',
       targetTab: 'compute' as const,
       subMarketplaceTab: undefined,
-      bgGradient: 'from-cyan-50/95 via-blue-50/40 to-slate-50/90',
-      borderColor: 'border-cyan-200/90',
-      badgeBg: 'bg-cyan-100/90 text-cyan-800 border-cyan-200',
-      btnGradient: 'bg-cyan-600 hover:bg-cyan-700 text-white shadow-cyan-200',
-      image: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&auto=format&fit=crop&q=80',
-      heroMetric: { title: '算力实例启动', val: '< 3.2s', sub: '按秒弹性计费' },
-      floatingTag: '🚀 预装 DeepSeek / Qwen'
+      baseGradient: 'from-slate-900 via-cyan-950/90 to-blue-900/60',
+      badgeBg: 'bg-cyan-500/25 text-cyan-200 border-cyan-400/40',
+      image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1600&auto=format&fit=crop&q=80',
+      heroMetric: { title: '实例启动速度', val: '< 3.2s' },
+      tag1: '秒级弹性计费',
+      tag2: '预装大模型环境'
     },
     {
       id: 'b3',
@@ -208,16 +204,14 @@ export const HomeView: React.FC = () => {
       subtitle: '5 大前沿创意赛道全面开放，从 AIGC 多模态设计、数据科学建模到攻防安全与产业落地',
       badge: '创意空间 · 赛题征集',
       techTag: 'CREATIVE HACKATHON',
-      buttonText: '进入创意空间',
       targetTab: 'creative' as const,
       subMarketplaceTab: undefined,
-      bgGradient: 'from-purple-50/95 via-indigo-50/40 to-slate-50/90',
-      borderColor: 'border-purple-200/90',
-      badgeBg: 'bg-purple-100/90 text-purple-800 border-purple-200',
-      btnGradient: 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-200',
-      image: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=800&auto=format&fit=crop&q=80',
-      heroMetric: { title: '创意总奖池', val: '100,000+', sub: '官方认证与孵化' },
-      floatingTag: '💡 5 大赛题火热进行'
+      baseGradient: 'from-slate-900 via-purple-950/90 to-fuchsia-900/60',
+      badgeBg: 'bg-purple-500/25 text-purple-200 border-purple-400/40',
+      image: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=1600&auto=format&fit=crop&q=80',
+      heroMetric: { title: '创意总奖池', val: '100,000+' },
+      tag1: '官方认证背书',
+      tag2: '优秀成果直接孵化'
     }
   ];
 
@@ -437,105 +431,97 @@ export const HomeView: React.FC = () => {
       ========================================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         
-        {/* 左侧 Banner（约 8 列宽度，融合 3D 科技图案与无缝渐变质感） */}
-        <div className={`lg:col-span-8 relative rounded-3xl p-7 lg:p-8 bg-gradient-to-br ${currentBannerData.bgGradient} border ${currentBannerData.borderColor} shadow-sm overflow-hidden flex flex-col justify-between min-h-[320px] transition-all duration-500 group`}>
+        {/* 左侧 Banner（明亮通透全幅科技大图，从右往左自然透明融合，点击卡片直接跳转） */}
+        <div 
+          onClick={() => {
+            setActiveTab(currentBannerData.targetTab);
+            if (currentBannerData.subMarketplaceTab) {
+              setMarketplaceTab(currentBannerData.subMarketplaceTab);
+            }
+          }}
+          className={`lg:col-span-8 relative rounded-3xl p-8 lg:p-9 bg-gradient-to-r ${currentBannerData.baseGradient} border border-slate-700/60 shadow-xl overflow-hidden flex flex-col justify-between min-h-[360px] cursor-pointer group hover:border-indigo-400/80 hover:shadow-2xl hover:shadow-indigo-500/20 transition-all duration-500 select-none`}
+        >
+          {/* 1. 全景科技背景大图（铺满整个 Banner，高透明亮，悬浮微放大） */}
+          <img 
+            src={currentBannerData.image} 
+            alt={currentBannerData.title}
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-70 group-hover:scale-105 group-hover:opacity-85 transition-all duration-1000 ease-out pointer-events-none"
+          />
+
+          {/* 2. 从右往左渐渐透明的平滑半透遮罩（左侧深蓝灰保证文字 100% 清晰，右侧透亮科技大图自然呈现） */}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/70 via-50% to-slate-900/10 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none" />
           
-          {/* 科技网格背景底纹 */}
-          <div className="absolute inset-0 bg-[radial-gradient(#4f46e5_0.75px,transparent_0.75px)] [background-size:20px_20px] opacity-15 pointer-events-none" />
-          
-          {/* 右侧无缝融合背景大图 */}
-          <div className="absolute top-0 right-0 h-full w-1/2 pointer-events-none overflow-hidden hidden md:block select-none">
-            {/* 3D 科技主图，填充整个右半侧并自然淡出 */}
-            <img 
-              src={currentBannerData.image} 
-              alt={currentBannerData.title}
-              className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
-            />
-            {/* 渐变遮罩：左侧融合到 Banner 的背景色 */}
-            <div className={`absolute inset-0 bg-gradient-to-r ${
-              currentBannerData.id === 'b1' ? 'from-indigo-50/95 via-indigo-50/70 to-transparent' :
-              currentBannerData.id === 'b2' ? 'from-cyan-50/95 via-cyan-50/70 to-transparent' :
-              'from-purple-50/95 via-purple-50/70 to-transparent'
-            }`} />
-            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-50/40 to-transparent" />
+          {/* 3. 柔和的亮色极光光晕，提升整体明亮度与通透感 */}
+          <div className="absolute -top-12 right-1/4 w-96 h-96 bg-indigo-500/25 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-12 right-10 w-80 h-80 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none" />
+
+          {/* 4. 精致的赛博微网格与顶部亮色细线 */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear-gradient(to_bottom,#334155_1px,transparent_1px)] [background-size:28px_28px] opacity-25 pointer-events-none" />
+          <div className="absolute left-0 right-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-indigo-300/80 to-transparent pointer-events-none" />
+
+          {/* 5. 右上角：明亮跳转微提示 */}
+          <div className="absolute top-6 right-6 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/80 border border-slate-600 text-slate-200 text-xs font-semibold backdrop-blur-md group-hover:border-indigo-300 group-hover:text-white group-hover:bg-indigo-600/60 transition-all shadow-md">
+            <span>点击直达</span>
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
           </div>
 
-          {/* 动态光晕光斑 */}
-          <div className="absolute top-0 right-1/4 w-96 h-96 bg-indigo-300/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-10 right-0 w-80 h-80 bg-cyan-300/20 rounded-full blur-2xl pointer-events-none" />
-
-          {/* Banner 主体内容区：左侧文案（覆盖全景，无任何二级边框卡片嵌套） */}
-          <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-center flex-1">
-            
-            {/* 左侧文字与标语 */}
-            <div className="md:col-span-8 space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black border shadow-2xs ${currentBannerData.badgeBg}`}>
-                  <Sparkles className="w-3.5 h-3.5 animate-pulse text-indigo-600" />
-                  <span>{currentBannerData.badge}</span>
-                </div>
-                <span className="text-[10px] font-mono font-bold tracking-widest text-slate-400 uppercase bg-white/80 px-2 py-0.5 rounded border border-slate-200/70">
-                  {currentBannerData.techTag}
-                </span>
+          {/* 6. Banner 左侧核心文案区 */}
+          <div className="relative z-10 space-y-4 max-w-xl">
+            {/* 顶栏 Badge 与 Tech Tag */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black border shadow-xs ${currentBannerData.badgeBg}`}>
+                <Sparkle className="w-3.5 h-3.5 text-indigo-300 animate-pulse" />
+                <span>{currentBannerData.badge}</span>
               </div>
-
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-snug max-w-lg">
-                {currentBannerData.title}
-              </h1>
-
-              <p className="text-slate-600 text-xs sm:text-sm leading-relaxed font-semibold max-w-md">
-                {currentBannerData.subtitle}
-              </p>
-
-              {/* 核心亮点徽章条与指标卡的高度融合 */}
-              <div className="flex flex-wrap items-center gap-2 pt-2">
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-700 bg-white/95 border border-indigo-200/60 px-2.5 py-1 rounded-lg shadow-3xs">
-                  <Cpu className="w-3 h-3 text-indigo-500" />
-                  <span>极速纳秒级路由</span>
-                </span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-cyan-800 bg-white/95 border border-cyan-200/60 px-2.5 py-1 rounded-lg shadow-3xs">
-                  <ShieldCheck className="w-3 h-3 text-cyan-600" />
-                  <span>企业级沙箱隔离</span>
-                </span>
-                {/* 悬浮标签与指标数据融合成平行的胶囊标签 */}
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-800 bg-white/95 border border-slate-200 px-2.5 py-1 rounded-lg shadow-3xs">
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                  <span>{currentBannerData.heroMetric.title}: <strong className="text-indigo-600 font-mono font-black">{currentBannerData.heroMetric.val}</strong></span>
-                </span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-amber-700 bg-amber-50/95 border border-amber-200/60 px-2.5 py-1 rounded-lg shadow-3xs">
-                  {currentBannerData.floatingTag}
-                </span>
-              </div>
+              <span className="text-[10px] font-mono font-bold tracking-widest text-slate-300 uppercase bg-slate-800/90 border border-slate-700 px-2.5 py-0.5 rounded shadow-2xs">
+                {currentBannerData.techTag}
+              </span>
             </div>
 
-            {/* 右侧空出，供背景图在md及以上窗口透出 */}
-            <div className="md:col-span-4 hidden md:block pointer-events-none" />
+            {/* 大标题（更加明亮饱满） */}
+            <h1 className="text-2xl sm:text-3xl lg:text-[32px] font-black text-white tracking-tight leading-tight drop-shadow-md group-hover:text-indigo-100 transition-colors">
+              {currentBannerData.title}
+            </h1>
 
+            {/* 副标题说明 */}
+            <p className="text-slate-200 text-xs sm:text-sm leading-relaxed font-medium line-clamp-2 drop-shadow-2xs">
+              {currentBannerData.subtitle}
+            </p>
           </div>
 
-          {/* Banner 底部操作栏与指示器 */}
-          <div className="relative z-10 flex items-center justify-between pt-5 border-t border-slate-200/60 mt-4">
-            <button
-              onClick={() => {
-                setActiveTab(currentBannerData.targetTab);
-                if (currentBannerData.subMarketplaceTab) {
-                  setMarketplaceTab(currentBannerData.subMarketplaceTab);
-                }
-              }}
-              className={`px-6 py-2.5 rounded-2xl ${currentBannerData.btnGradient} font-bold text-xs sm:text-sm transition-all shadow-md flex items-center gap-2 group cursor-pointer hover:scale-[1.02]`}
-            >
-              <span>{currentBannerData.buttonText}</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
+          {/* 7. Banner 底部特性胶囊与指示器 */}
+          <div className="relative z-10 flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-slate-700/60 mt-6">
+            {/* 核心亮点特性标签 */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-100 bg-slate-900/80 border border-slate-700/80 px-3 py-1.5 rounded-xl shadow-2xs backdrop-blur-xs">
+                <Cpu className="w-3.5 h-3.5 text-indigo-300" />
+                <span>{currentBannerData.tag1}</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-100 bg-slate-900/80 border border-slate-700/80 px-3 py-1.5 rounded-xl shadow-2xs backdrop-blur-xs">
+                <ShieldCheck className="w-3.5 h-3.5 text-cyan-300" />
+                <span>{currentBannerData.tag2}</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-100 bg-slate-900/80 border border-slate-700/80 px-3 py-1.5 rounded-xl shadow-2xs backdrop-blur-xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                <span>{currentBannerData.heroMetric.title}: <strong className="text-indigo-300 font-mono font-black">{currentBannerData.heroMetric.val}</strong></span>
+              </span>
+            </div>
 
-            {/* 3 张图圆点指示器 */}
-            <div className="flex items-center gap-2 bg-white/90 backdrop-blur-xs px-3.5 py-1.5 rounded-full border border-slate-200/80 shadow-2xs">
+            {/* 3 张图圆点指示器（点击圆点切换，阻止冒泡） */}
+            <div 
+              className="flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-700 shadow-sm"
+              onClick={(e) => e.stopPropagation()}
+            >
               {bannerList.map((_, idx) => (
                 <button
                   key={idx}
-                  onClick={() => setCurrentBanner(idx)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentBanner(idx);
+                  }}
                   className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                    idx === currentBanner ? 'w-7 bg-indigo-600 shadow-xs' : 'w-2 bg-slate-300 hover:bg-slate-400'
+                    idx === currentBanner ? 'w-6 bg-indigo-400 shadow-md' : 'w-2 bg-slate-600 hover:bg-slate-400'
                   }`}
                   aria-label={`切换到第 ${idx + 1} 张 Banner`}
                 />
