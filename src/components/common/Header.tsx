@@ -65,10 +65,10 @@ export const Header: React.FC = () => {
           </div>
           <div>
             <div className="text-lg font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-800 font-sans">
-              千机·AI空间
+              AI运营中心
             </div>
             <div className="text-[10px] text-indigo-600/90 font-mono tracking-widest uppercase font-bold">
-              QIANJI AI SPACE
+              AI OPERATIONS CENTER
             </div>
           </div>
         </div>
@@ -97,18 +97,6 @@ export const Header: React.FC = () => {
         {/* Right Controls Area */}
         <div className="flex items-center gap-4 shrink-0">
           
-          {/* Global Search Button */}
-          <button
-            onClick={() => setSearchOpen(true)}
-            className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-slate-100/90 hover:bg-slate-200/80 border border-slate-200 text-slate-500 hover:text-slate-900 text-xs font-medium transition shadow-xs group"
-          >
-            <Search className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform" />
-            <span className="hidden lg:inline">全局搜索 Agent / 模型 / 任务...</span>
-            <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-mono bg-white text-slate-500 rounded border border-slate-300 shadow-xs">
-              Ctrl K
-            </kbd>
-          </button>
-
           {/* Points Balance Button */}
           <button
             onClick={() => {

@@ -108,7 +108,8 @@ main();`;
   };
 
   const handleCopyMarkdown = () => {
-    const md = `### ${model.vendor}: ${model.name}\n- **Model ID**: \`${modelCode}\`\n- **Context**: ${model.contextLength}\n- **Input Price**: ${model.priceInput}\n- **Output Price**: ${model.priceOutput}`;
+    const contextStr = model.contextLength ? `\n- **Context**: ${model.contextLength}` : '';
+    const md = `### ${model.vendor}: ${model.name}\n- **Model ID**: \`${modelCode}\`${contextStr}\n- **Input Price**: ${model.priceInput}\n- **Output Price**: ${model.priceOutput}`;
     navigator.clipboard.writeText(md);
     setCopiedMarkdown(true);
     showToast('已复制 Markdown 说明！');
@@ -160,9 +161,11 @@ main();`;
 
             {/* Tags */}
             <div className="flex flex-wrap items-center gap-2 pt-0.5">
-              <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 font-mono">
-                上下文 {model.contextLength}
-              </span>
+              {model.contextLength && (
+                <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 font-mono">
+                  上下文 {model.contextLength}
+                </span>
+              )}
               <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
                 {model.inputModalities?.join('、') || '文本'} → {model.outputModalities?.join('、') || '文本'}
               </span>
@@ -253,10 +256,12 @@ main();`;
 
                 {/* Price Metrics Grid */}
                 <div className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white text-slate-700 font-medium">
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                    <div className="text-[10px] text-slate-400 mb-0.5">上下文长度</div>
-                    <div className="font-extrabold font-mono text-slate-900 text-xs">{model.contextLength}</div>
-                  </div>
+                  {model.contextLength && (
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="text-[10px] text-slate-400 mb-0.5">上下文长度</div>
+                      <div className="font-extrabold font-mono text-slate-900 text-xs">{model.contextLength}</div>
+                    </div>
+                  )}
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                     <div className="text-[10px] text-slate-400 mb-0.5">输入计费</div>
                     <div className="font-extrabold font-mono text-emerald-600 text-xs">{model.priceInput}</div>

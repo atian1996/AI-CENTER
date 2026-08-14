@@ -211,7 +211,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const setSelectedMainTab = (tab: MainTabType) => setActiveTab(tab);
 
-  const userAgents = agents.filter(a => a.author === user.name || a.id.startsWith('ag_custom') || a.isDeveloped || a.isPurchased);
+  const userAgents = agents.filter(a => a.author === user.name || a.id.startsWith('ag_custom') || a.id.startsWith('app_') || a.isDeveloped || a.isPurchased);
   const favorites = agents.filter(a => favoriteAgentIds.includes(a.id));
 
   const purchaseAgent = (agentId: string) => {

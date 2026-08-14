@@ -91,66 +91,70 @@ export const LearningView: React.FC = () => {
     switch (color) {
       case 'cyan':
         return {
-          cardBorder: 'border-cyan-200/80 hover:border-cyan-400',
+          cardBorder: 'border-cyan-200/80 hover:border-cyan-400 hover:shadow-cyan-100/50',
           bgGlow: 'bg-cyan-500/10',
           badgeBg: 'bg-cyan-50 text-cyan-700 border-cyan-200',
-          btn: 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-cyan-500/20',
-          iconBg: 'bg-cyan-50 border-cyan-100'
+          btn: 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-3xs hover:shadow-sm hover:scale-[1.02] active:scale-95 shadow-cyan-500/20',
+          iconBg: 'bg-cyan-50 border-cyan-100',
+          cardBg: 'from-cyan-50/10 via-white to-slate-50/30'
         };
       case 'purple':
         return {
-          cardBorder: 'border-purple-200/80 hover:border-purple-400',
+          cardBorder: 'border-purple-200/80 hover:border-purple-400 hover:shadow-purple-100/50',
           bgGlow: 'bg-purple-500/10',
           badgeBg: 'bg-purple-50 text-purple-700 border-purple-200',
-          btn: 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-500/20',
-          iconBg: 'bg-purple-50 border-purple-100'
+          btn: 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-3xs hover:shadow-sm hover:scale-[1.02] active:scale-95 shadow-purple-500/20',
+          iconBg: 'bg-purple-50 border-purple-100',
+          cardBg: 'from-purple-50/10 via-white to-slate-50/30'
         };
       case 'indigo':
         return {
-          cardBorder: 'border-indigo-200/80 hover:border-indigo-400',
+          cardBorder: 'border-indigo-200/80 hover:border-indigo-400 hover:shadow-indigo-100/50',
           bgGlow: 'bg-indigo-500/10',
           badgeBg: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-          btn: 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-indigo-500/20',
-          iconBg: 'bg-indigo-50 border-indigo-100'
+          btn: 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-3xs hover:shadow-sm hover:scale-[1.02] active:scale-95 shadow-indigo-500/20',
+          iconBg: 'bg-indigo-50 border-indigo-100',
+          cardBg: 'from-indigo-50/10 via-white to-slate-50/30'
         };
       case 'emerald':
         return {
-          cardBorder: 'border-emerald-200/80 hover:border-emerald-400',
+          cardBorder: 'border-emerald-200/80 hover:border-emerald-400 hover:shadow-emerald-100/50',
           bgGlow: 'bg-emerald-500/10',
           badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-          btn: 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-500/20',
-          iconBg: 'bg-emerald-50 border-emerald-100'
+          btn: 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-3xs hover:shadow-sm hover:scale-[1.02] active:scale-95 shadow-emerald-500/20',
+          iconBg: 'bg-emerald-50 border-emerald-100',
+          cardBg: 'from-emerald-50/10 via-white to-slate-50/30'
         };
       case 'amber':
         return {
-          cardBorder: 'border-amber-200/80 hover:border-amber-400',
+          cardBorder: 'border-amber-200/80 hover:border-amber-400 hover:shadow-amber-100/50',
           bgGlow: 'bg-amber-500/10',
           badgeBg: 'bg-amber-50 text-amber-800 border-amber-200',
-          btn: 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white shadow-amber-500/20',
-          iconBg: 'bg-amber-50 border-amber-100'
+          btn: 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white shadow-3xs hover:shadow-sm hover:scale-[1.02] active:scale-95 shadow-amber-500/20',
+          iconBg: 'bg-amber-50 border-amber-100',
+          cardBg: 'from-amber-50/10 via-white to-slate-50/30'
         };
     }
   };
 
   return (
-    <div className="w-full space-y-8 animate-fade-in pb-12 select-none font-sans max-w-7xl mx-auto">
+    <div className="w-full space-y-6 animate-fade-in pb-12 select-none font-sans">
       
-      {/* 顶部极简页头 Header */}
-      <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20 shrink-0">
+      {/* Standard Unified Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-2xs shrink-0">
             <GraduationCap className="w-6 h-6" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-black text-slate-900 tracking-tight">人才学院</h1>
-              <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[11px] font-bold flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-indigo-600" />
-                <span>Talent Academy</span>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+              人才学院
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                Talent Academy
               </span>
-            </div>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              打造专业的人工智能与网络安全人才培育基地，提供全流程实战与认证服务
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-1">
+              打造专业的人工智能与网络安全人才培育基地，提供全流程实战与权威认证服务
             </p>
           </div>
         </div>
@@ -166,8 +170,11 @@ export const LearningView: React.FC = () => {
             return (
               <div 
                 key={card.id}
-                className={`group relative rounded-3xl bg-white border ${styles.cardBorder} p-7 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden hover:-translate-y-1 space-y-6`}
+                className={`group relative rounded-3xl bg-gradient-to-br ${styles.cardBg} border ${styles.cardBorder} p-7 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden hover:-translate-y-1 min-h-[300px]`}
               >
+                {/* 科技感微点阵背景 */}
+                <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px] opacity-35 pointer-events-none" />
+
                 {/* 右上角背景微光效果 */}
                 <div className={`absolute -top-10 -right-10 w-40 h-40 ${styles.bgGlow} rounded-full blur-2xl group-hover:scale-125 transition-transform pointer-events-none`} />
 
@@ -182,7 +189,7 @@ export const LearningView: React.FC = () => {
                       <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold border ${styles.badgeBg}`}>
                         {card.badge}
                       </span>
-                      <span className="text-[10px] text-slate-400 font-medium font-mono">
+                      <span className="text-[10px] text-slate-400 font-semibold font-mono tracking-tight">
                         {card.englishTitle}
                       </span>
                     </div>
@@ -194,16 +201,16 @@ export const LearningView: React.FC = () => {
                   </h2>
 
                   {/* 简介描述 */}
-                  <p className="text-xs text-slate-600 leading-relaxed font-normal min-h-[56px]">
+                  <p className="text-xs text-slate-600 leading-relaxed font-normal min-h-[56px] line-clamp-3 md:line-clamp-4">
                     {card.description}
                   </p>
                 </div>
 
-                {/* 底部按钮 */}
-                <div className="pt-2 relative z-10">
+                {/* 底部按钮：自适应宽度、精致、不再太长太突兀 */}
+                <div className="pt-4 relative z-10 flex justify-start">
                   <button
                     onClick={() => handleEnterCard(card)}
-                    className={`w-full py-3 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 ${styles.btn}`}
+                    className={`inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer active:scale-95 ${styles.btn}`}
                   >
                     <span>立即进入</span>
                     {card.url ? <ExternalLink className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
@@ -222,8 +229,11 @@ export const LearningView: React.FC = () => {
             return (
               <div 
                 key={card.id}
-                className={`group relative rounded-3xl bg-white border ${styles.cardBorder} p-7 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden hover:-translate-y-1 space-y-6`}
+                className={`group relative rounded-3xl bg-gradient-to-br ${styles.cardBg} border ${styles.cardBorder} p-7 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden hover:-translate-y-1 min-h-[260px]`}
               >
+                {/* 科技感微点阵背景 */}
+                <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px] opacity-35 pointer-events-none" />
+
                 {/* 右上角背景微光效果 */}
                 <div className={`absolute -top-10 -right-10 w-44 h-44 ${styles.bgGlow} rounded-full blur-2xl group-hover:scale-125 transition-transform pointer-events-none`} />
 
@@ -238,7 +248,7 @@ export const LearningView: React.FC = () => {
                       <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold border ${styles.badgeBg}`}>
                         {card.badge}
                       </span>
-                      <span className="text-[10px] text-slate-400 font-medium font-mono">
+                      <span className="text-[10px] text-slate-400 font-semibold font-mono tracking-tight">
                         {card.englishTitle}
                       </span>
                     </div>
@@ -250,16 +260,16 @@ export const LearningView: React.FC = () => {
                   </h2>
 
                   {/* 简介描述 */}
-                  <p className="text-xs text-slate-600 leading-relaxed font-normal min-h-[56px]">
+                  <p className="text-xs text-slate-600 leading-relaxed font-normal">
                     {card.description}
                   </p>
                 </div>
 
-                {/* 底部按钮 */}
-                <div className="pt-2 relative z-10">
+                {/* 底部按钮：自适应宽度、精致、不再太长太突兀 */}
+                <div className="pt-4 relative z-10 flex justify-start">
                   <button
                     onClick={() => handleEnterCard(card)}
-                    className={`w-full py-3 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 ${styles.btn}`}
+                    className={`inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer active:scale-95 ${styles.btn}`}
                   >
                     <span>立即进入</span>
                     {card.url ? <ExternalLink className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}

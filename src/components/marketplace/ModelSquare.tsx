@@ -48,7 +48,7 @@ export const ModelSquare: React.FC = () => {
     'Alibaba', 'ByteDance', 'DeepSeek', 'JinaAI', 'Minimax', 'MoonshotAI', 'Qwen', 'Z.ai', 'Google', 'BAAI'
   ];
   const providersList = [
-    '无问芯穹', '阿里云', '阿里云百炼', '百度千帆', '百度智能云', '捷查', '腾讯云', '火山引擎'
+    '阿里云', '阿里云百炼', '百度千帆', '百度智能云', '捷查', '腾讯云', '火山引擎'
   ];
 
   // 过滤函数
@@ -336,11 +336,13 @@ export const ModelSquare: React.FC = () => {
                   </p>
 
                   {/* Specs Pill Bar */}
-                  <div className="p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center justify-between text-[11px] font-mono mb-4">
-                    <div className="text-slate-700 font-bold flex items-center gap-1">
-                      <span className="text-indigo-600">{m.contextLength}</span>
-                      <span className="text-slate-400 font-normal">context</span>
-                    </div>
+                  <div className={`p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center text-[11px] font-mono mb-4 ${m.contextLength ? 'justify-between' : 'justify-end'}`}>
+                    {m.contextLength && (
+                      <div className="text-slate-700 font-bold flex items-center gap-1">
+                        <span className="text-indigo-600">{m.contextLength}</span>
+                        <span className="text-slate-400 font-normal">context</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-3">
                       {m.typeTag === '图像' ? (
                         <>
@@ -382,52 +384,6 @@ export const ModelSquare: React.FC = () => {
                         </>
                       )}
                     </div>
-                  </div>
-                </div>
-
-                {/* Card Action Buttons Footer */}
-                <div 
-                  onClick={(e) => e.stopPropagation()} 
-                  className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2"
-                >
-                  <button
-                    onClick={() => toggleCompareModel(m)}
-                    className={`px-3 py-1.5 rounded-xl text-[11px] font-bold border transition flex items-center gap-1.5 cursor-pointer ${
-                      isCompared
-                        ? 'bg-indigo-50 text-indigo-700 border-indigo-200 font-extrabold'
-                        : 'bg-white text-slate-600 hover:text-slate-900 border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    <Scale className="w-3.5 h-3.5" />
-                    <span>{isCompared ? '已加入对比' : '对比'}</span>
-                  </button>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => openModelDetail(m)}
-                      className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition cursor-pointer flex items-center gap-1"
-                    >
-                      <Info className="w-3.5 h-3.5" />
-                      <span>查看详情</span>
-                    </button>
-
-                    {/* 只有文本类型的模型才支持在线体验 */}
-                    {m.typeTag === '文本' ? (
-                      <button
-                        onClick={() => setTryoutModel(m)}
-                        className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-extrabold shadow-sm flex items-center gap-1.5 transition cursor-pointer"
-                      >
-                        <Play className="w-3 h-3 fill-white" />
-                        <span>在线体验</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => openModelDetail(m)}
-                        className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 text-[11px] font-bold border border-slate-200/60 transition cursor-pointer"
-                      >
-                        API 调用
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>

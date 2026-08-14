@@ -11,7 +11,7 @@ import { CommunityView } from './components/community/CommunityView';
 import { WorkspaceView } from './components/workspace/WorkspaceView';
 
 import { GlobalSearchModal } from './components/common/GlobalSearchModal';
-import { CreateAgentModal } from './components/modals/CreateAgentModal';
+import { CreateBlankAppModal } from './components/modals/CreateBlankAppModal';
 import { CreateComputeModal } from './components/modals/CreateComputeModal';
 import { InstanceDetailModal } from './components/compute/InstanceDetailModal';
 import { ComputeHistoryModal } from './components/compute/ComputeHistoryModal';
@@ -69,7 +69,7 @@ const AppContent: React.FC = () => {
       <footer className="w-full border-t border-slate-200/80 bg-white/80 backdrop-blur-md py-6 text-center text-xs text-slate-500">
         <div className="max-w-[1920px] mx-auto px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="font-medium text-slate-600">
-            © 2026 <span className="font-bold text-indigo-600">千机·AI空间</span> (Qianji AI Space) - 全场景一站式 AI 应用 + 社区 + 算力 综合平台
+            © 2026 <span className="font-bold text-indigo-600">AI运营中心</span> (AI Operations Center) - 全场景一站式 AI 应用 + 社区 + 算力 综合平台
           </div>
           <div className="flex items-center gap-4 text-[11px] text-slate-500">
             <span className="flex items-center gap-1 font-semibold text-emerald-600">
@@ -85,7 +85,7 @@ const AppContent: React.FC = () => {
 
       {/* Global Modals & Overlays */}
       <GlobalSearchModal />
-      <CreateAgentModal />
+      <CreateBlankAppModal />
       <CreateComputeModal />
       <InstanceDetailModal />
       <ComputeHistoryModal />

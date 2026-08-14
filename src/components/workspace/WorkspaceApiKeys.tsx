@@ -67,7 +67,7 @@ export const WorkspaceApiKeys: React.FC = () => {
             </span>
           </h2>
           <p className="text-xs text-slate-400 font-medium mt-0.5">
-            配置用于程序化调用千机大模型与 Agent 接口的全功能 API Key 秘钥
+            配置用于程序化调用 AI运营中心大模型与 Agent 接口的全功能 API Key 密钥
           </p>
         </div>
 

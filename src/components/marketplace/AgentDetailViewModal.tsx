@@ -19,7 +19,8 @@ import {
   Coins, 
   Play, 
   Flame,
-  ShieldCheck
+  ShieldCheck,
+  X
 } from 'lucide-react';
 
 interface AgentDetailViewModalProps {
@@ -179,6 +180,13 @@ export const AgentDetailViewModal: React.FC<AgentDetailViewModalProps> = ({
             >
               <Share2 className="w-3.5 h-3.5" />
               <span>分享</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition cursor-pointer ml-1"
+              title="关闭弹窗"
+            >
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>

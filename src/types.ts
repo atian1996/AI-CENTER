@@ -1,5 +1,5 @@
 /**
- * 千机·AI空间 - 类型定义
+ * AI运营中心 - 类型定义
  */
 
 export type MainTabType = 
@@ -101,7 +101,8 @@ export interface AppNotification {
 }
 
 // Agent 资产分类与形态筛选
-export type TechFormType = 'Chatbot' | 'Agent' | 'Chatflow' | 'Workflow' | '文本生成';
+export type AppType = '工作流' | 'Chatflow' | '聊天助手' | 'Agent' | '文本生成应用';
+export type TechFormType = 'Chatbot' | 'Agent' | 'Chatflow' | 'Workflow' | '文本生成' | AppType;
 export type AppSceneType = '内容创作' | '数据分析' | '智能客服' | '办公助理' | '编程开发' | '营销推广' | '教育培训' | '行业垂直';
 export type IndustryDomainType = '政务' | '制造' | '零售' | '金融' | '医疗' | '教育' | '文旅' | '通用' | '企业' | '物流';
 export type PriceModeFilterType = 'all' | 'free' | 'token';
@@ -134,6 +135,9 @@ export interface AgentItem {
   priceModel?: '免费' | '按Token计费';
   priceText?: string; // 如 "¥0.50 / 万Token"
   techForm?: TechFormType;
+  appType?: AppType;
+  iconBgColor?: string;
+  iconType?: string;
   scene?: AppSceneType;
   industry?: IndustryDomainType;
   servicedCount?: number; // 如 1234
@@ -154,6 +158,7 @@ export interface AgentItem {
   version?: string;
   techDocs?: string;
   createdAt?: string;
+  updatedAt?: string;
   isFavorite?: boolean;
   todayTokenUsage?: number;
   isPurchased?: boolean;
@@ -205,7 +210,7 @@ export interface ModelItem {
   throughputTps?: number; // 如 76
   availabilityPercent?: number; // 如 99.9
   typeTag: ModelTypeTag;
-  contextLength: string; // 如 '128K', '1M'
+  contextLength?: string; // 如 '128K', '1M'
   priceInput: string; // ¥0.002 / 1k tokens
   priceOutput: string;
   tags: string[]; // ['热门', '国产', '免费额度']
@@ -215,32 +220,202 @@ export interface ModelItem {
   apiDocsUrl: string;
 }
 
+// 数据集文件与结构
+export interface DatasetFileItem {
+  id: string;
+  name: string;
+  size: string;
+  format: 'csv' | 'xlsx' | 'json' | 'jsonl' | 'parquet' | 'txt' | 'zip';
+  rowsCount: number;
+  colsCount: number;
+  encoding: string;
+  headers: string[];
+  sampleRows: Record<string, string | number>[];
+}
+
+export interface DatasetCommentReply {
+  id: string;
+  userName: string;
+  userAvatar: string;
+  time: string;
+  content: string;
+}
+
+export interface DatasetCommentItem {
+  id: string;
+  userName: string;
+  userAvatar: string;
+  time: string;
+  content: string;
+  likes?: number;
+  replies?: DatasetCommentReply[];
+}
+
 // 数据集
 export interface DatasetItem {
   id: string;
   name: string;
-  industry: string; // 医疗 / 金融 / 法律 / 自动驾驶 / 通用
-  format: string; // JSON / CSV / Parquet / Images
-  scale: string; // 50GB / 100万条 / 10万张
-  license: string; // Apache 2.0 / Commercial / CC-BY
-  downloadCount: number;
+  repoPath: string; // 如 "open-rs/HRSC2016", "PowerBI零售数据分析实战配套数据集"
+  coverImage?: string; // 封面图
+  author: string;
+  authorAvatar?: string;
+  authorOrg?: string; // 如 "逐聚开源智能平台", "百度开源", "中科天机", "开放数据集镜像"
+  updatedAt: string; // 如 "2026/08/13"
+  relativeTime: string; // 如 "1 年前", "2 年前", "3 天前", "6 天前", "5 个月前"
+  viewsCount: number; // 👁 浏览量 (如 12091, 2254, 72)
+  downloadCount: number; // ⬇ 下载量 (如 734, 146, 9)
+  likesCount: number; // 👍 点赞数
+  favoritesCount: number; // ⭐ 收藏数 (♡ 0, ♡ 2)
+  isLiked?: boolean;
+  isFavorite?: boolean;
+  isCreatedByMe?: boolean;
+  isMounted?: boolean;
+
+  // 分类与标签
+  modalityCategory: '多模态' | '计算机视觉' | '自然语言处理' | '音频' | '表格' | '强化学习';
+  taskType: string; // 如 '图像描述', '无条件图像生成', '文本生成', '时间序列预测', '特征抽取', '文本分类', '物体检测'
+  domainTags: string[]; // 如 ['科技互联网', '经济', '商业', '电商', '金融科技', '数据分析', '数据挖掘']
+  license: string; // 如 'CC0 公共领域共享', 'Apache 2.0', 'MIT', 'CC-BY-4.0'
+  language: string; // '中文' | 'English' | '多语言'
+
+  // 描述与文档 (对齐详情页-概述)
   description: string;
-  updatedAt: string;
-  fields: { name: string; type: string; desc: string }[];
-  lineage: string[]; // 被引用的 Agent/模型 列表
-  isPrivate: boolean;
+  backgroundDesc: string; // 背景描述
+  dataDesc: string; // 数据说明
+  sourceDesc: string; // 数据来源
+  problemDesc: string; // 问题描述
+
+  // 基础信息 (对齐详情页-概述右侧信息)
+  mountPath: string; // 挂载目录如 "/home/mw/input/sjiiaa8769"
+  fileFormats: string; // 如 ".csv, .xlsx"
+  fileSize: string; // 如 "267.5 MB", "1.2 MB", "30.8 GB"
+  filesCount: number; // 如 6, 1, 20
+  theme: string; // 主题 如 "商业", "科技互联网", "医疗健康", "气象"
+  techDomain: string; // 技术领域 如 "数据挖掘", "特征工程", "多模态大模型"
+
+  // 关联文件列表 (对齐详情页-文件)
+  files: DatasetFileItem[];
+
+  // 评论列表 (对齐详情页-评论)
+  comments: DatasetCommentItem[];
+
+  // 兼容性字段
+  industry?: string;
+  format?: string;
+  scale?: string;
+  size?: string;
+  rowsCount?: string;
+  dataType?: string;
+  sampleRows?: any[];
+  fields?: { name: string; type: string; desc: string }[];
+  lineage?: string[];
+  isPrivate?: boolean;
+}
+
+// Skill 插件文件节点
+export interface SkillFileNode {
+  id: string;
+  name: string;
+  path: string;
+  size: string;
+  type: 'file' | 'folder';
+  language?: 'python' | 'json' | 'yaml' | 'markdown' | 'dockerfile' | 'bash' | 'text';
+  content?: string; // 文件内容，用于代码与文本在线预览
+  children?: SkillFileNode[];
+}
+
+// Skill 插件评论
+export interface SkillCommentItem {
+  id: string;
+  userName: string;
+  userAvatar: string;
+  userRole?: string;
+  rating?: number;
+  time: string;
+  content: string;
+  likes: number;
+  isLiked?: boolean;
+  replies?: {
+    id: string;
+    userName: string;
+    userAvatar: string;
+    userRole?: string;
+    time: string;
+    content: string;
+    likes: number;
+    isLiked?: boolean;
+  }[];
 }
 
 // Skill 插件
 export interface SkillPluginItem {
   id: string;
   name: string;
-  description: string;
-  compatibleAgents: string;
+  repoPath?: string; // 如 "@user_a38fd8a2/valuation-analysis", "google/live-web-search"
+  category: string; // '知识管理' | '办公效率' | '内容创作' | '设计多媒体' | '数据分析' | '开发编程' | '行业专业' | 'AI Agent' | '自动化'
+  source?: string; // 'SkillHub' | '官方' | '开源社区'
+  isOfficial?: boolean; // 官方认证小蓝盾
+  needsApiKey?: boolean; // 需配置 API Key
+  apiKeyProvider?: string; // API Key 提供方
+  aiRating?: number; // 如 4.3
+  aiRatingDesc?: string; // 如 "优秀 (AI 评分)"
+  securityStatus?: string; // 如 "安全"
+  voteCount?: number; // 投票数
+  hasVoted?: boolean;
+  
   developer: string;
-  installs: number;
+  developerAvatar?: string;
+  developerOrg?: string;
+  authorSignature?: string; // 如 "弗兰克斯基 (Franski)"
   version: string;
+  updatedAt?: string;
+  relativeTime?: string;
+  installs: number; // 安装量
+  downloadsCount?: number; // 下载量
+  viewsCount?: number;
+  likesCount?: number;
+  favoritesCount?: number;
+  isLiked?: boolean;
+  isFavorite?: boolean;
+  description: string;
+  license?: string;
+  compatibleAgents: string;
+  runtimeEnv?: string; // 如 "Python 3.11+", "Node.js 20+", "Docker Sandbox"
+  packageFormat?: string; // 如 "ZIP, Wheel, Git"
+  packageSize?: string; // 如 "1.4 MB", "3.2 MB"
   requiredPermissions: string[];
+  tags?: string[];
+  
+  // 详情页 - 概述扩展
+  copyrightNotice?: string; // 知识产权声明
+  licenseTerms?: {
+    allowed: string[]; // 允许的项目
+    forbidden: string[]; // 禁止的项目
+  };
+  disclaimer?: string; // 免责声明
+  authorBio?: string; // 作者及方法论说明
+  dependencies?: {
+    name: string;
+    purpose: string;
+    installCmd: string;
+  }[];
+  systemArchAscii?: string; // 系统架构 ASCII 示意框图
+  coreModules?: {
+    name: string;
+    functionDesc: string;
+    docPath: string;
+  }[];
+  backgroundDesc?: string;
+  featuresDesc?: string[];
+  toolDefinitionSchema?: string; // Function Calling JSON Schema
+  pythonDecoratorCode?: string; // Python @tool 装饰器代码
+  agentIntegrationCode?: string; // Agent 接入示例代码
+  
+  // 详情页 - 文件树与预览
+  files?: SkillFileNode[];
+  
+  // 详情页 - 评论
+  comments?: SkillCommentItem[];
 }
 
 // 任务大厅

@@ -534,29 +534,32 @@ export const CommunityView: React.FC = () => {
   return (
     <div className="w-full space-y-6 animate-fade-in pb-12 select-none relative">
       
-      {/* Top Header Banner */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-md relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 border border-slate-800">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 space-y-1.5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-            <span>千机开发者生态圈</span>
+      {/* Standard Unified Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-2xs shrink-0">
+            <Users className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-2">
-            开发者技术社区
-          </h1>
-          <p className="text-xs text-slate-300 max-w-2xl font-normal leading-relaxed">
-            汇聚全球 AI 开发者、算法工程师与独立创作者，分享实践经验、解答技术难题、探讨商业路线与人脉连接。
-          </p>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+              开发者技术社区
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                生态圈
+              </span>
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-1">
+              汇聚全球 AI 开发者、算法工程师与独立创作者，分享实践经验、解答技术难题与人脉连接
+            </p>
+          </div>
         </div>
 
         {/* Action: 我要发帖 button */}
-        <div className="relative z-10 shrink-0">
+        <div className="shrink-0">
           <button
             onClick={() => setViewMode('publish')}
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 flex items-center gap-2 cursor-pointer transition transform active:scale-95"
+            className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-200 flex items-center gap-2 cursor-pointer transition-all hover:scale-[1.02]"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
             <span>我要发帖</span>
           </button>
         </div>

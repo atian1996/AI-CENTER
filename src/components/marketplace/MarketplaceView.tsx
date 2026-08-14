@@ -20,27 +20,34 @@ export const MarketplaceView: React.FC = () => {
   return (
     <div className="w-full space-y-6 animate-fade-in pb-12 select-none">
       
-      {/* Top Header & Sub-Tab Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
-        <div>
-          <h1 className="text-xl font-black text-slate-900 flex items-center gap-2">
-            <Store className="w-6 h-6 text-indigo-600" />
-            AI 资产统一发现与交易集市
-          </h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">
-            一站式检索 Agent 智能体、大模型底座、高质数据集与开放 Skill 插件
-          </p>
+      {/* Standard Unified Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-2xs shrink-0">
+            <Store className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+              AI 资产统一发现与交易集市
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                一站式集市
+              </span>
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-1">
+              一站式检索与体验 Agent 智能体、大模型底座、高质行业数据集与开放 Skill 插件
+            </p>
+          </div>
         </div>
 
         {/* Sub Tab Switcher */}
-        <div className="flex items-center gap-1.5 bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/80">
+        <div className="flex items-center gap-1.5 bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/80 shrink-0">
           {tabs.map(t => {
             const isActive = marketplaceTab === t.id;
             return (
               <button
                 key={t.id}
                 onClick={() => setMarketplaceTab(t.id)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
                   isActive
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-white'

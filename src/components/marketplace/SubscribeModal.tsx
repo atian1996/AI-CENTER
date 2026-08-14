@@ -290,7 +290,7 @@ export const SubscribeModal: React.FC<SubscribeModalProps> = ({
           {/* Price Calculation Row */}
           <div className="flex items-center justify-between pt-2">
             <div className="text-xs text-slate-500">
-              订阅即代表您同意《千机AI应用平台服务协议》与扣费条款
+              订阅即代表您同意《AI运营中心应用平台服务协议》与扣费条款
             </div>
             <div className="text-right">
               <span className="text-xs text-slate-500 font-bold mr-1">实付金额：</span>

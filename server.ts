@@ -44,7 +44,7 @@ async function startServer() {
       if (!ai) {
         // Fallback simulated response if key not available
         return res.json({
-          text: `【千机·AI空间 沙箱服务】收到您的指令："${prompt}"。由于当前处于演示环境，已启动内置 Agent 模拟思考并返回响应：该任务可以成功执行！`,
+          text: `【AI运营中心 沙箱服务】收到您的指令："${prompt}"。由于当前处于演示环境，已启动内置 Agent 模拟思考并返回响应：该任务可以成功执行！`,
         });
       }
 
@@ -84,7 +84,7 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`千机·AI空间 服务器已启动: http://0.0.0.0:${PORT}`);
+    console.log(`AI运营中心 服务器已启动: http://0.0.0.0:${PORT}`);
   });
 }
 

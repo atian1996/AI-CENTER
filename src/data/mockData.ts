@@ -66,7 +66,7 @@ export const initialNotifications: AppNotification[] = [
 export const mockBannerItems = [
   {
     id: 'b1',
-    title: '千机·AI空间 1.0 全面重构上线',
+    title: 'AI运营中心 1.0 全面重构上线',
     subtitle: '一站式赋能 AI 应用开发、算力调度与开发者社区生态',
     badge: '官方活动',
     bgGradient: 'from-indigo-900 via-purple-900 to-slate-900',
@@ -84,7 +84,7 @@ export const mockBannerItems = [
   },
   {
     id: 'b3',
-    title: '首届“千机杯”大模型 Agent 创客大赛',
+    title: '首届“创新杯”大模型 Agent 创客大赛',
     subtitle: '百万积分与十万现金赏金池，等最强 AI 开发者来战！',
     badge: '任务悬赏',
     bgGradient: 'from-amber-900 via-red-900 to-slate-900',
@@ -93,7 +93,115 @@ export const mockBannerItems = [
   }
 ];
 
-export const mockAgents: AgentItem[] = mock60Agents;
+export const initialDevelopedApps: AgentItem[] = [
+  {
+    id: 'app_wf_01',
+    name: '工作流应用测试',
+    avatar: '🤖',
+    iconBgColor: 'bg-rose-100 border-rose-200 text-rose-600',
+    description: '',
+    category: 'coding',
+    rating: 5.0,
+    ratingCount: 12,
+    priceType: 'free',
+    priceValue: 0,
+    appType: '工作流',
+    techForm: '工作流',
+    author: '极客小千',
+    updatedAt: '2026/08/14 09:28',
+    createdAt: '2026-08-14',
+    tags: [],
+    usageCount: 142,
+    isDeveloped: true,
+    baseModel: 'DeepSeek-V3 671B'
+  },
+  {
+    id: 'app_chat_01',
+    name: '111',
+    avatar: '🤖',
+    iconBgColor: 'bg-amber-100 border-amber-200 text-amber-600',
+    description: '111',
+    category: 'dialogue',
+    rating: 4.8,
+    ratingCount: 8,
+    priceType: 'free',
+    priceValue: 0,
+    appType: '聊天助手',
+    techForm: '聊天助手',
+    author: '极客小千',
+    updatedAt: '2026/08/13 11:37',
+    createdAt: '2026-08-13',
+    tags: [],
+    usageCount: 88,
+    isDeveloped: true,
+    baseModel: 'Qwen-2.5-72B-Instruct'
+  },
+  {
+    id: 'app_cf_01',
+    name: '文件翻译',
+    avatar: '📁',
+    iconBgColor: 'bg-sky-100 border-sky-200 text-sky-600',
+    description: '',
+    category: 'vertical',
+    rating: 5.0,
+    ratingCount: 36,
+    priceType: 'token',
+    priceValue: 0.5,
+    appType: 'Chatflow',
+    techForm: 'Chatflow',
+    author: '极客小千',
+    updatedAt: '2026/08/11 15:46',
+    createdAt: '2026-08-11',
+    tags: [],
+    usageCount: 520,
+    isDeveloped: true,
+    baseModel: 'DeepSeek-V3 671B'
+  },
+  {
+    id: 'app_cf_02',
+    name: 'UI设计',
+    avatar: '🤖',
+    iconBgColor: 'bg-orange-100 border-orange-200 text-orange-600',
+    description: '',
+    category: 'image',
+    rating: 4.9,
+    ratingCount: 45,
+    priceType: 'token',
+    priceValue: 0.8,
+    appType: 'Chatflow',
+    techForm: 'Chatflow',
+    author: '极客小千',
+    updatedAt: '2026/08/11 10:16',
+    createdAt: '2026-08-11',
+    tags: [],
+    usageCount: 680,
+    isDeveloped: true,
+    baseModel: 'Gemini 3.6 Flash'
+  },
+  {
+    id: 'app_wf_02',
+    name: '工作流: 文本摘要器',
+    avatar: '📝',
+    iconBgColor: 'bg-slate-100 border-slate-200 text-slate-600',
+    description: '',
+    category: 'vertical',
+    rating: 5.0,
+    ratingCount: 94,
+    priceType: 'free',
+    priceValue: 0,
+    appType: '工作流',
+    techForm: '工作流',
+    author: '极客小千',
+    updatedAt: '2026/08/11 10:12',
+    createdAt: '2026-08-11',
+    tags: [],
+    usageCount: 1290,
+    isDeveloped: true,
+    baseModel: 'DeepSeek-V3 671B'
+  }
+];
+
+export const mockAgents: AgentItem[] = [...initialDevelopedApps, ...mock60Agents];
 
 export const mockModels: ModelItem[] = [
   // --- 文本大模型 ---
@@ -390,7 +498,6 @@ export const mockModels: ModelItem[] = [
     throughputTps: 30,
     availabilityPercent: 99.8,
     typeTag: '图像',
-    contextLength: '高清可控编辑',
     priceInput: '¥0.02/张 (首张免费)',
     priceOutput: '¥0.3~0.6/张',
     tags: ['图像生成', '可控编辑', '商业效果自然'],
@@ -415,7 +522,6 @@ export const mockModels: ModelItem[] = [
     throughputTps: 45,
     availabilityPercent: 99.9,
     typeTag: '图像',
-    contextLength: '实时网页检索',
     priceInput: '免费',
     priceOutput: '¥0.22/张',
     tags: ['在线检索', '实时时效', '轻量极速'],
@@ -442,7 +548,6 @@ export const mockModels: ModelItem[] = [
     throughputTps: 200,
     availabilityPercent: 99.95,
     typeTag: '音频',
-    contextLength: '超长文本朗读',
     priceInput: '免费',
     priceOutput: '¥0.2/千字符',
     tags: ['极致速度', '逼真音效', 'TTS首选'],
@@ -467,7 +572,6 @@ export const mockModels: ModelItem[] = [
     throughputTps: 120,
     availabilityPercent: 99.9,
     typeTag: '音频',
-    contextLength: '高保真音频',
     priceInput: '免费',
     priceOutput: '¥0.35/千字符',
     tags: ['情绪渲染', '语气词融合', '广播级音质'],
@@ -594,7 +698,6 @@ export const mockModels: ModelItem[] = [
     throughputTps: 45,
     availabilityPercent: 99.7,
     typeTag: '视频',
-    contextLength: '50个素材',
     priceInput: '按时长计费',
     priceOutput: '¥42~70/M tokens',
     tags: ['视频创作', '多模态参考', '时间戳控制'],
@@ -619,7 +722,6 @@ export const mockModels: ModelItem[] = [
     throughputTps: 80,
     availabilityPercent: 99.8,
     typeTag: '视频',
-    contextLength: '高频创作',
     priceInput: '低门槛',
     priceOutput: '¥14~23/M tokens',
     tags: ['性价比', '高频应用', '图生视频'],
@@ -644,7 +746,6 @@ export const mockModels: ModelItem[] = [
     throughputTps: 60,
     availabilityPercent: 99.8,
     typeTag: '视频',
-    contextLength: '首尾帧控制',
     priceInput: '文/图生视频',
     priceOutput: '¥16~51/M tokens',
     tags: ['角色一致性', '首尾帧引导', '风格保持'],
@@ -669,7 +770,6 @@ export const mockModels: ModelItem[] = [
     throughputTps: 40,
     availabilityPercent: 99.7,
     typeTag: '视频',
-    contextLength: '最多9张参考图',
     priceInput: '视频时长 ¥0.9~1.2',
     priceOutput: '¥0.54~0.72/秒',
     tags: ['参考生视频', '风格稳定', '场景保持'],
@@ -694,7 +794,6 @@ export const mockModels: ModelItem[] = [
     throughputTps: 45,
     availabilityPercent: 99.8,
     typeTag: '视频',
-    contextLength: '高清流畅',
     priceInput: '视频时长 ¥0.9~1.2',
     priceOutput: '¥0.54~0.72/秒',
     tags: ['图生视频', '音画同步', '动作流畅'],
@@ -719,7 +818,6 @@ export const mockModels: ModelItem[] = [
     throughputTps: 50,
     availabilityPercent: 99.8,
     typeTag: '视频',
-    contextLength: '镜头调度',
     priceInput: '视频时长 ¥0.9~1.2',
     priceOutput: '¥0.54~0.72/秒',
     tags: ['文生视频', '镜头调度', '自然物理运动'],
@@ -744,7 +842,6 @@ export const mockModels: ModelItem[] = [
     throughputTps: 70,
     availabilityPercent: 99.8,
     typeTag: '视频',
-    contextLength: '16:9/9:16/1:1',
     priceInput: '积分',
     priceOutput: '¥1/积分',
     tags: ['首尾帧控制', '原生音频生成', '3-15秒'],
@@ -769,7 +866,6 @@ export const mockModels: ModelItem[] = [
     throughputTps: 110,
     availabilityPercent: 99.9,
     typeTag: '视频',
-    contextLength: '极速生成',
     priceInput: '输出折扣',
     priceOutput: '¥18.7~31.45/M tokens',
     tags: ['省流加速', '极速渲染', '高性价比'],
@@ -794,7 +890,6 @@ export const mockModels: ModelItem[] = [
     throughputTps: 100,
     availabilityPercent: 99.9,
     typeTag: '视频',
-    contextLength: '标准加速',
     priceInput: '输出',
     priceOutput: '¥22~37/M tokens',
     tags: ['极速渲染', '质量保证'],
@@ -819,7 +914,6 @@ export const mockModels: ModelItem[] = [
     throughputTps: 35,
     availabilityPercent: 99.6,
     typeTag: '视频',
-    contextLength: '风格变换与局部替换',
     priceInput: '视频时长',
     priceOutput: '¥0.9~1.6/秒',
     tags: ['视频局部编辑', '风格变换'],
@@ -883,97 +977,918 @@ export const mockModels: ModelItem[] = [
 ];
 
 export const mockDatasets: DatasetItem[] = [
+  // 1. PowerBI 零售数据分析实战配套数据集 (主打详情演示，精准还原图3、图4、图5)
   {
-    id: 'ds_01',
-    name: 'Chinese Medical QA 500K 临床问答数据集',
-    industry: '医疗',
-    format: 'JSONL',
-    scale: '50万条',
+    id: 'ds_powerbi_retail',
+    name: 'PowerBI零售数据分析实战配套数据集',
+    repoPath: 'zj/PowerBI-retail-analytics',
+    coverImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&auto=format&fit=crop&q=80',
+    author: 'zj',
+    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    authorOrg: '数据实战工坊',
+    updatedAt: '2026/08/07 14:20',
+    relativeTime: '6 天前',
+    viewsCount: 72,
+    downloadCount: 9,
+    likesCount: 15,
+    favoritesCount: 38,
+    isLiked: false,
+    isFavorite: true,
+    isCreatedByMe: true,
+    isMounted: true,
+    modalityCategory: '表格',
+    taskType: '表格回归',
+    domainTags: ['商业', '数据挖掘', '零售分析', 'PowerBI'],
+    license: 'CC0 公共领域共享',
+    language: '中文',
+    description: 'PowerBI零售数据分析实战这本书作者提供的数据集，涵盖中型连锁品牌门店销售、会员生命周期、库存流转等多维度真实商业脱敏数据。',
+    backgroundDesc: '本项目为零售业数字化经营实战分析配套数据。面向新零售连锁门店日常经营、会员画像分层、商品流转与销售任务达成率等多维分析场景构建。',
+    dataDesc: '示例数据是完整数据的子集，示例数据可以在Excel中直接处理，完整数据建议使用R/Python或者PowerBI等工具，数据基本上作为零售领域的绝大多数分析的示例数据使用，不过作者说数据是合成的，不过大概率应该是脱敏得到的，合成一个200MB的中型连锁品牌的符合商业逻辑的数据并不好搞，作者的书中使用了解各种分析方法在本书据上，至少结构应该是符合真实的商业逻辑。',
+    sourceDesc: '数据由零售行业公开脱敏数据及商业分析教学案例整理构建，时间跨度覆盖2年。',
+    problemDesc: '该数据能解决什么问题？适用于什么场景：适用于零售行业销售漏斗分析、会员RFM分群模型、商品动销率测算、门店目标达成率与库存周转天数分析等实战教学与算法模型训练。',
+    mountPath: '/home/mw/input/sjiiaa8769',
+    fileFormats: '.csv, .xlsx',
+    fileSize: '267.5 MB',
+    filesCount: 6,
+    theme: '商业',
+    techDomain: '数据挖掘',
+    industry: '商业',
+    format: 'CSV / XLSX',
+    scale: '267.5 MB (260万条)',
+    files: [
+      {
+        id: 'f_order_csv',
+        name: '订单表.csv',
+        size: '144.8 MB',
+        format: 'csv',
+        rowsCount: 2599646,
+        colsCount: 8,
+        encoding: 'UTF-8',
+        headers: ['门店ID', '订单ID', '会员ID', '吊牌价', '数量', '金额', '产品ID', '日期'],
+        sampleRows: [
+          { '门店ID': 'a058', '订单ID': '201811100326', '会员ID': 'A0076253', '吊牌价': 12, '数量': 1, '金额': 11, '产品ID': 'XYZ1004889', '日期': '2018-01-01' },
+          { '门店ID': 'a028', '订单ID': '201811100674', '会员ID': 'A0084495', '吊牌价': 12, '数量': 1, '金额': 11, '产品ID': 'XYZ1004883', '日期': '2018-01-01' },
+          { '门店ID': 'a166', '订单ID': '201811103290', '会员ID': 'A0236159', '吊牌价': 12, '数量': 1, '金额': 11, '产品ID': 'XYZ1004883', '日期': '2018-01-01' },
+          { '门店ID': 'a166', '订单ID': '201811103308', '会员ID': 'A0236159', '吊牌价': 12, '数量': 1, '金额': 11, '产品ID': 'XYZ1004883', '日期': '2018-01-01' },
+          { '门店ID': 'a091', '订单ID': '201811103735', '会员ID': 'A0252601', '吊牌价': 12, '数量': 1, '金额': 11, '产品ID': 'XYZ1004883', '日期': '2018-01-01' },
+          { '门店ID': 'a030', '订单ID': '201811102718', '会员ID': 'A0165441', '吊牌价': 12, '数量': 1, '金额': 11, '产品ID': 'XYZ1004887', '日期': '2018-01-01' },
+          { '门店ID': 'a030', '订单ID': '201811102683', '会员ID': 'A0227723', '吊牌价': 12, '数量': 1, '金额': 11, '产品ID': 'XYZ1004887', '日期': '2018-01-01' },
+          { '门店ID': 'a051', '订单ID': '201811101225', '会员ID': 'A0187383', '吊牌价': 12, '数量': 1, '金额': 0, '产品ID': 'XYZ1004887', '日期': '2018-01-01' },
+          { '门店ID': 'a051', '订单ID': '201811101226', '会员ID': 'A0195470', '吊牌价': 12, '数量': 1, '金额': 0, '产品ID': 'XYZ1004887', '日期': '2018-01-01' },
+          { '门店ID': 'a030', '订单ID': '201811102565', '会员ID': 'A0114038', '吊牌价': 12, '数量': 1, '金额': 0, '产品ID': 'XYZ1004887', '日期': '2018-01-01' },
+          { '门店ID': 'a062', '订单ID': '201811103396', '会员ID': 'A0114883', '吊牌价': 12, '数量': 1, '金额': 0, '产品ID': 'XYZ1004881', '日期': '2018-01-01' },
+          { '门店ID': 'a051', '订单ID': '201811101218', '会员ID': 'A0187372', '吊牌价': 12, '数量': 1, '金额': 0, '产品ID': 'XYZ1004885', '日期': '2018-01-01' },
+          { '门店ID': 'a022', '订单ID': '201811102260', '会员ID': 'A0126070', '吊牌价': 12, '数量': 1, '金额': 0, '产品ID': 'XYZ1004879', '日期': '2018-01-01' },
+          { '门店ID': 'a022', '订单ID': '201811102252', '会员ID': 'A0223838', '吊牌价': 12, '数量': 1, '金额': 0, '产品ID': 'XYZ1004879', '日期': '2018-01-01' },
+          { '门店ID': 'a019', '订单ID': '201811101901', '会员ID': 'A0098124', '吊牌价': 15, '数量': 2, '金额': 28, '产品ID': 'XYZ1004902', '日期': '2018-01-02' },
+          { '门店ID': 'a088', '订单ID': '201811104512', '会员ID': 'A0314502', '吊牌价': 18, '数量': 1, '金额': 18, '产品ID': 'XYZ1004910', '日期': '2018-01-02' },
+          { '门店ID': 'a102', '订单ID': '201811105120', '会员ID': 'A0289104', '吊牌价': 25, '数量': 1, '金额': 22, '产品ID': 'XYZ1005001', '日期': '2018-01-02' },
+          { '门店ID': 'a044', '订单ID': '201811102914', '会员ID': 'A0142901', '吊牌价': 30, '数量': 1, '金额': 27, '产品ID': 'XYZ1005018', '日期': '2018-01-03' },
+          { '门店ID': 'a115', '订单ID': '201811106001', '会员ID': 'A0331908', '吊牌价': 12, '数量': 3, '金额': 33, '产品ID': 'XYZ1004889', '日期': '2018-01-03' },
+          { '门店ID': 'a007', '订单ID': '201811100109', '会员ID': 'A0051289', '吊牌价': 45, '数量': 1, '金额': 45, '产品ID': 'XYZ1005200', '日期': '2018-01-03' }
+        ]
+      },
+      {
+        id: 'f_member_csv',
+        name: '会员表.csv',
+        size: '42.1 MB',
+        format: 'csv',
+        rowsCount: 842000,
+        colsCount: 6,
+        encoding: 'UTF-8',
+        headers: ['会员ID', '注册时间', '注册城市', '年龄段', '消费等级', '积分余额'],
+        sampleRows: [
+          { '会员ID': 'A0076253', '注册时间': '2017-05-12', '注册城市': '上海', '年龄段': '25-34', '消费等级': 'V3-黄金', '积分余额': 1280 },
+          { '会员ID': 'A0084495', '注册时间': '2017-08-20', '注册城市': '杭州', '年龄段': '35-44', '消费等级': 'V2-白银', '积分余额': 450 },
+          { '会员ID': 'A0236159', '注册时间': '2018-01-01', '注册城市': '北京', '年龄段': '18-24', '消费等级': 'V1-普通', '积分余额': 100 }
+        ]
+      },
+      {
+        id: 'f_stock_csv',
+        name: '库存流转表.csv',
+        size: '35.6 MB',
+        format: 'csv',
+        rowsCount: 610000,
+        colsCount: 7,
+        encoding: 'UTF-8',
+        headers: ['仓库ID', '货品SKU', '出入库类型', '批次号', '数量', '结存', '日期'],
+        sampleRows: [
+          { '仓库ID': 'WH-01', '货品SKU': 'XYZ1004889', '出入库类型': '销售出库', '批次号': 'BAT-20180101', '数量': 100, '结存': 4200, '日期': '2018-01-01' },
+          { '仓库ID': 'WH-02', '货品SKU': 'XYZ1004883', '出入库类型': '采购入库', '批次号': 'BAT-20180102', '数量': 500, '结存': 1800, '日期': '2018-01-02' }
+        ]
+      },
+      {
+        id: 'f_sales_csv',
+        name: '销售任务表.csv',
+        size: '18.2 MB',
+        format: 'csv',
+        rowsCount: 120000,
+        colsCount: 5,
+        encoding: 'UTF-8',
+        headers: ['门店ID', '销售周期', '目标金额(万元)', '实际完成(万元)', '达成率(%)'],
+        sampleRows: [
+          { '门店ID': 'a058', '销售周期': '2018-Q1', '目标金额(万元)': 120, '实际完成(万元)': 134.5, '达成率(%)': 112.1 },
+          { '门店ID': 'a028', '销售周期': '2018-Q1', '目标金额(万元)': 95, '实际完成(万元)': 88.2, '达成率(%)': 92.8 }
+        ]
+      },
+      {
+        id: 'f_dim_xlsx',
+        name: '维度表.xlsx',
+        size: '14.5 MB',
+        format: 'xlsx',
+        rowsCount: 50000,
+        colsCount: 6,
+        encoding: 'UTF-8',
+        headers: ['维度代码', '类别名称', '细分指标', '对应业务线', '计算公式', '备注'],
+        sampleRows: [
+          { '维度代码': 'DIM_CUST_VAL', '类别名称': '客户价值', '细分指标': 'RFM得分', '对应业务线': '新零售营销', '计算公式': 'R*0.2+F*0.5+M*0.3', '备注': '季度滚动更新' }
+        ]
+      },
+      {
+        id: 'f_sample_xlsx',
+        name: '示例数据.xlsx',
+        size: '12.3 MB',
+        format: 'xlsx',
+        rowsCount: 20000,
+        colsCount: 8,
+        encoding: 'UTF-8',
+        headers: ['样本编号', '渠道', '转化漏斗', '客单价', 'ROI', '复购周期', '标签', '评级'],
+        sampleRows: [
+          { '样本编号': 'SMP-001', '渠道': '自营商城', '转化漏斗': '下单支付', '客单价': 168.5, 'ROI': 3.8, '复购周期': '45天', '标签': '高价值客群', '评级': 'A+' }
+        ]
+      }
+    ],
+    comments: [
+      {
+        id: 'c1',
+        userName: '长吻海豚49gp',
+        userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+        time: '6 天前',
+        content: '请问数据时2026的吗',
+        likes: 2,
+        replies: [
+          {
+            id: 'r1_1',
+            userName: 'zj',
+            userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+            time: '6 天前',
+            content: '2022年出的一本书，数据并不保证真实，不过作者在书里就是拿这个数据做各种分析，结构上没有问题'
+          },
+          {
+            id: 'r1_2',
+            userName: 'zj',
+            userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+            time: '6 天前',
+            content: '如果你只是拿来学习用的话不用纠结，这个数据有8，9张表，数据的时间跨度是2年，足够你用于学习零售行业数据分析有关的技能了'
+          }
+        ]
+      },
+      {
+        id: 'c2',
+        userName: '极客数据探索者',
+        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        time: '3 天前',
+        content: '挂载到容器后用 DuckDB 直接跑 SQL 查询非常快，260万行订单表几百毫秒就出报表了，很适合做 BI 建模练习！',
+        likes: 5
+      }
+    ]
+  },
+
+  // 2. 用户行为数据分析与可视化 用户购买行为 电商数据 (图2第一条)
+  {
+    id: 'ds_user_behavior',
+    name: '用户行为数据分析与可视化 用户购买行为 电商数据',
+    repoPath: 'coder-writer/ecommerce-user-behavior',
+    coverImage: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400&auto=format&fit=crop&q=80',
+    author: '爱打字的程序员',
+    authorAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80',
+    authorOrg: '数据分析开源社',
+    updatedAt: '2026/07/15 10:30',
+    relativeTime: '1 个月前',
+    viewsCount: 12091,
+    downloadCount: 734,
+    likesCount: 128,
+    favoritesCount: 340,
+    isLiked: false,
+    isFavorite: false,
+    modalityCategory: '表格',
+    taskType: '时间序列预测',
+    domainTags: ['科技互联网', '经济', '商业', '电商', '金融科技', '数据分析'],
+    license: 'CC-BY-4.0',
+    language: '中文',
+    description: '随着互联网的普及和移动设备的普遍使用，用户行为数据分析已成为了解用户需求、优化用户体验和促进商业转化的关键支撑。',
+    backgroundDesc: '大型电商平台在双十一、618等大促期间沉淀的超千万级用户点击、加购、收藏与购买转化日志。',
+    dataDesc: '包含用户ID、商品品类、行为类型（pv/buy/cart/fav）、时间戳以及停留时长等多维记录。',
+    sourceDesc: '阿里巴巴开源公开竞赛脱敏数据集与天池平台开放数据整理。',
+    problemDesc: '用于用户转化漏斗分析、流失预警模型、协同过滤推荐系统与时序购买预测。',
+    mountPath: '/home/mw/input/ecommerce_behavior',
+    fileFormats: '.csv',
+    fileSize: '1.2 MB',
+    filesCount: 1,
+    theme: '电商',
+    techDomain: '数据分析',
+    industry: '电商',
+    format: 'CSV',
+    scale: '1.2 MB (5万条)',
+    files: [
+      {
+        id: 'f_ub_1',
+        name: 'UserBehavior_Sample.csv',
+        size: '1.2 MB',
+        format: 'csv',
+        rowsCount: 50000,
+        colsCount: 6,
+        encoding: 'UTF-8',
+        headers: ['User_ID', 'Item_ID', 'Category_ID', 'Behavior_Type', 'Timestamp', 'Date'],
+        sampleRows: [
+          { 'User_ID': 'U10001', 'Item_ID': 'I89210', 'Category_ID': 'C401', 'Behavior_Type': 'pv', 'Timestamp': 1618192000, 'Date': '2026-04-12' },
+          { 'User_ID': 'U10001', 'Item_ID': 'I89210', 'Category_ID': 'C401', 'Behavior_Type': 'cart', 'Timestamp': 1618192150, 'Date': '2026-04-12' },
+          { 'User_ID': 'U10001', 'Item_ID': 'I89210', 'Category_ID': 'C401', 'Behavior_Type': 'buy', 'Timestamp': 1618192300, 'Date': '2026-04-12' }
+        ]
+      }
+    ],
+    comments: []
+  },
+
+  // 3. 多种高发癌症数据分析 癌症数据分析 (图2第二条)
+  {
+    id: 'ds_cancer_analysis',
+    name: '多种高发癌症数据分析 癌症数据分析',
+    repoPath: 'coder-writer/multi-cancer-analytics',
+    coverImage: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=400&auto=format&fit=crop&q=80',
+    author: '爱打字的程序员',
+    authorAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80',
+    authorOrg: '医学AI联合实验室',
+    updatedAt: '2026/08/10 18:00',
+    relativeTime: '3 天前',
+    viewsCount: 35,
+    downloadCount: 0,
+    likesCount: 6,
+    favoritesCount: 12,
+    isLiked: false,
+    isFavorite: false,
+    modalityCategory: '表格',
+    taskType: '表格分类',
+    domainTags: ['科技互联网', '经济', '商业', '电商', '人文社科', '金融科技'],
     license: 'CC-BY-NC 4.0',
-    downloadCount: 4200,
-    description: '涵盖内科、外科、妇产、儿科等20+科室真实匿名化问答数据，包含医生诊断思路与处方禁忌标注。',
-    updatedAt: '2026-07-20',
-    fields: [
-      { name: 'question_id', type: 'string', desc: '唯一问答标识' },
-      { name: 'department', type: 'string', desc: '医学科室分类' },
-      { name: 'patient_symptoms', type: 'text', desc: '主诉与主观症状' },
-      { name: 'doctor_reply', type: 'text', desc: '三甲主治医师结构化回复' }
+    language: '中文',
+    description: '涵盖肺癌、乳腺癌、胃癌等全国前五大高发恶性肿瘤的临床指标特征、基因表达突变数据及预后随访统计。',
+    backgroundDesc: '结合国家癌症中心年报与 SEER 数据库公开特征提炼的多中心肿瘤临床指标。',
+    dataDesc: '包含患者年龄、分期、化疗方案、无病生存期（DFS）及关键生物标志物（如 EGFR, HER2）等脱敏数据。',
+    sourceDesc: '各大医学科研开放机构公开统计汇总。',
+    problemDesc: '可用于多模态生存预测模型、生物标志物特征重要性排序及辅助临床路径决策。',
+    mountPath: '/home/mw/input/cancer_multi_features',
+    fileFormats: '.csv, .json',
+    fileSize: '0.0 Byte',
+    filesCount: 1,
+    theme: '医疗健康',
+    techDomain: '生物医药',
+    industry: '医疗',
+    format: 'CSV / JSON',
+    scale: '0.0 Byte (索引库)',
+    files: [
+      {
+        id: 'f_cancer_meta',
+        name: 'cancer_index_schema.json',
+        size: '12.4 KB',
+        format: 'json',
+        rowsCount: 120,
+        colsCount: 10,
+        encoding: 'UTF-8',
+        headers: ['Cancer_Type', 'Sample_Size', 'Feature_Count', 'Source_DB'],
+        sampleRows: [
+          { 'Cancer_Type': 'Lung_Adenocarcinoma', 'Sample_Size': 12000, 'Feature_Count': 48, 'Source_DB': 'TCGA-LUAD' }
+        ]
+      }
     ],
-    lineage: ['三甲医院全科医疗预诊助手', 'MedLLM-7B'],
-    isPrivate: false
+    comments: []
   },
+
+  // 4. 云上气象Python (图2第三条)
   {
-    id: 'ds_02',
-    name: 'A股上市公司财报与年报结构化 Corpus (2020-2025)',
+    id: 'ds_weather_python',
+    name: '云上气象Python',
+    repoPath: 'qikeqike/cloud-weather-python',
+    coverImage: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=400&auto=format&fit=crop&q=80',
+    author: '气科气科',
+    authorAvatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&auto=format&fit=crop&q=80',
+    authorOrg: '气象科学社',
+    updatedAt: '2026/08/10 11:15',
+    relativeTime: '3 天前',
+    viewsCount: 21,
+    downloadCount: 0,
+    likesCount: 3,
+    favoritesCount: 8,
+    isLiked: false,
+    isFavorite: false,
+    modalityCategory: '表格',
+    taskType: '时间序列预测',
+    domainTags: ['气象环境', 'Python', '遥感反演', '数据挖掘'],
+    license: 'MIT',
+    language: '中文',
+    description: '云上气象Python课程与实战配套数据，包含地面观测站网逐小时温湿度、气压、风速与雷达回波特征。',
+    backgroundDesc: '为气象大数据与 AI 降水短临预报教学配套提供的精细化气象观测样本集。',
+    dataDesc: '标准 NetCDF 与 CSV 格式，包含近 10 年华东区域典型强对流天气过程要素。',
+    sourceDesc: '国家气象科学数据中心公开开放资料。',
+    problemDesc: '适用于气象时空序列预测、风速风向时序预测与极端降水预警模型开发。',
+    mountPath: '/home/mw/input/weather_python_lab',
+    fileFormats: '.csv',
+    fileSize: '763.9 KB',
+    filesCount: 1,
+    theme: '地球气象',
+    techDomain: '时序分析',
+    industry: '气象',
+    format: 'CSV',
+    scale: '763.9 KB',
+    files: [
+      {
+        id: 'f_weather_1',
+        name: 'station_hourly_2026.csv',
+        size: '763.9 KB',
+        format: 'csv',
+        rowsCount: 8760,
+        colsCount: 9,
+        encoding: 'UTF-8',
+        headers: ['Station_ID', 'DateTime', 'Temp_C', 'Humidity_%', 'Pressure_hPa', 'Wind_Speed_ms', 'Rainfall_mm'],
+        sampleRows: [
+          { 'Station_ID': 'STN_58362', 'DateTime': '2026-01-01 00:00', 'Temp_C': 4.2, 'Humidity_%': 68, 'Pressure_hPa': 1024.5, 'Wind_Speed_ms': 3.1, 'Rainfall_mm': 0.0 }
+        ]
+      }
+    ],
+    comments: []
+  },
+
+  // 5. GPRChinaTemp1km (图2第四条)
+  {
+    id: 'ds_gpr_china_temp',
+    name: 'GPRChinaTemp1km',
+    repoPath: 'lqy/GPRChinaTemp1km',
+    coverImage: 'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=400&auto=format&fit=crop&q=80',
+    author: 'lqy',
+    authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+    authorOrg: '地理空间大数据研究所',
+    updatedAt: '2026/08/09 09:00',
+    relativeTime: '4 天前',
+    viewsCount: 9,
+    downloadCount: 0,
+    likesCount: 1,
+    favoritesCount: 5,
+    isLiked: false,
+    isFavorite: false,
+    modalityCategory: '多模态',
+    taskType: '特征抽取',
+    domainTags: ['遥感地理', '空间插值', '高分辨率气温', '全国尺度'],
+    license: 'CC-BY-4.0',
+    language: 'English',
+    description: '中国陆地1公里高分辨率逐日地表与近地表气温栅格数据集（GPRChinaTemp1km），基于高斯过程回归与多源遥感融合。',
+    backgroundDesc: '解决传统气象台站空间代表性不足的问题，提供全国连续、高精度的气温网格数据。',
+    dataDesc: '数据包含全国范围日最高温、日最低温与日均温三项核心栅格指标。',
+    sourceDesc: 'MODIS 卫星地表温度与全国气象站点融合校正。',
+    problemDesc: '适用于生态水文建模、城市热岛效应分析与农业气象灾害评估。',
+    mountPath: '/home/mw/input/GPRChinaTemp1km',
+    fileFormats: '.tif, .csv',
+    fileSize: '30.8 GB',
+    filesCount: 1,
+    theme: '地理信息',
+    techDomain: '空间计算',
+    industry: '科研',
+    format: 'GeoTIFF / CSV',
+    scale: '30.8 GB',
+    files: [
+      {
+        id: 'f_gpr_grid',
+        name: 'china_temp_1km_grid.csv',
+        size: '1.8 GB',
+        format: 'csv',
+        rowsCount: 450000,
+        colsCount: 6,
+        encoding: 'UTF-8',
+        headers: ['Lat', 'Lon', 'Elevation_m', 'T_Mean_2026', 'T_Max_2026', 'T_Min_2026'],
+        sampleRows: [
+          { 'Lat': 39.9042, 'Lon': 116.4074, 'Elevation_m': 43.5, 'T_Mean_2026': 13.8, 'T_Max_2026': 28.5, 'T_Min_2026': -5.2 }
+        ]
+      }
+    ],
+    comments: []
+  },
+
+  // 6. 中科天机全球12公里沙尘数据 (图2第五条)
+  {
+    id: 'ds_sand_dust_12km',
+    name: '中科天机全球12公里沙尘数据',
+    repoPath: 'zk-tianji/global-dust-12km',
+    coverImage: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=400&auto=format&fit=crop&q=80',
+    author: '中科天机',
+    authorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80',
+    authorOrg: '中科天机空间气象院',
+    updatedAt: '2026/03/12 16:00',
+    relativeTime: '5 个月前',
+    viewsCount: 2254,
+    downloadCount: 146,
+    likesCount: 88,
+    favoritesCount: 210,
+    isLiked: false,
+    isFavorite: false,
+    modalityCategory: '表格',
+    taskType: '时间序列预测',
+    domainTags: ['沙尘预报', '全球气溶胶', '中科天机', '环境气象'],
+    license: '开放商业可授权',
+    language: '中文',
+    description: '中科天机全球12公里沙尘浓度与光学厚度数值预报与同化数据集，覆盖亚洲沙源地及全球主要沙尘传输带。',
+    backgroundDesc: '针对春季沙尘暴天气高发期，依托风云气象卫星与全球数值同化系统生成的高时空分辨率沙尘特征集。',
+    dataDesc: '涵盖近地面 PM10 沙尘占比、垂直柱浓度与地表能见度等关键物理量。',
+    sourceDesc: '中科天机数值预报系统。',
+    problemDesc: '服务于北方重点城市沙尘防灾减灾、光伏发电功率预测及航空飞行能见度保障。',
+    mountPath: '/home/mw/input/global_dust_12km',
+    fileFormats: '.nc, .csv',
+    fileSize: '6.8 GB',
+    filesCount: 1,
+    theme: '环境生态',
+    techDomain: '流体仿真',
+    industry: '气象',
+    format: 'NC / CSV',
+    scale: '6.8 GB',
+    files: [
+      {
+        id: 'f_dust_1',
+        name: 'dust_column_sample.csv',
+        size: '120.5 MB',
+        format: 'csv',
+        rowsCount: 120000,
+        colsCount: 7,
+        encoding: 'UTF-8',
+        headers: ['Time_UTC', 'Grid_X', 'Grid_Y', 'Dust_AOD_550nm', 'PM10_ug_m3', 'Visibility_km', 'Risk_Level'],
+        sampleRows: [
+          { 'Time_UTC': '2026-03-15 06:00', 'Grid_X': 105.2, 'Grid_Y': 38.4, 'Dust_AOD_550nm': 1.82, 'PM10_ug_m3': 850.0, 'Visibility_km': 1.2, 'Risk_Level': 'Severe' }
+        ]
+      }
+    ],
+    comments: []
+  },
+
+  // 7. 经常性贸易收支，20年的 (图2第六条)
+  {
+    id: 'ds_trade_balance',
+    name: '经常性贸易收支，20年的',
+    repoPath: 'att004/trade-balance-20years',
+    coverImage: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&auto=format&fit=crop&q=80',
+    author: 'att004',
+    authorAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80',
+    authorOrg: '国际经贸统计室',
+    updatedAt: '2026/08/08 14:10',
+    relativeTime: '5 天前',
+    viewsCount: 40,
+    downloadCount: 4,
+    likesCount: 8,
+    favoritesCount: 19,
+    isLiked: false,
+    isFavorite: false,
+    modalityCategory: '表格',
+    taskType: '表格回归',
+    domainTags: ['经济', '数据挖掘', '贸易逆差', '宏观经济'],
+    license: 'CC0 公共领域共享',
+    language: '中文',
+    description: '2005—2025 年经常账户收支详细数据表（单位：亿美元，"+"为顺差，"-"为逆差），包含货物与服务贸易细分项。',
+    backgroundDesc: '宏观经济金融计量分析必备的长周期国际收支平衡表数据。',
+    dataDesc: '涵盖货物进出口、初次收入、二次收入及资本金融账户年度/季度连续数据。',
+    sourceDesc: '国家外汇管理局与海关总署公开历史年鉴统计。',
+    problemDesc: '用于汇率波动影响分析、双循环经济模型检验与宏观经济学实证计量研究。',
+    mountPath: '/home/mw/input/trade_balance_20y',
+    fileFormats: '.xlsx',
+    fileSize: '1.1 KB',
+    filesCount: 1,
+    theme: '宏观经济',
+    techDomain: '统计计量',
     industry: '金融',
-    format: 'Parquet',
-    scale: '12GB',
-    license: '商业可授权',
-    downloadCount: 1850,
-    description: '包含沪深三千余家上市公司 5 年完整财报文本、MD&A 讨论、资产负债表 JSON 解析与研报标注。',
-    updatedAt: '2026-08-01',
-    fields: [
-      { name: 'stock_code', type: 'string', desc: '股票代码' },
-      { name: 'report_year', type: 'int', desc: '报告年份' },
-      { name: 'ebitda', type: 'float', desc: '息税折旧摊销前利润' },
-      { name: 'mda_text', type: 'text', desc: '管理层讨论与分析' }
+    format: 'XLSX',
+    scale: '1.1 KB',
+    files: [
+      {
+        id: 'f_trade_xlsx',
+        name: 'china_current_account_2005_2025.xlsx',
+        size: '1.1 KB',
+        format: 'xlsx',
+        rowsCount: 80,
+        colsCount: 8,
+        encoding: 'UTF-8',
+        headers: ['年份季度', '经常账户差额(亿美元)', '货物贸易顺差', '服务贸易逆差', '初次收入', '二次收入', 'GDP占比%'],
+        sampleRows: [
+          { '年份季度': '2025-Q4', '经常账户差额(亿美元)': 892.4, '货物贸易顺差': 1240.1, '服务贸易逆差': -280.5, '初次收入': -52.0, '二次收入': -15.2, 'GDP占比%': 2.1 }
+        ]
+      }
     ],
-    lineage: ['金融研报 & 财报速读智囊'],
-    isPrivate: true
+    comments: []
   },
+
+  // 8. 中科天机公里级融合数据 - 2025年华北区域历史数据样例 (图2第八条)
   {
-    id: 'ds_03',
-    name: 'Code-Instruct-200K 多语言编程微调集',
-    industry: '通用',
-    format: 'JSON',
-    scale: '20万对',
-    license: 'Apache 2.0',
-    downloadCount: 8900,
-    description: '包含 Python, TypeScript, Rust, Go, C++ 复杂的单测生成、Refactor 与 Bug Fix 问答对。',
-    updatedAt: '2026-06-18',
-    fields: [
-      { name: 'lang', type: 'string', desc: '编程语言类型' },
-      { name: 'instruction', type: 'string', desc: '编程任务指令' },
-      { name: 'input_code', type: 'text', desc: '输入源代码片段' },
-      { name: 'output_code', type: 'text', desc: '期望生成重构代码' }
+    id: 'ds_tianji_1km_sample',
+    name: '中科天机公里级融合数据 - 2025年华北区域历史数据样例',
+    repoPath: 'zk-tianji/north-china-1km-2025',
+    coverImage: 'https://images.unsplash.com/photo-1508614589041-895b88991e3e?w=400&auto=format&fit=crop&q=80',
+    author: '中科天机',
+    authorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80',
+    authorOrg: '中科天机空间气象院',
+    updatedAt: '2026/03/01 10:00',
+    relativeTime: '5 个月前',
+    viewsCount: 1504,
+    downloadCount: 86,
+    likesCount: 65,
+    favoritesCount: 172,
+    isLiked: false,
+    isFavorite: false,
+    modalityCategory: '表格',
+    taskType: '时间序列预测',
+    domainTags: ['气象融合', '中科天机', '华北区域', '公里级网格'],
+    license: '商业可授权',
+    language: '中文',
+    description: '2025年中国华北区域包括辐射、温度、降水、风速、湿度、气压等 9 项核心气象要素的历史10天逐小时公里级融合数据。',
+    backgroundDesc: '采用多源雷达卫星融合、地形订正算法构建的高分辨率地表气象重分析数据集。',
+    dataDesc: '20个分块子文件，包含北京、天津、河北、山西及内蒙古南部的精细化网格。',
+    sourceDesc: '中科天机高精度同化产品。',
+    problemDesc: '适用于新能源风光功率预测、智慧农业灌溉控制与城市内涝仿真。',
+    mountPath: '/home/mw/input/north_china_1km_sample',
+    fileFormats: '.csv, .nc',
+    fileSize: '14.1 GB',
+    filesCount: 20,
+    theme: '地球气象',
+    techDomain: '时空建模',
+    industry: '气象',
+    format: 'CSV / NC',
+    scale: '14.1 GB (20 files)',
+    files: [
+      {
+        id: 'f_nc_sample',
+        name: 'beijing_tianjin_hourly_grid.csv',
+        size: '720.0 MB',
+        format: 'csv',
+        rowsCount: 1500000,
+        colsCount: 11,
+        encoding: 'UTF-8',
+        headers: ['GridID', 'Time', 'Lat', 'Lon', 'Temp_2m', 'DSR_Wm2', 'Precip_mm', 'Wind_10m', 'RH_2m'],
+        sampleRows: [
+          { 'GridID': 'BJ_001', 'Time': '2025-07-01 12:00', 'Lat': 39.91, 'Lon': 116.40, 'Temp_2m': 32.4, 'DSR_Wm2': 890, 'Precip_mm': 0.0, 'Wind_10m': 2.4, 'RH_2m': 45.0 }
+        ]
+      }
     ],
-    lineage: ['代码重构与安全审计 Agent', 'SQL 复杂查询优化助手'],
-    isPrivate: false
+    comments: []
+  },
+
+  // 9. open-rs/HRSC2016 (图1第一条)
+  {
+    id: 'ds_hrsc2016',
+    name: 'open-rs/HRSC2016',
+    repoPath: 'open-rs/HRSC2016',
+    coverImage: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&auto=format&fit=crop&q=80',
+    author: '逐聚开源智能平台',
+    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    authorOrg: '逐聚开源',
+    updatedAt: '2025/08/14',
+    relativeTime: '1 年前',
+    viewsCount: 3820,
+    downloadCount: 607,
+    likesCount: 0,
+    favoritesCount: 0,
+    isLiked: false,
+    isFavorite: false,
+    modalityCategory: '计算机视觉',
+    taskType: '物体检测',
+    domainTags: ['遥感船舶', '旋转目标检测', '高分辨率光学', 'HRSC2016'],
+    license: 'CC-BY-4.0',
+    language: 'English',
+    description: 'High Resolution Ship Collections (HRSC2016) 遥感高分辨率光学船舶旋转目标检测基准数据集。',
+    backgroundDesc: '西北工业大学航天学院创建的高分辨率遥感图像船舶目标检测数据集。',
+    dataDesc: '包含1068张高分辨率图像，标注了2976个船舶实例，涵盖航母、驱逐舰、商船、货船等30余类细粒度目标。',
+    sourceDesc: 'Google Earth 卫星高分影像。',
+    problemDesc: '解决遥感领域大长宽比、任意方向旋转目标的精确定位与细粒度识别难题。',
+    mountPath: '/home/mw/input/open_rs_HRSC2016',
+    fileFormats: '.xml, .png',
+    fileSize: '1.4 GB',
+    filesCount: 4,
+    theme: '计算机视觉',
+    techDomain: '物体检测',
+    industry: '遥感',
+    format: 'PNG / XML',
+    scale: '1.4 GB (1068张)',
+    files: [
+      {
+        id: 'f_hrsc_1',
+        name: 'annotations_oriented_bbox.xml',
+        size: '12.8 MB',
+        format: 'txt',
+        rowsCount: 2976,
+        colsCount: 8,
+        encoding: 'UTF-8',
+        headers: ['ImageID', 'ClassID', 'cx', 'cy', 'width', 'height', 'angle', 'is_diff'],
+        sampleRows: [
+          { 'ImageID': '100000001.png', 'ClassID': 'AircraftCarrier', 'cx': 512.4, 'cy': 380.2, 'width': 420.0, 'height': 82.5, 'angle': 42.5, 'is_diff': 0 }
+        ]
+      }
+    ],
+    comments: []
+  },
+
+  // 10. baidu/coco-cn (图1第二条)
+  {
+    id: 'ds_coco_cn',
+    name: 'baidu/coco-cn',
+    repoPath: 'baidu/coco-cn',
+    coverImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&auto=format&fit=crop&q=80',
+    author: '百度开源',
+    authorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+    authorOrg: 'Baidu Open Source',
+    updatedAt: '2024/08/10',
+    relativeTime: '2 年前',
+    viewsCount: 4120,
+    downloadCount: 577,
+    likesCount: 2,
+    favoritesCount: 2,
+    isLiked: false,
+    isFavorite: false,
+    modalityCategory: '多模态',
+    taskType: '图像描述',
+    domainTags: ['中文图像描述', 'Image Captioning', 'COCO-CN', '跨模态检索'],
+    license: 'Apache 2.0',
+    language: '中文',
+    description: 'COCO-CN 中文图像描述与跨模态文本图文对齐数据集，为 MS-COCO 图像提供人工精标的中文自然语言描述。',
+    backgroundDesc: '填补多模态图文领域中文跨模态预训练语料匮乏的问题。',
+    dataDesc: '包含 27,000 张图像及对应的 27,000+ 条人工翻译与创作的中文图文配对句子。',
+    sourceDesc: '百度多媒体搜索与自然语言处理团队联合开源。',
+    problemDesc: '可用于中文 CLIP、Vision-Language 跨模态大模型对齐微调及文本生成图像评测。',
+    mountPath: '/home/mw/input/baidu_coco_cn',
+    fileFormats: '.json, .jpg',
+    fileSize: '4.2 GB',
+    filesCount: 2,
+    theme: '多模态',
+    techDomain: '图文多模态',
+    industry: '通用',
+    format: 'JSON / JPG',
+    scale: '4.2 GB (2.7万对)',
+    files: [
+      {
+        id: 'f_cococn_json',
+        name: 'coco_cn_captions.json',
+        size: '18.5 MB',
+        format: 'json',
+        rowsCount: 27218,
+        colsCount: 4,
+        encoding: 'UTF-8',
+        headers: ['image_id', 'caption_cn', 'caption_en', 'category'],
+        sampleRows: [
+          { 'image_id': 'COCO_val2014_000000000042.jpg', 'caption_cn': '一只黑色小狗在草地上追逐飞盘', 'caption_en': 'A small black dog running after a frisbee on grass', 'category': 'Animals' }
+        ]
+      }
+    ],
+    comments: []
+  },
+
+  // 11. lighteval/MATH (图1第三条)
+  {
+    id: 'ds_lighteval_math',
+    name: 'lighteval/MATH',
+    repoPath: 'lighteval/MATH',
+    coverImage: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&auto=format&fit=crop&q=80',
+    author: 'lighteval',
+    authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+    authorOrg: 'Hugging Face LightEval',
+    updatedAt: '2023/08/10',
+    relativeTime: '3 年前',
+    viewsCount: 3950,
+    downloadCount: 537,
+    likesCount: 0,
+    favoritesCount: 0,
+    isLiked: false,
+    isFavorite: false,
+    modalityCategory: '自然语言处理',
+    taskType: '问答',
+    domainTags: ['数学推理', 'CoT思维链', '竞赛数学', 'DeepSeek训练'],
+    license: 'MIT',
+    language: 'English',
+    description: 'MATH Benchmark: 包含从初等代数、几何到高中全国数学奥赛级别复杂数学题目的结构化推理数据集。',
+    backgroundDesc: 'UC Berkeley 等机构发布的高难度数学推理基准，包含逐步 LaTeX 详细解答过程。',
+    dataDesc: '12,500 道高难度数学竞赛题，按难度分为 Level 1 到 Level 5。',
+    sourceDesc: 'AMC 10, AMC 12, AIME 及高中竞赛真题。',
+    problemDesc: '评测与强化大语言模型（如 DeepSeek-R1, OpenAI o1）在复杂形式化数学定理证明与长思维链计算能力。',
+    mountPath: '/home/mw/input/lighteval_MATH',
+    fileFormats: '.jsonl',
+    fileSize: '35.4 MB',
+    filesCount: 2,
+    theme: '数理逻辑',
+    techDomain: '推理大模型',
+    industry: '教育',
+    format: 'JSONL',
+    scale: '35.4 MB (1.25万题)',
+    files: [
+      {
+        id: 'f_math_jsonl',
+        name: 'math_train.jsonl',
+        size: '28.1 MB',
+        format: 'jsonl',
+        rowsCount: 7500,
+        colsCount: 4,
+        encoding: 'UTF-8',
+        headers: ['problem', 'solution', 'level', 'type'],
+        sampleRows: [
+          { 'problem': 'Find all roots of x^3 - 6x^2 + 11x - 6 = 0.', 'solution': 'Factor as (x-1)(x-2)(x-3)=0, hence roots are 1, 2, 3.', 'level': 'Level 2', 'type': 'Algebra' }
+        ]
+      }
+    ],
+    comments: []
+  },
+
+  // 12. Gxg/Math23K (图1第四条)
+  {
+    id: 'ds_gxg_math23k',
+    name: 'Gxg/Math23K',
+    repoPath: 'Gxg/Math23K',
+    coverImage: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&auto=format&fit=crop&q=80',
+    author: 'Gxg',
+    authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+    authorOrg: 'NLP算法团队',
+    updatedAt: '2024/07/20',
+    relativeTime: '2 年前',
+    viewsCount: 2900,
+    downloadCount: 527,
+    likesCount: 0,
+    favoritesCount: 0,
+    isLiked: false,
+    isFavorite: false,
+    modalityCategory: '自然语言处理',
+    taskType: '问答',
+    domainTags: ['中文应用题', '小学数学', 'MWP', '公式生成'],
+    license: 'Apache 2.0',
+    language: '中文',
+    description: 'Math23K 中文小学数学应用题数据集，包含 23,162 道中文代数与几何文字应用题及其对应的等式方程。',
+    backgroundDesc: '腾讯与各大高校开源的经典中文数学词题（Math Word Problem）自动求解评测集。',
+    dataDesc: '每道题目包含题目文本、结构化数学方程表达式及最终数值答案。',
+    sourceDesc: '互联网小学数学题库整理。',
+    problemDesc: '用于自然语言理解、语义解析与符号计算联合建模。',
+    mountPath: '/home/mw/input/Gxg_Math23K',
+    fileFormats: '.json',
+    fileSize: '15.2 MB',
+    filesCount: 1,
+    theme: '教育科学',
+    techDomain: '自然语言处理',
+    industry: '教育',
+    format: 'JSON',
+    scale: '15.2 MB (2.3万题)',
+    files: [
+      {
+        id: 'f_math23k_1',
+        name: 'math23k_clean.json',
+        size: '15.2 MB',
+        format: 'json',
+        rowsCount: 23162,
+        colsCount: 4,
+        encoding: 'UTF-8',
+        headers: ['id', 'original_text', 'equation', 'ans'],
+        sampleRows: [
+          { 'id': '1001', 'original_text': '小明有5个苹果，小红给小明3个，现在小明一共有几个？', 'equation': 'x=5+3', 'ans': '8' }
+        ]
+      }
+    ],
+    comments: []
+  },
+
+  // 13. texturedesign/td01_natural-ground-textures (图1第六条)
+  {
+    id: 'ds_td01_ground_textures',
+    name: 'texturedesign/td01_natural-ground-textures',
+    repoPath: 'texturedesign/td01_natural-ground-textures',
+    coverImage: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&auto=format&fit=crop&q=80',
+    author: 'texturedesign',
+    authorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+    authorOrg: '3D Texture Studio',
+    updatedAt: '2024/06/15',
+    relativeTime: '2 年前',
+    viewsCount: 1890,
+    downloadCount: 373,
+    likesCount: 1,
+    favoritesCount: 1,
+    isLiked: false,
+    isFavorite: false,
+    modalityCategory: '计算机视觉',
+    taskType: '无条件图像生成',
+    domainTags: ['PBR纹理', '地面材质', '4K无缝贴图', '游戏引擎'],
+    license: 'CC0 公共领域共享',
+    language: 'English',
+    description: '4K超清自然地面 PBR 材质与贴图生成集，包含泥土、沙石、草地、岩石等超逼真游戏资产。',
+    backgroundDesc: '面向三维图形学与 Diffusion 材质无缝生成模型构建的 PBR 材质贴图库。',
+    dataDesc: '包含反照率图（Albedo）、法线贴图（Normal）、粗糙度贴图（Roughness）及位移贴图（Height）。',
+    sourceDesc: '单反相机现场扫描光度立体采集。',
+    problemDesc: '用于 3D AIGC、游戏环境生成及材质大模型训练。',
+    mountPath: '/home/mw/input/td01_natural_ground',
+    fileFormats: '.png, .exr',
+    fileSize: '8.6 GB',
+    filesCount: 120,
+    theme: '计算机视觉',
+    techDomain: '三维生成',
+    industry: '游戏文娱',
+    format: 'PNG / EXR',
+    scale: '8.6 GB (120组)',
+    files: [
+      {
+        id: 'f_tex_1',
+        name: 'ground_rock_4k_albedo.png',
+        size: '32.5 MB',
+        format: 'txt',
+        rowsCount: 4096,
+        colsCount: 4096,
+        encoding: 'Binary',
+        headers: ['Width', 'Height', 'Channels', 'BitDepth'],
+        sampleRows: [
+          { 'Width': 4096, 'Height': 4096, 'Channels': 3, 'BitDepth': 16 }
+        ]
+      }
+    ],
+    comments: []
+  },
+
+  // 14. open-rs/30Class (图1第五条)
+  {
+    id: 'ds_open_rs_30class',
+    name: 'open-rs/30Class',
+    repoPath: 'open-rs/30Class',
+    coverImage: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=400&auto=format&fit=crop&q=80',
+    author: '逐聚开源智能平台',
+    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    authorOrg: '逐聚开源',
+    updatedAt: '2025/08/01',
+    relativeTime: '1 年前',
+    viewsCount: 2150,
+    downloadCount: 376,
+    likesCount: 0,
+    favoritesCount: 0,
+    isLiked: false,
+    isFavorite: false,
+    modalityCategory: '计算机视觉',
+    taskType: '图像分类',
+    domainTags: ['遥感地物分类', '30类场景', '卫星高分'],
+    license: 'CC-BY-4.0',
+    language: 'English',
+    description: '30类遥感地物与大尺度场景分类基准数据集，涵盖农田、森林、港口、工业区等典型地理单元。',
+    backgroundDesc: '遥感场景理解经典 benchmark。',
+    dataDesc: '包含 30 个类别共 30,000 张高分辨率航天影像切片。',
+    sourceDesc: '逐聚开源社区与高校联合标注。',
+    problemDesc: '土地利用分类、灾害变化检测。',
+    mountPath: '/home/mw/input/open_rs_30Class',
+    fileFormats: '.jpg, .txt',
+    fileSize: '3.8 GB',
+    filesCount: 30,
+    theme: '地理遥感',
+    techDomain: '图像分类',
+    industry: '遥感',
+    format: 'JPG / TXT',
+    scale: '3.8 GB',
+    files: [],
+    comments: []
+  },
+
+  // 15. indonesian-nlp/mc4-id (图1第十一条)
+  {
+    id: 'ds_mc4_id',
+    name: 'indonesian-nlp/mc4-id',
+    repoPath: 'indonesian-nlp/mc4-id',
+    coverImage: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&auto=format&fit=crop&q=80',
+    author: 'indonesian-nlp',
+    authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+    authorOrg: 'Indonesian NLP Group',
+    updatedAt: '2024/08/01',
+    relativeTime: '2 年前',
+    viewsCount: 1980,
+    downloadCount: 341,
+    likesCount: 0,
+    favoritesCount: 0,
+    isLiked: false,
+    isFavorite: false,
+    modalityCategory: '自然语言处理',
+    taskType: '文本生成',
+    domainTags: ['印尼语', '小语种预训练', 'mC4清洗', 'LLM基座语料'],
+    license: 'ODC-BY',
+    language: '多语言',
+    description: 'mC4 印尼语高质量去重清洗预训练语料库，包含海量网页、新闻与知识文本。',
+    backgroundDesc: '多语言大语言模型在东南亚语种上的预训练语料基础。',
+    dataDesc: '经规则过滤、语言标识分类与毒性清洗后的超大规模印尼语纯文本。',
+    sourceDesc: 'Common Crawl mC4 开源子集。',
+    problemDesc: '训练具备印尼语及东南亚跨文化理解能力的生成式大语言模型。',
+    mountPath: '/home/mw/input/mc4_id_corpus',
+    fileFormats: '.jsonl.gz',
+    fileSize: '45.0 GB',
+    filesCount: 16,
+    theme: '多语言NLP',
+    techDomain: '文本生成',
+    industry: '通用',
+    format: 'JSONL',
+    scale: '45.0 GB',
+    files: [],
+    comments: []
   }
 ];
 
-export const mockSkills: SkillPluginItem[] = [
-  {
-    id: 'sk_01',
-    name: 'Google Live Web Search Engine',
-    description: '为 Agent 提供实时网络搜索能力，能够抓取最新新闻、股市行情与网页文本元数据。',
-    compatibleAgents: '对话助手 / 数据分析 / 通用 Agent',
-    developer: '千机官方',
-    installs: 15400,
-    version: 'v1.4.0',
-    requiredPermissions: ['Network Request', 'Google Search API Key']
-  },
-  {
-    id: 'sk_02',
-    name: 'Python Code Sandbox Executor',
-    description: '安全隔离的 Docker 沙箱环境，可实时执行 Python 代码并返回图表打印结果与 stdout 日志。',
-    compatibleAgents: '编程辅助 / 数据分析 Agent',
-    developer: 'Sandbox Lab',
-    installs: 9200,
-    version: 'v2.1.0',
-    requiredPermissions: ['Container Runtime', 'File I/O']
-  },
-  {
-    id: 'sk_03',
-    name: 'Financial Data API Bridge',
-    description: '对接新浪财经、Tushare 与东方财富 API，实时拉取 K线图、分时数据与资金流向。',
-    compatibleAgents: '金融垂直 Agent',
-    developer: 'Quant Master',
-    installs: 3400,
-    version: 'v1.0.5',
-    requiredPermissions: ['Financial Data License']
-  }
-];
+
+import { mockSkillPlugins } from './mockSkillsData';
+
+export const mockSkills: SkillPluginItem[] = mockSkillPlugins;
 
 export const mockTasks: TaskItem[] = [
   {
@@ -990,7 +1905,7 @@ export const mockTasks: TaskItem[] = [
     bidCount: 14,
     status: '招募中',
     description: '需要开发一个能够自动识别劳动合同、采购协议中隐藏法律风险（如违约金陷阱、免责条款不符）的 Agent，需支持上传 PDF/Docx 并输出红线标注报告。',
-    deliverables: '1. 可上架千机 AI 集市的 Agent 配置文件；2. 预建的民商法 RAG 向量数据库；3. 部署文档与单元测试集。',
+    deliverables: '1. 可上架官方 AI 集市的 Agent 配置文件；2. 预建 of 民商法 RAG 向量数据库；3. 部署文档与单元测试集。',
     attachments: ['合同审查需求说明书.pdf', '测试用例范本_200例.zip']
   },
   {
@@ -1011,11 +1926,11 @@ export const mockTasks: TaskItem[] = [
   },
   {
     id: 'tsk_103',
-    title: '【竞赛】“千机杯”创意文生图 Lora 模型训练挑战赛',
+    title: '【竞赛】“创新杯”创意文生图 Lora 模型训练挑战赛',
     type: '竞赛任务',
     bounty: 50000,
     bountyUnit: '积分',
-    publisher: '千机官方运营组',
+    publisher: '官方运营组',
     publisherAvatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80',
     publishTime: '2026-08-01',
     deadline: '2026-08-31',
@@ -1086,7 +2001,7 @@ export const mockCourses: CourseItem[] = [
 
 export const mockLearningPaths: LearningPathItem[] = [
   { id: 'lp_1', title: 'AI 基础入门路径', description: '适合无 AI 经验的开发者，快速掌握 Prompt 工程与 LLM 原理。', stepCount: 4, badgeName: 'AI 启蒙勋章', targetRole: '初级 AI 爱好者' },
-  { id: 'lp_2', title: 'Agent 全栈开发者', description: '掌握 LangChain, LangGraph, Tools 编写与千机平台 Agent 上架发布。', stepCount: 8, badgeName: 'Agent 架构师', targetRole: '全栈 Agent 工程师' },
+  { id: 'lp_2', title: 'Agent 全栈开发者', description: '掌握 LangChain, LangGraph, Tools 编写与平台 Agent 上架发布。', stepCount: 8, badgeName: 'Agent 架构师', targetRole: '全栈 Agent 工程师' },
   { id: 'lp_3', title: '工业级 AI 算法专家', description: '涵盖 70B 大模型训练、分布式推理加速、CUDA 算子优化与模型量化。', stepCount: 12, badgeName: '算力与算法专家', targetRole: '算法工程师' },
   { id: 'lp_4', title: '数据工程师 & RAG 专家', description: '数据清洗、Embedding 向量化、Milvus/Qdrant 混合检索与 GraphRAG。', stepCount: 6, badgeName: '数据血缘大师', targetRole: 'RAG 数据专家' }
 ];
@@ -2394,8 +3309,8 @@ export const mockOrders: OrderItem[] = [
 export const mockPointStoreItems: PointStoreItem[] = [
   { id: 'store_1', name: 'GPU 算力卡 (10 卡时 T4/RTX4090)', type: '算力卡', pointsRequired: 500, stock: 120, image: '⚡', description: '包含 10 小时 T4 或 4090 算力体验时长，全平台算力容器通用。' },
   { id: 'store_2', name: '大模型 API Token 礼包 (1,000,000 Tokens)', type: 'Token包', pointsRequired: 300, stock: 500, image: '🎁', description: '全平台模型通用 API 调用额度，有效期 90 天。' },
-  { id: 'store_3', name: '千机认证 Agent 架构师考试券', type: '认证考试券', pointsRequired: 1000, stock: 50, image: '📜', description: '包含 1 次千机 AI 官方认证架构师线上考试资格与电子证书。' },
-  { id: 'store_4', name: '千机 AI 极客纪念版连帽衫', type: '实体周边', pointsRequired: 2500, stock: 15, image: '👕', description: '纯棉高品质极客定制连帽卫衣，含千机专属刺绣 LOGO（包邮）。' }
+  { id: 'store_3', name: '官方认证 Agent 架构师考试券', type: '认证考试券', pointsRequired: 1000, stock: 50, image: '📜', description: '包含 1 次官方认证架构师线上考试资格与电子证书。' },
+  { id: 'store_4', name: '官方 AI 极客纪念版连帽衫', type: '实体周边', pointsRequired: 2500, stock: 15, image: '👕', description: '纯棉高品质极客定制连帽卫衣，含专属刺绣 LOGO（包邮）。' }
 ];
 
 export const mockDatasetApplications: DatasetApplication[] = [
@@ -2424,13 +3339,13 @@ export const mockPointRecords: PointRecord[] = [
 
 export const mockLeaderboards = {
   topAgents: [
-    { rank: 1, name: '代码重构与安全审计 Agent', usage: '14,250 次调用', author: '千机官方实验室' },
+    { rank: 1, name: '代码重构与安全审计 Agent', usage: '14,250 次调用', author: '官方实验室' },
     { rank: 2, name: 'ComfyUI 绘图提示词大师', usage: '23,100 次调用', author: 'AIGC 视觉引擎' },
-    { rank: 3, name: '全语种实时翻译与同传专家', usage: '31,000 次调用', author: '千机官方实验室' },
+    { rank: 3, name: '全语种实时翻译与同传专家', usage: '31,000 次调用', author: '官方实验室' },
     { rank: 4, name: '金融研报 & 财报速读智囊', usage: '8,900 次调用', author: '量化星云团队' }
   ],
   topDevelopers: [
-    { rank: 1, name: '王AI-深度架构师', score: '9,850 开发者积分', title: '千机认证架构师' },
+    { rank: 1, name: '王AI-深度架构师', score: '9,850 开发者积分', title: '官方认证架构师' },
     { rank: 2, name: '极客小千 (你)', score: '7,420 开发者积分', title: '全栈 Agent 专家' },
     { rank: 3, name: '华西数字医疗课题组', score: '6,900 开发者积分', title: '医疗垂直专家' },
     { rank: 4, name: '量化星云团队', score: '5,800 开发者积分', title: '金融量化先锋' }
@@ -2438,7 +3353,7 @@ export const mockLeaderboards = {
   hardestTasks: [
     { rank: 1, title: '【招标】微调 70B 医疗多模态大模型', bounty: '¥35,000', difficulty: 'SSS 级' },
     { rank: 2, title: '【悬赏】定制基于 Qwen2.5 的合同审查 Agent', bounty: '¥8,000', difficulty: 'SS 级' },
-    { rank: 3, title: '【竞赛】“千机杯”创意文生图 Lora 挑战赛', bounty: '50,000 积分', difficulty: 'S 级' }
+    { rank: 3, title: '【竞赛】“创新杯”创意文生图 Lora 挑战赛', bounty: '50,000 积分', difficulty: 'S 级' }
   ],
   richPoints: [
     { rank: 1, name: 'SuperQuant', points: '128,500  pts' },
@@ -2449,7 +3364,7 @@ export const mockLeaderboards = {
 };
 
 export const mockSystemAnnouncements = [
-  { id: 'a1', title: '【平台公告】千机·AI空间 1.0 版本正式发版，新增 Gemini 3.6 与 DeepSeek-R1 算力节点支持', date: '2026-08-11' },
+  { id: 'a1', title: '【平台公告】AI运营中心 1.0 版本正式发版，新增 Gemini 3.6 与 DeepSeek-R1 算力节点支持', date: '2026-08-11' },
   { id: 'a2', title: '【维护通知】算力工坊 A100 集群将于今晚 02:00-03:00 进行固件例行升级', date: '2026-08-10' },
   { id: 'a3', title: '【规则变更】Agent 分成比例全面提升至 85%，鼓励开发者创建高质量行业 Agent', date: '2026-08-08' }
 ];
