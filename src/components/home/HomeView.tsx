@@ -200,18 +200,18 @@ export const HomeView: React.FC = () => {
     },
     {
       id: 'b3',
-      title: '用 AI 创造未来的无限想象',
-      subtitle: '5 大前沿创意赛道全面开放，从 AIGC 多模态设计、数据科学建模到攻防安全与产业落地',
-      badge: '创意空间 · 赛题征集',
-      techTag: 'CREATIVE HACKATHON',
+      title: '2026 AI 创新巅峰赛火热开赛',
+      subtitle: '4 大前沿官方赛道全面开放，从数据科学建模、网安攻防到 AIGC 视觉生成与产业应用落地',
+      badge: '赛事中心 · 极客角逐',
+      techTag: 'AI COMPETITION',
       targetTab: 'creative' as const,
       subMarketplaceTab: undefined,
-      baseGradient: 'from-slate-900 via-purple-950/90 to-fuchsia-900/60',
-      badgeBg: 'bg-purple-500/25 text-purple-200 border-purple-400/40',
-      image: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=1600&auto=format&fit=crop&q=80',
-      heroMetric: { title: '创意总奖池', val: '100,000+' },
-      tag1: '官方认证背书',
-      tag2: '优秀成果直接孵化'
+      baseGradient: 'from-slate-900 via-indigo-950/90 to-purple-900/60',
+      badgeBg: 'bg-indigo-500/25 text-indigo-200 border-indigo-400/40',
+      image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1600&auto=format&fit=crop&q=80',
+      heroMetric: { title: '大赛总奖池', val: '¥200,000+' },
+      tag1: '中国人工智能学会主办',
+      tag2: '顶会推优 / 算力直通'
     }
   ];
 
@@ -834,8 +834,8 @@ export const HomeView: React.FC = () => {
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Zap className="w-3.5 h-3.5 text-purple-500" />
-              <span>💡 创意空间</span>
+              <Trophy className="w-3.5 h-3.5 text-purple-500" />
+              <span>🏆 赛事中心</span>
             </button>
 
             <button

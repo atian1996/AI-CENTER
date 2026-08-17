@@ -9,10 +9,12 @@ import { ComputeView } from './components/compute/ComputeView';
 import { CreativeView } from './components/creative/CreativeView';
 import { CommunityView } from './components/community/CommunityView';
 import { WorkspaceView } from './components/workspace/WorkspaceView';
+import { AdminLayout } from './components/admin/AdminLayout';
 
 import { GlobalSearchModal } from './components/common/GlobalSearchModal';
 import { CreateBlankAppModal } from './components/modals/CreateBlankAppModal';
 import { CreateComputeModal } from './components/modals/CreateComputeModal';
+import { PublishTaskModal } from './components/modals/PublishTaskModal';
 import { InstanceDetailModal } from './components/compute/InstanceDetailModal';
 import { ComputeHistoryModal } from './components/compute/ComputeHistoryModal';
 import { AgentSandboxModal } from './components/modals/AgentSandboxModal';
@@ -27,6 +29,8 @@ import { Toast } from './components/common/Toast';
 const AppContent: React.FC = () => {
   const { 
     activeTab, 
+    tabResetKey,
+    isAdminMode,
     detailModalAgent, 
     setDetailModalAgent, 
     subscribeModalAgent, 
@@ -42,8 +46,60 @@ const AppContent: React.FC = () => {
     detailModel,
     setDetailModel,
     setTryoutModel,
+    publishTaskModalOpen,
+    setPublishTaskModalOpen,
     showToast
   } = useApp();
+
+  // Scroll to top whenever activeTab changes or menu is clicked
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+  }, [activeTab, tabResetKey, isAdminMode]);
+
+  // 如果处于后台管理模式，渲染后台左侧导航专属界面
+  if (isAdminMode) {
+    return (
+      <div className="min-h-screen w-full bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white">
+        <AdminLayout />
+
+        {/* Global Modals & Toast */}
+        <GlobalSearchModal />
+        <CreateBlankAppModal />
+        <CreateComputeModal />
+        <PublishTaskModal
+          isOpen={publishTaskModalOpen}
+          onClose={() => setPublishTaskModalOpen(false)}
+        />
+        <InstanceDetailModal />
+        <ComputeHistoryModal />
+        
+        {/* Global Agent Modals */}
+        {detailModalAgent && (
+          <AgentDetailViewModal
+            agent={detailModalAgent}
+            isOpen={!!detailModalAgent}
+            onClose={() => setDetailModalAgent(null)}
+            onOpenSubscribeModal={(ag) => setSubscribeModalAgent(ag)}
+            onOpenQuotaModal={(ag) => setQuotaModalAgent(ag)}
+            userSubscription={subscriptions[detailModalAgent.id]}
+            isPayPerTokenMode={!!payPerTokenAgents[detailModalAgent.id]}
+            onTogglePayPerTokenMode={() => {
+              setPayPerTokenAgents(prev => ({
+                ...prev,
+                [detailModalAgent.id]: !prev[detailModalAgent.id]
+              }));
+              showToast(payPerTokenAgents[detailModalAgent.id] ? '已切换为免费额度优先' : '已开启按量后付费模式');
+            }}
+          />
+        )}
+
+        {/* Toast Component */}
+        <Toast />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-slate-50/90 text-slate-800 font-sans selection:bg-indigo-500 selection:text-white flex flex-col bg-tech-grid relative">
@@ -55,14 +111,14 @@ const AppContent: React.FC = () => {
 
       {/* Main Container tailored for 1920x1080 resolution */}
       <main className="flex-1 w-full max-w-[1920px] mx-auto px-8 py-6 overflow-x-hidden">
-        {activeTab === 'home' && <HomeView />}
-        {activeTab === 'marketplace' && <MarketplaceView />}
-        {activeTab === 'tasks' && <TasksView />}
-        {activeTab === 'compute' && <ComputeView />}
-        {activeTab === 'learning' && <LearningView />}
-        {activeTab === 'creative' && <CreativeView />}
-        {activeTab === 'community' && <CommunityView />}
-        {activeTab === 'workspace' && <WorkspaceView />}
+        {activeTab === 'home' && <HomeView key={`home-${tabResetKey.home}`} />}
+        {activeTab === 'marketplace' && <MarketplaceView key={`marketplace-${tabResetKey.marketplace}`} />}
+        {activeTab === 'tasks' && <TasksView key={`tasks-${tabResetKey.tasks}`} />}
+        {activeTab === 'compute' && <ComputeView key={`compute-${tabResetKey.compute}`} />}
+        {activeTab === 'learning' && <LearningView key={`learning-${tabResetKey.learning}`} />}
+        {activeTab === 'creative' && <CreativeView key={`creative-${tabResetKey.creative}`} />}
+        {activeTab === 'community' && <CommunityView key={`community-${tabResetKey.community}`} />}
+        {activeTab === 'workspace' && <WorkspaceView key={`workspace-${tabResetKey.workspace}`} />}
       </main>
 
       {/* Footer */}
@@ -87,6 +143,10 @@ const AppContent: React.FC = () => {
       <GlobalSearchModal />
       <CreateBlankAppModal />
       <CreateComputeModal />
+      <PublishTaskModal
+        isOpen={publishTaskModalOpen}
+        onClose={() => setPublishTaskModalOpen(false)}
+      />
       <InstanceDetailModal />
       <ComputeHistoryModal />
       

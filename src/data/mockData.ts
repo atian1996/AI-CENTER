@@ -23,7 +23,8 @@ import {
   PointStoreItem,
   DatasetApplication,
   TaskCollaborationMessage,
-  LoginDeviceItem
+  LoginDeviceItem,
+  CompetitionItem
 } from '../types';
 
 export const initialUserProfile: UserProfile = {
@@ -35,8 +36,10 @@ export const initialUserProfile: UserProfile = {
   levelBadge: 'LV.4 AI架构师',
   identityTag: '高级开发者 / 算法工程师',
   skills: ['Python', 'Agent Protocol', 'PyTorch', 'vLLM', 'React', 'TypeScript'],
-  balance: 128.00,
-  points: 1200,
+  balance: 25800.00,
+  frozenBalance: 3000.00,
+  points: 15000,
+  frozenPoints: 0,
   todayEarnedPoints: 120,
   githubUrl: 'https://github.com/qianji-ai',
   websiteUrl: 'https://qianji.ai',
@@ -1887,60 +1890,11 @@ export const mockDatasets: DatasetItem[] = [
 
 
 import { mockSkillPlugins } from './mockSkillsData';
+import { mockRichTasks } from './mockTasksData';
 
 export const mockSkills: SkillPluginItem[] = mockSkillPlugins;
 
-export const mockTasks: TaskItem[] = [
-  {
-    id: 'tsk_101',
-    title: '【悬赏】定制基于 Qwen2.5 的律所合同审查 Agent 与 RAG 向量库',
-    type: '悬赏任务',
-    bounty: 8000,
-    bountyUnit: '¥',
-    publisher: '北京天元律师事务所',
-    publisherAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-    publishTime: '2026-08-09',
-    deadline: '2026-08-25',
-    requiredSkills: ['Qwen2.5', 'RAG', 'Python', 'Milvus', '合同分析'],
-    bidCount: 14,
-    status: '招募中',
-    description: '需要开发一个能够自动识别劳动合同、采购协议中隐藏法律风险（如违约金陷阱、免责条款不符）的 Agent，需支持上传 PDF/Docx 并输出红线标注报告。',
-    deliverables: '1. 可上架官方 AI 集市的 Agent 配置文件；2. 预建 of 民商法 RAG 向量数据库；3. 部署文档与单元测试集。',
-    attachments: ['合同审查需求说明书.pdf', '测试用例范本_200例.zip']
-  },
-  {
-    id: 'tsk_102',
-    title: '【招标】微调 70B 医疗多模态大模型，要求图像与病历联合推理',
-    type: '招标任务',
-    bounty: 35000,
-    bountyUnit: '¥',
-    publisher: '迈瑞数字医疗研究院',
-    publisherAvatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&auto=format&fit=crop&q=80',
-    publishTime: '2026-08-05',
-    deadline: '2026-09-10',
-    requiredSkills: ['LoRA / Full Fine-tuning', 'PyTorch', 'vLLM', 'DICOM Medical Imaging'],
-    bidCount: 8,
-    status: '进行中',
-    description: '针对 CT/X光片图像与电子病历（EMR）文本进行对齐微调。要求在华西/协和公开数据集上 BLEU-4 达到 0.42 以上，推理时延控制在 2 秒以内。',
-    deliverables: '1. 合并后的 GGUF / SafeTensors 模型权重；2. 评估代码与显存吞吐测试报告；3. 源码仓库导出。'
-  },
-  {
-    id: 'tsk_103',
-    title: '【竞赛】“创新杯”创意文生图 Lora 模型训练挑战赛',
-    type: '竞赛任务',
-    bounty: 50000,
-    bountyUnit: '积分',
-    publisher: '官方运营组',
-    publisherAvatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80',
-    publishTime: '2026-08-01',
-    deadline: '2026-08-31',
-    requiredSkills: ['Flux.1 Lora', 'ComfyUI', 'Dataset Tagging'],
-    bidCount: 65,
-    status: '招募中',
-    description: '训练一个专属于“赛博朋克国风建筑”风格的 Flux.1 / SDXL Lora 模型，根据社区投票与专家组综合评分决出一二三等奖，获奖模型将在算力工坊首页推荐。',
-    deliverables: '1. Lora 权重文件 (.safetensors)；2. 10 张示例渲染图与完整 Prompt 工作流 (.json)。'
-  }
-];
+export const mockTasks: TaskItem[] = mockRichTasks;
 
 export const mockCourses: CourseItem[] = [
   {
@@ -3478,5 +3432,338 @@ export const mockAccountTransactions: AccountTransaction[] = [
     pointsAmount: -100,
     pointsBalanceAfter: 1345,
     status: 'success'
+  }
+];
+
+// 赛事中心 - 官方赛事列表数据
+export const mockCompetitions: CompetitionItem[] = [
+  {
+    id: 'comp-01',
+    title: '2026 AI创新巅峰赛',
+    organizer: '中国人工智能学会',
+    organizerBadge: '国家一级学会',
+    coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
+    bannerImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1600&auto=format&fit=crop&q=80',
+    startTime: '2026-08-01 00:00:00',
+    endTime: '2026-10-31 23:59:59',
+    status: 'ongoing',
+    typeTags: ['AI数据科学赛', 'AI安全挑战赛', 'AIGC生成赛', 'AI产品应用赛'],
+    introduction: {
+      summary: '2026 AI创新巅峰赛是由中国人工智能学会主办，千机AI运营中心与多家顶尖科研院校、头部科技大厂联合承办的国家级高水平人工智能综合挑战赛。大赛旨在汇聚全球 AI 算法工程师、开发者与高校学子，围绕通用大模型、多模态智能、深度攻防安全与垂类产业应用展开全方位技术角逐，孵化具有行业颠覆价值的 AI 原生应用和前沿开源成果。',
+      schedule: [
+        { stage: '第一阶段：报名与组队', time: '2026-08-01 00:00 ~ 2026-09-01 23:59', desc: '开放线上注册组队通道，发布初赛基线数据集与开发者环境指南。' },
+        { stage: '第二阶段：初赛评测角逐', time: '2026-09-01 00:00 ~ 2026-10-01 23:59', desc: '各赛道评测榜单每日自动刷新评测得分，筛选 TOP 20 队伍晋级全国决赛。' },
+        { stage: '第三阶段：全国决赛答辩', time: '2026-10-01 00:00 ~ 2026-10-31 23:59', desc: '专家评审委员会线上/线下现场代码复现、路演答辩与颁奖盛典。' }
+      ],
+      awards: [
+        { rank: '一等奖 (各赛道 1 名)', reward: '¥50,000 现金 + 荣誉证书 + 顶会推优', quota: '4 支队伍', iconBg: 'from-amber-400 to-amber-600' },
+        { rank: '二等奖 (各赛道 2 名)', reward: '¥20,000 现金 + 专属GPU算力卡 2000元', quota: '8 支队伍', iconBg: 'from-slate-300 to-slate-500' },
+        { rank: '三等奖 (各赛道 3 名)', reward: '¥10,000 现金 + 平台认证专家证书', quota: '12 支队伍', iconBg: 'from-amber-700 to-orange-800' },
+        { rank: '优胜奖 (各赛道 TOP 10)', reward: '¥2,000 算力补贴 + 官方孵化直通绿卡', quota: '40 支队伍', iconBg: 'from-indigo-400 to-indigo-600' }
+      ],
+      evaluationStandards: [
+        '算法与模型性能指标（根据各赛道基准测试指标如 F1、Accuracy、ROUGE 等进行客观量化排榜，占比 50%）；',
+        '方案创新性与学术工程突破（方案设计、架构优化、数据清洗与轻量化调优策略，占比 25%）；',
+        '系统工程落地度与可用性（代码规范程度、推理吞吐性能、API接口稳定性与资源消耗比，占比 15%）；',
+        '答辩表现与技术文档完备性（决赛路演逻辑清晰度、技术文档结构严密性，占比 10%）。'
+      ],
+      organizingCommittee: [
+        { role: '指导单位', name: '中国人工智能学会专家指导委员会' },
+        { role: '主办单位', name: '中国人工智能学会 (CAAI)' },
+        { role: '承办单位', name: '千机 AI 运营中心 / 极客智能计算联合实验室' },
+        { role: '算力与技术支持', name: '千机算力工坊 · GPU 容器集群' }
+      ]
+    },
+    tracks: [
+      {
+        id: 'track-01-1',
+        name: 'AI数据科学赛道',
+        shortName: '数据科学赛道',
+        coverImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=80',
+        timeRange: '2026-09-01 00:00:00 ~ 2026-10-15 23:59:59',
+        typeTag: 'AI数据科学赛',
+        description: '本赛道聚焦于金融与复杂时序领域的数据科学建模，要求参赛者基于海量带噪多模态金融行情与新闻语料，构建高精度分类预测模型。',
+        problemStatement: '本次比赛提供经过脱敏处理的近千万条金融新闻文本和对应的标的行情波动标注数据。参赛者需构建综合 NLP 与时间序列的深度模型，对未标注新闻在发布后 1 小时内的标的情感倾向及波动趋势进行快速精准研判。',
+        evaluationMetrics: '主观得分由客观排行榜指标决定：采用宏平均 F1 值（Macro-F1）作为核心评估基准，结合推理耗时（P95 Latency ≤ 35ms）进行综合打分。',
+        dataDescription: '训练集：包含 100,000 条结构化标注语料（文本内容、来源机构、情绪极性、涨跌波幅）；测试集：包含 20,000 条盲测样本；所有数据均已去除涉及隐私的敏感字段。',
+        ruleDescription: '参赛队伍每日最多可提交 5 次预测结果（CSV 格式）；禁止使用赛题未允许的外部收费闭源大模型 API 泄题。',
+        targetUrl: 'https://adworld.xctf.org.cn/competitions-hall/competitions',
+        participantsCount: 428,
+        submissionsCount: 1892
+      },
+      {
+        id: 'track-01-2',
+        name: 'AI安全挑战赛道',
+        shortName: '安全挑战赛道',
+        coverImage: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600&auto=format&fit=crop&q=80',
+        timeRange: '2026-09-01 00:00:00 ~ 2026-10-20 23:59:59',
+        typeTag: 'AI安全挑战赛',
+        description: '探索大语言模型红蓝对抗与智能体防御机制，用技术挖掘提示词注入（Prompt Injection）、越狱攻击以及 Agent 权限越权等前沿安全漏洞。',
+        problemStatement: '选手需作为红队测试人员，针对官方部署的高防御虚拟企业 Agent 系统，在合规沙箱中设计对抗性 Prompt 提示词与恶意诱导 Payload，突破系统设定的道德安全护栏与敏感信息防泄密机制。',
+        evaluationMetrics: '以成功触发目标敏感 Flag 的有效攻击链数量、突破难度层级（Level 1~5）及越狱样本简洁度进行积分排名（Capture The Flag 模式）。',
+        dataDescription: '提供虚拟靶场沙箱 API 接入凭据，靶场内含 8 个不同安全防御等级的真实企业智能体应用场景。',
+        ruleDescription: '严禁对比赛沙箱平台服务器实施 DoS/DDoS 暴力拒绝服务攻击；提交攻击报告需附带可复现的 HTTP 请求报文与执行日志。',
+        targetUrl: 'https://adworld.xctf.org.cn/competitions-hall/competitions',
+        participantsCount: 310,
+        submissionsCount: 940
+      },
+      {
+        id: 'track-01-3',
+        name: 'AIGC多模态创作赛道',
+        shortName: 'AIGC创作赛道',
+        coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
+        timeRange: '2026-09-01 00:00:00 ~ 2026-10-25 23:59:59',
+        typeTag: 'AIGC生成赛',
+        description: '以“东方美学与未来赛博”为核心主题，利用 Flux、Midjourney、ComfyUI 或自研 LoRA 权重生成高水准数字视觉大片与动态短片。',
+        problemStatement: '参赛者需在规定主题下创作一组（不少于 4 张）具有完整叙事脉络的 4K 概念视觉艺术作品或 30 秒以内的 AI 生成高清连贯短片，并附带完整生图生视频的工作流配置（Workflow JSON）。',
+        evaluationMetrics: '评审团由资深概念艺术家与 AI 技术专家联合打分：视觉艺术表现力（40%）+ 主题叙事连贯性（30%）+ AI生成技术难度与工作流复现度（30%）。',
+        dataDescription: '官方算力工坊已预置 Flux 1.0、SDXL 与 Wan2.2 视频生成节点环境，参赛者可一键挂载使用。',
+        ruleDescription: '作品必须为原创生成，不得侵犯第三方知识产权；需提供原始提示词、种子值与工作流文件。',
+        targetUrl: 'http://10.4.5.3/page/mg/project-hall',
+        participantsCount: 560,
+        submissionsCount: 720,
+        featuredWorks: [
+          {
+            id: 'work-1',
+            title: '《霓虹云阙·重构山海》',
+            author: '极客小千',
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+            image: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=800&auto=format&fit=crop&q=80',
+            score: '96.8 分',
+            description: '基于自训练国风赛博 LoRA 权重与 Wan2.2 动态插帧技术，重现千里江山图在未来数字世界的流光幻象。',
+            likes: 382
+          },
+          {
+            id: 'work-2',
+            title: '《深空巨构：第零引力站》',
+            author: 'CyberArtist_Ray',
+            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+            image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
+            score: '94.5 分',
+            description: '探讨深空采矿与人工智能自我迭代命题的高精 8K 概念短片，使用 ComfyUI 复杂多层节点渲染。',
+            likes: 245
+          }
+        ]
+      },
+      {
+        id: 'track-01-4',
+        name: 'AI产品应用创新赛道',
+        shortName: '产品应用赛道',
+        coverImage: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=600&auto=format&fit=crop&q=80',
+        timeRange: '2026-09-01 00:00:00 ~ 2026-10-31 23:59:59',
+        typeTag: 'AI产品应用赛',
+        description: '聚焦“AI + 真实业务场景”，构建具备完整商业价值闭环的独立 Web / 移动端 AI 原生产品原型或多 Agent 协作系统。',
+        problemStatement: '参赛队伍需针对医疗健康、智慧政务、工业智造或跨境电商等实际行业痛点，开发一款具有可用交互 UI 与后端业务逻辑的完整 AI 原生应用。',
+        evaluationMetrics: '业务场景商业价值（35%）+ 产品 UI/UX 交互体验（30%）+ AI 技术结合深度与系统稳定性（25%）+ 开源生态贡献度（10%）。',
+        dataDescription: '提供平台百款精选 Agent 资产与大模型统一 API 网关接入额度支持。',
+        ruleDescription: '参赛项目需提供线上可访问的 Demo 体验链接及 GitHub/Gitee 开源代码仓库。',
+        targetUrl: 'http://10.4.5.3/page/mg/project-hall',
+        participantsCount: 380,
+        submissionsCount: 210,
+        featuredWorks: [
+          {
+            id: 'work-3',
+            title: '《全科医生慢病智能预诊系统》',
+            author: '华西数字医疗团队',
+            avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&auto=format&fit=crop&q=80',
+            image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop&q=80',
+            score: '97.2 分',
+            description: '融合多模态病历识别、知识图谱推理与多智能体分诊协作的高可靠医疗助手，已在三甲医院开展试点。',
+            likes: 512
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'comp-02',
+    title: '2026 数据科学挑战赛',
+    organizer: '国家数据科学研究院',
+    organizerBadge: '国家重点实验室',
+    coverImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop&q=80',
+    bannerImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1600&auto=format&fit=crop&q=80',
+    startTime: '2026-09-01 00:00:00',
+    endTime: '2026-12-31 23:59:59',
+    status: 'unstarted',
+    typeTags: ['AI数据科学赛'],
+    introduction: {
+      summary: '2026 数据科学挑战赛聚焦于工业大数据分析、能源负荷高精度预测与时序异常检测。旨在发掘具备高超特征工程构建能力与先进算法建模能力的优秀数据科学家。',
+      schedule: [
+        { stage: '赛事报名与热身', time: '2026-09-01 00:00 ~ 2026-10-01 23:59', desc: '开放参赛通道，提供热身练习集与数据看板教程。' },
+        { stage: '正式赛季与模型提交', time: '2026-10-01 00:00 ~ 2026-12-15 23:59', desc: '正式测试集 A/B 榜单评测，每周评选周星奖。' },
+        { stage: '代码审核与结果公布', time: '2026-12-15 00:00 ~ 2026-12-31 23:59', desc: 'TOP 10 队伍代码复现审查并颁发认证奖项。' }
+      ],
+      awards: [
+        { rank: '特等奖 (1 名)', reward: '¥80,000 奖金 + 签约数据科学家 Offer 直通', quota: '1 支队伍', iconBg: 'from-amber-400 to-amber-600' },
+        { rank: '一等奖 (2 名)', reward: '¥30,000 奖金 + 高级算力卡 3000元', quota: '2 支队伍', iconBg: 'from-slate-300 to-slate-500' },
+        { rank: '二等奖 (5 名)', reward: '¥10,000 奖金 + 官方荣誉奖牌', quota: '5 支队伍', iconBg: 'from-amber-700 to-orange-800' }
+      ],
+      evaluationStandards: [
+        '榜单均方根误差（RMSE）与平均绝对百分比误差（MAPE）综合加权（80%）；',
+        '模型泛化能力及对抗过拟合表现（15%）；',
+        '代码规范性与运行效率（5%）。'
+      ],
+      organizingCommittee: [
+        { role: '主办单位', name: '国家数据科学研究院' },
+        { role: '协办单位', name: '全国工业大数据技术联盟' }
+      ]
+    },
+    tracks: [
+      {
+        id: 'track-02-1',
+        name: '工业时序数据科学建模赛道',
+        shortName: '数据科学赛道',
+        coverImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=80',
+        timeRange: '2026-09-01 00:00:00 ~ 2026-12-15 23:59:59',
+        typeTag: 'AI数据科学赛',
+        description: '基于智能电网高频传感器采集的时序数据，预测未来 72 小时的负荷曲线与电网峰谷波动情况。',
+        problemStatement: '参赛者需处理具有高噪声、缺失值和季节性周期特性的工业级传感器日志，结合气象特征构建高鲁棒性的多步时间序列预测模型。',
+        evaluationMetrics: '采用加权对称平均绝对百分比误差（WMAPE）作为排榜指标，得分越低排名越靠前。',
+        dataDescription: '包含近 3 年 15 分钟级电网负荷数据及同期区域温湿度、节假日特征数据集。',
+        ruleDescription: '严禁进行任何形式的人工标注与标签穿越；模型必须提供无网络环境下的单机 Docker 推理镜像。',
+        targetUrl: 'https://adworld.xctf.org.cn/competitions-hall/competitions',
+        participantsCount: 290,
+        submissionsCount: 650
+      }
+    ]
+  },
+  {
+    id: 'comp-03',
+    title: '2026 网络与AI安全攻防挑战赛',
+    organizer: '网络空间安全人才培养基地',
+    organizerBadge: '网安重点专项',
+    coverImage: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop&q=80',
+    bannerImage: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=1600&auto=format&fit=crop&q=80',
+    startTime: '2026-06-01 00:00:00',
+    endTime: '2026-07-31 23:59:59',
+    status: 'ended',
+    typeTags: ['AI安全挑战赛'],
+    introduction: {
+      summary: '2026 网络与AI安全攻防挑战赛是国内首个针对大模型供应链安全与自动化智能体（Agent）渗透防御的实战对抗赛事。',
+      schedule: [
+        { stage: '线上靶场挑战', time: '2026-06-01 00:00 ~ 2026-07-15 23:59', desc: '开放 12 道高难度 AI 攻防靶场关卡。' },
+        { stage: '线下巅峰对决', time: '2026-07-25 00:00 ~ 2026-07-31 23:59', desc: 'TOP 10 战队进行现场实时自动化攻防对抗（AWD 模式）。' }
+      ],
+      awards: [
+        { rank: '冠军战队 (1 名)', reward: '¥60,000 奖金 + 攻防荣誉奖杯', quota: '1 支战队' },
+        { rank: '亚军战队 (2 名)', reward: '¥25,000 奖金 + 顶级网安实验室录用函', quota: '2 支战队' },
+        { rank: '季军战队 (3 名)', reward: '¥10,000 奖金 + 安全专家证书', quota: '3 支战队' }
+      ],
+      evaluationStandards: [
+        '攻防靶场实时积分排行榜（解题速度与首杀加分机制，占比 100%）。'
+      ],
+      organizingCommittee: [
+        { role: '主办单位', name: '网络空间安全人才培养基地' },
+        { role: '技术支持', name: 'XCTF 攻防竞赛联盟' }
+      ]
+    },
+    tracks: [
+      {
+        id: 'track-03-1',
+        name: 'AI大模型安全攻防赛道',
+        shortName: '安全挑战赛道',
+        coverImage: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600&auto=format&fit=crop&q=80',
+        timeRange: '2026-06-01 00:00:00 ~ 2026-07-31 23:59:59',
+        typeTag: 'AI安全挑战赛',
+        description: '在真实沙箱中挖掘模型间接注入、后门触发与越权函数调用的复合攻击漏洞。',
+        problemStatement: '参赛战队需利用自动构造或手工逆向的提示词向量，攻破防御严格的虚拟 AI 运维管控中枢。',
+        evaluationMetrics: 'Flag 提交系统自动实时校验判分。',
+        dataDescription: '提供沙箱靶场动态下发的 Docker 容器实例。',
+        ruleDescription: '已顺利完赛闭幕，历届赛题与官方解题 Writeup 已归档入库。',
+        targetUrl: 'https://adworld.xctf.org.cn/competitions-hall/competitions',
+        participantsCount: 520,
+        submissionsCount: 2310
+      }
+    ]
+  },
+  {
+    id: 'comp-04',
+    title: '2026 产业大模型应用创意赛',
+    organizer: '数字经济产业创新联合体',
+    organizerBadge: '产业联盟',
+    coverImage: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=800&auto=format&fit=crop&q=80',
+    bannerImage: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=1600&auto=format&fit=crop&q=80',
+    startTime: '2026-08-15 00:00:00',
+    endTime: '2026-11-20 23:59:59',
+    status: 'ongoing',
+    typeTags: ['AIGC生成赛', 'AI产品应用赛'],
+    introduction: {
+      summary: '推动大模型从技术试验走向千万级产业落地，鼓励开发者结合具体企业数字化转型场景（营销、研发、政务、文旅）打造高价值 AI 软件原型。',
+      schedule: [
+        { stage: '创意提案征集', time: '2026-08-15 00:00 ~ 2026-09-30 23:59', desc: '提交项目商业计划书与交互原型架构。' },
+        { stage: '原型研发打磨', time: '2026-10-01 00:00 ~ 2026-11-10 23:59', desc: '平台免费提供 GPU 算力支持与导师辅导。' },
+        { stage: '产业对接大会', time: '2026-11-15 00:00 ~ 2026-11-20 23:59', desc: '百家投资机构与龙头企业采购团现场直投。' }
+      ],
+      awards: [
+        { rank: '产业卓越奖 (2 名)', reward: '¥100,000 产业孵化金 + 领投意向书', quota: '2 支队伍' },
+        { rank: '最佳商业价值奖 (3 名)', reward: '¥30,000 奖金 + 平台免费推广位 1 年', quota: '3 支队伍' },
+        { rank: '最佳技术创新奖 (5 名)', reward: '¥15,000 奖金 + 算力工坊 5000元代金券', quota: '5 支队伍' }
+      ],
+      evaluationStandards: [
+        '市场痛点真实性与商业模式闭环（40%）；',
+        'AI 技术架构先进性与模型调优深度（30%）；',
+        '用户体验设计与产品完成度（30%）。'
+      ],
+      organizingCommittee: [
+        { role: '主办单位', name: '数字经济产业创新联合体' },
+        { role: '协办单位', name: '千机 AI 产业生态孵化器' }
+      ]
+    },
+    tracks: [
+      {
+        id: 'track-04-1',
+        name: 'AIGC智能营销与内容生成赛道',
+        shortName: 'AIGC创作赛道',
+        coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
+        timeRange: '2026-08-15 00:00:00 ~ 2026-11-15 23:59:59',
+        typeTag: 'AIGC生成赛',
+        description: '探索基于多模态大模型的自动化品牌营销素材生成、智能文案与数字人播报短视频生产矩阵。',
+        problemStatement: '参赛团队需提供整套可落地的 AIGC 创意营销解决方案及实际生成的高清样片与文案转化率测试数据。',
+        evaluationMetrics: '创意新颖度与商业品牌传播效果综合打分。',
+        dataDescription: '提供数十套行业营销数据集及品牌官方图库。',
+        targetUrl: 'http://10.4.5.3/page/mg/project-hall',
+        participantsCount: 215,
+        submissionsCount: 180,
+        featuredWorks: [
+          {
+            id: 'work-4',
+            title: '《AI驱动国潮品牌全域爆款营销矩阵》',
+            author: '星火创意实验室',
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+            image: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=800&auto=format&fit=crop&q=80',
+            score: '95.0 分',
+            description: '一键生成涵盖小红书图文、抖音短剧脚本与电商主图的端到端 AIGC 工业级自动化流程。',
+            likes: 198
+          }
+        ]
+      },
+      {
+        id: 'track-04-2',
+        name: '垂直行业AI原生应用落地赛道',
+        shortName: '产品应用赛道',
+        coverImage: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=600&auto=format&fit=crop&q=80',
+        timeRange: '2026-08-15 00:00:00 ~ 2026-11-20 23:59:59',
+        typeTag: 'AI产品应用赛',
+        description: '聚焦于政务、医疗、制造业等实际场景的 Agent 与大模型工作流应用开发。',
+        problemStatement: '打造具备企业级权限隔离、外部系统 OpenAPI 联动与私有知识库 RAG 检索的生产级 AI 软件。',
+        evaluationMetrics: '企业专家评审团针对系统可用性与工程鲁棒性进行现场打分。',
+        dataDescription: '提供脱敏后的行业业务系统接口规范。',
+        targetUrl: 'http://10.4.5.3/page/mg/project-hall',
+        participantsCount: 180,
+        submissionsCount: 95,
+        featuredWorks: [
+          {
+            id: 'work-5',
+            title: '《工业智造设备故障多模态诊断专家》',
+            author: '智控物联团队',
+            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+            image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&auto=format&fit=crop&q=80',
+            score: '96.2 分',
+            description: '结合工业振动频谱声纹与大模型故障知识库，准确率达 98.4% 的工业设备巡检 Agent。',
+            likes: 310
+          }
+        ]
+      }
+    ]
   }
 ];

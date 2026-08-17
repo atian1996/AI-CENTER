@@ -17,7 +17,9 @@ import {
   AppNotification, 
   OnboardingTask,
   PointRecord,
-  ApiKeyItem
+  ApiKeyItem,
+  CompetitionItem,
+  AdminMenuKey
 } from '../types';
 import { 
   initialUserProfile, 
@@ -27,23 +29,33 @@ import {
   mockModels, 
   mockDatasets, 
   mockSkills,
-  mockTasks, 
   mockCourses, 
   mockGpuInstances, 
-  mockFeedPosts,
-  mockApiKeys,
-  mockPointRecords
+  mockFeedPosts, 
+  mockApiKeys, 
+  mockPointRecords, 
+  mockCompetitions 
 } from '../data/mockData';
+import { mockRichTasks } from '../data/mockTasksData';
 
 interface AppContextType {
   // Navigation State
   activeTab: MainTabType;
   setActiveTab: (tab: MainTabType) => void;
   setSelectedMainTab: (tab: MainTabType) => void;
+  tabResetKey: Record<MainTabType, number>;
   marketplaceTab: MarketplaceSubTab;
   setMarketplaceTab: (tab: MarketplaceSubTab) => void;
   workspaceSubTab: WorkspaceSubTab;
   setWorkspaceSubTab: (sub: WorkspaceSubTab) => void;
+
+  // Backend Admin System State
+  isAdminMode: boolean;
+  setIsAdminMode: (admin: boolean) => void;
+  activeAdminMenu: AdminMenuKey;
+  setActiveAdminMenu: (menu: AdminMenuKey) => void;
+  enterAdminMode: (defaultMenu?: AdminMenuKey) => void;
+  exitAdminMode: () => void;
 
   // Search & Global Modals
   searchOpen: boolean;
@@ -109,7 +121,13 @@ interface AppContextType {
   toggleCompareModel: (model: ModelItem) => void;
   clearCompareModels: () => void;
 
-  // Action Modals
+  // Competitions
+  competitions: CompetitionItem[];
+  selectedCompetitionId: string | null;
+  setSelectedCompetitionId: (id: string | null) => void;
+  openCompetitionDetail: (compId: string) => void;
+
+  // Action Modals & Task Flow
   createAgentModalOpen: boolean;
   setCreateAgentModalOpen: (open: boolean) => void;
   publishTaskModalOpen: boolean;
@@ -122,11 +140,27 @@ interface AppContextType {
   setDetailInstance: (inst: GPUInstance | null) => void;
   historyModalOpen: boolean;
   setHistoryModalOpen: (open: boolean) => void;
+  
+  // 任务导航跳转
+  selectedTaskIdForDetail: string | null;
+  setSelectedTaskIdForDetail: (id: string | null) => void;
+  selectedTaskForVerification: TaskItem | null;
+  setSelectedTaskForVerification: (task: TaskItem | null) => void;
 
   // Interactive Operations
   addAgent: (agent: Omit<AgentItem, 'id' | 'rating' | 'ratingCount' | 'usageCount' | 'createdAt'>) => void;
   purchaseAgent: (agentId: string) => void;
-  addTask: (task: Omit<TaskItem, 'id' | 'bidCount' | 'publishTime' | 'status'>) => void;
+  addTask: (task: any) => void;
+  auditTask: (taskId: string, approved: boolean, remark?: string) => void;
+  withdrawTask: (taskId: string) => void;
+  takeTask: (taskId: string) => void;
+  submitTaskResult: (taskId: string, notes: string, files: { name: string; size: string }[]) => void;
+  verifyTaskSubmission: (taskId: string, submissionId: string, approved: boolean, rejectReason?: string) => void;
+  updateTask: (task: TaskItem) => void;
+  submitTaskBid: (taskId: string, proposal: string, quoteAmount: number, estimatedDays: number, attachments?: string[]) => void;
+  submitTaskDeliverable: (taskId: string, fileName: string, fileSize: string, summary: string, demoUrl?: string) => void;
+  acceptTaskSubmission: (taskId: string, submissionId: string, comment?: string) => void;
+  rejectTaskSubmission: (taskId: string, submissionId: string, comment: string) => void;
   launchGpuInstance: (scene: GPUInstance['scene'], gpuModel: string, imageName: string, customOpts?: Partial<GPUInstance>) => void;
   toggleGpuInstanceStatus: (id: string) => void;
   restartGpuInstance: (id: string) => void;
@@ -161,11 +195,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [datasets] = useState<DatasetItem[]>(mockDatasets);
   const [skills] = useState<SkillPluginItem[]>(mockSkills);
   const [favoriteAgentIds, setFavoriteAgentIds] = useState<string[]>(['ag_01', 'ag_03']);
-  const [tasks, setTasks] = useState<TaskItem[]>(mockTasks);
+  const [tasks, setTasks] = useState<TaskItem[]>(mockRichTasks);
   const [courses] = useState<CourseItem[]>(mockCourses);
   const [gpuInstances, setGpuInstances] = useState<GPUInstance[]>(mockGpuInstances);
   const [posts, setPosts] = useState<FeedPost[]>(mockFeedPosts);
   const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>(mockApiKeys);
+  
+  // 任务导航状态
+  const [selectedTaskIdForDetail, setSelectedTaskIdForDetail] = useState<string | null>(null);
+  const [selectedTaskForVerification, setSelectedTaskForVerification] = useState<TaskItem | null>(null);
 
   // Modals & Selection
   const [sandboxAgentState, setSandboxAgentState] = useState<AgentItem | null>(null);
@@ -199,6 +237,94 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const [selectedCompareModels, setSelectedCompareModels] = useState<ModelItem[]>([]);
+
+  // Competitions
+  const [competitions] = useState<CompetitionItem[]>(mockCompetitions);
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState<string | null>(null);
+
+  // Tab reset keys to force fresh initial view on menu switches
+  const [tabResetKey, setTabResetKey] = useState<Record<MainTabType, number>>({
+    home: 0,
+    marketplace: 0,
+    tasks: 0,
+    compute: 0,
+    learning: 0,
+    creative: 0,
+    community: 0,
+    workspace: 0,
+  });
+
+  // Backend Admin System State
+  const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
+  const [activeAdminMenu, setActiveAdminMenu] = useState<AdminMenuKey>('operations');
+
+  const enterAdminMode = (defaultMenu: AdminMenuKey = 'operations') => {
+    setIsAdminMode(true);
+    setActiveAdminMenu(defaultMenu);
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+    } catch {
+      // ignore
+    }
+  };
+
+  const exitAdminMode = () => {
+    setIsAdminMode(false);
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleSetActiveTab = (tab: MainTabType) => {
+    // If in admin mode, exiting back to frontend
+    setIsAdminMode(false);
+
+    // Reset all sub-page states across modules to their clean initial default
+    setSelectedCompetitionId(null);
+    setMarketplaceTab('agent');
+    setWorkspaceSubTab('overview');
+    setSelectedCompareModels([]);
+    setDetailModalAgent(null);
+    setSubscribeModalAgent(null);
+    setQuotaModalAgent(null);
+    setDetailModel(null);
+    setTryoutModel(null);
+    setDetailInstance(null);
+    setCreateComputePreset(null);
+    setCreateComputeModalOpen(false);
+    setCreateAgentModalOpen(false);
+    setPublishTaskModalOpen(false);
+    setHistoryModalOpen(false);
+
+    // Bump reset key for this tab to force clean re-mount and reset internal subpage states
+    setTabResetKey(prev => ({
+      ...prev,
+      [tab]: (prev[tab] || 0) + 1
+    }));
+
+    // Scroll window and document element back to top
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+    } catch {
+      // ignore fallback
+    }
+
+    setActiveTab(tab);
+  };
+
+  const openCompetitionDetail = (compId: string) => {
+    handleSetActiveTab('creative');
+    // Set selected competition detail explicitly after resetting tab
+    setSelectedCompetitionId(compId);
+  };
 
   const [createAgentModalOpen, setCreateAgentModalOpen] = useState<boolean>(false);
   const [publishTaskModalOpen, setPublishTaskModalOpen] = useState<boolean>(false);
@@ -349,16 +475,313 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast(` Agent【${newAgent.name}】创建成功并上线！`);
   };
 
-  const addTask = (newTaskData: Omit<TaskItem, 'id' | 'bidCount' | 'publishTime' | 'status'>) => {
+  const addTask = (newTaskData: any) => {
+    const cashReq = Number(newTaskData.totalCashReward ?? newTaskData.cashReward ?? newTaskData.bounty ?? 0);
+    const pointsReq = Number(newTaskData.totalPointsReward ?? newTaskData.pointsReward ?? 0);
+
+    // 检查可用资金与积分
+    if (user.balance < cashReq) {
+      showToast(`可用余额不足 (需 ¥${cashReq.toLocaleString()}，当前可用 ¥${user.balance.toLocaleString()})，请先充值`);
+      return;
+    }
+    if (user.points < pointsReq) {
+      showToast(`可用积分不足 (需 ${pointsReq} 积分，当前可用 ${user.points} 积分)`);
+      return;
+    }
+
+    // 资金与积分转入冻结
+    setUser(prev => ({
+      ...prev,
+      balance: Math.max(0, prev.balance - cashReq),
+      frozenBalance: (prev.frozenBalance || 0) + cashReq,
+      points: Math.max(0, prev.points - pointsReq),
+      frozenPoints: (prev.frozenPoints || 0) + pointsReq
+    }));
+
+    const taskCount = newTaskData.categoryType === '批量任务' ? Math.max(2, Math.min(9999, Number(newTaskData.taskCount || 2))) : 1;
+    const cashSingle = Number(newTaskData.cashReward || 0);
+    const pointsSingle = Number(newTaskData.pointsReward || 0);
+
     const newTask: TaskItem = {
-      ...newTaskData,
       id: `tsk_${Date.now()}`,
-      bidCount: 0,
-      publishTime: '刚刚',
-      status: '招募中'
+      title: newTaskData.title?.trim() || '未命名任务',
+      brief: newTaskData.brief || newTaskData.description?.replace(/<[^>]+>/g, '').slice(0, 50) || '任务简述',
+      categoryType: newTaskData.categoryType || '单个任务',
+      taskCount,
+      domain: newTaskData.domain || '技术开发',
+      difficulty: newTaskData.difficulty || '简单',
+      description: newTaskData.description || '',
+      acceptanceCriteria: newTaskData.acceptanceCriteria || '',
+      cashReward: cashSingle,
+      pointsReward: pointsSingle,
+      totalCashReward: cashSingle * taskCount,
+      totalPointsReward: pointsSingle * taskCount,
+      startTime: newTaskData.startTime || new Date().toISOString().replace('T', ' ').substring(0, 19),
+      endTime: newTaskData.endTime || new Date(Date.now() + 14 * 86400000).toISOString().replace('T', ' ').substring(0, 19),
+      remainingDays: 14,
+      publisher: user.name,
+      publisherAvatar: user.avatar,
+      publishTime: new Date().toISOString().replace('T', ' ').substring(0, 19),
+      status: '审核中', // 发布任务默认进入审核中
+      acceptedCount: 0,
+      submittedCount: 0,
+      verifiedCount: 0,
+      takers: [],
+      submissions: [],
+      // 兼容字段
+      bounty: cashSingle,
+      bountyUnit: '¥'
     };
+
     setTasks(prev => [newTask, ...prev]);
-    showToast(` 任务【${newTask.title}】发布成功！`);
+    showToast(`任务【${newTask.title}】已提交审核！已预付托管 ¥${(cashSingle * taskCount).toLocaleString()} 及 ${pointsSingle * taskCount} 积分`);
+  };
+
+  const auditTask = (taskId: string, approved: boolean, remark?: string) => {
+    setTasks(prev => prev.map(t => {
+      if (t.id === taskId) {
+        if (approved) {
+          showToast(`已审核通过任务【${t.title}】，已上架并在大厅展示！`);
+          return {
+            ...t,
+            status: '进行中' as const,
+            auditTime: new Date().toISOString().replace('T', ' ').substring(0, 19)
+          };
+        } else {
+          // 审核驳回：若发布者是当前用户，全额解冻退还
+          if (t.publisher === user.name) {
+            const refundCash = t.totalCashReward || (t.cashReward * t.taskCount) || (t.bounty || 0);
+            const refundPoints = t.totalPointsReward || (t.pointsReward * t.taskCount) || 0;
+            setUser(u => ({
+              ...u,
+              balance: u.balance + refundCash,
+              frozenBalance: Math.max(0, (u.frozenBalance || 0) - refundCash),
+              points: u.points + refundPoints,
+              frozenPoints: Math.max(0, (u.frozenPoints || 0) - refundPoints)
+            }));
+          }
+          showToast(`已驳回任务【${t.title}】，预付托管资金已全额解冻退回！`);
+          return {
+            ...t,
+            status: '已驳回' as const,
+            rejectReason: remark || '任务描述不够详尽或存在违规内容，请修改后重新提交。',
+            auditTime: new Date().toISOString().replace('T', ' ').substring(0, 19)
+          };
+        }
+      }
+      return t;
+    }));
+  };
+
+  const withdrawTask = (taskId: string) => {
+    setTasks(prev => {
+      const target = prev.find(t => t.id === taskId);
+      if (!target) return prev;
+      if (target.publisher === user.name && target.status === '审核中') {
+        const refundCash = target.totalCashReward || (target.cashReward * target.taskCount) || 0;
+        const refundPoints = target.totalPointsReward || (target.pointsReward * target.taskCount) || 0;
+        setUser(u => ({
+          ...u,
+          balance: u.balance + refundCash,
+          frozenBalance: Math.max(0, (u.frozenBalance || 0) - refundCash),
+          points: u.points + refundPoints,
+          frozenPoints: Math.max(0, (u.frozenPoints || 0) - refundPoints)
+        }));
+        showToast(`已撤回任务【${target.title}】，预付托管资金已全额退回可用账户`);
+      }
+      return prev.filter(t => t.id !== taskId);
+    });
+  };
+
+  const takeTask = (taskId: string) => {
+    setTasks(prev => prev.map(t => {
+      if (t.id === taskId) {
+        // 检查是否已接单
+        const existing = (t.takers || []).find(tk => tk.username === user.name || tk.username.includes('你'));
+        if (existing) {
+          showToast('您已经接单该任务，请勿重复接单');
+          return t;
+        }
+        if (t.taskCount && t.acceptedCount >= t.taskCount * 5) {
+          showToast('该任务接单人数已满');
+          return t;
+        }
+        const newTaker = {
+          id: `tk_${Date.now()}`,
+          taskId,
+          username: `${user.name} (你)`,
+          userAvatar: user.avatar,
+          takeTime: new Date().toISOString().replace('T', ' ').substring(0, 19),
+          status: '已接单' as const
+        };
+        showToast(`成功接单【${t.title}】！请在截止时间内提交交付成果`);
+        return {
+          ...t,
+          acceptedCount: (t.acceptedCount || 0) + 1,
+          takers: [newTaker, ...(t.takers || [])]
+        };
+      }
+      return t;
+    }));
+  };
+
+  const submitTaskResult = (taskId: string, notes: string, files: { name: string; size: string }[]) => {
+    const subId = `sub_${Date.now()}`;
+    const newSubmission = {
+      id: subId,
+      taskId,
+      username: `${user.name} (你)`,
+      userAvatar: user.avatar,
+      submitTime: new Date().toISOString().replace('T', ' ').substring(0, 19),
+      notes,
+      files: files.map((f, i) => ({ id: `f_${Date.now()}_${i}`, name: f.name, size: f.size })),
+      status: '待验收' as const
+    };
+
+    setTasks(prev => prev.map(t => {
+      if (t.id === taskId) {
+        const updatedTakers = (t.takers || []).map(tk => {
+          if (tk.username === user.name || tk.username.includes('你') || tk.username.includes(user.name)) {
+            return { ...tk, status: '已提交' as const, submissionId: subId };
+          }
+          return tk;
+        });
+
+        // 如果之前没有 taker 记录，自动补上
+        const hasTaker = updatedTakers.some(tk => tk.username.includes(user.name) || tk.username.includes('你'));
+        const finalTakers = hasTaker ? updatedTakers : [
+          {
+            id: `tk_${Date.now()}`,
+            taskId,
+            username: `${user.name} (你)`,
+            userAvatar: user.avatar,
+            takeTime: new Date().toISOString().replace('T', ' ').substring(0, 19),
+            status: '已提交' as const,
+            submissionId: subId
+          },
+          ...updatedTakers
+        ];
+
+        return {
+          ...t,
+          submittedCount: (t.submittedCount || 0) + 1,
+          submissions: [newSubmission, ...(t.submissions || [])],
+          takers: finalTakers
+        };
+      }
+      return t;
+    }));
+
+    showToast('交付成果已提交，请耐心等待雇主验收！');
+  };
+
+  const verifyTaskSubmission = (taskId: string, submissionId: string, approved: boolean, rejectReason?: string) => {
+    setTasks(prev => prev.map(t => {
+      if (t.id === taskId) {
+        let subTargetUser = '';
+        const updatedSubs = (t.submissions || []).map(s => {
+          if (s.id === submissionId) {
+            subTargetUser = s.username;
+            if (approved) {
+              return {
+                ...s,
+                status: '已通过' as const,
+                verifiedTime: new Date().toISOString().replace('T', ' ').substring(0, 19)
+              };
+            } else {
+              return {
+                ...s,
+                status: '已驳回' as const,
+                rejectReason: rejectReason || '交付成果未达验收标准，请修改后重试。'
+              };
+            }
+          }
+          return s;
+        });
+
+        const updatedTakers = (t.takers || []).map(tk => {
+          if (tk.submissionId === submissionId || tk.username === subTargetUser) {
+            return {
+              ...tk,
+              status: approved ? ('已验收' as const) : ('已驳回' as const)
+            };
+          }
+          return tk;
+        });
+
+        const nextVerifiedCount = approved ? (t.verifiedCount || 0) + 1 : (t.verifiedCount || 0);
+        const isTaskFinished = nextVerifiedCount >= (t.taskCount || 1);
+
+        // 资金联动：
+        // 1. 如果发布者是当前用户，扣除发布者冻结资金/积分
+        if (t.publisher === user.name && approved) {
+          const singleCash = t.cashReward || 0;
+          const singlePoints = t.pointsReward || 0;
+          setUser(u => ({
+            ...u,
+            frozenBalance: Math.max(0, (u.frozenBalance || 0) - singleCash),
+            frozenPoints: Math.max(0, (u.frozenPoints || 0) - singlePoints)
+          }));
+        }
+
+        // 2. 如果被验收者是当前用户，增加当前用户可用余额与可用积分
+        if ((subTargetUser.includes(user.name) || subTargetUser.includes('你')) && approved) {
+          const earnedCash = t.cashReward || 0;
+          const earnedPoints = t.pointsReward || 0;
+          setUser(u => ({
+            ...u,
+            balance: u.balance + earnedCash,
+            points: u.points + earnedPoints,
+            todayEarnedPoints: u.todayEarnedPoints + earnedPoints
+          }));
+          showToast(`验收通过！恭喜获得赏金 ¥${earnedCash.toLocaleString()} 及 ${earnedPoints} 积分入账！`);
+        } else if (approved) {
+          showToast(`已通过对【${subTargetUser}】的成果验收并结算单份赏金！`);
+        } else {
+          showToast(`已驳回【${subTargetUser}】的成果提交`);
+        }
+
+        return {
+          ...t,
+          verifiedCount: nextVerifiedCount,
+          status: isTaskFinished ? ('已验收' as const) : t.status,
+          submissions: updatedSubs,
+          takers: updatedTakers
+        };
+      }
+      return t;
+    }));
+  };
+
+  const updateTask = (updatedTask: TaskItem) => {
+    setTasks(prev => prev.map(t => {
+      if (t.id === updatedTask.id) {
+        return {
+          ...updatedTask,
+          status: '审核中' as const,
+          rejectReason: undefined,
+          publishTime: new Date().toISOString().replace('T', ' ').substring(0, 19)
+        };
+      }
+      return t;
+    }));
+    showToast(`任务【${updatedTask.title}】已修改并重新提交审核！`);
+  };
+
+  const submitTaskBid = (taskId: string, proposal: string, quoteAmount: number, estimatedDays: number, attachments?: string[]) => {
+    showToast('投标方案已递交！');
+  };
+
+  const submitTaskDeliverable = (taskId: string, fileName: string, fileSize: string, summary: string, demoUrl?: string) => {
+    submitTaskResult(taskId, summary, [{ name: fileName, size: fileSize }]);
+  };
+
+  const acceptTaskSubmission = (taskId: string, submissionId: string, comment?: string) => {
+    verifyTaskSubmission(taskId, submissionId, true, comment);
+  };
+
+  const rejectTaskSubmission = (taskId: string, submissionId: string, comment: string) => {
+    verifyTaskSubmission(taskId, submissionId, false, comment);
   };
 
   const launchGpuInstance = (scene: GPUInstance['scene'], gpuModel: string, imageName: string, customOpts?: Partial<GPUInstance>) => {
@@ -482,12 +905,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider value={{
       activeTab,
-      setActiveTab,
-      setSelectedMainTab,
+      setActiveTab: handleSetActiveTab,
+      setSelectedMainTab: handleSetActiveTab,
+      tabResetKey,
       marketplaceTab,
       setMarketplaceTab,
       workspaceSubTab,
       setWorkspaceSubTab,
+      isAdminMode,
+      setIsAdminMode,
+      activeAdminMenu,
+      setActiveAdminMenu,
+      enterAdminMode,
+      exitAdminMode,
       searchOpen,
       setSearchOpen,
       searchQuery,
@@ -542,6 +972,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       selectedCompareModels,
       toggleCompareModel,
       clearCompareModels,
+      competitions,
+      selectedCompetitionId,
+      setSelectedCompetitionId,
+      openCompetitionDetail,
       createAgentModalOpen,
       setCreateAgentModalOpen,
       publishTaskModalOpen,
@@ -554,9 +988,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setDetailInstance,
       historyModalOpen,
       setHistoryModalOpen,
+      selectedTaskIdForDetail,
+      setSelectedTaskIdForDetail,
+      selectedTaskForVerification,
+      setSelectedTaskForVerification,
       addAgent,
       purchaseAgent,
       addTask,
+      auditTask,
+      withdrawTask,
+      takeTask,
+      submitTaskResult,
+      verifyTaskSubmission,
+      updateTask,
+      submitTaskBid,
+      submitTaskDeliverable,
+      acceptTaskSubmission,
+      rejectTaskSubmission,
       launchGpuInstance,
       toggleGpuInstanceStatus,
       restartGpuInstance,

@@ -17,9 +17,10 @@ import {
   Briefcase,
   GraduationCap,
   Cpu,
-  Palette,
+  Trophy,
   Users,
-  Wallet
+  Wallet,
+  ShieldCheck
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -32,6 +33,7 @@ export const Header: React.FC = () => {
     unreadCount, 
     markAllNotificationsRead,
     setWorkspaceSubTab,
+    enterAdminMode,
     showToast
   } = useApp();
 
@@ -44,7 +46,7 @@ export const Header: React.FC = () => {
     { id: 'tasks', label: '任务大厅', icon: <Briefcase className="w-4 h-4" /> },
     { id: 'compute', label: '算力工坊', icon: <Cpu className="w-4 h-4" /> },
     { id: 'learning', label: '人才学院', icon: <GraduationCap className="w-4 h-4" /> },
-    { id: 'creative', label: '创意空间', icon: <Palette className="w-4 h-4" /> },
+    { id: 'creative', label: '赛事中心', icon: <Trophy className="w-4 h-4" /> },
     { id: 'community', label: '社区', icon: <Users className="w-4 h-4" /> },
     { id: 'workspace', label: '工作台', icon: <LayoutDashboard className="w-4 h-4" /> },
   ];
@@ -233,6 +235,21 @@ export const Header: React.FC = () => {
                 </div>
 
                 <div className="py-1">
+                  <button
+                    id="header-user-admin-btn"
+                    onClick={() => {
+                      enterAdminMode();
+                      setUserMenuOpen(false);
+                      showToast('已进入千机智算中心后台管理系统');
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-gradient-to-r from-slate-900 to-indigo-950 hover:from-slate-800 hover:to-indigo-900 text-white text-left transition font-bold shadow-xs my-0.5 cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+                      <span className="text-xs">后台管理</span>
+                    </div>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold">ADMIN</span>
+                  </button>
                   <button
                     onClick={() => {
                       setActiveTab('workspace');

@@ -45,8 +45,10 @@ export interface UserProfile {
   levelBadge: string;
   identityTag: string;
   skills: string[];
-  balance: number; // 账户人民币余额(元)
-  points: number;
+  balance: number; // 账户人民币可用余额(元)
+  frozenBalance?: number; // 冻结资金(元)
+  points: number; // 可用积分
+  frozenPoints?: number; // 冻结积分
   todayEarnedPoints: number;
   githubUrl?: string;
   websiteUrl?: string;
@@ -418,37 +420,126 @@ export interface SkillPluginItem {
   comments?: SkillCommentItem[];
 }
 
-// 任务大厅
-export type TaskType = '悬赏任务' | '招标任务' | '竞赛任务';
-export type TaskStatus = '招募中' | '进行中' | '已完成';
+// 任务大厅规范类型
+export type TaskCategoryType = '单个任务' | '批量任务';
+export type TaskDomainType = '技术开发' | '内容创作' | 'AI模型与数据' | '工具与自动化' | '咨询与培训';
+export type TaskDomain = TaskDomainType;
+export type TaskDifficultyLevel = '简单' | '中等' | '困难';
+export type TaskGlobalStatus = '审核中' | '已驳回' | '已发布' | '进行中' | '已结束' | '已验收';
+export type UserTakeStatus = '未接单' | '已接单' | '已提交' | '已验收' | '已驳回';
+
+// 兼容别名
+export type TaskType = TaskCategoryType | '悬赏任务' | '招标任务' | '竞赛任务';
+export type TaskCategory = TaskDomainType | '技术开发' | '数据服务' | '模型训练' | '应用构建' | '方案设计' | '其他';
+export type TaskDifficulty = TaskDifficultyLevel | '入门' | '进阶' | '专家' | '大师';
+export type TaskStatus = TaskGlobalStatus;
+
+export interface TaskBidItem {
+  id: string;
+  taskId: string;
+  bidderId: string;
+  bidderName: string;
+  bidderAvatar: string;
+  bidderTitle: string;
+  bidderScore: number;
+  bidAmount: number;
+  bidUnit: '¥' | '积分';
+  proposal: string;
+  deliverDays: number;
+  submittedTime: string;
+  status: '待审核' | '已中标' | '已谢绝';
+}
+
+export interface TaskFileItem {
+  id: string;
+  name: string;
+  size: string;
+  url?: string;
+}
+
+export interface TaskSubmissionRecord {
+  id: string;
+  taskId: string;
+  username: string;
+  userAvatar: string;
+  submitTime: string;
+  notes: string;
+  files: TaskFileItem[];
+  status: '待验收' | '已通过' | '已驳回';
+  rejectReason?: string;
+  verifiedTime?: string;
+}
+
+export interface TaskTakerRecord {
+  id: string;
+  taskId: string;
+  username: string;
+  userAvatar: string;
+  takeTime: string;
+  status: '已接单' | '已提交' | '已验收' | '已驳回';
+  submissionId?: string;
+}
 
 export interface TaskItem {
   id: string;
-  title: string;
-  type: TaskType;
-  bounty: number; // 赏金 (元或积分)
-  bountyUnit: '¥' | '积分';
+  title: string; // 标题限30字
+  brief?: string; // 一句话简述
+  categoryType: TaskCategoryType; // '单个任务' | '批量任务'
+  taskCount: number; // 单个任务固定1，批量任务 2~9999
+  domain: TaskDomainType; // 所属领域5选1
+  difficulty: TaskDifficultyLevel; // 简单/中等/困难
+  
+  // 描述与验收标准（富文本）
+  description: string; // 富文本HTML/Markdown
+  acceptanceCriteria: string; // 富文本HTML/Markdown
+  
+  // 奖励设置
+  cashReward: number; // 单份现金奖励（元）
+  pointsReward: number; // 单份积分奖励（个）
+  totalCashReward: number; // 总现金
+  totalPointsReward: number; // 总积分
+  
+  // 交付周期
+  startTime: string; // YYYY-MM-DD HH:mm:ss
+  endTime: string; // YYYY-MM-DD HH:mm:ss
+  remainingDays?: number; // 剩余天数
+  
+  // 发布者信息
   publisher: string;
   publisherAvatar: string;
-  publishTime: string;
-  deadline: string;
-  requiredSkills: string[];
-  bidCount: number;
-  status: TaskStatus;
-  description: string;
-  deliverables: string;
-  attachments?: string[];
+  publishTime: string; // 提交/发布时间
+  
+  // 任务全局状态
+  status: TaskGlobalStatus; // '审核中' | '已驳回' | '已发布' | '进行中' | '已结束' | '已验收'
+  rejectReason?: string; // 审核驳回原因
+  auditTime?: string;
+  
+  // 统计数据
+  acceptedCount: number; // 已接单人数
+  submittedCount: number; // 已提交人数
+  verifiedCount: number; // 已验收人数
+  
+  // 明细记录
+  takers?: TaskTakerRecord[];
+  submissions?: TaskSubmissionRecord[];
+  
+  // 兼容旧字段
+  type?: any;
+  category?: any;
+  bounty?: number;
+  bountyUnit?: '¥' | '积分';
+  rewardText?: string;
+  requiredSkills?: string[];
+  bidCount?: number;
+  viewCount?: number;
+  deliverables?: string;
+  attachments?: any;
+  escrow?: any;
+  bids?: any;
+  milestones?: any;
 }
 
-export interface TaskBid {
-  id: string;
-  taskId: string;
-  bidderName: string;
-  bidderAvatar: string;
-  proposal: string;
-  portfolioUrl?: string;
-  time: string;
-}
+export interface TaskBid extends TaskBidItem {}
 
 // 学习中心
 export interface CourseItem {
@@ -699,13 +790,88 @@ export interface TaskCollaborationMessage {
   versionTag?: string;
 }
 
-// 登录设备
+// 赛事中心类型定义
+export type CompetitionStatus = 'all' | 'unstarted' | 'ongoing' | 'ended';
+
+export type CompetitionTypeTag = 
+  | 'AI数据科学赛' 
+  | 'AI安全挑战赛' 
+  | 'AIGC生成赛' 
+  | 'AI产品应用赛';
+
+export interface MatchTrackItem {
+  id: string;
+  name: string; // 全称 如 "AI数据科学赛道"
+  shortName: string; // 简称 如 "数据科学赛道"，用于 TAB 名称
+  coverImage: string; // 比赛封面小图
+  timeRange: string; // 如 "2026-09-01 00:00:00 ~ 2026-10-15 23:59:59"
+  typeTag: CompetitionTypeTag;
+  description: string; // 赛道介绍
+  problemStatement: string; // 赛题说明
+  evaluationMetrics: string; // 评估指标
+  dataDescription?: string; // 数据说明
+  ruleDescription?: string; // 赛规说明
+  targetUrl?: string; // 进入比赛的目标跳转 URL
+  submissionsCount?: number;
+  participantsCount?: number;
+  featuredWorks?: {
+    id: string;
+    title: string;
+    author: string;
+    avatar: string;
+    image: string;
+    score?: string;
+    description: string;
+    likes: number;
+  }[];
+}
+
+export interface CompetitionItem {
+  id: string;
+  title: string; // 赛事名称
+  organizer: string; // 主办方名称 如 "中国人工智能学会"
+  organizerBadge?: string; // 主办方标签 如 "国家一级学会"
+  coverImage: string; // 赛事封面图片 (列表卡片用)
+  bannerImage: string; // 详情页顶部长条 BANNER 图片
+  startTime: string; // 年月日时分秒 如 "2026-08-01 00:00:00"
+  endTime: string; // 年月日时分秒 如 "2026-10-31 23:59:59"
+  status: 'unstarted' | 'ongoing' | 'ended'; // 状态: 未开始 / 进行中 / 已结束
+  typeTags: CompetitionTypeTag[]; // 赛事类型列表
+  
+  // 赛事介绍 TAB 固定内容
+  introduction: {
+    summary: string; // 赛事简介
+    schedule: { stage: string; time: string; desc: string }[]; // 赛事流程阶段
+    awards: { rank: string; reward: string; quota: string; iconBg?: string }[]; // 奖项设置
+    evaluationStandards: string[]; // 评审标准
+    organizingCommittee: { role: string; name: string }[]; // 组委会信息
+  };
+
+  // 绑定的比赛赛道列表
+  tracks: MatchTrackItem[];
+}
+
+// 登录设备管理
 export interface LoginDeviceItem {
   id: string;
   deviceName: string;
+  deviceType?: 'desktop' | 'mobile' | 'tablet';
   browser: string;
+  os?: string;
   ip: string;
   location: string;
-  loginTime: string;
+  loginTime?: string;
+  lastActiveTime?: string;
   isCurrent: boolean;
 }
+
+// 后台管理菜单
+export type AdminMenuKey = 
+  | 'operations'          // 运营中心
+  | 'marketplace_admin'   // AI集市管理
+  | 'publish_audit'       // 任务管理 - 发布审核
+  | 'task_monitor'        // 任务管理 - 任务监控
+  | 'compute_admin'       // 算力管理
+  | 'competition_admin'   // 赛事管理
+  | 'system_admin';       // 系统管理
+
