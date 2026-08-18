@@ -64,15 +64,18 @@ export const AgentStore: React.FC = () => {
   ];
 
   const scenes = [
-    { key: 'all', label: '全部场景' },
-    { key: '办公助理', label: '办公助理' },
-    { key: '内容创作', label: '内容创作' },
-    { key: '数据分析', label: '数据分析' },
-    { key: '智能客服', label: '智能客服' },
-    { key: '编程开发', label: '编程开发' },
-    { key: '营销推广', label: '营销推广' },
-    { key: '教育培训', label: '教育培训' },
-    { key: '行业垂直', label: '行业垂直' },
+    { key: 'all', label: '✨ 全部智能体' },
+    { key: '内容创作', label: '🎨 内容创作与视觉' },
+    { key: '营销推广', label: '📈 营销与商业增长' },
+    { key: '研究决策', label: '🔍 深度研究与决策' },
+    { key: '办公助理', label: '💼 办公与生产力' },
+    { key: '数据分析', label: '📊 数据分析与挖掘' },
+    { key: '编程开发', label: '💻 编程与技术开发' },
+    { key: '企业服务', label: '🏢 企业服务与法务' },
+    { key: '教育培训', label: '🎓 求职成长与教育' },
+    { key: '智能客服', label: '🎧 智能客服与运营' },
+    { key: '生活出行', label: '✈ 生活品质与出行' },
+    { key: '行业垂直', label: '🌐 行业垂直专家' },
   ];
 
   const industries = [
@@ -105,7 +108,33 @@ export const AgentStore: React.FC = () => {
       if (!matchName && !matchDesc && !matchTags && !matchDev) return false;
     }
     if (techFormFilter !== 'all' && a.techForm !== techFormFilter) return false;
-    if (sceneFilter !== 'all' && a.scene !== sceneFilter) return false;
+    if (sceneFilter !== 'all') {
+      if (sceneFilter === '内容创作') {
+        if (a.scene !== '内容创作' && !a.tags.some(t => ['提示词', 'PPT', '创作者', '连载', '公众号', '文章', '海报', '文案', '设计', '小说'].some(k => t.includes(k)))) return false;
+      } else if (sceneFilter === '营销推广') {
+        if (a.scene !== '营销推广' && !a.tags.some(t => ['SEO', '私域', '出海', '广告', '营销', '推广', '增长', '转化'].some(k => t.includes(k)))) return false;
+      } else if (sceneFilter === '研究决策') {
+        if (a.scene !== '数据分析' && !a.tags.some(t => ['研究', '研报', '趋势', '股票', '估值', '思维', '决策', '分析', '智库', '研究员'].some(k => t.includes(k))) && !['深度研究', '雷达', '股票', '苏格拉底'].some(k => a.name.includes(k))) return false;
+      } else if (sceneFilter === '教育培训') {
+        if (a.scene !== '教育培训' && !a.tags.some(t => ['简历', '留学', '高考', '面试', '志愿', '培训', '教学', '考试'].some(k => t.includes(k)))) return false;
+      } else if (sceneFilter === '企业服务') {
+        if (a.industry !== '企业' && a.industry !== '制造' && !a.tags.some(t => ['供应链', '文档', '法律', '合同', '法条', '采购', 'Excel', '企业', '规章'].some(k => t.includes(k)))) return false;
+      } else if (sceneFilter === '生活出行') {
+        if (a.industry !== '文旅' && !a.tags.some(t => ['行程', '旅游', '命理', '传统文化', '塔罗', '出行', '美食', '生活', '健康'].some(k => t.includes(k)))) return false;
+      } else if (sceneFilter === '数据分析') {
+        if (a.scene !== '数据分析' && !a.tags.some(t => ['数据', '报表', '分析', '挖掘', 'BI', '图表', 'SQL'].some(k => t.includes(k)))) return false;
+      } else if (sceneFilter === '编程开发') {
+        if (a.scene !== '编程开发' && !a.tags.some(t => ['代码', '编程', '开发', 'API', 'Java', 'Python', 'React', '架构'].some(k => t.includes(k)))) return false;
+      } else if (sceneFilter === '智能客服') {
+        if (a.scene !== '智能客服' && !a.tags.some(t => ['客服', '工单', '回复', '问答', '售后'].some(k => t.includes(k)))) return false;
+      } else if (sceneFilter === '办公助理') {
+        if (a.scene !== '办公助理' && !a.tags.some(t => ['办公', '文档', '纪要', '日程', '表格', '邮件', '翻译', '助理'].some(k => t.includes(k)))) return false;
+      } else if (sceneFilter === '行业垂直') {
+        if (a.scene !== '行业垂直' && a.category !== 'vertical' && a.industry === '通用') return false;
+      } else {
+        if (a.scene !== sceneFilter) return false;
+      }
+    }
     if (industryFilter !== 'all' && a.industry !== industryFilter) return false;
     if (priceModeFilter === 'free' && a.priceType !== 'free') return false;
     if (priceModeFilter === 'token' && a.priceType !== 'token' && a.priceModel !== '按Token计费') return false;

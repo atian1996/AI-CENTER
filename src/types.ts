@@ -421,7 +421,8 @@ export interface SkillPluginItem {
 }
 
 // 任务大厅规范类型
-export type TaskCategoryType = '单个任务' | '批量任务';
+export type TaskKindType = '抢单' | '比稿';
+export type TaskCategoryType = '任务';
 export type TaskDomainType = '技术开发' | '内容创作' | 'AI模型与数据' | '工具与自动化' | '咨询与培训';
 export type TaskDomain = TaskDomainType;
 export type TaskDifficultyLevel = '简单' | '中等' | '困难';
@@ -429,7 +430,7 @@ export type TaskGlobalStatus = '审核中' | '已驳回' | '已发布' | '进行
 export type UserTakeStatus = '未接单' | '已接单' | '已提交' | '已验收' | '已驳回';
 
 // 兼容别名
-export type TaskType = TaskCategoryType | '悬赏任务' | '招标任务' | '竞赛任务';
+export type TaskType = string;
 export type TaskCategory = TaskDomainType | '技术开发' | '数据服务' | '模型训练' | '应用构建' | '方案设计' | '其他';
 export type TaskDifficulty = TaskDifficultyLevel | '入门' | '进阶' | '专家' | '大师';
 export type TaskStatus = TaskGlobalStatus;
@@ -476,16 +477,17 @@ export interface TaskTakerRecord {
   username: string;
   userAvatar: string;
   takeTime: string;
-  status: '已接单' | '已提交' | '已验收' | '已驳回';
+  status: '已接单' | '已抢单承接' | '已提交' | '已验收' | '已驳回';
   submissionId?: string;
+  submission?: TaskSubmissionRecord;
 }
 
 export interface TaskItem {
   id: string;
   title: string; // 标题限30字
+  taskType: TaskKindType; // '抢单' 或 '比稿'
+  maxTakersLimit?: number; // 比稿任务上限人数（如最少不少于2人，0表示不限）
   brief?: string; // 一句话简述
-  categoryType: TaskCategoryType; // '单个任务' | '批量任务'
-  taskCount: number; // 单个任务固定1，批量任务 2~9999
   domain: TaskDomainType; // 所属领域5选1
   difficulty: TaskDifficultyLevel; // 简单/中等/困难
   
@@ -494,10 +496,10 @@ export interface TaskItem {
   acceptanceCriteria: string; // 富文本HTML/Markdown
   
   // 奖励设置
-  cashReward: number; // 单份现金奖励（元）
-  pointsReward: number; // 单份积分奖励（个）
-  totalCashReward: number; // 总现金
-  totalPointsReward: number; // 总积分
+  cashReward: number; // 现金奖励（元）
+  pointsReward: number; // 积分奖励（个）
+  totalCashReward?: number; // 兼容总现金
+  totalPointsReward?: number; // 兼容总积分
   
   // 交付周期
   startTime: string; // YYYY-MM-DD HH:mm:ss
@@ -511,19 +513,30 @@ export interface TaskItem {
   
   // 任务全局状态
   status: TaskGlobalStatus; // '审核中' | '已驳回' | '已发布' | '进行中' | '已结束' | '已验收'
+  isAccepted?: boolean;
   rejectReason?: string; // 审核驳回原因
   auditTime?: string;
+  
+  // 中标获胜者信息
+  winner?: {
+    username: string;
+    userAvatar: string;
+    passTime: string;
+    notes?: string;
+  };
   
   // 统计数据
   acceptedCount: number; // 已接单人数
   submittedCount: number; // 已提交人数
-  verifiedCount: number; // 已验收人数
+  verifiedCount: number; // 已验收人数 (0 或 1)
   
   // 明细记录
   takers?: TaskTakerRecord[];
   submissions?: TaskSubmissionRecord[];
   
-  // 兼容旧字段
+  // 兼容与可选字段
+  categoryType?: string;
+  taskCount?: number;
   type?: any;
   category?: any;
   bounty?: number;

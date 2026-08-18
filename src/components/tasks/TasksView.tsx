@@ -1,393 +1,464 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
-import { TaskItem, TaskDomain, TaskDifficulty, TaskCategoryType } from '../../types';
-import { motion, AnimatePresence } from 'motion/react';
+import { TaskItem } from '../../types';
 import {
-  Briefcase,
   Plus,
-  Clock,
-  Coins,
-  Send,
-  FileText,
   Search,
-  Users,
   Sparkles,
-  ArrowUpDown,
-  CheckCircle2,
-  Calendar,
-  Layers,
+  Briefcase,
   ChevronRight,
-  ShieldCheck,
   Zap,
-  TrendingUp,
+  Palette,
+  Clock,
+  Layers,
+  FileText,
+  X,
   Filter,
-  Check
+  ArrowUpDown,
+  Award,
+  Activity
 } from 'lucide-react';
 import { TaskDetailModal } from './TaskDetailModal';
 
 export const TasksView: React.FC = () => {
-  const { tasks, setPublishTaskModalOpen, user, takeTask, showToast } = useApp();
+  const { tasks, setPublishTaskModalOpen, user } = useApp();
 
   // 搜索与过滤状态
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDomain, setSelectedDomain] = useState<string>('全部');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('全部');
-  const [selectedCategoryType, setSelectedCategoryType] = useState<string>('全部');
-  const [sortBy, setSortBy] = useState<'latest' | 'bounty' | 'deadline' | 'hot'>('latest');
+  const [selectedTaskType, setSelectedTaskType] = useState<string>('全部'); // 全部 / 抢单任务 / 比稿任务
+  const [selectedStatus, setSelectedStatus] = useState<string>('全部'); // 全部 / 进行中 / 已结束
+  const [selectedDomain, setSelectedDomain] = useState<string>('全部'); // 全部 / 技术开发 / 内容创作 / AI模型与数据 / 工具与自动化 / 咨询与培训
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('全部'); // 全部 / 简单 / 中等 / 困难
+  const [sortBy, setSortBy] = useState<'latest' | 'deadline' | 'reward'>('latest'); // 最新发布 / 即将截止 / 奖励最高
 
   // 详情弹窗状态
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
 
-  // 仅在任务大厅展示已通过审核的任务（'进行中'、'已验收'）
+  // 判断任务大状态 (进行中 VS 已结束)
+  const isTaskFinished = (task: TaskItem) => {
+    return (
+      task.status === '已结束' ||
+      task.status === '已验收' ||
+      (task.remainingDays !== undefined && task.remainingDays <= 0) ||
+      task.isAccepted === true ||
+      !!task.winner ||
+      (task.submissions || []).some(s => s.status === '已通过')
+    );
+  };
+
+  // 任务大厅只展示审核通过并在架展示的任务
   const publicTasks = useMemo(() => {
-    return tasks.filter(t => t.status === '进行中' || t.status === '已验收');
+    return tasks.filter(t => t.status === '进行中' || t.status === '已结束' || t.status === '已验收' || t.status === '已发布');
   }, [tasks]);
 
-  // 统计数据
-  const totalBountySum = useMemo(() => {
-    return publicTasks.reduce((acc, t) => acc + (t.totalCashReward || t.cashReward || t.bounty || 0), 0);
-  }, [publicTasks]);
-
-  const activeTasksCount = useMemo(() => {
-    return publicTasks.filter(t => t.status === '进行中').length;
+  // 大盘统计数据
+  const stats = useMemo(() => {
+    const total = publicTasks.length;
+    const fcfsCount = publicTasks.filter(t => t.taskType === '抢单').length;
+    const pitchCount = publicTasks.filter(t => t.taskType === '比稿').length;
+    const finishedCount = publicTasks.filter(t => isTaskFinished(t)).length;
+    const ongoingCount = total - finishedCount;
+    return { total, fcfsCount, pitchCount, ongoingCount, finishedCount };
   }, [publicTasks]);
 
   // 过滤与排序
   const filteredTasks = useMemo(() => {
     return publicTasks.filter(task => {
-      // 搜索匹配
+      // 搜索匹配 (标题、描述模糊匹配)
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchTitle = task.title.toLowerCase().includes(q);
-        const matchDesc = task.description.toLowerCase().includes(q);
-        const matchPub = task.publisher.toLowerCase().includes(q);
-        const matchDomain = task.domain.toLowerCase().includes(q);
-        if (!matchTitle && !matchDesc && !matchPub && !matchDomain) return false;
+        const matchDesc = (task.brief || task.description || '').toLowerCase().includes(q);
+        if (!matchTitle && !matchDesc) return false;
       }
 
-      // 领域匹配
+      // 任务状态筛选 (全部 / 进行中 / 已结束)
+      const finished = isTaskFinished(task);
+      if (selectedStatus === '进行中' && finished) return false;
+      if (selectedStatus === '已结束' && !finished) return false;
+
+      // 任务类型筛选 (全部 / 抢单任务 / 比稿任务)
+      if (selectedTaskType !== '全部') {
+        if (selectedTaskType === '抢单任务' && task.taskType !== '抢单') return false;
+        if (selectedTaskType === '比稿任务' && task.taskType !== '比稿') return false;
+      }
+
+      // 所属领域筛选
       if (selectedDomain !== '全部' && task.domain !== selectedDomain) {
         return false;
       }
 
-      // 难度匹配
+      // 任务难度筛选
       if (selectedDifficulty !== '全部' && task.difficulty !== selectedDifficulty) {
-        return false;
-      }
-
-      // 任务类别匹配
-      if (selectedCategoryType !== '全部' && task.categoryType !== selectedCategoryType) {
         return false;
       }
 
       return true;
     }).sort((a, b) => {
-      if (sortBy === 'bounty') {
-        const bountyA = a.cashReward || a.bounty || 0;
-        const bountyB = b.cashReward || b.bounty || 0;
-        return bountyB - bountyA;
+      if (sortBy === 'reward') {
+        const rewardA = (a.cashReward || 0) + (a.pointsReward || 0);
+        const rewardB = (b.cashReward || 0) + (b.pointsReward || 0);
+        return rewardB - rewardA;
       }
       if (sortBy === 'deadline') {
         return (a.remainingDays || 14) - (b.remainingDays || 14);
       }
-      if (sortBy === 'hot') {
-        return (b.acceptedCount || 0) - (a.acceptedCount || 0);
-      }
-      // latest
-      return new Date(b.publishTime).getTime() - new Date(a.publishTime).getTime();
+      // 最新发布
+      return new Date(b.publishTime || b.startTime || Date.now()).getTime() - new Date(a.publishTime || a.startTime || Date.now()).getTime();
     });
-  }, [publicTasks, searchQuery, selectedDomain, selectedDifficulty, selectedCategoryType, sortBy]);
+  }, [publicTasks, searchQuery, selectedStatus, selectedTaskType, selectedDomain, selectedDifficulty, sortBy]);
 
-  const domains: (string)[] = ['全部', '技术开发', '内容创作', 'AI模型与数据', '工具与自动化', '咨询与培训'];
-  const difficulties: (string)[] = ['全部', '简单', '中等', '困难'];
-  const categoryTypes: (string)[] = ['全部', '单个任务', '批量任务'];
+  const statusesList = ['全部', '进行中', '已结束'];
+  const taskTypesList = ['全部', '抢单任务', '比稿任务'];
+  const domainsList = ['全部', '技术开发', '内容创作', 'AI模型与数据', '工具与自动化', '咨询与培训'];
+  const difficultiesList = ['全部', '简单', '中等', '困难'];
 
   return (
-    <div className="space-y-7 animate-fade-in pb-12">
-      {/* 顶部横幅：任务大厅看板与发布入口 */}
-      <div className="bg-gradient-to-r from-indigo-900 via-slate-900 to-slate-950 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden border border-indigo-900/50">
-        {/* 背景光晕装饰 */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="space-y-6 animate-fade-in pb-16">
+      {/* 1. 统一顶部 Header 结构 (与其他菜单风格完全保持一致) */}
+      <div className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/90 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black shadow-md shadow-indigo-600/20 shrink-0 mt-0.5">
+            <Briefcase className="w-6 h-6" />
+          </div>
 
-        <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="space-y-3 max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-black border border-indigo-500/30">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>智能任务协同 · 赏金全额托管 · 官方验收结算</span>
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">任务大厅</h1>
+              <span className="px-3 py-0.5 rounded-full text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200/80 flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                <span>前沿 AI & SaaS 需求撮合平台</span>
+              </span>
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-white">
-              AI 任务大厅
-            </h1>
-            <p className="text-sm text-slate-300 font-medium leading-relaxed">
-              汇聚企业与开发者的技术开发、AI数据清洗、Prompt调优及自动化工具开发等全领域需求。资金由平台100%预付托管，多节点并发接单，按质验收结算。
+
+            <p className="text-xs text-slate-500 font-medium leading-relaxed max-w-2xl">
+              提供「⚡ 抢单速配」与「🎨 方案比稿」双重任务模式，实时连接开发者与优质产品需求。
             </p>
           </div>
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 shrink-0">
-            {/* 核心发布任务大按钮 */}
-            <button
-              onClick={() => setPublishTaskModalOpen(true)}
-              className="px-8 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm shadow-lg shadow-indigo-600/30 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Plus className="w-5 h-5 stroke-[2.5]" />
-              <span>发布悬赏任务</span>
-            </button>
-          </div>
         </div>
 
-        {/* 统计指标 */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-slate-800/80">
-          <div>
-            <div className="text-xs text-slate-400 font-medium">当前进行中任务</div>
-            <div className="text-2xl font-black text-white font-mono mt-1 flex items-baseline gap-1">
-              <span>{activeTasksCount}</span>
-              <span className="text-xs text-slate-400 font-sans font-bold">个</span>
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-slate-400 font-medium">累计托管赏金池</div>
-            <div className="text-2xl font-black text-emerald-400 font-mono mt-1 flex items-baseline gap-1">
-              <span>¥{totalBountySum.toLocaleString()}</span>
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-slate-400 font-medium">平均交付周期</div>
-            <div className="text-2xl font-black text-cyan-400 font-mono mt-1">
-              4.8 <span className="text-xs text-slate-400 font-sans font-bold">天</span>
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-slate-400 font-medium">开发者综合验收率</div>
-            <div className="text-2xl font-black text-amber-400 font-mono mt-1">
-              98.6%
-            </div>
-          </div>
-        </div>
+        <button
+          onClick={() => setPublishTaskModalOpen(true)}
+          className="px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-extrabold text-xs shadow-md shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
+        >
+          <Plus className="w-4 h-4 stroke-[2.5]" />
+          <span>发布新需求任务</span>
+        </button>
       </div>
 
-      {/* 搜索与多维过滤栏 */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-5">
-        {/* 搜索输入与排序 */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="搜索任务标题、需求描述、发布机构或技术关键词..."
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs font-semibold outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
-            />
+      {/* 2. 搜索与五维多选择筛选栏 */}
+      <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-4">
+        {/* 一整行搜索框 */}
+        <div className="relative w-full">
+          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="搜索任务标题、需求描述或技术栈关键词..."
+            className="w-full pl-11 pr-10 py-3 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 text-xs font-semibold outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all placeholder:text-slate-400"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* 筛选控件区 */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-3 border-t border-slate-100">
+          {/* 筛选一：任务状态 */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+              <Activity className="w-3 h-3 text-slate-400" />
+              <span>任务状态</span>
+            </label>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-bold outline-none focus:bg-white focus:border-indigo-500 cursor-pointer"
+            >
+              {statusesList.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs text-slate-400 font-bold flex items-center gap-1">
-              <ArrowUpDown className="w-3.5 h-3.5" /> 排序:
-            </span>
+          {/* 筛选二：任务模式 */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+              <Filter className="w-3 h-3 text-slate-400" />
+              <span>任务类型</span>
+            </label>
+            <select
+              value={selectedTaskType}
+              onChange={(e) => setSelectedTaskType(e.target.value)}
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-bold outline-none focus:bg-white focus:border-indigo-500 cursor-pointer"
+            >
+              {taskTypesList.map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* 筛选三：所属领域 */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+              <Layers className="w-3 h-3 text-slate-400" />
+              <span>所属领域</span>
+            </label>
+            <select
+              value={selectedDomain}
+              onChange={(e) => setSelectedDomain(e.target.value)}
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-bold outline-none focus:bg-white focus:border-indigo-500 cursor-pointer"
+            >
+              {domainsList.map(d => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* 筛选四：任务难度 */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+              <Award className="w-3 h-3 text-slate-400" />
+              <span>难度等级</span>
+            </label>
+            <select
+              value={selectedDifficulty}
+              onChange={(e) => setSelectedDifficulty(e.target.value)}
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-bold outline-none focus:bg-white focus:border-indigo-500 cursor-pointer"
+            >
+              {difficultiesList.map(df => (
+                <option key={df} value={df}>{df}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* 筛选五：排序 */}
+          <div className="space-y-1 col-span-2 sm:col-span-1">
+            <label className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+              <ArrowUpDown className="w-3 h-3 text-slate-400" />
+              <span>排序规则</span>
+            </label>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-xs font-bold outline-none focus:bg-white focus:border-indigo-500"
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-bold outline-none focus:bg-white focus:border-indigo-500 cursor-pointer"
             >
-              <option value="latest">最新发布</option>
-              <option value="bounty">赏金最高</option>
-              <option value="deadline">即将截止</option>
-              <option value="hot">接单热度</option>
+              <option value="latest">最新发布 (优先)</option>
+              <option value="deadline">即将截止 (优先)</option>
+              <option value="reward">奖励金额 (由高到低)</option>
             </select>
-          </div>
-        </div>
-
-        {/* 领域筛选按钮组 */}
-        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
-          <span className="text-xs text-slate-400 font-bold mr-1">所属领域:</span>
-          {domains.map(dom => (
-            <button
-              key={dom}
-              onClick={() => setSelectedDomain(dom)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                selectedDomain === dom
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'bg-slate-100/70 hover:bg-slate-200/60 text-slate-600'
-              }`}
-            >
-              {dom}
-            </button>
-          ))}
-        </div>
-
-        {/* 难度与类别标签 */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-1 border-t border-slate-100 text-xs">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-slate-400 font-bold mr-1">任务难度:</span>
-            {difficulties.map(dif => (
-              <button
-                key={dif}
-                onClick={() => setSelectedDifficulty(dif)}
-                className={`px-3 py-1 rounded-lg font-bold transition-all ${
-                  selectedDifficulty === dif
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                {dif}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-slate-400 font-bold mr-1">任务类别:</span>
-            {categoryTypes.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategoryType(cat)}
-                className={`px-3 py-1 rounded-lg font-bold transition-all ${
-                  selectedCategoryType === cat
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
           </div>
         </div>
       </div>
 
-      {/* 任务卡片网格列表 */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between px-1">
-          <div className="text-xs font-black text-slate-500 uppercase tracking-wider">
-            共找到 <span className="text-indigo-600 font-mono font-bold">{filteredTasks.length}</span> 个符合条件的悬赏任务
+      {/* 3. 统计总结黑金信息条 */}
+      <div className="bg-slate-900 rounded-2xl px-6 py-3.5 text-white flex flex-wrap items-center justify-between gap-4 text-xs shadow-xs">
+        <div className="flex flex-wrap items-center gap-6 font-bold">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400">大厅需求总数</span>
+            <span className="text-white font-mono font-black text-sm">{stats.total} 项</span>
+          </div>
+          <div className="h-3 w-px bg-slate-700 hidden sm:block" />
+          <div className="flex items-center gap-2">
+            <span className="text-emerald-400">进行中</span>
+            <span className="text-emerald-300 font-mono font-black text-sm">{stats.ongoingCount} 项</span>
+          </div>
+          <div className="h-3 w-px bg-slate-700 hidden sm:block" />
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400">已结束</span>
+            <span className="text-slate-300 font-mono font-black text-sm">{stats.finishedCount} 项</span>
           </div>
         </div>
 
-        {filteredTasks.length === 0 ? (
-          <div className="bg-white rounded-2xl p-16 text-center border border-slate-200">
-            <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <h3 className="text-base font-bold text-slate-700">未找到匹配的悬赏任务</h3>
-            <p className="text-xs text-slate-400 mt-1">您可以尝试清空搜索条件或调整所属领域筛选</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {filteredTasks.map(task => {
-              const isPublisher = task.publisher === user.name;
-              const hasTaken = (task.takers || []).some(tk => tk.username === user.name || tk.username.includes('你'));
+        {(selectedStatus !== '全部' || selectedTaskType !== '全部' || selectedDomain !== '全部' || selectedDifficulty !== '全部' || searchQuery) && (
+          <button
+            onClick={() => {
+              setSelectedStatus('全部');
+              setSelectedTaskType('全部');
+              setSelectedDomain('全部');
+              setSelectedDifficulty('全部');
+              setSearchQuery('');
+              setSortBy('latest');
+            }}
+            className="text-[11px] text-indigo-300 hover:text-white font-bold transition cursor-pointer underline"
+          >
+            重置全部筛选条件
+          </button>
+        )}
+      </div>
 
-              return (
-                <div
-                  key={task.id}
-                  onClick={() => setDetailTaskId(task.id)}
-                  className="bg-white rounded-2xl p-6 border border-slate-200/80 hover:border-indigo-400 hover:shadow-lg transition-all flex flex-col justify-between gap-5 group cursor-pointer"
-                >
-                  {/* 头部：标签 + 赏金 */}
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200/50">
-                          {task.domain}
-                        </span>
-                        <span
-                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-black ${
-                            task.difficulty === '简单'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50'
-                              : task.difficulty === '中等'
-                              ? 'bg-blue-50 text-blue-700 border border-blue-200/50'
-                              : 'bg-purple-50 text-purple-700 border border-purple-200/50'
-                          }`}
-                        >
-                          {task.difficulty}
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200/50">
-                          {task.categoryType} ({task.taskCount || 1}份)
-                        </span>
-                      </div>
+      {/* 4. 高质感 1920*1080 适配 Bento/Grid 卡片布局 */}
+      {filteredTasks.length === 0 ? (
+        <div className="bg-white rounded-2xl p-16 text-center border border-slate-200 space-y-3">
+          <FileText className="w-12 h-12 text-slate-300 mx-auto" />
+          <h3 className="text-base font-bold text-slate-800">暂无符合条件的任务需求</h3>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            您可以尝试调整筛选规则或搜索词，亦可发布您的专属定制需求
+          </p>
+          <button
+            onClick={() => setPublishTaskModalOpen(true)}
+            className="mt-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-500 transition cursor-pointer"
+          >
+            发布新任务需求
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredTasks.map(task => {
+            const isFcfs = task.taskType === '抢单';
+            const acceptedNum = (task.takers || []).length || task.acceptedCount || 0;
+            const finished = isTaskFinished(task);
 
-                      {/* 赏金展示 */}
-                      <div className="text-right shrink-0">
-                        <div className="text-lg font-black font-mono text-indigo-600 leading-tight">
-                          ¥{task.cashReward?.toLocaleString() ?? task.bounty?.toLocaleString()}
-                        </div>
-                        {task.pointsReward > 0 && (
-                          <div className="text-[11px] font-bold text-amber-600">
-                            +{task.pointsReward} 积分
-                          </div>
-                        )}
-                      </div>
-                    </div>
+            return (
+              <div
+                key={task.id}
+                onClick={() => setDetailTaskId(task.id)}
+                className={`bg-white rounded-2xl p-6 border transition-all flex flex-col justify-between gap-4 group cursor-pointer ${
+                  finished
+                    ? 'border-slate-200 bg-slate-50/50 opacity-80 hover:border-slate-300'
+                    : 'border-slate-200/90 hover:border-indigo-500/80 hover:shadow-lg hover:-translate-y-0.5'
+                }`}
+              >
+                {/* 顶栏：标题 + 类型 Crystal Badge + 状态 Badge */}
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-base font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                      {task.title}
+                    </h3>
 
-                    {/* 标题与简要说明 */}
-                    <div>
-                      <h3 className="text-base font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
-                        {task.title}
-                      </h3>
-                      <p className="text-xs text-slate-500 font-medium leading-relaxed line-clamp-2 mt-1.5">
-                        {task.brief || task.description}
-                      </p>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {isFcfs ? (
+                        <span className="px-2.5 py-0.5 rounded-lg text-xs font-black bg-amber-50 text-amber-800 border border-amber-200/80 shrink-0">
+                          ⚡ 抢单
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-lg text-xs font-black bg-indigo-50 text-indigo-800 border border-indigo-200/80 shrink-0">
+                          🎨 比稿
+                        </span>
+                      )}
+
+                      {/* 显式展示【进行中】与【已结束】状态，已删除资金托管标签 */}
+                      {finished ? (
+                        <span className="px-2.5 py-0.5 rounded-lg text-xs font-extrabold bg-slate-200 text-slate-600 border border-slate-300/80">
+                          已结束
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-lg text-xs font-extrabold bg-emerald-500 text-white shadow-2xs">
+                          进行中
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  {/* 底部信息：发布人、进度与操作 */}
-                  <div className="pt-4 border-t border-slate-100 space-y-3">
-                    {/* 批量任务时展示进度条 */}
-                    {task.categoryType === '批量任务' && (
-                      <div>
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 font-bold mb-1">
-                          <span>接单进度: {task.acceptedCount || 0} / {task.taskCount || 1} 份</span>
-                          <span className="text-indigo-600">已验收: {task.verifiedCount || 0} 份</span>
-                        </div>
-                        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-indigo-600 rounded-full"
-                            style={{ width: `${Math.min(100, ((task.verifiedCount || 0) / (task.taskCount || 1)) * 100)}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
+                  {/* 属性微型胶囊 */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-indigo-50/70 text-indigo-700 border border-indigo-100">
+                      {task.domain}
+                    </span>
+                    <span
+                      className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${
+                        task.difficulty === '简单'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                          : task.difficulty === '中等'
+                          ? 'bg-blue-50 text-blue-700 border-blue-100'
+                          : 'bg-purple-50 text-purple-700 border-purple-100'
+                      }`}
+                    >
+                      {task.difficulty}难度
+                    </span>
+                    <span className="text-slate-400 text-[11px] ml-auto">
+                      {finished ? '到期或已完成验收' : `剩余 ${task.remainingDays || 14} 天`}
+                    </span>
+                  </div>
 
-                    <div className="flex items-center justify-between text-xs">
-                      {/* 发布者信息 */}
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={task.publisherAvatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80'}
-                          alt={task.publisher}
-                          className="w-6 h-6 rounded-full object-cover border border-slate-200"
-                        />
-                        <span className="font-bold text-slate-700">{task.publisher}</span>
-                        <span className="text-slate-400">· 剩余 {task.remainingDays || 14} 天</span>
-                      </div>
+                  {/* 需求概览简述 */}
+                  <p className="text-xs text-slate-600 font-medium leading-relaxed line-clamp-2 min-h-[36px]">
+                    {task.brief || task.description.replace(/<[^>]+>/g, '').substring(0, 80)}
+                  </p>
+                </div>
 
-                      {/* 按钮 */}
-                      <div className="flex items-center gap-2">
-                        {hasTaken ? (
-                          <span className="px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 font-extrabold text-xs flex items-center gap-1">
-                            <Check className="w-3.5 h-3.5" /> 已接单
-                          </span>
-                        ) : isPublisher ? (
-                          <span className="px-3 py-1 rounded-xl bg-indigo-50 text-indigo-700 font-bold text-xs">
-                            我发布的
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              takeTask(task.id);
-                            }}
-                            className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white font-extrabold text-xs transition active:scale-95 cursor-pointer flex items-center gap-1"
-                          >
-                            <span>立即接单</span>
-                            <ChevronRight className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
+                {/* 赏金与结算信息深色小卡 (已删除“资金托管”标签) */}
+                <div className="p-3.5 bg-slate-50/90 border border-slate-100 rounded-xl flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-[11px] text-slate-400 font-medium">赏金预算</div>
+                    <div className="text-lg font-black font-mono text-indigo-600 leading-tight">
+                      ¥{(task.cashReward || 0).toLocaleString()}
+                      {(task.pointsReward || 0) > 0 && (
+                        <span className="text-xs font-bold text-amber-600 ml-1.5 font-sans">
+                          +{task.pointsReward}积分
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="text-[11px] text-slate-400 font-medium">截止时间</div>
+                    <div className="text-xs font-bold text-slate-700 mt-0.5 font-mono">
+                      {task.endTime || task.deadline || '2026-12-31'}
                     </div>
                   </div>
                 </div>
-              );
-            })}
+
+                {/* 卡片底栏 */}
+                <div className="pt-2 flex items-center justify-between text-xs border-t border-slate-100/80">
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={task.publisherAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'}
+                      alt={task.publisher}
+                      className="w-6 h-6 rounded-full object-cover border border-slate-200"
+                    />
+                    <span className="font-bold text-slate-800 truncate max-w-[100px]">{task.publisher}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      {acceptedNum} 人接单
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDetailTaskId(task.id);
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white font-extrabold text-xs transition cursor-pointer flex items-center gap-1 shrink-0 shadow-2xs"
+                    >
+                      <span>详情</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* 5. 底部发布招募引导 Banner */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-7 text-white border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-md">
+        <div className="space-y-1 text-center sm:text-left">
+          <div className="flex items-center justify-center sm:justify-start gap-2">
+            <h4 className="text-base font-black">有专属的 AI / SaaS 开发需求要外包发布？</h4>
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-indigo-500/30 text-indigo-300 border border-indigo-400/30">
+              极速撮合
+            </span>
           </div>
-        )}
+          <p className="text-xs text-slate-300 font-medium">
+            数十万顶尖极客开发者在线竞标，资金全程托管保护，按质验收保障无风险。
+          </p>
+        </div>
+
+        <button
+          onClick={() => setPublishTaskModalOpen(true)}
+          className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black shadow-md shadow-indigo-600/30 transition active:scale-95 cursor-pointer shrink-0"
+        >
+          立即免费发布任务
+        </button>
       </div>
 
       {/* 任务详情弹窗 */}

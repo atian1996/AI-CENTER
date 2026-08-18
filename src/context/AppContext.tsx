@@ -153,6 +153,7 @@ interface AppContextType {
   addTask: (task: any) => void;
   auditTask: (taskId: string, approved: boolean, remark?: string) => void;
   withdrawTask: (taskId: string) => void;
+  deleteTask: (taskId: string) => void;
   takeTask: (taskId: string) => void;
   submitTaskResult: (taskId: string, notes: string, files: { name: string; size: string }[]) => void;
   verifyTaskSubmission: (taskId: string, submissionId: string, approved: boolean, rejectReason?: string) => void;
@@ -498,24 +499,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       frozenPoints: (prev.frozenPoints || 0) + pointsReq
     }));
 
-    const taskCount = newTaskData.categoryType === '批量任务' ? Math.max(2, Math.min(9999, Number(newTaskData.taskCount || 2))) : 1;
-    const cashSingle = Number(newTaskData.cashReward || 0);
-    const pointsSingle = Number(newTaskData.pointsReward || 0);
-
     const newTask: TaskItem = {
       id: `tsk_${Date.now()}`,
       title: newTaskData.title?.trim() || '未命名任务',
+      taskType: newTaskData.taskType || '抢单',
       brief: newTaskData.brief || newTaskData.description?.replace(/<[^>]+>/g, '').slice(0, 50) || '任务简述',
-      categoryType: newTaskData.categoryType || '单个任务',
-      taskCount,
       domain: newTaskData.domain || '技术开发',
       difficulty: newTaskData.difficulty || '简单',
       description: newTaskData.description || '',
       acceptanceCriteria: newTaskData.acceptanceCriteria || '',
-      cashReward: cashSingle,
-      pointsReward: pointsSingle,
-      totalCashReward: cashSingle * taskCount,
-      totalPointsReward: pointsSingle * taskCount,
+      cashReward: cashReq,
+      pointsReward: pointsReq,
+      totalCashReward: cashReq,
+      totalPointsReward: pointsReq,
       startTime: newTaskData.startTime || new Date().toISOString().replace('T', ' ').substring(0, 19),
       endTime: newTaskData.endTime || new Date(Date.now() + 14 * 86400000).toISOString().replace('T', ' ').substring(0, 19),
       remainingDays: 14,
@@ -529,12 +525,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       takers: [],
       submissions: [],
       // 兼容字段
-      bounty: cashSingle,
+      bounty: cashReq,
       bountyUnit: '¥'
     };
 
     setTasks(prev => [newTask, ...prev]);
-    showToast(`任务【${newTask.title}】已提交审核！已预付托管 ¥${(cashSingle * taskCount).toLocaleString()} 及 ${pointsSingle * taskCount} 积分`);
+    showToast(`任务【${newTask.title}】已提交审核！已预付托管 ¥${cashReq.toLocaleString()} 及 ${pointsReq} 积分`);
   };
 
   const auditTask = (taskId: string, approved: boolean, remark?: string) => {
@@ -550,8 +546,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           // 审核驳回：若发布者是当前用户，全额解冻退还
           if (t.publisher === user.name) {
-            const refundCash = t.totalCashReward || (t.cashReward * t.taskCount) || (t.bounty || 0);
-            const refundPoints = t.totalPointsReward || (t.pointsReward * t.taskCount) || 0;
+            const refundCash = t.cashReward || t.totalCashReward || (t.bounty || 0);
+            const refundPoints = t.pointsReward || t.totalPointsReward || 0;
             setUser(u => ({
               ...u,
               balance: u.balance + refundCash,
@@ -574,12 +570,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const withdrawTask = (taskId: string) => {
+    deleteTask(taskId);
+  };
+
+  const deleteTask = (taskId: string) => {
     setTasks(prev => {
       const target = prev.find(t => t.id === taskId);
       if (!target) return prev;
       if (target.publisher === user.name && target.status === '审核中') {
-        const refundCash = target.totalCashReward || (target.cashReward * target.taskCount) || 0;
-        const refundPoints = target.totalPointsReward || (target.pointsReward * target.taskCount) || 0;
+        const refundCash = target.cashReward || target.totalCashReward || 0;
+        const refundPoints = target.pointsReward || target.totalPointsReward || 0;
         setUser(u => ({
           ...u,
           balance: u.balance + refundCash,
@@ -587,7 +587,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           points: u.points + refundPoints,
           frozenPoints: Math.max(0, (u.frozenPoints || 0) - refundPoints)
         }));
-        showToast(`已撤回任务【${target.title}】，预付托管资金已全额退回可用账户`);
+        showToast(`已删除任务【${target.title}】，预付托管资金已全额退回可用账户`);
+      } else {
+        showToast(`已成功删除任务【${target.title}】`);
       }
       return prev.filter(t => t.id !== taskId);
     });
@@ -596,14 +598,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const takeTask = (taskId: string) => {
     setTasks(prev => prev.map(t => {
       if (t.id === taskId) {
+        if (t.status === '已结束' || t.status === '已验收') {
+          showToast('该任务已结束，无法继续接单');
+          return t;
+        }
+        if (t.status !== '进行中' && t.status !== '已发布') {
+          showToast('该任务当前不可接单');
+          return t;
+        }
+        // 抢单任务规则：只能有1个人接单，先到先得
+        if (t.taskType === '抢单' && (t.acceptedCount || 0) >= 1) {
+          showToast('⚡ 该抢单任务已被其他人接单，抢单任务只能由一人承接');
+          return t;
+        }
+        // 比稿任务上限人数校验
+        if (t.taskType === '比稿' && t.maxTakersLimit && (t.acceptedCount || 0) >= t.maxTakersLimit) {
+          showToast(`🎨 该比稿任务已达到最高接单人数限制 (${t.maxTakersLimit}人)`);
+          return t;
+        }
         // 检查是否已接单
         const existing = (t.takers || []).find(tk => tk.username === user.name || tk.username.includes('你'));
         if (existing) {
-          showToast('您已经接单该任务，请勿重复接单');
-          return t;
-        }
-        if (t.taskCount && t.acceptedCount >= t.taskCount * 5) {
-          showToast('该任务接单人数已满');
+          showToast('您已经接单该任务，请在“我承接的任务”中提交交付成果');
           return t;
         }
         const newTaker = {
@@ -614,9 +630,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           takeTime: new Date().toISOString().replace('T', ' ').substring(0, 19),
           status: '已接单' as const
         };
-        showToast(`成功接单【${t.title}】！请在截止时间内提交交付成果`);
+        const updatedStatus = t.status === '已发布' ? '进行中' : t.status;
+        showToast(`成功接单【${t.title}】（${t.taskType === '抢单' ? '⚡ 抢单任务' : '🎨 比稿任务'}）！`);
         return {
           ...t,
+          status: updatedStatus,
           acceptedCount: (t.acceptedCount || 0) + 1,
           takers: [newTaker, ...(t.takers || [])]
         };
@@ -626,6 +644,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const submitTaskResult = (taskId: string, notes: string, files: { name: string; size: string }[]) => {
+    const targetTask = tasks.find(t => t.id === taskId);
+    if (targetTask && (targetTask.status === '已结束' || targetTask.status === '已验收')) {
+      showToast('该任务发布者已验收结束，无法继续提交成果');
+      return;
+    }
+
     const subId = `sub_${Date.now()}`;
     const newSubmission = {
       id: subId,
@@ -642,7 +666,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (t.id === taskId) {
         const updatedTakers = (t.takers || []).map(tk => {
           if (tk.username === user.name || tk.username.includes('你') || tk.username.includes(user.name)) {
-            return { ...tk, status: '已提交' as const, submissionId: subId };
+            return { ...tk, status: '已提交' as const, submissionId: subId, submission: newSubmission };
           }
           return tk;
         });
@@ -657,7 +681,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             userAvatar: user.avatar,
             takeTime: new Date().toISOString().replace('T', ' ').substring(0, 19),
             status: '已提交' as const,
-            submissionId: subId
+            submissionId: subId,
+            submission: newSubmission
           },
           ...updatedTakers
         ];
@@ -679,72 +704,109 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTasks(prev => prev.map(t => {
       if (t.id === taskId) {
         let subTargetUser = '';
+        let subTargetAvatar = '';
+        let subNotes = '';
+
+        // 更新提交记录
         const updatedSubs = (t.submissions || []).map(s => {
           if (s.id === submissionId) {
             subTargetUser = s.username;
-            if (approved) {
-              return {
-                ...s,
-                status: '已通过' as const,
-                verifiedTime: new Date().toISOString().replace('T', ' ').substring(0, 19)
-              };
-            } else {
-              return {
-                ...s,
-                status: '已驳回' as const,
-                rejectReason: rejectReason || '交付成果未达验收标准，请修改后重试。'
-              };
-            }
+            subTargetAvatar = s.userAvatar;
+            subNotes = s.notes;
+            return {
+              ...s,
+              status: approved ? ('已通过' as const) : ('已驳回' as const),
+              rejectReason: approved ? undefined : (rejectReason || '未被选为验收通过方案。'),
+              verifiedTime: new Date().toISOString().replace('T', ' ').substring(0, 19)
+            };
+          } else if (approved) {
+            // 比稿任务中，一旦某个成果被“选为通过”，其他未被选中的成果自动标注为“未通过” / “已驳回”
+            return {
+              ...s,
+              status: '已驳回' as const,
+              rejectReason: '未被选为最佳比稿通过方案。'
+            };
           }
           return s;
         });
 
+        // 更新接单人记录
         const updatedTakers = (t.takers || []).map(tk => {
           if (tk.submissionId === submissionId || tk.username === subTargetUser) {
             return {
               ...tk,
               status: approved ? ('已验收' as const) : ('已驳回' as const)
             };
+          } else if (approved) {
+            return {
+              ...tk,
+              status: '已驳回' as const
+            };
           }
           return tk;
         });
 
-        const nextVerifiedCount = approved ? (t.verifiedCount || 0) + 1 : (t.verifiedCount || 0);
-        const isTaskFinished = nextVerifiedCount >= (t.taskCount || 1);
+        // 资金结算逻辑：
+        if (approved) {
+          // 1. 如果发布者是当前用户，扣除发布者冻结资金/积分
+          if (t.publisher === user.name) {
+            const cashAmount = t.cashReward || 0;
+            const pointsAmount = t.pointsReward || 0;
+            setUser(u => ({
+              ...u,
+              frozenBalance: Math.max(0, (u.frozenBalance || 0) - cashAmount),
+              frozenPoints: Math.max(0, (u.frozenPoints || 0) - pointsAmount)
+            }));
+          }
 
-        // 资金联动：
-        // 1. 如果发布者是当前用户，扣除发布者冻结资金/积分
-        if (t.publisher === user.name && approved) {
-          const singleCash = t.cashReward || 0;
-          const singlePoints = t.pointsReward || 0;
-          setUser(u => ({
-            ...u,
-            frozenBalance: Math.max(0, (u.frozenBalance || 0) - singleCash),
-            frozenPoints: Math.max(0, (u.frozenPoints || 0) - singlePoints)
-          }));
-        }
-
-        // 2. 如果被验收者是当前用户，增加当前用户可用余额与可用积分
-        if ((subTargetUser.includes(user.name) || subTargetUser.includes('你')) && approved) {
-          const earnedCash = t.cashReward || 0;
-          const earnedPoints = t.pointsReward || 0;
-          setUser(u => ({
-            ...u,
-            balance: u.balance + earnedCash,
-            points: u.points + earnedPoints,
-            todayEarnedPoints: u.todayEarnedPoints + earnedPoints
-          }));
-          showToast(`验收通过！恭喜获得赏金 ¥${earnedCash.toLocaleString()} 及 ${earnedPoints} 积分入账！`);
-        } else if (approved) {
-          showToast(`已通过对【${subTargetUser}】的成果验收并结算单份赏金！`);
+          // 2. 如果获胜接单者是当前用户，发放赏金与积分
+          if (subTargetUser.includes(user.name) || subTargetUser.includes('你')) {
+            const earnedCash = t.cashReward || 0;
+            const earnedPoints = t.pointsReward || 0;
+            setUser(u => ({
+              ...u,
+              balance: u.balance + earnedCash,
+              points: u.points + earnedPoints,
+              todayEarnedPoints: u.todayEarnedPoints + earnedPoints
+            }));
+            showToast(`🎉 恭喜！您的比稿/抢单作品已被选为【验收通过】，赏金 ¥${earnedCash.toLocaleString()} 及 ${earnedPoints} 积分已到账！`);
+          } else if (t.publisher === user.name) {
+            showToast(`已成功将【${subTargetUser}】的成果【选为通过】！赏金结算完毕，任务已顺利结束。`);
+          }
         } else {
-          showToast(`已驳回【${subTargetUser}】的成果提交`);
+          // 拒绝/未通过逻辑
+          if (t.taskType === '抢单') {
+            // 抢单任务拒绝后，退还预付资金给发布者，任务结束
+            if (t.publisher === user.name) {
+              const refundCash = t.cashReward || 0;
+              const refundPoints = t.pointsReward || 0;
+              setUser(u => ({
+                ...u,
+                balance: u.balance + refundCash,
+                points: u.points + refundPoints,
+                frozenBalance: Math.max(0, (u.frozenBalance || 0) - refundCash),
+                frozenPoints: Math.max(0, (u.frozenPoints || 0) - refundPoints)
+              }));
+              showToast(`已拒绝抢单成果。预付保证金 ¥${refundCash.toLocaleString()} 已解冻退还，任务已结束。`);
+            }
+          } else {
+            showToast(`已驳回【${subTargetUser}】提交的成果。`);
+          }
         }
+
+        // 抢单任务拒绝后任务也直接结束；比稿任务选为通过后任务结束
+        const isTaskFinished = approved || t.taskType === '抢单';
 
         return {
           ...t,
-          verifiedCount: nextVerifiedCount,
-          status: isTaskFinished ? ('已验收' as const) : t.status,
+          verifiedCount: approved ? 1 : (t.verifiedCount || 0),
+          status: isTaskFinished ? ('已结束' as const) : t.status,
+          winner: approved ? {
+            username: subTargetUser,
+            userAvatar: subTargetAvatar,
+            passTime: new Date().toISOString().replace('T', ' ').substring(0, 19),
+            notes: subNotes
+          } : t.winner,
           submissions: updatedSubs,
           takers: updatedTakers
         };
@@ -754,17 +816,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateTask = (updatedTask: TaskItem) => {
-    setTasks(prev => prev.map(t => {
-      if (t.id === updatedTask.id) {
-        return {
-          ...updatedTask,
-          status: '审核中' as const,
-          rejectReason: undefined,
-          publishTime: new Date().toISOString().replace('T', ' ').substring(0, 19)
-        };
+    setTasks(prev => {
+      const existing = prev.find(t => t.id === updatedTask.id);
+      if (existing && existing.status === '已驳回') {
+        const cashReq = updatedTask.cashReward || updatedTask.totalCashReward || 0;
+        const pointsReq = updatedTask.pointsReward || updatedTask.totalPointsReward || 0;
+        setUser(u => ({
+          ...u,
+          balance: Math.max(0, u.balance - cashReq),
+          frozenBalance: (u.frozenBalance || 0) + cashReq,
+          points: Math.max(0, u.points - pointsReq),
+          frozenPoints: (u.frozenPoints || 0) + pointsReq
+        }));
       }
-      return t;
-    }));
+
+      return prev.map(t => {
+        if (t.id === updatedTask.id) {
+          return {
+            ...updatedTask,
+            status: '审核中' as const,
+            rejectReason: undefined,
+            auditTime: undefined,
+            publishTime: new Date().toISOString().replace('T', ' ').substring(0, 19)
+          };
+        }
+        return t;
+      });
+    });
     showToast(`任务【${updatedTask.title}】已修改并重新提交审核！`);
   };
 
@@ -997,6 +1075,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addTask,
       auditTask,
       withdrawTask,
+      deleteTask,
       takeTask,
       submitTaskResult,
       verifyTaskSubmission,

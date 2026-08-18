@@ -1229,15 +1229,6 @@ export const HomeView: React.FC = () => {
                       {card.desc}
                     </p>
                   </div>
-
-                  <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      官方赛道
-                    </span>
-                    <span className="text-xs font-bold text-indigo-600 flex items-center gap-0.5 group-hover:translate-x-1 transition-transform">
-                      探索 <ArrowRight className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
                 </div>
               </div>
             );

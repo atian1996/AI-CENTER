@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { AdminMenuKey } from '../../types';
+import { TaskDetailModal } from '../tasks/TaskDetailModal';
 import {
   LayoutDashboard,
   Store,
@@ -572,13 +573,38 @@ const PublishAuditAdminView: React.FC = () => {
   const { tasks, auditTask, showToast } = useApp();
   const [rejectingTaskId, setRejectingTaskId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
 
-  const pendingTasks = tasks.filter(t => t.status === '审核中');
-  const auditedTasks = tasks.filter(t => t.status !== '审核中');
+  // 筛选栏状态
+  const [typeFilter, setTypeFilter] = useState<string>('全部'); // 全部 / 抢单任务 / 比稿任务
+  const [domainFilter, setDomainFilter] = useState<string>('全部'); // 全部 / 技术开发 / 内容创作 / AI模型与数据 / 工具与自动化 / 咨询与培训
+  const [statusFilter, setStatusFilter] = useState<string>('待审核'); // 全部 / 待审核 / 审核通过 / 已驳回
+
+  // 过滤后的任务列表
+  const filteredAuditTasks = useMemo(() => {
+    return tasks.filter(task => {
+      // 任务类型筛选
+      if (typeFilter !== '全部') {
+        if (typeFilter === '抢单任务' && task.taskType !== '抢单') return false;
+        if (typeFilter === '比稿任务' && task.taskType !== '比稿') return false;
+      }
+      // 所属领域筛选
+      if (domainFilter !== '全部' && task.domain !== domainFilter) {
+        return false;
+      }
+      // 任务状态筛选
+      if (statusFilter !== '全部') {
+        if (statusFilter === '待审核' && task.status !== '审核中') return false;
+        if (statusFilter === '审核通过' && (task.status === '审核中' || task.status === '已驳回')) return false;
+        if (statusFilter === '已驳回' && task.status !== '已驳回') return false;
+      }
+      return true;
+    });
+  }, [tasks, typeFilter, domainFilter, statusFilter]);
 
   const handlePass = (taskId: string, title: string) => {
     auditTask(taskId, true);
-    showToast(`任务【${title}】已审核通过并成功上架至任务大厅！`);
+    showToast(`任务【${title}】审核通过！平台预付款已冻结，该任务已同步在任务大厅上架。`);
   };
 
   const handleOpenReject = (taskId: string) => {
@@ -588,172 +614,253 @@ const PublishAuditAdminView: React.FC = () => {
 
   const handleConfirmReject = (taskId: string) => {
     if (!rejectReason.trim()) {
-      showToast('请填写驳回原因，便于通知发布雇主修改');
+      showToast('请填写驳回原因（必填）');
       return;
     }
     auditTask(taskId, false, rejectReason.trim());
+    showToast(`任务已驳回，驳回通知与退款已实时原路发放。`);
     setRejectingTaskId(null);
   };
 
   return (
     <div className="space-y-6">
-      {/* 待审核任务 */}
+      {/* 顶部三维筛选栏 */}
+      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+        <div className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <Filter className="w-3.5 h-3.5 text-indigo-400" />
+          <span>任务发布审核筛选控制台</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* 筛选1：任务类型 */}
+          <div>
+            <label className="text-[11px] font-bold text-slate-400 mb-1 block">任务类型</label>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-bold outline-none focus:border-indigo-500"
+            >
+              <option value="全部">全部类型</option>
+              <option value="抢单任务">抢单任务</option>
+              <option value="比稿任务">比稿任务</option>
+            </select>
+          </div>
+
+          {/* 筛选2：所属领域 */}
+          <div>
+            <label className="text-[11px] font-bold text-slate-400 mb-1 block">所属领域</label>
+            <select
+              value={domainFilter}
+              onChange={(e) => setDomainFilter(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-bold outline-none focus:border-indigo-500"
+            >
+              <option value="全部">全部领域</option>
+              <option value="技术开发">技术开发</option>
+              <option value="内容创作">内容创作</option>
+              <option value="AI模型与数据">AI模型与数据</option>
+              <option value="工具与自动化">工具与自动化</option>
+              <option value="咨询与培训">咨询与培训</option>
+            </select>
+          </div>
+
+          {/* 筛选3：任务状态 */}
+          <div>
+            <label className="text-[11px] font-bold text-slate-400 mb-1 block">任务状态</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-bold outline-none focus:border-indigo-500"
+            >
+              <option value="全部">全部状态</option>
+              <option value="待审核">待审核</option>
+              <option value="审核通过">审核通过</option>
+              <option value="已驳回">已驳回</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* 待审核 / 过滤后的任务卡片列表 */}
       <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-6 space-y-5">
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
           <div>
             <h3 className="text-base font-black text-white flex items-center gap-2">
               <FileCheck className="w-5 h-5 text-amber-400" />
-              <span>待审核发布任务</span>
+              <span>任务审核与预算初审列表</span>
             </h3>
-            <p className="text-xs text-slate-400 mt-1">审核雇主提交的任务需求合法性、验收标准明确度及赏金托管冻结状态</p>
+            <p className="text-xs text-slate-400 mt-1">核查需求合规性、验收指标合理性及雇主全额托管预付款扣发记录</p>
           </div>
           <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-3 py-1 rounded-lg border border-amber-500/20">
-            待处理: {pendingTasks.length} 件
+            已检索: {filteredAuditTasks.length} 件
           </span>
         </div>
 
-        {pendingTasks.length === 0 ? (
+        {filteredAuditTasks.length === 0 ? (
           <div className="py-12 text-center text-slate-500 space-y-2">
             <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto opacity-60" />
-            <p className="text-sm font-bold text-slate-300">当前没有待审核的任务</p>
-            <p className="text-xs">所有发布的任务均已完成初审与上架流转</p>
+            <p className="text-sm font-bold text-slate-300">暂无此筛选条件下的任务</p>
+            <p className="text-xs">请切换筛选条件或等待雇主发布新的悬赏任务</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {pendingTasks.map(task => (
-              <div
-                key={task.id}
-                className="p-5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-4 hover:border-slate-700 transition"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="space-y-1.5">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                        {task.domain}
-                      </span>
-                      <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
-                        {task.difficulty}难度
-                      </span>
-                      <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                        {task.categoryType} ({task.taskCount || 1}份)
-                      </span>
-                      <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
-                        待平台审核
-                      </span>
-                    </div>
-                    <h4 className="text-base font-extrabold text-white">{task.title}</h4>
-                  </div>
+            {filteredAuditTasks.map(task => {
+              const isFcfs = task.taskType === '抢单';
+              const isAuditing = task.status === '审核中';
+              const isRejected = task.status === '已驳回';
 
-                  <div className="text-right">
-                    <div className="text-sm font-black font-mono text-emerald-400">
-                      ¥{(task.totalCashReward || (task.cashReward * (task.taskCount || 1))).toLocaleString()}
-                    </div>
-                    <div className="text-[11px] text-slate-400">
-                      {task.pointsReward > 0 && `+${task.totalPointsReward || task.pointsReward} 积分 · `}已全额资金托管
-                    </div>
-                  </div>
-                </div>
+              return (
+                <div
+                  key={task.id}
+                  className="p-5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-4 hover:border-slate-700 transition"
+                >
+                  {/* 卡片头部 */}
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {/* 任务类型 */}
+                        {isFcfs ? (
+                          <span className="px-2 py-0.5 rounded text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            ⚡ 抢单任务
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded text-[11px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                            🎨 比稿任务
+                          </span>
+                        )}
 
-                {/* 需求描述与验收标准 */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                  <div className="p-3.5 bg-slate-900 rounded-lg border border-slate-800/80 space-y-1">
-                    <div className="text-slate-400 font-bold">任务需求详情：</div>
-                    <div className="text-slate-300 whitespace-pre-line leading-relaxed font-mono text-[11px]">
-                      {task.description}
-                    </div>
-                  </div>
-                  <div className="p-3.5 bg-slate-900 rounded-lg border border-slate-800/80 space-y-1">
-                    <div className="text-emerald-400 font-bold">验收标准细则：</div>
-                    <div className="text-slate-300 whitespace-pre-line leading-relaxed font-mono text-[11px]">
-                      {task.acceptanceCriteria}
-                    </div>
-                  </div>
-                </div>
+                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                          {task.domain}
+                        </span>
+                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                          {task.difficulty}难度
+                        </span>
 
-                {/* 雇主信息与发布时间 */}
-                <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400 pt-2 border-t border-slate-800/60">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={task.publisherAvatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80'}
-                      alt={task.publisher}
-                      className="w-6 h-6 rounded-full object-cover border border-slate-700"
-                    />
-                    <span className="font-bold text-slate-200">雇主：{task.publisher}</span>
-                    <span>· 提交时间：{task.publishTime}</span>
-                  </div>
+                        {/* 状态 */}
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-black ${
+                          isAuditing
+                            ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                            : isRejected
+                            ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                            : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                        }`}>
+                          {isAuditing ? '待审核' : isRejected ? '已驳回' : '已审核通过'}
+                        </span>
+                      </div>
+                      <h4 className="text-base font-extrabold text-white">{task.title}</h4>
+                    </div>
 
-                  {rejectingTaskId === task.id ? (
-                    <div className="w-full mt-3 p-3 bg-red-950/40 border border-red-800/60 rounded-xl space-y-2">
-                      <div className="text-xs font-bold text-red-300">请填写驳回原因（将通知雇主并全额退回托管款项）：</div>
-                      <input
-                        type="text"
-                        value={rejectReason}
-                        onChange={(e) => setRejectReason(e.target.value)}
-                        placeholder="例如：任务验收指标不够量化，请补充具体的 Baseline 评测数据集格式要求..."
-                        className="w-full px-3 py-1.5 bg-slate-900 border border-red-700 rounded-lg text-xs text-white outline-none"
-                      />
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => setRejectingTaskId(null)}
-                          className="px-3 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs"
-                        >
-                          取消
-                        </button>
-                        <button
-                          onClick={() => handleConfirmReject(task.id)}
-                          className="px-4 py-1 rounded bg-red-600 hover:bg-red-500 text-white font-bold text-xs"
-                        >
-                          确认驳回并退款
-                        </button>
+                    <div className="text-right shrink-0">
+                      <div className="text-sm font-black font-mono text-emerald-400">
+                        ¥{(task.cashReward || 0).toLocaleString()} 元
+                      </div>
+                      <div className="text-[11px] text-slate-400 font-mono">
+                        {(task.pointsReward || 0) > 0 && `+${task.pointsReward} 积分 · `}赏金预算
                       </div>
                     </div>
-                  ) : (
+                  </div>
+
+                  {/* 需求描述与验收标准 */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div className="p-3.5 bg-slate-900 rounded-lg border border-slate-800/80 space-y-1">
+                      <div className="text-slate-400 font-bold">任务描述：</div>
+                      <div
+                        className="text-slate-300 leading-relaxed font-mono text-[11px] line-clamp-4"
+                        dangerouslySetInnerHTML={{ __html: task.description }}
+                      />
+                    </div>
+                    <div className="p-3.5 bg-slate-900 rounded-lg border border-slate-800/80 space-y-1">
+                      <div className="text-emerald-400 font-bold">验收标准：</div>
+                      <div
+                        className="text-slate-300 leading-relaxed font-mono text-[11px] line-clamp-4"
+                        dangerouslySetInnerHTML={{ __html: task.acceptanceCriteria }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 附件与发布者 */}
+                  <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400 pt-2 border-t border-slate-800/60">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={task.publisherAvatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80'}
+                        alt={task.publisher}
+                        className="w-6 h-6 rounded-full object-cover border border-slate-700"
+                      />
+                      <span className="font-bold text-slate-200">发布人：{task.publisher}</span>
+                      <span>· 发布时间：{task.publishTime}</span>
+                      {task.attachments && task.attachments.length > 0 && (
+                        <span className="text-indigo-400 font-mono">· 附件：{task.attachments.length} 个</span>
+                      )}
+                    </div>
+
+                    {/* 操作区 */}
                     <div className="flex items-center gap-3">
                       <button
-                        onClick={() => handleOpenReject(task.id)}
-                        className="px-3.5 py-1.5 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 font-bold transition"
+                        onClick={() => setDetailTaskId(task.id)}
+                        className="px-3.5 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 font-bold transition"
                       >
-                        驳回修改
+                        查看详情
                       </button>
-                      <button
-                        onClick={() => handlePass(task.id, task.title)}
-                        className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold shadow-sm transition flex items-center gap-1"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                        <span>审核通过并上架</span>
-                      </button>
+
+                      {isAuditing && (
+                        <>
+                          {rejectingTaskId === task.id ? (
+                            <div className="w-full mt-2 p-3 bg-red-950/40 border border-red-800/60 rounded-xl space-y-2">
+                              <div className="text-xs font-bold text-red-300">请输入驳回原因说明（必填）：</div>
+                              <input
+                                type="text"
+                                value={rejectReason}
+                                onChange={(e) => setRejectReason(e.target.value)}
+                                placeholder="例如：任务验收标准不够量化，请明确具体数据精度门槛..."
+                                className="w-full px-3 py-1.5 bg-slate-900 border border-red-700 rounded-lg text-xs text-white outline-none"
+                              />
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={() => setRejectingTaskId(null)}
+                                  className="px-3 py-1 rounded bg-slate-800 text-slate-300 text-xs"
+                                >
+                                  取消
+                                </button>
+                                <button
+                                  onClick={() => handleConfirmReject(task.id)}
+                                  className="px-4 py-1 rounded bg-red-600 hover:bg-red-500 text-white font-bold text-xs"
+                                >
+                                  确认驳回
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleOpenReject(task.id)}
+                                className="px-3.5 py-1.5 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 font-bold transition"
+                              >
+                                驳回
+                              </button>
+                              <button
+                                onClick={() => handlePass(task.id, task.title)}
+                                className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold shadow-sm transition flex items-center gap-1"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>审核通过</span>
+                              </button>
+                            </>
+                          )}
+                        </>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* 已审核历史归档 */}
-      <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-6 space-y-4">
-        <h4 className="text-sm font-bold text-slate-300">近期审核记录（共 {auditedTasks.length} 条）</h4>
-        <div className="divide-y divide-slate-800/80 text-xs">
-          {auditedTasks.slice(0, 5).map(task => (
-            <div key={task.id} className="py-3 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <span className={`w-2 h-2 rounded-full ${task.status === '已驳回' ? 'bg-red-400' : 'bg-emerald-400'}`} />
-                <span className="font-bold text-slate-200">{task.title}</span>
-                <span className="text-slate-500 font-mono">({task.publisher})</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                  task.status === '已驳回' ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'
-                }`}>
-                  {task.status}
-                </span>
-                <span className="text-slate-500 font-mono">{task.publishTime.split(' ')[0]}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* 弹窗挂载 */}
+      <TaskDetailModal
+        taskId={detailTaskId}
+        isOpen={!!detailTaskId}
+        onClose={() => setDetailTaskId(null)}
+      />
     </div>
   );
 };
@@ -763,100 +870,186 @@ const PublishAuditAdminView: React.FC = () => {
 // ==========================================
 const TaskMonitorAdminView: React.FC = () => {
   const { tasks } = useApp();
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
+
+  // 筛选栏
+  const [typeFilter, setTypeFilter] = useState<string>('全部'); // 全部 / 抢单任务 / 比稿任务
+  const [domainFilter, setDomainFilter] = useState<string>('全部'); // 全部 / 技术开发 / 内容创作 / AI模型与数据 / 工具与自动化 / 咨询与培训
+  const [statusFilter, setStatusFilter] = useState<string>('全部'); // 全部 / 进行中 / 已结束
+
+  // 只监控已经审核通过的任务（非审核中/非已驳回）
+  const approvedTasks = useMemo(() => {
+    return tasks.filter(t => t.status !== '审核中' && t.status !== '已驳回');
+  }, [tasks]);
+
+  const filteredMonitoredTasks = useMemo(() => {
+    return approvedTasks.filter(task => {
+      if (typeFilter !== '全部') {
+        if (typeFilter === '抢单任务' && task.taskType !== '抢单') return false;
+        if (typeFilter === '比稿任务' && task.taskType !== '比稿') return false;
+      }
+      if (domainFilter !== '全部' && task.domain !== domainFilter) {
+        return false;
+      }
+      if (statusFilter !== '全部') {
+        const isFinished = task.status === '已结束' || task.status === '已验收';
+        if (statusFilter === '进行中' && isFinished) return false;
+        if (statusFilter === '已结束' && !isFinished) return false;
+      }
+      return true;
+    });
+  }, [approvedTasks, typeFilter, domainFilter, statusFilter]);
 
   return (
     <div className="space-y-6">
-      {/* 监控大盘指标 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="rounded-xl bg-slate-900 border border-slate-800 p-4 space-y-1">
-          <div className="text-xs text-slate-400">全网任务总量</div>
-          <div className="text-xl font-black font-mono text-white">{tasks.length}</div>
+      {/* 筛选控制台 */}
+      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+        <div className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <Filter className="w-3.5 h-3.5 text-cyan-400" />
+          <span>全网任务执行监控筛选控制台</span>
         </div>
-        <div className="rounded-xl bg-slate-900 border border-slate-800 p-4 space-y-1">
-          <div className="text-xs text-slate-400">正在履约进行中</div>
-          <div className="text-xl font-black font-mono text-emerald-400">
-            {tasks.filter(t => t.status === '进行中').length}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label className="text-[11px] font-bold text-slate-400 mb-1 block">任务类型</label>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-bold outline-none focus:border-indigo-500"
+            >
+              <option value="全部">全部类型</option>
+              <option value="抢单任务">抢单任务</option>
+              <option value="比稿任务">比稿任务</option>
+            </select>
           </div>
-        </div>
-        <div className="rounded-xl bg-slate-900 border border-slate-800 p-4 space-y-1">
-          <div className="text-xs text-slate-400">待验收成果份数</div>
-          <div className="text-xl font-black font-mono text-amber-400">
-            {tasks.reduce((acc, t) => acc + ((t.submissions || []).filter(s => s.status === '待验收').length), 0)}
+
+          <div>
+            <label className="text-[11px] font-bold text-slate-400 mb-1 block">所属领域</label>
+            <select
+              value={domainFilter}
+              onChange={(e) => setDomainFilter(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-bold outline-none focus:border-indigo-500"
+            >
+              <option value="全部">全部领域</option>
+              <option value="技术开发">技术开发</option>
+              <option value="内容创作">内容创作</option>
+              <option value="AI模型与数据">AI模型与数据</option>
+              <option value="工具与自动化">工具与自动化</option>
+              <option value="咨询与培训">咨询与培训</option>
+            </select>
           </div>
-        </div>
-        <div className="rounded-xl bg-slate-900 border border-slate-800 p-4 space-y-1">
-          <div className="text-xs text-slate-400">履约完成已结算</div>
-          <div className="text-xl font-black font-mono text-indigo-400">
-            {tasks.filter(t => t.status === '已验收').length}
+
+          <div>
+            <label className="text-[11px] font-bold text-slate-400 mb-1 block">任务状态</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-bold outline-none focus:border-indigo-500"
+            >
+              <option value="全部">全部状态</option>
+              <option value="进行中">进行中</option>
+              <option value="已结束">已结束</option>
+            </select>
           </div>
         </div>
       </div>
 
-      {/* 任务监控实时看板表格 */}
+      {/* 监控列表 */}
       <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-6 space-y-4">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <h3 className="text-sm font-black text-white flex items-center gap-2">
             <Activity className="w-4 h-4 text-cyan-400" />
-            <span>全网任务履约与资金状态追踪</span>
+            <span>全网已审核通过任务轨迹动态（{filteredMonitoredTasks.length} 条）</span>
           </h3>
-          <span className="text-xs text-slate-500">按最新发布时间排序</span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/80 text-slate-400 uppercase font-mono text-[11px] border-b border-slate-800">
-              <tr>
-                <th className="py-3 px-4">任务标题</th>
-                <th className="py-3 px-3">领域/类别</th>
-                <th className="py-3 px-3">雇主</th>
-                <th className="py-3 px-3">单价/总托管</th>
-                <th className="py-3 px-3">接单/验收进度</th>
-                <th className="py-3 px-3">当前状态</th>
-                <th className="py-3 px-3 text-right">起止时间</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60 font-medium">
-              {tasks.map(task => (
-                <tr key={task.id} className="hover:bg-slate-800/40 transition">
-                  <td className="py-3.5 px-4 font-bold text-white max-w-xs truncate">
-                    {task.title}
-                  </td>
-                  <td className="py-3.5 px-3">
-                    <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px]">
-                      {task.domain}
+        <div className="space-y-4">
+          {filteredMonitoredTasks.map(task => {
+            const isFcfs = task.taskType === '抢单';
+            const takers = task.takers || [];
+            const submissions = task.submissions || [];
+            const isFinished = task.status === '已结束' || task.status === '已验收';
+
+            return (
+              <div key={task.id} className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {isFcfs ? (
+                        <span className="px-2 py-0.5 rounded text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                          ⚡ 抢单任务
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[11px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                          🎨 比稿任务
+                        </span>
+                      )}
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300">
+                        {task.domain}
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300">
+                        {task.difficulty}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        isFinished ? 'bg-slate-700 text-slate-300' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      }`}>
+                        {isFinished ? '已结束' : '进行中'}
+                      </span>
+                    </div>
+                    <h4 className="text-sm font-extrabold text-white">{task.title}</h4>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <div className="text-sm font-black font-mono text-emerald-400">
+                      ¥{(task.cashReward || 0).toLocaleString()} 元
+                    </div>
+                    <div className="text-[11px] text-slate-400">
+                      赏金与积分奖励
+                    </div>
+                  </div>
+                </div>
+
+                {/* 接单人履约动态轨迹 */}
+                <div className="p-3 bg-slate-900 rounded-xl text-xs space-y-2">
+                  <div className="flex items-center justify-between text-slate-400 font-bold">
+                    <span>发布雇主：{task.publisher}</span>
+                    <span>
+                      {isFcfs
+                        ? `接单情况：${takers.length} / 1 人`
+                        : `接单总人数：${takers.length} 人 ｜ 已提交：${submissions.length} 份`}
                     </span>
-                  </td>
-                  <td className="py-3.5 px-3 text-slate-300">{task.publisher}</td>
-                  <td className="py-3.5 px-3 font-mono font-bold text-emerald-400">
-                    ¥{task.cashReward} / ¥{task.totalCashReward || (task.cashReward * (task.taskCount || 1))}
-                  </td>
-                  <td className="py-3.5 px-3">
-                    <span className="text-slate-300">{task.acceptedCount || 0} 接单</span>
-                    <span className="text-slate-500 mx-1">/</span>
-                    <span className="text-indigo-400">{task.verifiedCount || 0} 验收</span>
-                  </td>
-                  <td className="py-3.5 px-3">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                      task.status === '进行中'
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        : task.status === '审核中'
-                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                        : task.status === '已验收'
-                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                        : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                    }`}>
-                      {task.status}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-3 text-right text-slate-400 font-mono text-[11px]">
-                    {task.startTime?.split(' ')[0]} ~ {task.endTime?.split(' ')[0]}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+
+                  {takers.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {takers.map(tk => (
+                        <span key={tk.id} className="px-2.5 py-1 bg-slate-950 rounded-lg text-[11px] text-slate-300 border border-slate-800">
+                          {tk.username} ({tk.status || '已接单'})
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 操作 */}
+                <div className="flex items-center justify-end">
+                  <button
+                    onClick={() => setDetailTaskId(task.id)}
+                    className="px-3.5 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-300 hover:bg-slate-800 font-bold transition cursor-pointer"
+                  >
+                    查看详情
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
+
+      <TaskDetailModal
+        taskId={detailTaskId}
+        isOpen={!!detailTaskId}
+        onClose={() => setDetailTaskId(null)}
+      />
     </div>
   );
 };
