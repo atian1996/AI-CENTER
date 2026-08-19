@@ -263,7 +263,7 @@ export const SubscribeModal: React.FC<SubscribeModalProps> = ({
           <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-bold text-slate-700">
               <div className="flex items-center gap-2">
-                <span>💳 当前账户余额：<strong className="text-slate-900 font-black">¥{user.balance.toFixed(2)}</strong></span>
+                <span>💳 当前账户余额：<strong className="text-slate-900 font-black">¥{(user?.balance ?? 128).toFixed(2)}</strong></span>
               </div>
               <div className="flex items-center gap-2">
                 <span>🌟 可用积分：<strong className="text-amber-600 font-black">{user.points}</strong>（可抵扣最高30%）</span>

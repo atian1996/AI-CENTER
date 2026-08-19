@@ -2,6 +2,13 @@ import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { AdminMenuKey } from '../../types';
 import { TaskDetailModal } from '../tasks/TaskDetailModal';
+import { ComputeSpecAdminView } from './compute/ComputeSpecAdminView';
+import { ComputeImageAdminView } from './compute/ComputeImageAdminView';
+import { ComputePoolAdminView } from './compute/ComputePoolAdminView';
+import { ComputeOrderAdminView } from './compute/ComputeOrderAdminView';
+import { ComputeInstanceMonitorView } from './compute/ComputeInstanceMonitorView';
+import { ComputeStatsAdminView } from './compute/ComputeStatsAdminView';
+import { ComputeSettlementAdminView } from './compute/ComputeSettlementAdminView';
 import {
   LayoutDashboard,
   Store,
@@ -34,7 +41,9 @@ import {
   HelpCircle,
   TrendingUp,
   AlertCircle,
-  Check
+  Check,
+  Coins,
+  Receipt
 } from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {
@@ -48,11 +57,14 @@ export const AdminLayout: React.FC = () => {
     agents,
     models,
     competitions,
-    gpuInstances
+    gpuInstances,
+    computeSpecs
   } = useApp();
 
   // Task sub-menu collapse state
   const [taskMenuExpanded, setTaskMenuExpanded] = useState<boolean>(true);
+  // Compute sub-menu collapse state
+  const [computeMenuExpanded, setComputeMenuExpanded] = useState<boolean>(true);
 
   // Search keyword inside admin view
   const [adminSearch, setAdminSearch] = useState('');
@@ -63,6 +75,7 @@ export const AdminLayout: React.FC = () => {
   };
 
   const isTaskSubMenu = activeAdminMenu === 'publish_audit' || activeAdminMenu === 'task_monitor';
+  const isComputeSubMenu = activeAdminMenu.startsWith('compute_');
 
   // Navigation Items
   const mainNav = [
@@ -99,10 +112,49 @@ export const AdminLayout: React.FC = () => {
       ]
     },
     {
-      id: 'compute_admin' as AdminMenuKey,
+      id: 'compute_admin_group',
       label: '算力管理',
       icon: <Cpu className="w-4 h-4" />,
-      count: gpuInstances.length
+      isGroup: true,
+      children: [
+        {
+          id: 'compute_spec' as AdminMenuKey,
+          label: '规格管理',
+          icon: <Cpu className="w-3.5 h-3.5" />,
+          badge: `${computeSpecs.length}款`
+        },
+        {
+          id: 'compute_image' as AdminMenuKey,
+          label: '镜像管理',
+          icon: <Terminal className="w-3.5 h-3.5" />
+        },
+        {
+          id: 'compute_pool' as AdminMenuKey,
+          label: '资源池管理',
+          icon: <Server className="w-3.5 h-3.5" />
+        },
+        {
+          id: 'compute_order' as AdminMenuKey,
+          label: '实例订单管理',
+          icon: <Receipt className="w-3.5 h-3.5" />
+        },
+        {
+          id: 'compute_instance' as AdminMenuKey,
+          label: '运行实例监控',
+          icon: <Activity className="w-3.5 h-3.5" />,
+          badge: '实时'
+        },
+        {
+          id: 'compute_stat' as AdminMenuKey,
+          label: '资源使用统计',
+          icon: <TrendingUp className="w-3.5 h-3.5" />
+        },
+        {
+          id: 'compute_settlement' as AdminMenuKey,
+          label: '对账结算',
+          icon: <Coins className="w-3.5 h-3.5" />
+        }
+      ]
     },
     {
       id: 'competition_admin' as AdminMenuKey,
@@ -148,11 +200,60 @@ export const AdminLayout: React.FC = () => {
           category: '任务管理',
           crumb: ['后台管理', '任务管理', '任务监控']
         };
+      case 'compute_spec':
+        return {
+          title: '规格管理',
+          subtitle: '定义平台可提供的 GPU 规格（型号、显存、CPU/内存/存储、按量及日/周/月套餐价格与可用库存）',
+          category: '算力管理',
+          crumb: ['后台管理', '算力管理', '规格管理']
+        };
+      case 'compute_image':
+        return {
+          title: '镜像管理',
+          subtitle: '管理用户在创建实例时可选的官方系统镜像、App 市场应用镜像与社区镜像',
+          category: '算力管理',
+          crumb: ['后台管理', '算力管理', '镜像管理']
+        };
+      case 'compute_pool':
+        return {
+          title: '资源池管理',
+          subtitle: '管理平台接入的各运营商算力集群节点、容量水位、利用率及告警阈值',
+          category: '算力管理',
+          crumb: ['后台管理', '算力管理', '资源池管理']
+        };
+      case 'compute_order':
+        return {
+          title: '实例订单管理',
+          subtitle: '查看与处理所有用户的 GPU 容器/虚拟机实例订单、计费明细与异常调度',
+          category: '算力管理',
+          crumb: ['后台管理', '算力管理', '实例订单管理']
+        };
+      case 'compute_instance':
+        return {
+          title: '运行实例监控',
+          subtitle: '实时查看所有运行中的实例遥测指标（GPU/CPU/显存/温度/功耗），支持远程重启与强制停机',
+          category: '算力管理',
+          crumb: ['后台管理', '算力管理', '运行实例监控']
+        };
+      case 'compute_stat':
+        return {
+          title: '资源使用统计',
+          subtitle: '平台算力资源利用率、热门型号排行、用户用量排行、运营商营收与成本结构分析',
+          category: '算力管理',
+          crumb: ['后台管理', '算力管理', '资源使用统计']
+        };
+      case 'compute_settlement':
+        return {
+          title: '对账结算',
+          subtitle: '与算力运营商的账期卡时消耗核对、应付成本计算与发票结款归档',
+          category: '算力管理',
+          crumb: ['后台管理', '算力管理', '对账结算']
+        };
       case 'compute_admin':
         return {
-          title: '算力集群管理',
+          title: '算力概览',
           subtitle: '管控多机房 GPU 算力集群节点、容器化实例状态、算力配额与硬件利用率',
-          category: '基础设施',
+          category: '算力管理',
           crumb: ['后台管理', '算力管理']
         };
       case 'competition_admin':
@@ -236,26 +337,35 @@ export const AdminLayout: React.FC = () => {
 
               {mainNav.map((item) => {
                 if (item.isGroup && item.children) {
+                  const isCompute = item.id === 'compute_admin_group';
+                  const isTask = item.id === 'task_admin_group';
+                  const isGroupActive = isCompute ? isComputeSubMenu : isTaskSubMenu;
+                  const isExpanded = isCompute ? computeMenuExpanded : taskMenuExpanded;
+                  const toggleExpanded = () => {
+                    if (isCompute) setComputeMenuExpanded(!computeMenuExpanded);
+                    if (isTask) setTaskMenuExpanded(!taskMenuExpanded);
+                  };
+
                   return (
                     <div key={item.id} className="space-y-1">
-                      {/* 一级父菜单：任务管理 */}
+                      {/* 一级父菜单 */}
                       <button
-                        onClick={() => setTaskMenuExpanded(!taskMenuExpanded)}
+                        onClick={toggleExpanded}
                         className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
-                          isTaskSubMenu 
+                          isGroupActive 
                             ? 'bg-slate-800 text-indigo-300 border border-slate-700/80' 
                             : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
-                          <span className={`${isTaskSubMenu ? 'text-indigo-400' : 'text-slate-400'}`}>
+                          <span className={`${isGroupActive ? 'text-indigo-400' : 'text-slate-400'}`}>
                             {item.icon}
                           </span>
                           <span>{item.label}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <span className="text-[10px] text-slate-400 font-normal">2 项</span>
-                          {taskMenuExpanded ? (
+                          <span className="text-[10px] text-slate-400 font-normal">{item.children.length} 项</span>
+                          {isExpanded ? (
                             <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                           ) : (
                             <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
@@ -263,8 +373,8 @@ export const AdminLayout: React.FC = () => {
                         </div>
                       </button>
 
-                      {/* 二级子菜单：发布审核、任务监控 */}
-                      {taskMenuExpanded && (
+                      {/* 二级子菜单 */}
+                      {isExpanded && (
                         <div className="pl-4 space-y-1 border-l-2 border-slate-800 ml-4 py-1">
                           {item.children.map(sub => {
                             const isSubActive = activeAdminMenu === sub.id;
@@ -454,7 +564,17 @@ export const AdminLayout: React.FC = () => {
             {activeAdminMenu === 'marketplace_admin' && <MarketplaceAdminView />}
             {activeAdminMenu === 'publish_audit' && <PublishAuditAdminView />}
             {activeAdminMenu === 'task_monitor' && <TaskMonitorAdminView />}
-            {activeAdminMenu === 'compute_admin' && <ComputeAdminView />}
+            
+            {/* 算力管理 7 大核心模块 */}
+            {activeAdminMenu === 'compute_spec' && <ComputeSpecAdminView />}
+            {activeAdminMenu === 'compute_image' && <ComputeImageAdminView />}
+            {activeAdminMenu === 'compute_pool' && <ComputePoolAdminView />}
+            {activeAdminMenu === 'compute_order' && <ComputeOrderAdminView />}
+            {activeAdminMenu === 'compute_instance' && <ComputeInstanceMonitorView />}
+            {activeAdminMenu === 'compute_stat' && <ComputeStatsAdminView />}
+            {activeAdminMenu === 'compute_settlement' && <ComputeSettlementAdminView />}
+            {activeAdminMenu === 'compute_admin' && <ComputeSpecAdminView />}
+
             {activeAdminMenu === 'competition_admin' && <CompetitionAdminView />}
             {activeAdminMenu === 'system_admin' && <SystemAdminView />}
 
@@ -575,24 +695,33 @@ const PublishAuditAdminView: React.FC = () => {
   const [rejectReason, setRejectReason] = useState('');
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
 
-  // 筛选栏状态
+  // 综合多维筛选控制台状态
+  const [searchQuery, setSearchQuery] = useState<string>(''); // 关键词搜索
   const [typeFilter, setTypeFilter] = useState<string>('全部'); // 全部 / 抢单任务 / 比稿任务
-  const [domainFilter, setDomainFilter] = useState<string>('全部'); // 全部 / 技术开发 / 内容创作 / AI模型与数据 / 工具与自动化 / 咨询与培训
+  const [domainFilter, setDomainFilter] = useState<string>('全部'); // 全部 / 各领域
   const [statusFilter, setStatusFilter] = useState<string>('待审核'); // 全部 / 待审核 / 审核通过 / 已驳回
 
   // 过滤后的任务列表
   const filteredAuditTasks = useMemo(() => {
     return tasks.filter(task => {
-      // 任务类型筛选
+      // 1. 关键词搜索 (匹配标题、需求描述、发布者)
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchTitle = task.title.toLowerCase().includes(q);
+        const matchDesc = (task.description || task.brief || '').toLowerCase().includes(q);
+        const matchPublisher = (task.publisher || '').toLowerCase().includes(q);
+        if (!matchTitle && !matchDesc && !matchPublisher) return false;
+      }
+      // 2. 任务类型筛选
       if (typeFilter !== '全部') {
         if (typeFilter === '抢单任务' && task.taskType !== '抢单') return false;
         if (typeFilter === '比稿任务' && task.taskType !== '比稿') return false;
       }
-      // 所属领域筛选
+      // 3. 所属领域筛选
       if (domainFilter !== '全部' && task.domain !== domainFilter) {
         return false;
       }
-      // 任务状态筛选
+      // 4. 任务状态筛选
       if (statusFilter !== '全部') {
         if (statusFilter === '待审核' && task.status !== '审核中') return false;
         if (statusFilter === '审核通过' && (task.status === '审核中' || task.status === '已驳回')) return false;
@@ -600,11 +729,11 @@ const PublishAuditAdminView: React.FC = () => {
       }
       return true;
     });
-  }, [tasks, typeFilter, domainFilter, statusFilter]);
+  }, [tasks, searchQuery, typeFilter, domainFilter, statusFilter]);
 
   const handlePass = (taskId: string, title: string) => {
     auditTask(taskId, true);
-    showToast(`任务【${title}】审核通过！平台预付款已冻结，该任务已同步在任务大厅上架。`);
+    showToast(`任务【${title}】审核通过！已实时进入进行中状态并在任务大厅展示。`);
   };
 
   const handleOpenReject = (taskId: string) => {
@@ -618,19 +747,34 @@ const PublishAuditAdminView: React.FC = () => {
       return;
     }
     auditTask(taskId, false, rejectReason.trim());
-    showToast(`任务已驳回，驳回通知与退款已实时原路发放。`);
+    showToast(`任务已成功驳回，已通知发布雇主全额解冻预付资金。`);
     setRejectingTaskId(null);
   };
 
   return (
     <div className="space-y-6">
-      {/* 顶部三维筛选栏 */}
+      {/* 1. 综合多维筛选控制台 */}
       <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
         <div className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2">
           <Filter className="w-3.5 h-3.5 text-indigo-400" />
-          <span>任务发布审核筛选控制台</span>
+          <span>任务发布审核多维查询控制台</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* 关键词搜索 */}
+          <div>
+            <label className="text-[11px] font-bold text-slate-400 mb-1 block">关键词搜索</label>
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="搜索标题、需求描述或发布者..."
+                className="w-full pl-8 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-500 font-medium outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
           {/* 筛选1：任务类型 */}
           <div>
             <label className="text-[11px] font-bold text-slate-400 mb-1 block">任务类型</label>
@@ -662,9 +806,9 @@ const PublishAuditAdminView: React.FC = () => {
             </select>
           </div>
 
-          {/* 筛选3：任务状态 */}
+          {/* 筛选3：审核状态 */}
           <div>
-            <label className="text-[11px] font-bold text-slate-400 mb-1 block">任务状态</label>
+            <label className="text-[11px] font-bold text-slate-400 mb-1 block">审核状态</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -679,183 +823,190 @@ const PublishAuditAdminView: React.FC = () => {
         </div>
       </div>
 
-      {/* 待审核 / 过滤后的任务卡片列表 */}
-      <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-6 space-y-5">
+      {/* 2. 传统标准表格列表展示区 */}
+      <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-6 space-y-4 overflow-hidden">
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
           <div>
             <h3 className="text-base font-black text-white flex items-center gap-2">
               <FileCheck className="w-5 h-5 text-amber-400" />
-              <span>任务审核与预算初审列表</span>
+              <span>任务发布审核与预算清算表</span>
             </h3>
-            <p className="text-xs text-slate-400 mt-1">核查需求合规性、验收指标合理性及雇主全额托管预付款扣发记录</p>
+            <p className="text-xs text-slate-400 mt-1">审核需求完整度、预付款托管记录，并通过表格集中分列操作</p>
           </div>
           <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-3 py-1 rounded-lg border border-amber-500/20">
-            已检索: {filteredAuditTasks.length} 件
+            共检索到: {filteredAuditTasks.length} 条记录
           </span>
         </div>
 
         {filteredAuditTasks.length === 0 ? (
-          <div className="py-12 text-center text-slate-500 space-y-2">
+          <div className="py-16 text-center text-slate-500 space-y-2">
             <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto opacity-60" />
-            <p className="text-sm font-bold text-slate-300">暂无此筛选条件下的任务</p>
-            <p className="text-xs">请切换筛选条件或等待雇主发布新的悬赏任务</p>
+            <p className="text-sm font-bold text-slate-300">暂无满足筛选条件的任务数据</p>
+            <p className="text-xs">您可以调整上方的关键字或选单条件重新检索</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {filteredAuditTasks.map(task => {
-              const isFcfs = task.taskType === '抢单';
-              const isAuditing = task.status === '审核中';
-              const isRejected = task.status === '已驳回';
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-800 bg-slate-950/60 text-slate-400 font-bold uppercase text-[11px]">
+                  <th className="py-3 px-4 min-w-[220px]">任务标题 / 属性</th>
+                  <th className="py-3 px-3">任务机制</th>
+                  <th className="py-3 px-4 min-w-[160px]">发布人</th>
+                  <th className="py-3 px-3 text-right">赏金预算</th>
+                  <th className="py-3 px-3">截止时间</th>
+                  <th className="py-3 px-3">审核状态</th>
+                  <th className="py-3 px-4 text-center min-w-[180px]">操作列</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                {filteredAuditTasks.map(task => {
+                  const isFcfs = task.taskType === '抢单';
+                  const isAuditing = task.status === '审核中';
+                  const isRejected = task.status === '已驳回';
 
-              return (
-                <div
-                  key={task.id}
-                  className="p-5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-4 hover:border-slate-700 transition"
-                >
-                  {/* 卡片头部 */}
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="space-y-1.5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {/* 任务类型 */}
-                        {isFcfs ? (
-                          <span className="px-2 py-0.5 rounded text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                            ⚡ 抢单任务
+                  return (
+                    <React.Fragment key={task.id}>
+                      <tr className="hover:bg-slate-800/40 transition">
+                        {/* 1. 任务标题与属性 */}
+                        <td className="py-3.5 px-4">
+                          <div className="font-extrabold text-white text-sm line-clamp-1">{task.title}</div>
+                          <div className="flex items-center gap-1.5 mt-1 text-[10px]">
+                            <span className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 border border-slate-700">
+                              {task.domain}
+                            </span>
+                            <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                              {task.difficulty}难度
+                            </span>
+                            <span className="text-slate-500 font-mono">ID: {task.id}</span>
+                          </div>
+                        </td>
+
+                        {/* 2. 任务机制 */}
+                        <td className="py-3.5 px-3">
+                          {isFcfs ? (
+                            <span className="px-2 py-0.5 rounded text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap">
+                              ⚡ 抢单
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[11px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 whitespace-nowrap">
+                              🎨 比稿
+                            </span>
+                          )}
+                        </td>
+
+                        {/* 3. 发布人 */}
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-2">
+                            <img
+                              src={task.publisherAvatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80'}
+                              alt={task.publisher}
+                              className="w-6 h-6 rounded-full object-cover border border-slate-700"
+                            />
+                            <div>
+                              <div className="font-bold text-slate-200 text-xs">{task.publisher}</div>
+                              <div className="text-[10px] text-slate-500 font-mono">{task.publishTime}</div>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* 4. 赏金预算 */}
+                        <td className="py-3.5 px-3 text-right">
+                          <div className="font-black font-mono text-emerald-400 text-sm">
+                            ¥{(task.cashReward || 0).toLocaleString()}
+                          </div>
+                          {(task.pointsReward || 0) > 0 && (
+                            <div className="text-[10px] text-amber-400 font-mono">+ {task.pointsReward} 积分</div>
+                          )}
+                        </td>
+
+                        {/* 5. 截止时间 */}
+                        <td className="py-3.5 px-3 font-mono text-[11px] text-slate-300 whitespace-nowrap">
+                          {task.endTime}
+                        </td>
+
+                        {/* 6. 审核状态 */}
+                        <td className="py-3.5 px-3 whitespace-nowrap">
+                          <span className={`px-2.5 py-1 rounded-lg text-[11px] font-black ${
+                            isAuditing
+                              ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                              : isRejected
+                              ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                              : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                          }`}>
+                            {isAuditing ? '待审核' : isRejected ? '已驳回' : '已通过'}
                           </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded text-[11px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                            🎨 比稿任务
-                          </span>
-                        )}
+                        </td>
 
-                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
-                          {task.domain}
-                        </span>
-                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
-                          {task.difficulty}难度
-                        </span>
+                        {/* 7. 集中操作列 */}
+                        <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => setDetailTaskId(task.id)}
+                              className="px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 font-bold text-xs transition cursor-pointer"
+                            >
+                              查看详情
+                            </button>
 
-                        {/* 状态 */}
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-black ${
-                          isAuditing
-                            ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                            : isRejected
-                            ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                            : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        }`}>
-                          {isAuditing ? '待审核' : isRejected ? '已驳回' : '已审核通过'}
-                        </span>
-                      </div>
-                      <h4 className="text-base font-extrabold text-white">{task.title}</h4>
-                    </div>
+                            {isAuditing && (
+                              <>
+                                <button
+                                  onClick={() => handlePass(task.id, task.title)}
+                                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs transition cursor-pointer flex items-center gap-1 shadow-xs"
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                  <span>通过</span>
+                                </button>
+                                <button
+                                  onClick={() => handleOpenReject(task.id)}
+                                  className="px-3 py-1.5 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 font-bold text-xs transition cursor-pointer"
+                                >
+                                  驳回
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
 
-                    <div className="text-right shrink-0">
-                      <div className="text-sm font-black font-mono text-emerald-400">
-                        ¥{(task.cashReward || 0).toLocaleString()} 元
-                      </div>
-                      <div className="text-[11px] text-slate-400 font-mono">
-                        {(task.pointsReward || 0) > 0 && `+${task.pointsReward} 积分 · `}赏金预算
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 需求描述与验收标准 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <div className="p-3.5 bg-slate-900 rounded-lg border border-slate-800/80 space-y-1">
-                      <div className="text-slate-400 font-bold">任务描述：</div>
-                      <div
-                        className="text-slate-300 leading-relaxed font-mono text-[11px] line-clamp-4"
-                        dangerouslySetInnerHTML={{ __html: task.description }}
-                      />
-                    </div>
-                    <div className="p-3.5 bg-slate-900 rounded-lg border border-slate-800/80 space-y-1">
-                      <div className="text-emerald-400 font-bold">验收标准：</div>
-                      <div
-                        className="text-slate-300 leading-relaxed font-mono text-[11px] line-clamp-4"
-                        dangerouslySetInnerHTML={{ __html: task.acceptanceCriteria }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* 附件与发布者 */}
-                  <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400 pt-2 border-t border-slate-800/60">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={task.publisherAvatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80'}
-                        alt={task.publisher}
-                        className="w-6 h-6 rounded-full object-cover border border-slate-700"
-                      />
-                      <span className="font-bold text-slate-200">发布人：{task.publisher}</span>
-                      <span>· 发布时间：{task.publishTime}</span>
-                      {task.attachments && task.attachments.length > 0 && (
-                        <span className="text-indigo-400 font-mono">· 附件：{task.attachments.length} 个</span>
-                      )}
-                    </div>
-
-                    {/* 操作区 */}
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => setDetailTaskId(task.id)}
-                        className="px-3.5 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 font-bold transition"
-                      >
-                        查看详情
-                      </button>
-
-                      {isAuditing && (
-                        <>
-                          {rejectingTaskId === task.id ? (
-                            <div className="w-full mt-2 p-3 bg-red-950/40 border border-red-800/60 rounded-xl space-y-2">
-                              <div className="text-xs font-bold text-red-300">请输入驳回原因说明（必填）：</div>
+                      {/* 展开的驳回原因填写行 */}
+                      {rejectingTaskId === task.id && (
+                        <tr className="bg-red-950/30 border-b border-red-900/50">
+                          <td colSpan={7} className="p-4">
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-bold text-red-300 shrink-0">驳回说明：</span>
                               <input
                                 type="text"
                                 value={rejectReason}
                                 onChange={(e) => setRejectReason(e.target.value)}
-                                placeholder="例如：任务验收标准不够量化，请明确具体数据精度门槛..."
-                                className="w-full px-3 py-1.5 bg-slate-900 border border-red-700 rounded-lg text-xs text-white outline-none"
+                                placeholder="例如：任务描述不完整或需求验收指标不可量化..."
+                                className="flex-1 px-3 py-1.5 bg-slate-900 border border-red-700 rounded-lg text-xs text-white outline-none focus:border-red-500"
                               />
-                              <div className="flex items-center justify-end gap-2">
-                                <button
-                                  onClick={() => setRejectingTaskId(null)}
-                                  className="px-3 py-1 rounded bg-slate-800 text-slate-300 text-xs"
-                                >
-                                  取消
-                                </button>
-                                <button
-                                  onClick={() => handleConfirmReject(task.id)}
-                                  className="px-4 py-1 rounded bg-red-600 hover:bg-red-500 text-white font-bold text-xs"
-                                >
-                                  确认驳回
-                                </button>
-                              </div>
+                              <button
+                                onClick={() => setRejectingTaskId(null)}
+                                className="px-3 py-1.5 rounded bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 cursor-pointer"
+                              >
+                                取消
+                              </button>
+                              <button
+                                onClick={() => handleConfirmReject(task.id)}
+                                className="px-4 py-1.5 rounded bg-red-600 hover:bg-red-500 text-white font-bold text-xs cursor-pointer"
+                              >
+                                确认驳回退款
+                              </button>
                             </div>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => handleOpenReject(task.id)}
-                                className="px-3.5 py-1.5 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 font-bold transition"
-                              >
-                                驳回
-                              </button>
-                              <button
-                                onClick={() => handlePass(task.id, task.title)}
-                                className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold shadow-sm transition flex items-center gap-1"
-                              >
-                                <Check className="w-3.5 h-3.5" />
-                                <span>审核通过</span>
-                              </button>
-                            </>
-                          )}
-                        </>
+                          </td>
+                        </tr>
                       )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
 
-      {/* 弹窗挂载 */}
+      {/* 详情弹窗 */}
       <TaskDetailModal
         taskId={detailTaskId}
         isOpen={!!detailTaskId}
@@ -872,25 +1023,37 @@ const TaskMonitorAdminView: React.FC = () => {
   const { tasks } = useApp();
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
 
-  // 筛选栏
+  // 筛选控制台状态
+  const [searchQuery, setSearchQuery] = useState<string>(''); // 关键词搜索
   const [typeFilter, setTypeFilter] = useState<string>('全部'); // 全部 / 抢单任务 / 比稿任务
-  const [domainFilter, setDomainFilter] = useState<string>('全部'); // 全部 / 技术开发 / 内容创作 / AI模型与数据 / 工具与自动化 / 咨询与培训
+  const [domainFilter, setDomainFilter] = useState<string>('全部'); // 全部 / 各领域
   const [statusFilter, setStatusFilter] = useState<string>('全部'); // 全部 / 进行中 / 已结束
 
-  // 只监控已经审核通过的任务（非审核中/非已驳回）
+  // 仅监控已通过审核的任务（排除审核中和已驳回）
   const approvedTasks = useMemo(() => {
     return tasks.filter(t => t.status !== '审核中' && t.status !== '已驳回');
   }, [tasks]);
 
   const filteredMonitoredTasks = useMemo(() => {
     return approvedTasks.filter(task => {
+      // 1. 关键词匹配
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchTitle = task.title.toLowerCase().includes(q);
+        const matchDesc = (task.description || task.brief || '').toLowerCase().includes(q);
+        const matchPublisher = (task.publisher || '').toLowerCase().includes(q);
+        if (!matchTitle && !matchDesc && !matchPublisher) return false;
+      }
+      // 2. 任务类型
       if (typeFilter !== '全部') {
         if (typeFilter === '抢单任务' && task.taskType !== '抢单') return false;
         if (typeFilter === '比稿任务' && task.taskType !== '比稿') return false;
       }
+      // 3. 所属领域
       if (domainFilter !== '全部' && task.domain !== domainFilter) {
         return false;
       }
+      // 4. 运行状态
       if (statusFilter !== '全部') {
         const isFinished = task.status === '已结束' || task.status === '已验收';
         if (statusFilter === '进行中' && isFinished) return false;
@@ -898,17 +1061,32 @@ const TaskMonitorAdminView: React.FC = () => {
       }
       return true;
     });
-  }, [approvedTasks, typeFilter, domainFilter, statusFilter]);
+  }, [approvedTasks, searchQuery, typeFilter, domainFilter, statusFilter]);
 
   return (
     <div className="space-y-6">
-      {/* 筛选控制台 */}
+      {/* 1. 多维筛选控制台 */}
       <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
         <div className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2">
           <Filter className="w-3.5 h-3.5 text-cyan-400" />
-          <span>全网任务执行监控筛选控制台</span>
+          <span>全网任务执行轨迹监控筛选控制台</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* 关键词搜索 */}
+          <div>
+            <label className="text-[11px] font-bold text-slate-400 mb-1 block">关键词搜索</label>
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="搜索标题、描述或发布者..."
+                className="w-full pl-8 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-500 font-medium outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
           <div>
             <label className="text-[11px] font-bold text-slate-400 mb-1 block">任务类型</label>
             <select
@@ -939,7 +1117,7 @@ const TaskMonitorAdminView: React.FC = () => {
           </div>
 
           <div>
-            <label className="text-[11px] font-bold text-slate-400 mb-1 block">任务状态</label>
+            <label className="text-[11px] font-bold text-slate-400 mb-1 block">任务运行状态</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -953,96 +1131,139 @@ const TaskMonitorAdminView: React.FC = () => {
         </div>
       </div>
 
-      {/* 监控列表 */}
-      <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-6 space-y-4">
+      {/* 2. 传统标准表格监控数据表 */}
+      <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-6 space-y-4 overflow-hidden">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <h3 className="text-sm font-black text-white flex items-center gap-2">
             <Activity className="w-4 h-4 text-cyan-400" />
-            <span>全网已审核通过任务轨迹动态（{filteredMonitoredTasks.length} 条）</span>
+            <span>全网任务履约与进度表格（共 {filteredMonitoredTasks.length} 条记录）</span>
           </h3>
         </div>
 
-        <div className="space-y-4">
-          {filteredMonitoredTasks.map(task => {
-            const isFcfs = task.taskType === '抢单';
-            const takers = task.takers || [];
-            const submissions = task.submissions || [];
-            const isFinished = task.status === '已结束' || task.status === '已验收';
+        {filteredMonitoredTasks.length === 0 ? (
+          <div className="py-16 text-center text-slate-500 space-y-2">
+            <Activity className="w-10 h-10 text-cyan-400 mx-auto opacity-50" />
+            <p className="text-sm font-bold text-slate-300">暂无监控中的任务</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-800 bg-slate-950/60 text-slate-400 font-bold uppercase text-[11px]">
+                  <th className="py-3 px-4 min-w-[220px]">任务标题 / 领域</th>
+                  <th className="py-3 px-3">机制</th>
+                  <th className="py-3 px-4 min-w-[150px]">发布雇主</th>
+                  <th className="py-3 px-4">接单与成果提交履约</th>
+                  <th className="py-3 px-3 text-right">赏金预算</th>
+                  <th className="py-3 px-3">截止时间</th>
+                  <th className="py-3 px-3">运行状态</th>
+                  <th className="py-3 px-4 text-center">操作列</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                {filteredMonitoredTasks.map(task => {
+                  const isFcfs = task.taskType === '抢单';
+                  const takers = task.takers || [];
+                  const submissions = task.submissions || [];
+                  const isFinished = task.status === '已结束' || task.status === '已验收';
 
-            return (
-              <div key={task.id} className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {isFcfs ? (
-                        <span className="px-2 py-0.5 rounded text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                          ⚡ 抢单任务
+                  return (
+                    <tr key={task.id} className="hover:bg-slate-800/40 transition">
+                      {/* 1. 标题与领域 */}
+                      <td className="py-3.5 px-4">
+                        <div className="font-extrabold text-white text-sm line-clamp-1">{task.title}</div>
+                        <div className="flex items-center gap-1.5 mt-1 text-[10px]">
+                          <span className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 border border-slate-700">
+                            {task.domain}
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                            {task.difficulty}难度
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* 2. 机制 */}
+                      <td className="py-3.5 px-3 whitespace-nowrap">
+                        {isFcfs ? (
+                          <span className="px-2 py-0.5 rounded text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            ⚡ 抢单
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded text-[11px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                            🎨 比稿
+                          </span>
+                        )}
+                      </td>
+
+                      {/* 3. 发布雇主 */}
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-slate-200 text-xs">{task.publisher}</div>
+                        <div className="text-[10px] text-slate-500 font-mono">{task.publishTime}</div>
+                      </td>
+
+                      {/* 4. 接单与成果履约 */}
+                      <td className="py-3.5 px-4">
+                        <div className="text-xs font-bold text-slate-300">
+                          {isFcfs
+                            ? `接单: ${takers.length}/1 人`
+                            : `接单: ${takers.length}人 · 已提交: ${submissions.length}份`}
+                        </div>
+                        {takers.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {takers.slice(0, 3).map(tk => (
+                              <span key={tk.id} className="px-1.5 py-0.5 bg-slate-950 rounded text-[10px] text-slate-400 border border-slate-800">
+                                {tk.username}
+                              </span>
+                            ))}
+                            {takers.length > 3 && (
+                              <span className="text-[10px] text-slate-500">+{takers.length - 3}</span>
+                            )}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* 5. 赏金预算 */}
+                      <td className="py-3.5 px-3 text-right whitespace-nowrap">
+                        <div className="font-black font-mono text-emerald-400 text-sm">
+                          ¥{(task.cashReward || 0).toLocaleString()}
+                        </div>
+                        {(task.pointsReward || 0) > 0 && (
+                          <div className="text-[10px] text-amber-400 font-mono">+ {task.pointsReward} 积分</div>
+                        )}
+                      </td>
+
+                      {/* 6. 截止时间 */}
+                      <td className="py-3.5 px-3 font-mono text-[11px] text-slate-300 whitespace-nowrap">
+                        {task.endTime}
+                      </td>
+
+                      {/* 7. 运行状态 */}
+                      <td className="py-3.5 px-3 whitespace-nowrap">
+                        <span className={`px-2.5 py-1 rounded-lg text-[11px] font-bold ${
+                          isFinished
+                            ? 'bg-slate-800 text-slate-400 border border-slate-700'
+                            : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse'
+                        }`}>
+                          {isFinished ? '已结束' : '进行中'}
                         </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded text-[11px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                          🎨 比稿任务
-                        </span>
-                      )}
-                      <span className="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300">
-                        {task.domain}
-                      </span>
-                      <span className="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300">
-                        {task.difficulty}
-                      </span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                        isFinished ? 'bg-slate-700 text-slate-300' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                      }`}>
-                        {isFinished ? '已结束' : '进行中'}
-                      </span>
-                    </div>
-                    <h4 className="text-sm font-extrabold text-white">{task.title}</h4>
-                  </div>
+                      </td>
 
-                  <div className="text-right shrink-0">
-                    <div className="text-sm font-black font-mono text-emerald-400">
-                      ¥{(task.cashReward || 0).toLocaleString()} 元
-                    </div>
-                    <div className="text-[11px] text-slate-400">
-                      赏金与积分奖励
-                    </div>
-                  </div>
-                </div>
-
-                {/* 接单人履约动态轨迹 */}
-                <div className="p-3 bg-slate-900 rounded-xl text-xs space-y-2">
-                  <div className="flex items-center justify-between text-slate-400 font-bold">
-                    <span>发布雇主：{task.publisher}</span>
-                    <span>
-                      {isFcfs
-                        ? `接单情况：${takers.length} / 1 人`
-                        : `接单总人数：${takers.length} 人 ｜ 已提交：${submissions.length} 份`}
-                    </span>
-                  </div>
-
-                  {takers.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      {takers.map(tk => (
-                        <span key={tk.id} className="px-2.5 py-1 bg-slate-950 rounded-lg text-[11px] text-slate-300 border border-slate-800">
-                          {tk.username} ({tk.status || '已接单'})
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* 操作 */}
-                <div className="flex items-center justify-end">
-                  <button
-                    onClick={() => setDetailTaskId(task.id)}
-                    className="px-3.5 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-300 hover:bg-slate-800 font-bold transition cursor-pointer"
-                  >
-                    查看详情
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                      {/* 8. 集中操作列 */}
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        <button
+                          onClick={() => setDetailTaskId(task.id)}
+                          className="px-3.5 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-300 hover:bg-slate-800 font-bold transition cursor-pointer"
+                        >
+                          查看详情
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <TaskDetailModal

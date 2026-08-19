@@ -1,6 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { RentalGPUCard, GPUInstance } from '../../types';
+import { 
+  ChangeRentalDurationModal,
+  UpdateInstanceRemarkModal,
+  CreateImageFromInstanceModal
+} from './InstanceActionModals';
+import { MyImagesView } from './MyImagesView';
 import { 
   Zap, 
   Cpu, 
@@ -20,14 +26,30 @@ import {
   Palette,
   Sliders,
   ChevronRight,
-  ArrowRight
+  ArrowRight,
+  ChevronDown,
+  RefreshCw,
+  Terminal,
+  Code,
+  HardDrive,
+  Clock,
+  CreditCard,
+  AlertCircle,
+  Filter,
+  ChevronLeft
 } from 'lucide-react';
 
 export const ComputeView: React.FC = () => {
   const { 
     gpuInstances, 
+    myCustomImages,
+    computeSpecs,
     toggleGpuInstanceStatus, 
+    restartGpuInstance,
     deleteGpuInstance, 
+    updateInstanceRemark,
+    changeInstanceRentalDuration,
+    createImageFromInstance,
     setCreateComputeModalOpen, 
     setCreateComputePreset,
     setDetailInstance, 
@@ -35,14 +57,20 @@ export const ComputeView: React.FC = () => {
     showToast 
   } = useApp();
 
-  // Top Main Tabs: 'available' (可租用实例) | 'my_instances' (我租用的实例)
-  const [activeTab, setActiveTab] = useState<'available' | 'my_instances'>('available');
+  // Top Main Tabs: 'available' (可租用实例) | 'my_instances' (我租用的实例) | 'my_images' (我的镜像)
+  const [activeTab, setActiveTab] = useState<'available' | 'my_instances' | 'my_images'>('available');
 
   // Filters for My Instances
   const [statusFilter, setStatusFilter] = useState<'all' | 'running' | 'stopped'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedInstIds, setSelectedInstIds] = useState<string[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // 3 大弹窗与下拉菜单控制
+  const [modalType, setModalType] = useState<'duration' | 'remark' | 'image' | null>(null);
+  const [activeModalInst, setActiveModalInst] = useState<GPUInstance | null>(null);
+  const [dropdownInstId, setDropdownInstId] = useState<string | null>(null);
+  const [restartDropdownId, setRestartDropdownId] = useState<string | null>(null);
 
   // 4 个顶部快速场景 Preset 卡片定义 (参考图片 3)
   const quickPresets = [
@@ -100,189 +128,65 @@ export const ComputeView: React.FC = () => {
     }
   ];
 
-  // 丰富的可租用实例卡片数据示例 (12 种典型算力卡)
-  const availableRentalCards: RentalGPUCard[] = [
-    {
-      id: 'pro_6000_96g',
-      title: 'PRO 6000 96GB',
-      availableCards: 7,
-      hourlyPrice: 6.19,
-      dayPrice: 145,
-      weekPrice: 987,
-      monthPrice: 4011,
-      topBorderColor: 'border-t-amber-500',
-      gpuModel: 'RTX PRO 6000',
-      vram: '96.0 GB 显存',
-      cpu: '30 核 AMD EPYC 9J14',
-      ram: '128.8 GB',
-      disk: '1.1 TB 或更多'
-    },
-    {
-      id: 'h100_sxm_80g',
-      title: 'NVIDIA H100 SXM',
-      availableCards: 4,
-      hourlyPrice: 18.50,
-      dayPrice: 420,
-      weekPrice: 2800,
-      monthPrice: 11200,
-      topBorderColor: 'border-t-purple-600',
-      gpuModel: 'NVIDIA H100 SXM',
-      vram: '80.0 GB HBM3 显存',
-      cpu: '64 核 AMD EPYC 9654',
-      ram: '256.0 GB',
-      disk: '2.0 TB NVMe High Speed'
-    },
-    {
-      id: 'rtx_5090_32g',
-      title: 'RTX 5090 32G',
-      availableCards: 5,
-      hourlyPrice: 4.50,
-      dayPrice: 105,
-      weekPrice: 710,
-      monthPrice: 2880,
-      topBorderColor: 'border-t-indigo-600',
-      gpuModel: 'RTX 5090',
-      vram: '32.0 GB GDDR7 显存',
-      cpu: '24 核 AMD EPYC 9354',
-      ram: '128.0 GB',
-      disk: '1.0 TB 或更多'
-    },
-    {
-      id: 'a100_80g',
-      title: 'NVIDIA A100 80G',
-      availableCards: 6,
-      hourlyPrice: 8.80,
-      dayPrice: 200,
-      weekPrice: 1350,
-      monthPrice: 5400,
-      topBorderColor: 'border-t-emerald-600',
-      gpuModel: 'NVIDIA A100',
-      vram: '80.0 GB HBM2e 显存',
-      cpu: '32 核 AMD EPYC 7742',
-      ram: '128.0 GB',
-      disk: '1.5 TB NVMe'
-    },
-    {
-      id: 'rtx_4090_48g',
-      title: 'RTX 4090 48G',
-      availableCards: 2,
-      hourlyPrice: 3.00,
-      dayPrice: 70,
-      weekPrice: 480,
-      monthPrice: 1950,
-      topBorderColor: 'border-t-yellow-600',
-      gpuModel: 'RTX 4090 48G',
-      vram: '48.0 GB 显存',
-      cpu: '14 核 AMD EPYC 7453',
-      ram: '60.1 GB',
-      disk: '751.6 GB 或更多'
-    },
-    {
-      id: 'rtx_4090',
-      title: 'RTX 4090',
-      availableCards: 3,
-      hourlyPrice: 1.87,
-      dayPrice: 44,
-      weekPrice: 298,
-      monthPrice: 1210,
-      topBorderColor: 'border-t-amber-600',
-      gpuModel: 'RTX 4090',
-      vram: '25.2 GB 显存',
-      cpu: '14 核 AMD EPYC 9354',
-      ram: '60.1 GB',
-      disk: '400.0 GB 或更多'
-    },
-    {
-      id: 'l40s_48g',
-      title: 'NVIDIA L40S 48G',
-      availableCards: 3,
-      hourlyPrice: 5.20,
-      dayPrice: 120,
-      weekPrice: 810,
-      monthPrice: 3300,
-      topBorderColor: 'border-t-cyan-600',
-      gpuModel: 'NVIDIA L40S',
-      vram: '48.0 GB GDDR6 显存',
-      cpu: '32 核 Intel Xeon Gold',
-      ram: '128.0 GB',
-      disk: '1.0 TB NVMe'
-    },
-    {
-      id: 'rtx_3090',
-      title: 'RTX 3090',
-      availableCards: 2,
-      hourlyPrice: 1.62,
-      dayPrice: 38,
-      weekPrice: 258,
-      monthPrice: 1050,
-      topBorderColor: 'border-t-red-500',
-      gpuModel: 'RTX 3090',
-      vram: '25.4 GB 显存',
-      cpu: '6 核 Xeon Gold 6142',
-      ram: '60.1 GB',
-      disk: '451.0 GB 或更多'
-    },
-    {
-      id: 'rtx_4080s',
-      title: 'RTX 4080 Super',
-      availableCards: 8,
-      hourlyPrice: 1.25,
-      dayPrice: 28,
-      weekPrice: 190,
-      monthPrice: 780,
-      topBorderColor: 'border-t-teal-600',
-      gpuModel: 'RTX 4080 Super',
-      vram: '16.0 GB 显存',
-      cpu: '12 核 AMD EPYC 7543',
-      ram: '48.0 GB',
-      disk: '500.0 GB 或更多'
-    },
-    {
-      id: 'rtx_2080ti_22g',
-      title: 'RTX 2080 Ti 22G',
-      availableCards: 8,
-      hourlyPrice: 0.69,
-      dayPrice: 16,
-      weekPrice: 110,
-      monthPrice: 448,
-      topBorderColor: 'border-t-lime-600',
-      gpuModel: 'RTX 2080 Ti',
-      vram: '22.0 GB 显存',
-      cpu: '8 核 Intel E5-2686 v4',
-      ram: '27.9 GB',
-      disk: '751.6 GB 或更多'
-    },
-    {
-      id: 'rtx_3060',
-      title: 'RTX 3060',
-      availableCards: 6,
-      hourlyPrice: 0.69,
-      dayPrice: 16,
-      weekPrice: 110,
-      monthPrice: 448,
-      topBorderColor: 'border-t-blue-600',
-      gpuModel: 'RTX 3060',
-      vram: '12.6 GB 显存',
-      cpu: '5 核 E5-2686 v4',
-      ram: '27.1 GB',
-      disk: '375.8 GB 或更多'
-    },
-    {
-      id: 'tesla_v100',
-      title: 'Tesla V100 32G',
-      availableCards: 4,
-      hourlyPrice: 1.10,
-      dayPrice: 25,
-      weekPrice: 170,
-      monthPrice: 680,
-      topBorderColor: 'border-t-slate-600',
-      gpuModel: 'Tesla V100',
-      vram: '32.0 GB HBM2 显存',
-      cpu: '16 核 Intel Xeon',
-      ram: '64.0 GB',
-      disk: '500.0 GB NVMe'
+  // 动态映射前台可租用规格（仅展示后台“已上架”状态的规格）
+  const availableRentalCards: RentalGPUCard[] = useMemo(() => {
+    const onlineSpecs = (computeSpecs || []).filter(s => s.status === '上架');
+    if (onlineSpecs.length > 0) {
+      return onlineSpecs.map((s, idx) => {
+        const borderColors = [
+          'border-t-amber-500',
+          'border-t-emerald-600',
+          'border-t-purple-600',
+          'border-t-indigo-600',
+          'border-t-cyan-600',
+          'border-t-blue-600',
+          'border-t-yellow-600',
+          'border-t-teal-600'
+        ];
+        return {
+          id: s.id,
+          title: s.name,
+          availableCards: s.stock ?? Math.floor(Math.random() * 8 + 2),
+          hourlyPrice: s.hourlyPrice,
+          dayPrice: s.dayPrice ?? Math.round(s.hourlyPrice * 22),
+          weekPrice: s.weekPrice ?? Math.round(s.hourlyPrice * 22 * 6.5),
+          monthPrice: s.monthPrice ?? Math.round(s.hourlyPrice * 22 * 26),
+          topBorderColor: borderColors[idx % borderColors.length],
+          gpuModel: s.gpuModel,
+          vram: `${s.vram} 显存`,
+          cpu: `${s.cpu} 核 ${s.cpuModel ? `(${s.cpuModel})` : '高性能 CPU'}`,
+          ram: `${s.ram} ${s.ramUnit || 'GB'} 内存`,
+          disk: `${s.disk} ${s.diskUnit || 'GB'} NVMe 存储`,
+          allowedGpuCounts: s.allowedGpuCounts || [1, 2, 4],
+          maxGpuCount: s.maxGpuCount || 4,
+          perCardCpu: s.cpu,
+          perCardRam: s.ram,
+          perCardDisk: s.disk
+        };
+      });
     }
-  ];
+
+    // 默认兜底卡片
+    return [
+      {
+        id: 'pro_6000_96g',
+        title: 'PRO 6000 96GB',
+        availableCards: 7,
+        hourlyPrice: 6.19,
+        dayPrice: 145,
+        weekPrice: 987,
+        monthPrice: 4011,
+        topBorderColor: 'border-t-amber-500',
+        gpuModel: 'RTX PRO 6000',
+        vram: '96.0 GB 显存',
+        cpu: '30 核 AMD EPYC 9J14',
+        ram: '128.8 GB',
+        disk: '1.1 TB 或更多',
+        allowedGpuCounts: [1, 2, 4],
+        maxGpuCount: 4
+      }
+    ];
+  }, [computeSpecs]);
 
   // Filter instances for My Instances Tab
   const myInstances = gpuInstances.filter(inst => {
@@ -406,6 +310,20 @@ export const ComputeView: React.FC = () => {
             {gpuInstances.length}
           </span>
         </button>
+
+        <button
+          onClick={() => setActiveTab('my_images')}
+          className={`px-6 py-3 font-extrabold text-sm transition relative cursor-pointer flex items-center gap-2 ${
+            activeTab === 'my_images'
+              ? 'text-indigo-600 border-b-2 border-indigo-600'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <span>我的镜像</span>
+          <span className="px-2 py-0.2 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold border border-indigo-200">
+            {myCustomImages.length}
+          </span>
+        </button>
       </div>
 
       {/* TAB 1: 可租用实例 */}
@@ -482,7 +400,7 @@ export const ComputeView: React.FC = () => {
                         {card.title}
                       </h2>
                       <span className="px-3 py-1 rounded-full text-xs font-extrabold text-blue-600 bg-blue-50 border border-blue-200/80">
-                        {card.availableCards}卡可用
+                        {card.maxGpuCount ?? card.availableCards}卡可用
                       </span>
                     </div>
 
@@ -490,7 +408,7 @@ export const ComputeView: React.FC = () => {
                     <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium pb-2 border-b border-slate-100">
                       <Tag className="w-3.5 h-3.5 text-indigo-500 fill-indigo-100" />
                       <span>按量使用</span>
-                      <span className="text-red-500 font-black text-lg font-mono">¥{card.hourlyPrice.toFixed(2)}</span>
+                      <span className="text-red-500 font-black text-lg font-mono">¥{(card.hourlyPrice ?? 0).toFixed(2)}</span>
                       <span className="text-slate-400">/ 小时</span>
                     </div>
 
@@ -537,255 +455,395 @@ export const ComputeView: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 2: 我租用的实例 */}
+      {/* TAB 2: 我租用的实例 (截图 1 - 8 极高还原重构) */}
       {activeTab === 'my_instances' && (
-        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-5">
+        <div className="space-y-4 animate-fade-in">
           
-          {/* Header & Filter Toolbar */}
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-extrabold text-slate-900">
-                我租用的实例 ({myInstances.length})
-              </h2>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative w-48 sm:w-64">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          {/* Top Search & Filter Bar (参考截图 1, 2) */}
+          <div className="bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 flex-1 max-w-md">
+              <div className="relative w-full">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="搜索实例名称/ID/规格..."
-                  className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-indigo-600 font-medium"
+                  placeholder="搜索实例名称，按回车开始搜索"
+                  className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-slate-400 text-slate-800 font-medium"
                 />
               </div>
+              <button className="px-3 py-1.5 rounded-xl bg-slate-900 text-white hover:bg-black font-bold text-xs flex items-center gap-1 shrink-0 cursor-pointer transition shadow-2xs">
+                <Filter className="w-3.5 h-3.5" />
+                <span>搜索</span>
+              </button>
+            </div>
 
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-slate-700 cursor-pointer"
-              >
-                <option value="all">全部状态</option>
-                <option value="running">运行中</option>
-                <option value="stopped">已停止</option>
-              </select>
-
-              {selectedInstIds.length > 0 && (
-                <div className="flex items-center gap-2 animate-fade-in">
-                  <button
-                    onClick={handleBatchStop}
-                    className="px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold hover:bg-amber-100 transition cursor-pointer"
-                  >
-                    批量停止 ({selectedInstIds.length})
-                  </button>
-                  <button
-                    onClick={handleBatchDelete}
-                    className="px-3 py-1.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold hover:bg-red-100 transition cursor-pointer"
-                  >
-                    批量释放 ({selectedInstIds.length})
-                  </button>
-                </div>
-              )}
+            {/* Pagination Controls */}
+            <div className="flex items-center gap-2">
+              <button className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-600 cursor-pointer">
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">1</span>
+              <button className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-600 cursor-pointer">
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
-          {/* Instances List */}
+          {/* Instances Cards List */}
           {myInstances.length === 0 ? (
-            <div className="py-12 text-center text-slate-400 font-medium">
+            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-400">
               <Box className="w-12 h-12 mx-auto mb-2 opacity-30 text-indigo-600" />
-              <p className="text-xs">暂无正在租用中的算力容器实例</p>
+              <p className="text-xs font-medium">暂无正在租用中的算力容器实例</p>
               <button
                 onClick={() => setActiveTab('available')}
-                className="mt-3 px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs hover:bg-indigo-500 cursor-pointer"
+                className="mt-3 px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-black cursor-pointer transition"
               >
-                前去租用一个算力实例
+                前去租用算力实例
               </button>
             </div>
           ) : (
             <div className="space-y-4">
-              
-              {/* Running */}
-              {runningInstances.length > 0 && (
-                <div className="space-y-3">
-                  <div className="text-xs font-extrabold text-slate-700 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>运行中实例 ({runningInstances.length})</span>
-                  </div>
+              {myInstances.map((inst) => {
+                const isRunning = inst.status === 'running';
+                const isStarting = inst.status === 'starting';
+                const isCreatingImage = inst.status === 'creating_image';
+                const isStopped = inst.status === 'stopped';
 
-                  <div className="space-y-3">
-                    {runningInstances.map((inst) => (
-                      <div
-                        key={inst.id}
-                        className="p-5 bg-slate-50/70 hover:bg-white rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md transition flex flex-wrap items-center justify-between gap-4"
-                      >
-                        <div className="flex items-start gap-3">
-                          <input
-                            type="checkbox"
-                            checked={selectedInstIds.includes(inst.id)}
-                            onChange={() => toggleSelectInst(inst.id)}
-                            className="mt-1.5 rounded text-indigo-600 focus:ring-0 cursor-pointer"
-                          />
+                return (
+                  <div
+                    key={inst.id}
+                    className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4 hover:shadow-xs transition"
+                  >
+                    {/* Header Row: 规格名称 / 单价 / 状态 Tag <---> 实例 ID */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
+                      <div className="flex items-center gap-3">
+                        <span className="text-base font-black text-slate-900">{inst.name}</span>
+                        <span className="text-xs font-extrabold text-amber-600 bg-amber-50/60 px-2 py-0.5 rounded-md border border-amber-200/50">
+                          {inst.hourlyCost} 元 / 小时
+                        </span>
 
-                          <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200 flex items-center justify-center font-bold text-lg shrink-0">
-                            <Box className="w-5 h-5" />
-                          </div>
+                        {/* Status Tags */}
+                        {isRunning && (
+                          <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            运行中
+                          </span>
+                        )}
 
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-black text-slate-900 text-sm">{inst.name}</span>
-                              <span className="text-[10px] bg-slate-200/80 text-slate-700 px-2 py-0.5 rounded-md font-mono font-bold">
-                                ID: {inst.id}
-                              </span>
-                              <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
-                                ● 运行中
-                              </span>
-                            </div>
+                        {isStarting && (
+                          <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300 flex items-center gap-1">
+                            <RefreshCw className="w-3 h-3 animate-spin text-amber-600" />
+                            {inst.progressPercent ? `正在下载镜像: ${inst.progressPercent}%` : '正在开机...'}
+                          </span>
+                        )}
 
-                            <div className="text-xs font-mono font-medium text-slate-600 mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
-                              <span className="font-bold text-indigo-600">规格: {inst.gpuModel} × {inst.gpuCount}卡</span>
-                              <span>地域: {inst.region} ({inst.billingType})</span>
-                              <span>配置: {inst.cpu} / {inst.ram}</span>
-                            </div>
+                        {isCreatingImage && (
+                          <span className="text-[11px] font-bold text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-300 flex items-center gap-1">
+                            <RefreshCw className="w-3 h-3 animate-spin text-purple-600" />
+                            创建镜像中
+                          </span>
+                        )}
 
-                            <div className="text-[11px] font-mono text-slate-500 mt-1 flex items-center gap-4">
-                              <span>⏱ 运行时长: <strong className="text-slate-800">{inst.runningHours.toFixed(1)}h</strong></span>
-                              <span>💰 实时费用: <strong className="text-amber-600">¥{inst.totalCost.toFixed(2)}</strong> (¥{inst.hourlyCost.toFixed(2)}/h)</span>
-                            </div>
-                          </div>
+                        {isStopped && (
+                          <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-300">
+                            已关机
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="text-xs text-slate-400 font-mono">
+                        实例 ID: <span className="text-slate-600 font-bold">{inst.id}</span>
+                      </div>
+                    </div>
+
+                    {/* Middle Info Grid: 2 Columns Layout (左硬件右费用) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs leading-relaxed">
+                      {/* Left Column: 硬件配置 */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs">🟢</span>
+                          <span className="font-extrabold text-slate-800 shrink-0">GPU</span>
+                          <span className="text-slate-600 font-medium">
+                            {inst.gpuCount} 块 {inst.gpuModel}，共 {inst.vram} 显存
+                          </span>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
-                          {inst.jupyterUrl && (
-                            <a
-                              href={inst.jupyterUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1 cursor-pointer shadow-xs"
-                            >
-                              <span>JupyterLab</span>
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </a>
-                          )}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs">💻</span>
+                          <span className="font-extrabold text-slate-800 shrink-0">CPU</span>
+                          <span className="text-slate-600 font-medium">{inst.cpu}</span>
+                        </div>
 
-                          {inst.sshCommand && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs">🟧</span>
+                          <span className="font-extrabold text-slate-800 shrink-0">内存</span>
+                          <span className="text-slate-600 font-medium">{inst.ram}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs">🗄️</span>
+                          <span className="font-extrabold text-slate-800 shrink-0">硬盘</span>
+                          <span className="text-slate-600 font-medium">{inst.disk || '375.8 GB'}</span>
+                        </div>
+                      </div>
+
+                      {/* Right Column: 租用与费用明细 */}
+                      <div className="space-y-2 border-l border-slate-100 pl-0 md:pl-6">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500 font-medium">租用时间</span>
+                          <span className="text-slate-800 font-bold font-mono">{inst.startTime || inst.createdAt || '2026-08-19 14:22'}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500 font-medium">租用方式</span>
+                          <span className="text-slate-800 font-bold">{inst.billingType}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500 font-medium">费用情况</span>
+                          <span className="text-slate-800 font-medium">
+                            共计 <strong className="font-bold">{inst.totalCost ?? 0.0}</strong> 元，其中积分已抵扣 <strong className="font-bold">{inst.voucherDeduction ?? 0.0}</strong> 元
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500 font-medium">到期时间</span>
+                          <span className="text-slate-800 font-medium">
+                            {inst.expireTime ? (
+                              <strong className="text-amber-600">{inst.expireTime} 到期</strong>
+                            ) : (
+                              <span>当前余额预计还可使用 <strong className="font-bold">{inst.remainingHours ?? 8}</strong> 小时</span>
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Banner & Remarks Section (开机中 / 创建镜像中 / 专属备注) */}
+                    {(isStarting || isCreatingImage || inst.remark) && (
+                      <div className="pt-1">
+                        {isCreatingImage ? (
+                          <div className="p-3 rounded-xl bg-purple-50/70 border border-purple-200/60 text-xs text-purple-900 space-y-1">
+                            {inst.remark && (
+                              <div className="font-bold text-slate-700">备注: {inst.remark}</div>
+                            )}
+                            <div className="text-purple-700 flex items-center gap-1.5">
+                              <AlertCircle className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                              <span>该实例正在创建镜像，你可以在我的镜像中查看进度，创建完成后，实例将自动关机停止计费</span>
+                            </div>
+                          </div>
+                        ) : isStarting ? (
+                          <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200/60 text-xs text-amber-900 flex items-center gap-2">
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-600" />
+                            <span>实例已创建，正在进行网络与环境部署 ({inst.progressPercent || 39}%)...</span>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-slate-500 font-medium bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                            备注: {inst.remark}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Bottom Function Buttons Row (仅在非创建部署、非创建镜像状态下显示) */}
+                    {!isStarting && !isCreatingImage && (
+                      <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2.5">
+                        
+                        {/* Button 1: 【打开工作区 ▾】主下拉按钮 */}
+                        <div className="relative">
+                          <div className="inline-flex rounded-xl shadow-2xs overflow-hidden border border-slate-900 bg-slate-900 text-white text-xs font-bold">
                             <button
-                              onClick={() => copySSH(inst.sshCommand || '', inst.id)}
-                              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1 cursor-pointer"
+                              onClick={() => {
+                                if (inst.jupyterUrl) window.open(inst.jupyterUrl, '_blank');
+                                else showToast(`正在打开实例 ${inst.name} 的工作区...`);
+                              }}
+                              className="px-4 py-2 hover:bg-black transition cursor-pointer flex items-center gap-1.5"
                             >
-                              {copiedId === inst.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                              <span>{copiedId === inst.id ? '已复制 SSH' : '复制 SSH'}</span>
+                              <span>打开工作区</span>
                             </button>
+
+                            <button
+                              onClick={() => setDropdownInstId(dropdownInstId === inst.id ? null : inst.id)}
+                              className="px-2 border-l border-slate-700 hover:bg-black transition cursor-pointer flex items-center justify-center"
+                            >
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          {/* Dropdown Menu for Open Workspace */}
+                          {dropdownInstId === inst.id && (
+                            <div className="absolute left-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-30 animate-fade-in">
+                              <button
+                                onClick={() => {
+                                  const cmd = inst.sshCommand || `ssh -p 22321 root@gpu-${inst.id.slice(0, 8)}.qianji.ai`;
+                                  navigator.clipboard.writeText(cmd);
+                                  showToast('已成功复制 SSH 登录指令！');
+                                  setDropdownInstId(null);
+                                }}
+                                className="w-full px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 text-left font-medium cursor-pointer"
+                              >
+                                <Terminal className="w-4 h-4 text-slate-500" />
+                                <span>SSH 连接 (点击复制)</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  showToast('正在用 VS Code 唤起远程连接...');
+                                  setDropdownInstId(null);
+                                }}
+                                className="w-full px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 text-left font-medium cursor-pointer"
+                              >
+                                <Code className="w-4 h-4 text-blue-500" />
+                                <span>用 VS Code 打开</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  showToast('正在唤起 PyCharm 远程环境...');
+                                  setDropdownInstId(null);
+                                }}
+                                className="w-full px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 text-left font-medium cursor-pointer"
+                              >
+                                <Zap className="w-4 h-4 text-emerald-500" />
+                                <span>PyCharm 远程连接</span>
+                              </button>
+                            </div>
                           )}
-
-                          <button
-                            onClick={() => toggleGpuInstanceStatus(inst.id)}
-                            className="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs flex items-center gap-1 cursor-pointer"
-                          >
-                            <Square className="w-3.5 h-3.5 fill-current" />
-                            <span>停止</span>
-                          </button>
-
-                          <button
-                            onClick={() => setDetailInstance(inst)}
-                            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer"
-                          >
-                            详情
-                          </button>
-
-                          <button
-                            onClick={() => deleteGpuInstance(inst.id)}
-                            className="p-1.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
-                            title="释放销毁"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
-              {/* Stopped */}
-              {stoppedInstances.length > 0 && (
-                <div className="space-y-3 pt-2">
-                  <div className="text-xs font-extrabold text-slate-500 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-slate-400" />
-                    <span>已停止实例 ({stoppedInstances.length})</span>
-                  </div>
+                        {/* Button 2: 【强制重启 ▾】下拉按钮 */}
+                        <div className="relative">
+                          <div className="inline-flex rounded-xl shadow-2xs overflow-hidden border border-slate-900 bg-slate-900 text-white text-xs font-bold">
+                            <button
+                              onClick={() => restartGpuInstance(inst.id)}
+                              className="px-4 py-2 hover:bg-black transition cursor-pointer flex items-center gap-1.5"
+                            >
+                              <span>强制重启</span>
+                            </button>
 
-                  <div className="space-y-3">
-                    {stoppedInstances.map((inst) => (
-                      <div
-                        key={inst.id}
-                        className="p-5 bg-slate-100/60 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-4 opacity-85 hover:opacity-100 transition"
-                      >
-                        <div className="flex items-start gap-3">
-                          <input
-                            type="checkbox"
-                            checked={selectedInstIds.includes(inst.id)}
-                            onChange={() => toggleSelectInst(inst.id)}
-                            className="mt-1.5 rounded text-indigo-600 focus:ring-0 cursor-pointer"
-                          />
-
-                          <div className="w-10 h-10 rounded-2xl bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-lg shrink-0">
-                            <Box className="w-5 h-5" />
+                            <button
+                              onClick={() => setRestartDropdownId(restartDropdownId === inst.id ? null : inst.id)}
+                              className="px-2 border-l border-slate-700 hover:bg-black transition cursor-pointer flex items-center justify-center"
+                            >
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            </button>
                           </div>
 
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-extrabold text-slate-800 text-sm">{inst.name}</span>
-                              <span className="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md font-mono font-bold">
-                                ID: {inst.id}
-                              </span>
-                              <span className="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-bold">
-                                ○ 已暂停
-                              </span>
+                          {/* Dropdown Menu for Restart */}
+                          {restartDropdownId === inst.id && (
+                            <div className="absolute left-0 mt-1 w-40 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-30 animate-fade-in">
+                              <button
+                                onClick={() => {
+                                  showToast('已触发初始化重置，实例将恢复至出厂默认镜像');
+                                  setRestartDropdownId(null);
+                                }}
+                                className="w-full px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 text-left font-medium cursor-pointer"
+                              >
+                                <RefreshCw className="w-3.5 h-3.5 text-amber-500" />
+                                <span>恢复出厂状态</span>
+                              </button>
                             </div>
-
-                            <div className="text-xs font-mono font-medium text-slate-500 mt-1 flex flex-wrap items-center gap-x-4">
-                              <span>规格: {inst.gpuModel}</span>
-                              <span>地域: {inst.region}</span>
-                              <span>已用时长: {inst.runningHours.toFixed(1)}h</span>
-                            </div>
-                          </div>
+                          )}
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            onClick={() => toggleGpuInstanceStatus(inst.id)}
-                            className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
-                          >
-                            <Play className="w-3.5 h-3.5 fill-current" />
-                            <span>启动</span>
-                          </button>
+                        {/* Button 3: 转长租 */}
+                        <button
+                          onClick={() => {
+                            setActiveModalInst(inst);
+                            setModalType('duration');
+                          }}
+                          className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold cursor-pointer transition"
+                        >
+                          转长租
+                        </button>
 
-                          <button
-                            onClick={() => setDetailInstance(inst)}
-                            className="px-3 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs cursor-pointer"
-                          >
-                            详情
-                          </button>
+                        {/* Button 4: 备注 */}
+                        <button
+                          onClick={() => {
+                            setActiveModalInst(inst);
+                            setModalType('remark');
+                          }}
+                          className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold cursor-pointer transition"
+                        >
+                          备注
+                        </button>
 
-                          <button
-                            onClick={() => deleteGpuInstance(inst.id)}
-                            className="p-1.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        {/* Button 5: 退还实例 (红框) */}
+                        <button
+                          onClick={() => deleteGpuInstance(inst.id)}
+                          className="px-4 py-2 rounded-xl border border-red-300 text-red-600 hover:bg-red-50 text-xs font-bold cursor-pointer transition"
+                        >
+                          退还实例
+                        </button>
+
+                        {/* Button 6: 创建镜像 (黄/橙框) */}
+                        <button
+                          onClick={() => {
+                            setActiveModalInst(inst);
+                            setModalType('image');
+                          }}
+                          className="px-4 py-2 rounded-xl border border-amber-400 text-amber-700 hover:bg-amber-50 text-xs font-bold cursor-pointer transition"
+                        >
+                          创建镜像
+                        </button>
+
                       </div>
-                    ))}
+                    )}
                   </div>
-                </div>
-              )}
-
+                );
+              })}
             </div>
           )}
 
         </div>
       )}
+
+      {/* TAB 3: 我的镜像 (截图 1, 2, 3 极高还原重构) */}
+      {activeTab === 'my_images' && <MyImagesView />}
+
+      {/* Action Modals Mounts (变更为长期租用 / 修改备注 / 创建镜像) */}
+      <ChangeRentalDurationModal
+        isOpen={modalType === 'duration'}
+        instance={activeModalInst}
+        onClose={() => {
+          setModalType(null);
+          setActiveModalInst(null);
+        }}
+        onConfirm={(instId, type, autoReturn) => {
+          changeInstanceRentalDuration(instId, type, autoReturn);
+          setModalType(null);
+          setActiveModalInst(null);
+        }}
+      />
+
+      <UpdateInstanceRemarkModal
+        isOpen={modalType === 'remark'}
+        instance={activeModalInst}
+        onClose={() => {
+          setModalType(null);
+          setActiveModalInst(null);
+        }}
+        onSave={(instId, remark) => {
+          updateInstanceRemark(instId, remark);
+          setModalType(null);
+          setActiveModalInst(null);
+        }}
+      />
+
+      <CreateImageFromInstanceModal
+        isOpen={modalType === 'image'}
+        instance={activeModalInst}
+        onClose={() => {
+          setModalType(null);
+          setActiveModalInst(null);
+        }}
+        onConfirm={(instId, autoShutdown, overwrite) => {
+          createImageFromInstance(instId, autoShutdown, overwrite);
+          setModalType(null);
+          setActiveModalInst(null);
+        }}
+      />
 
     </div>
   );

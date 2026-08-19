@@ -203,8 +203,8 @@ export const AgentDetailViewModal: React.FC<AgentDetailViewModalProps> = ({
                   <h2 className="text-xl font-black text-slate-900 tracking-tight">{agent.name}</h2>
                   <div className="flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-lg">
                     <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                    <span>{agent.rating.toFixed(1)}</span>
-                    <span className="text-slate-400 font-normal">({agent.ratingCount}人评价)</span>
+                    <span>{(agent.rating ?? 5.0).toFixed(1)}</span>
+                    <span className="text-slate-400 font-normal">({agent.ratingCount ?? 120}人评价)</span>
                   </div>
                 </div>
 
@@ -380,7 +380,7 @@ export const AgentDetailViewModal: React.FC<AgentDetailViewModalProps> = ({
               ) : isPayPerTokenMode ? (
                 <div className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-[11px] font-extrabold flex items-center gap-1">
                   <Coins className="w-3.5 h-3.5" />
-                  <span>按 Token 扣费模式（余额: ¥{user.balance.toFixed(2)}）</span>
+                  <span>按 Token 扣费模式（余额: ¥{(user?.balance ?? 128).toFixed(2)}）</span>
                 </div>
               ) : trialCountLeft > 0 ? (
                 <div className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 text-[11px] font-extrabold flex items-center gap-1">

@@ -133,7 +133,7 @@ export const WorkspaceCalls: React.FC = () => {
                     <td className="p-4 text-slate-700 font-bold">
                       {log.inputTokens} / {log.outputTokens} <span className="text-slate-400 font-normal">({log.tokensUsed} Total)</span>
                     </td>
-                    <td className="p-4 font-bold text-indigo-600">¥{log.cost.toFixed(4)}</td>
+                    <td className="p-4 font-bold text-indigo-600">¥{(log.cost ?? 0).toFixed(4)}</td>
                     <td className="p-4 font-bold text-slate-700">{log.responseTimeMs} ms</td>
                     <td className="p-4">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
@@ -173,7 +173,7 @@ export const WorkspaceCalls: React.FC = () => {
                   <td className="p-4 font-extrabold text-slate-900">{tsk.taskType}</td>
                   <td className="p-4 text-slate-400">{tsk.createdAt}</td>
                   <td className="p-4 font-bold text-slate-700">{tsk.durationSec} 秒</td>
-                  <td className="p-4 font-bold text-emerald-600">¥{tsk.cost.toFixed(2)}</td>
+                  <td className="p-4 font-bold text-emerald-600">¥{(tsk.cost ?? 0).toFixed(2)}</td>
                   <td className="p-4">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
                       tsk.status === '已完成' ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-700'

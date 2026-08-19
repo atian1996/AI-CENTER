@@ -10,6 +10,7 @@ import {
   GPUInstance, 
   GpuPricing, 
   ComputeImageItem,
+  MyCustomImage,
   FeedPost, 
   OnboardingTask, 
   AppNotification, 
@@ -1961,127 +1962,79 @@ export const mockLearningPaths: LearningPathItem[] = [
 ];
 
 export const mockGpuInstances: GPUInstance[] = [
-  // 容器实例 Container Instances
   {
-    id: 'inst_c01',
-    name: 'my-llama-finetune',
-    instanceType: 'container',
-    scene: '大模型微调',
-    gpuModel: 'A100 80GB',
-    gpuCount: 1,
-    vram: '76 GB / 80 GB',
-    cpu: '16 核',
-    ram: '64 GB',
-    region: '华北 · 北京',
-    billingType: '包月',
-    status: 'running',
-    systemDisk: '50GB NVMe',
-    dataDisk: '500GB HighSpeed NVMe',
-    publicIp: '120.24.88.102',
-    osName: 'Ubuntu 22.04 LTS (Docker 26.1)',
-    ipAddress: '10.240.12.89:8888',
-    runningHours: 3.2,
-    hourlyCost: 14.25,
-    totalCost: 45.60,
-    createdAt: '2026-08-11 08:30',
-    jupyterUrl: 'https://jupyter.qianji.ai/?token=qj883920_c01',
-    sshCommand: 'ssh -p 22321 root@gpu-cluster-04.qianji.ai',
-    imageName: 'PyTorch 2.2 + CUDA 12.1 + DeepSpeed v0.12',
-    monitoring: {
-      gpuUsage: [45, 62, 88, 92, 95, 89, 94, 91],
-      vramUsage: [60, 72, 80, 85, 90, 92, 94, 95],
-      cpuUsage: [30, 45, 55, 68, 70, 65, 72, 75],
-      ramUsage: [40, 48, 52, 58, 62, 60, 64, 65]
-    },
-    fileList: [
-      { name: 'train_lora.py', size: '12.4 KB', isDir: false, modified: '10分钟前' },
-      { name: 'dataset_clean.jsonl', size: '428.5 MB', isDir: false, modified: '2小时前' },
-      { name: 'output_checkpoints/', size: '4.8 GB', isDir: true, modified: '15分钟前' },
-      { name: 'deepspeed_config.json', size: '2.1 KB', isDir: false, modified: '昨天' }
-    ],
-    snapshots: [
-      { id: 'snp_01', name: 'my-llama-v1-snapshot', description: '包含完整训练依赖与数据清洗脚本', size: '18.4 GB', createdAt: '2026-08-10 18:00', gpuModel: 'A100 80GB' }
-    ],
-    logs: [
-      { id: 'lg_1', action: '创建并启动容器实例', time: '2026-08-11 08:30:00', status: '成功' },
-      { id: 'lg_2', action: '挂载 500GB 数据盘', time: '2026-08-11 08:30:15', status: '成功' },
-      { id: 'lg_3', action: '开启 JupyterLab 远程端口 8888', time: '2026-08-11 08:31:02', status: '成功' }
-    ]
-  },
-  {
-    id: 'inst_c02',
-    name: 'comfyui-drawing',
-    instanceType: 'container',
-    scene: '文生图',
-    gpuModel: 'RTX 4090 24GB',
-    gpuCount: 1,
-    vram: '18 GB / 24 GB',
-    cpu: '16 核',
-    ram: '56 GB',
-    region: '华东 · 上海',
-    billingType: '按量计费',
-    status: 'running',
-    systemDisk: '40GB SSD',
-    dataDisk: '100GB NVMe',
-    publicIp: '114.215.120.45',
-    osName: 'Ubuntu 22.04 LTS (ComfyUI Env)',
-    ipAddress: '10.240.14.12:8188',
-    runningHours: 1.1,
-    hourlyCost: 2.90,
-    totalCost: 3.20,
-    createdAt: '2026-08-11 10:15',
-    jupyterUrl: 'https://comfy.qianji.ai/?instance=inst_c02',
-    sshCommand: 'ssh -p 22325 root@gpu-cluster-02.qianji.ai',
-    imageName: 'ComfyUI Official + Flux.1 Base + SDXL ControlNet',
-    monitoring: {
-      gpuUsage: [10, 85, 95, 20, 98, 15, 90, 80],
-      vramUsage: [30, 75, 78, 70, 82, 75, 80, 78],
-      cpuUsage: [15, 30, 40, 25, 45, 20, 35, 30],
-      ramUsage: [25, 35, 40, 38, 42, 40, 41, 42]
-    },
-    fileList: [
-      { name: 'custom_nodes/', size: '1.2 GB', isDir: true, modified: '刚刚' },
-      { name: 'models/checkpoints/', size: '24.5 GB', isDir: true, modified: '1小时前' },
-      { name: 'output_renders/', size: '156.8 MB', isDir: true, modified: '2分钟前' }
-    ],
-    snapshots: [],
-    logs: [
-      { id: 'lg_10', action: '秒级启动 ComfyUI 容器', time: '2026-08-11 10:15:00', status: '成功' }
-    ]
-  },
-  {
-    id: 'inst_c03',
-    name: 'test-env',
+    id: '18f05671-d941-4cdc-a00a-5d0a59d84539',
+    name: 'RTX 3060',
     instanceType: 'container',
     scene: 'Notebook开发',
-    gpuModel: 'T4 16GB',
+    gpuModel: 'RTX 3060',
     gpuCount: 1,
-    vram: '0 GB / 16 GB',
-    cpu: '4 核',
-    ram: '16 GB',
+    vram: '12.6 GB',
+    cpu: '6 核 E5-2680 v4',
+    ram: '30.1 GB',
+    disk: '375.8 GB',
+    region: '华东 · 上海',
+    billingType: '按量使用',
+    status: 'running',
+    startTime: '2026-08-19 14:22',
+    hourlyCost: 0.69,
+    totalCost: 0.0,
+    voucherDeduction: 0.0,
+    remainingHours: 8,
+    remark: '生产调试节点',
+    ipAddress: '10.240.12.89:8888',
+    runningHours: 3.2,
+    createdAt: '2026-08-19 14:22',
+    jupyterUrl: 'https://jupyter.qianji.ai/?token=qj883920_c01',
+    sshCommand: 'ssh -p 22321 root@gpu-cluster-04.qianji.ai',
+    pycharmUrl: 'pycharm://connect?host=gpu-cluster-04.qianji.ai&port=22321',
+    imageName: 'PyTorch 2.2.2 - CUDA 12.1'
+  },
+  {
+    id: '4090a881-c301-44bb-b21a-2e8f19223841',
+    name: 'RTX 4090 旗舰版',
+    instanceType: 'container',
+    scene: 'LLaMA/Qwen微调',
+    gpuModel: 'RTX 4090',
+    gpuCount: 1,
+    vram: '24.0 GB',
+    cpu: '16 核 AMD EPYC 9354',
+    ram: '60.0 GB',
+    disk: '750.0 GB',
+    region: '华北 · 北京',
+    billingType: '按量使用',
+    status: 'starting',
+    progressPercent: 39,
+    startTime: '2026-08-19 15:10',
+    hourlyCost: 1.88,
+    totalCost: 0.0,
+    voucherDeduction: 0.0,
+    remainingHours: 12,
+    createdAt: '2026-08-19 15:10',
+    imageName: 'PyTorch 2.2.2 + CUDA 12.1'
+  },
+  {
+    id: '6000f122-9988-4e11-aa99-1a8812309112',
+    name: 'PRO 6000',
+    instanceType: 'container',
+    scene: 'ComfyUI绘图',
+    gpuModel: 'RTX PRO 6000',
+    gpuCount: 1,
+    vram: '90.0 GB',
+    cpu: '30 核 AMD EPYC 9J14',
+    ram: '120.0 GB',
+    disk: '1024.0 GB',
     region: '华南 · 广州',
-    billingType: '按量计费',
-    status: 'stopped',
-    systemDisk: '40GB SSD',
-    dataDisk: '无',
-    publicIp: '以关机释放',
-    osName: 'JupyterLab + Python 3.11',
-    ipAddress: '10.240.09.44:8888',
-    runningHours: 4.8,
-    hourlyCost: 2.50,
-    totalCost: 12.00,
-    createdAt: '2026-08-09 14:00',
-    sshCommand: 'ssh -p 22100 root@gpu-cluster-01.qianji.ai',
-    imageName: 'JupyterLab + PyTorch 2.1 + Pandas',
-    monitoring: {
-      gpuUsage: [0, 0, 0, 0, 0, 0, 0, 0],
-      vramUsage: [0, 0, 0, 0, 0, 0, 0, 0],
-      cpuUsage: [0, 0, 0, 0, 0, 0, 0, 0],
-      ramUsage: [0, 0, 0, 0, 0, 0, 0, 0]
-    },
-    logs: [
-      { id: 'lg_20', action: '用户主动暂停实例', time: '2天前', status: '成功' }
-    ]
+    billingType: '日租',
+    status: 'creating_image',
+    startTime: '2026-08-19 12:00',
+    hourlyCost: 6.19,
+    totalCost: 145.0,
+    voucherDeduction: 0.0,
+    expireTime: '2026-08-20 12:00',
+    remark: '这里是备注',
+    createdAt: '2026-08-19 12:00',
+    imageName: 'Flux.1 + ComfyUI Web'
   },
 
   // 云服务器实例 Server Instances
@@ -2158,6 +2111,40 @@ export const mockGpuInstances: GPUInstance[] = [
     ],
     logs: [
       { id: 'lg_40', action: '已成功停止 Windows 云服务器以节省费用', time: '1天前', status: '成功' }
+    ]
+  }
+];
+
+export const mockMyCustomImages: MyCustomImage[] = [
+  {
+    id: 'my_img_01',
+    name: '自定义镜像 20260819_062827',
+    status: 'compressing',
+    size: '0 B',
+    authorName: '冷库的雪人',
+    createdAt: '2026-08-19 14:28',
+    isPrivate: true,
+    description: '正在压缩备份的环境包含 PyTorch 2.2 + CUDA 12.1 + Stable Diffusion WebUI 扩展节点与 ControlNet 模型权重...',
+    comments: []
+  },
+  {
+    id: 'my_img_02',
+    name: '自定义镜像 20260819_083015',
+    status: 'ready',
+    size: '20.0 GB',
+    authorName: '冷库的雪人',
+    createdAt: '2026-08-19 14:28',
+    isPrivate: true,
+    tags: [],
+    description: '这里是镜像详情',
+    comments: [
+      {
+        id: 'cm_01',
+        userName: '冷库的雪人',
+        createdAtAgo: '8分钟前',
+        likes: 0,
+        content: '11111111\n### 222222222'
+      }
     ]
   }
 ];

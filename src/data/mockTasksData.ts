@@ -23,7 +23,7 @@ export const mockRichTasks: TaskItem[] = [
     publishTime: '2026-08-01 10:00:00',
     status: '进行中',
     acceptedCount: 3,
-    submittedCount: 1,
+    submittedCount: 2,
     verifiedCount: 0,
     takers: [
       {
@@ -41,7 +41,8 @@ export const mockRichTasks: TaskItem[] = [
         username: '清华AI工程队',
         userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
         takeTime: '2026-08-06 09:10:00',
-        status: '已接单'
+        status: '已提交',
+        submissionId: 'sub_101_2'
       },
       {
         id: 'tk_3',
@@ -63,6 +64,18 @@ export const mockRichTasks: TaskItem[] = [
         files: [
           { id: 'f1', name: 'Legal_Agent_Source_v1.0.zip', size: '42.5 MB' },
           { id: 'f2', name: '测试报告与性能压测记录.pdf', size: '3.8 MB' }
+        ],
+        status: '待验收'
+      },
+      {
+        id: 'sub_101_2',
+        taskId: 'tsk_101',
+        username: '清华AI工程队',
+        userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+        submitTime: '2026-08-15 11:20:00',
+        notes: '基于 LangChain + Qwen2.5 构建了合同风险概率标注引擎，支持高亮 PDF 导出。',
+        files: [
+          { id: 'f101_2', name: 'Tsinghua_Legal_Agent_Bundle.zip', size: '38.2 MB' }
         ],
         status: '待验收'
       }
@@ -538,11 +551,64 @@ export const mockRichTasks: TaskItem[] = [
     publisherAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80',
     publishTime: '2026-08-15 16:30:00',
     status: '进行中',
-    acceptedCount: 2,
-    submittedCount: 0,
+    acceptedCount: 3,
+    submittedCount: 2,
     verifiedCount: 0,
-    takers: [],
-    submissions: [],
+    takers: [
+      {
+        id: 'tk_105_1',
+        taskId: 'tsk_105',
+        username: '华为云智算咨询团队',
+        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-16 09:00:00',
+        status: '已提交',
+        submissionId: 'sub_105_1'
+      },
+      {
+        id: 'tk_105_2',
+        taskId: 'tsk_105',
+        username: '阿里云混合云架构组',
+        userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-16 14:30:00',
+        status: '已提交',
+        submissionId: 'sub_105_2'
+      },
+      {
+        id: 'tk_105_3',
+        taskId: 'tsk_105',
+        username: '联想企业级算力实验室',
+        userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-17 10:00:00',
+        status: '已接单'
+      }
+    ],
+    submissions: [
+      {
+        id: 'sub_105_1',
+        taskId: 'tsk_105',
+        username: '华为云智算咨询团队',
+        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        submitTime: '2026-08-17 18:00:00',
+        notes: '交付包含昇腾 910B/C 算力集群部署方案、1,000 并发 TCO 成本对比与 Word 技术白皮书。',
+        files: [
+          { id: 'f_hw1', name: 'DeepSeek_Private_Deployment_Plan_HuaweiCloud.pdf', size: '14.5 MB' },
+          { id: 'f_hw2', name: 'DeepSeek_TCO_Cost_Estimation.xlsx', size: '2.1 MB' }
+        ],
+        status: '待验收'
+      },
+      {
+        id: 'sub_105_2',
+        taskId: 'tsk_105',
+        username: '阿里云混合云架构组',
+        userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+        submitTime: '2026-08-18 09:30:00',
+        notes: '交付阿里云专有云敏捷版 DeepSeek-R1 部署架构图及 8 卡 H800 组网实测报告。',
+        files: [
+          { id: 'f_ali1', name: 'DeepSeek_Private_Deployment_Aliyun.pdf', size: '18.2 MB' }
+        ],
+        status: '待验收'
+      }
+    ],
     bounty: 18000,
     bountyUnit: '¥'
   },
@@ -568,10 +634,64 @@ export const mockRichTasks: TaskItem[] = [
     publishTime: '2026-08-11 11:20:00',
     status: '进行中',
     acceptedCount: 3,
-    submittedCount: 1,
+    submittedCount: 2,
     verifiedCount: 0,
-    takers: [],
-    submissions: [],
+    takers: [
+      {
+        id: 'tk_hall_1',
+        taskId: 'tsk_hall_01',
+        username: '极客小千 (你)',
+        userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-12 14:00:00',
+        status: '已提交',
+        submissionId: 'sub_hall_1'
+      },
+      {
+        id: 'tk_hall_2',
+        taskId: 'tsk_hall_01',
+        username: 'AIGC视觉魔法师',
+        userAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-13 10:20:00',
+        status: '已提交',
+        submissionId: 'sub_hall_2'
+      },
+      {
+        id: 'tk_hall_3',
+        taskId: 'tsk_hall_01',
+        username: '时尚科技工作室',
+        userAvatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-14 16:00:00',
+        status: '已接单'
+      }
+    ],
+    submissions: [
+      {
+        id: 'sub_hall_1',
+        taskId: 'tsk_hall_01',
+        username: '极客小千 (你)',
+        userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+        submitTime: '2026-08-16 19:00:00',
+        notes: '构建了 Flux.1 + ControlNet 姿态遮罩与面料纹理保持工作流，附带 10 组试衣高保真前后对比图。',
+        files: [
+          { id: 'fh1', name: 'Flux_Virtual_Fitting_ComfyUI_v2.json', size: '4.8 MB' },
+          { id: 'fh2', name: '高清宣发效果对比图集.zip', size: '28.5 MB' }
+        ],
+        status: '待验收'
+      },
+      {
+        id: 'sub_hall_2',
+        taskId: 'tsk_hall_01',
+        username: 'AIGC视觉魔法师',
+        userAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-15 15:30:00',
+        submitTime: '2026-08-17 10:00:00',
+        notes: '使用 SDXL Inpainting + CatVTON 节点实现服装替换，运行稳定。',
+        files: [
+          { id: 'fh3', name: 'CatVTON_SDXL_Workflow.json', size: '2.3 MB' }
+        ],
+        status: '待验收'
+      }
+    ],
     bounty: 3600,
     bountyUnit: '¥'
   },
@@ -702,7 +822,8 @@ export const mockRichTasks: TaskItem[] = [
         username: '极客小千 (你)',
         userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
         takeTime: '2026-08-14 09:00:00',
-        status: '已接单'
+        status: '已提交',
+        submissionId: 'sub_und_b2_mine'
       },
       {
         id: 'tk_und_b2_2',
@@ -715,6 +836,19 @@ export const mockRichTasks: TaskItem[] = [
       }
     ],
     submissions: [
+      {
+        id: 'sub_und_b2_mine',
+        taskId: 'tsk_my_und_bigao_ing2',
+        username: '极客小千 (你)',
+        userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+        submitTime: '2026-08-17 14:20:00',
+        notes: '使用 Python + Click + Rich 构建跨平台命令行工具，已封装支持 API Key 密钥链安全存储与一键 publish 插件打包校验。',
+        files: [
+          { id: 'fg_mine_1', name: 'qianji_cli_python_v1.0.tar.gz', size: '12.4 MB' },
+          { id: 'fg_mine_2', name: 'CLI工具指令使用与自动化测试说明.pdf', size: '2.1 MB' }
+        ],
+        status: '待验收'
+      },
       {
         id: 'sub_und_b2_other',
         taskId: 'tsk_my_und_bigao_ing2',

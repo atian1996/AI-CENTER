@@ -368,7 +368,7 @@ export const InstanceDetailModal: React.FC = () => {
 
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <div className="text-slate-400 text-[10px] font-sans font-medium">计费单价</div>
-                    <div className="text-amber-600 font-bold text-sm mt-0.5">¥{inst.hourlyCost.toFixed(2)} / 小时</div>
+                    <div className="text-amber-600 font-bold text-sm mt-0.5">¥{(inst.hourlyCost ?? 0).toFixed(2)} / 小时</div>
                   </div>
 
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -619,15 +619,15 @@ export const InstanceDetailModal: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span>算力规格单价:</span>
-                  <span className="font-bold text-amber-600">¥{inst.hourlyCost.toFixed(2)} / 小时</span>
+                  <span className="font-bold text-amber-600">¥{(inst.hourlyCost ?? 0).toFixed(2)} / 小时</span>
                 </div>
                 <div className="flex justify-between">
                   <span>累计运行时间:</span>
-                  <span className="font-bold text-slate-900">{inst.runningHours.toFixed(1)} 小时</span>
+                  <span className="font-bold text-slate-900">{(inst.runningHours ?? 0).toFixed(1)} 小时</span>
                 </div>
                 <div className="flex justify-between border-t border-slate-200 pt-2 text-sm font-bold">
                   <span>本实例已产生费用:</span>
-                  <span className="text-amber-600">¥{inst.totalCost.toFixed(2)} 元</span>
+                  <span className="text-amber-600">¥{(inst.totalCost ?? 0).toFixed(2)} 元</span>
                 </div>
               </div>
             </div>

@@ -238,11 +238,11 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
                 <div className="space-y-2">
                   <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-blue-500" />
-                    <span>交付周期</span>
+                    <span>交付截止时间</span>
                   </h4>
                   <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs flex flex-wrap items-center justify-between gap-4 font-medium text-slate-700">
-                    <div>开始时间：<span className="font-bold font-mono">{task.startTime}</span></div>
-                    <div>结束时间：<span className="font-bold font-mono text-indigo-600">{task.endTime}</span></div>
+                    <div>发布时间：<span className="font-bold font-mono">{task.publishTime || task.startTime}</span></div>
+                    <div>截止时间：<span className="font-bold font-mono text-indigo-600">{task.endTime}</span></div>
                   </div>
                 </div>
               </div>
@@ -259,13 +259,18 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
                 ) : (
                   takersList.map(tk => {
                     const sub = submissionsList.find(s => s.username === tk.username || s.id === tk.submissionId);
-                    
-                    // 判断该接单成果是否【通过验收】
+                    const isMyRecord = tk.username === user.name || tk.username.includes(user.name) || (user.name === '极客小千' && tk.username.includes('你'));
+
+                    // 精确判读四大接单记录状态：未提交 | 待验收 | 通过验收 | 未通过验收
                     const isAcceptedWinner = 
                       sub?.status === '已通过' || 
                       tk.status === '已验收' || 
                       task.winner?.username === tk.username ||
                       (task.winner?.username && (tk.username.includes(task.winner.username) || task.winner.username.includes(tk.username)));
+
+                    const isRejected = sub?.status === '已驳回' || tk.status === '已驳回';
+                    const isPending = sub && (sub.status === '待验收' || tk.status === '已提交') && !isAcceptedWinner && !isRejected;
+                    const isNotSubmitted = !sub && tk.status !== '已提交' && tk.status !== '已验收';
 
                     return (
                       <div
@@ -273,6 +278,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
                         className={`p-5 rounded-2xl border transition-all space-y-3 ${
                           isAcceptedWinner
                             ? 'bg-emerald-50/60 border-emerald-300 shadow-2xs'
+                            : isRejected
+                            ? 'bg-red-50/40 border-red-200'
+                            : isPending
+                            ? 'bg-amber-50/40 border-amber-200'
                             : 'bg-white border-slate-200'
                         }`}
                       >
@@ -286,6 +295,11 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
                             <div>
                               <div className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
                                 <span>{tk.username}</span>
+                                {isMyRecord && (
+                                  <span className="px-2 py-0.5 rounded text-[10px] font-black bg-indigo-100 text-indigo-700 border border-indigo-200">
+                                    我的记录
+                                  </span>
+                                )}
                                 {isAcceptedWinner && (
                                   <span className="px-2 py-0.5 rounded text-[11px] font-black bg-emerald-600 text-white flex items-center gap-1">
                                     <Award className="w-3 h-3" />
@@ -304,45 +318,86 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
                             </div>
                           </div>
 
-                          {/* 右侧状态显式展示：通过验收 OR 未通过验收 */}
+                          {/* 右侧状态标准展示：未提交 | 待验收 | 通过验收 | 未通过验收 */}
                           <div>
                             {isAcceptedWinner ? (
                               <span className="px-3 py-1.5 bg-emerald-600 text-white font-black text-xs rounded-xl shadow-xs flex items-center gap-1">
                                 <CheckCircle2 className="w-3.5 h-3.5" />
                                 <span>通过验收</span>
                               </span>
+                            ) : isRejected ? (
+                              <span className="px-3 py-1.5 bg-red-100 text-red-700 font-bold text-xs rounded-xl border border-red-200">
+                                未通过验收
+                              </span>
+                            ) : isPending ? (
+                              <span className="px-3 py-1.5 bg-amber-100 text-amber-800 font-bold text-xs rounded-xl border border-amber-200 flex items-center gap-1">
+                                <Clock className="w-3.5 h-3.5 text-amber-600" />
+                                <span>待验收</span>
+                              </span>
                             ) : (
                               <span className="px-3 py-1.5 bg-slate-100 text-slate-500 font-bold text-xs rounded-xl border border-slate-200/80">
-                                未通过验收
+                                未提交
                               </span>
                             )}
                           </div>
                         </div>
 
-                        {/* 如果存在交付成果记录（仅允许发布人/管理员或本人查看说明与附件） */}
-                        {sub && (isPublisher || isAdminMode || tk.username.includes(user.name) || tk.username.includes('你')) && (
+                        {/* 交付成果与关联文件区（如果是本人记录、发布者或管理员，可直接查看与下载） */}
+                        {(isMyRecord || isPublisher || isAdminMode) ? (
                           <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
-                            <div className="text-[11px] font-bold text-slate-400">交付成果说明：</div>
-                            <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 leading-relaxed font-medium">
-                              {sub.notes}
-                            </div>
+                            {sub ? (
+                              <>
+                                <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
+                                  <span>交付成果说明与提交文件：</span>
+                                  {isMyRecord && (
+                                    <span className="text-indigo-600 font-semibold">您可以查看并预览自己提交的文件</span>
+                                  )}
+                                </div>
+                                <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 leading-relaxed font-medium">
+                                  {sub.notes}
+                                </div>
 
-                            {sub.files && sub.files.length > 0 && (
-                              <div className="flex flex-wrap gap-2 pt-1">
-                                {sub.files.map(f => (
-                                  <div
-                                    key={f.id || f.name}
-                                    onClick={() => showToast(`已下载成果文件：${f.name}`)}
-                                    className="flex items-center gap-2 px-3 py-1.5 bg-white hover:bg-indigo-50 border border-slate-200 text-xs font-bold text-slate-700 rounded-lg cursor-pointer transition"
-                                  >
-                                    <Paperclip className="w-3.5 h-3.5 text-indigo-600" />
-                                    <span>{f.name}</span>
-                                    <span className="text-slate-400 text-[11px]">({f.size})</span>
-                                    <Download className="w-3.5 h-3.5 text-slate-400 ml-1" />
+                                {/* 上传的文件列表 */}
+                                {sub.files && sub.files.length > 0 ? (
+                                  <div className="space-y-1.5 pt-1">
+                                    <div className="text-[11px] font-bold text-slate-400">已提交文件：</div>
+                                    <div className="flex flex-wrap gap-2">
+                                      {sub.files.map(f => (
+                                        <button
+                                          type="button"
+                                          key={f.id || f.name}
+                                          onClick={() => showToast(`正在为您下载文件【${f.name}】`)}
+                                          className="flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-xs font-bold text-slate-800 rounded-xl cursor-pointer transition shadow-2xs"
+                                        >
+                                          <Paperclip className="w-3.5 h-3.5 text-indigo-600" />
+                                          <span>{f.name}</span>
+                                          <span className="text-slate-400 text-[11px]">({f.size})</span>
+                                          <Download className="w-3.5 h-3.5 text-indigo-500 ml-1" />
+                                        </button>
+                                      ))}
+                                    </div>
                                   </div>
-                                ))}
+                                ) : (
+                                  <div className="text-[11px] text-slate-400 font-medium">暂无附带交付文件</div>
+                                )}
+                              </>
+                            ) : (
+                              <div className="p-3 bg-amber-50/50 border border-amber-200/60 rounded-xl text-xs text-amber-800 flex items-center justify-between">
+                                <span>当前接单状态为 <b>未提交</b>，请在截止日前提交交付成果。</span>
+                                {isMyRecord && (
+                                  <button
+                                    onClick={() => setSubmitModalOpen(true)}
+                                    className="px-3 py-1 bg-indigo-600 text-white font-extrabold text-[11px] rounded-lg hover:bg-indigo-500 cursor-pointer"
+                                  >
+                                    立即提交成果
+                                  </button>
+                                )}
                               </div>
                             )}
+                          </div>
+                        ) : (
+                          <div className="mt-2 pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
+                            受极客隐私规则保护，非本人或雇主不可查看其他开发者的交付文件。
                           </div>
                         )}
                       </div>

@@ -19,7 +19,14 @@ import {
   PointRecord,
   ApiKeyItem,
   CompetitionItem,
-  AdminMenuKey
+  AdminMenuKey,
+  ComputeSpecItem,
+  ComputeImageAdminItem,
+  ComputePoolItem,
+  ComputeOrderItem,
+  ComputeRunningInstanceItem,
+  ComputeSettlementItem,
+  MyCustomImage
 } from '../types';
 import { 
   initialUserProfile, 
@@ -31,12 +38,22 @@ import {
   mockSkills,
   mockCourses, 
   mockGpuInstances, 
+  mockMyCustomImages,
   mockFeedPosts, 
   mockApiKeys, 
   mockPointRecords, 
   mockCompetitions 
 } from '../data/mockData';
 import { mockRichTasks } from '../data/mockTasksData';
+import {
+  mockComputeSpecs,
+  mockComputeImages,
+  mockComputePools,
+  mockComputeOrders,
+  mockRunningInstances,
+  mockComputeSettlements,
+  mockComputeStats
+} from '../data/mockComputeAdminData';
 
 interface AppContextType {
   // Navigation State
@@ -147,6 +164,12 @@ interface AppContextType {
   selectedTaskForVerification: TaskItem | null;
   setSelectedTaskForVerification: (task: TaskItem | null) => void;
 
+  // 我租用的实例与我的镜像
+  myCustomImages: MyCustomImage[];
+  deleteMyCustomImage: (id: string) => void;
+  addMyCustomImageComment: (imageId: string, commentText: string) => void;
+  updateMyCustomImageDescription: (imageId: string, desc: string) => void;
+
   // Interactive Operations
   addAgent: (agent: Omit<AgentItem, 'id' | 'rating' | 'ratingCount' | 'usageCount' | 'createdAt'>) => void;
   purchaseAgent: (agentId: string) => void;
@@ -163,6 +186,9 @@ interface AppContextType {
   acceptTaskSubmission: (taskId: string, submissionId: string, comment?: string) => void;
   rejectTaskSubmission: (taskId: string, submissionId: string, comment: string) => void;
   launchGpuInstance: (scene: GPUInstance['scene'], gpuModel: string, imageName: string, customOpts?: Partial<GPUInstance>) => void;
+  updateInstanceRemark: (instId: string, remark: string) => void;
+  changeInstanceRentalDuration: (instId: string, durationType: string, autoReturn: boolean) => void;
+  createImageFromInstance: (instId: string, autoShutdown: boolean, overwrite: boolean) => void;
   toggleGpuInstanceStatus: (id: string) => void;
   restartGpuInstance: (id: string) => void;
   deleteGpuInstance: (id: string) => void;
@@ -172,6 +198,41 @@ interface AppContextType {
   // Toast System
   toast: string | null;
   showToast: (msg: string) => void;
+
+  // 算力工坊后台管理
+  computeSpecs: ComputeSpecItem[];
+  addComputeSpec: (spec: Omit<ComputeSpecItem, 'id' | 'createTime' | 'updateTime'>) => boolean;
+  updateComputeSpec: (id: string, updates: Partial<ComputeSpecItem>) => void;
+  deleteComputeSpec: (id: string) => boolean;
+  toggleComputeSpecStatus: (id: string, status: '上架' | '下架') => void;
+
+  computeImages: ComputeImageAdminItem[];
+  addComputeImage: (image: Omit<ComputeImageAdminItem, 'id' | 'updateTime'>) => void;
+  updateComputeImage: (id: string, updates: Partial<ComputeImageAdminItem>) => void;
+  deleteComputeImage: (id: string) => void;
+  toggleComputeImageStatus: (id: string, status: '上架' | '下架') => void;
+
+  computePools: ComputePoolItem[];
+  addComputePool: (pool: Partial<ComputePoolItem>) => void;
+  updateComputePool: (id: string, updates: Partial<ComputePoolItem>) => void;
+  deleteComputePool: (id: string) => void;
+  syncComputePoolStatus: (poolId: string) => void;
+  setComputePoolAlertThreshold: (poolId: string, threshold: number) => void;
+  toggleComputePoolMaintenance: (poolId: string) => void;
+
+  computeOrders: ComputeOrderItem[];
+  stopComputeOrder: (orderId: string) => void;
+  releaseComputeOrder: (orderId: string) => void;
+  retryComputeOrder: (orderId: string) => void;
+
+  computeRunningInstances: ComputeRunningInstanceItem[];
+  restartComputeRunningInstance: (id: string) => void;
+  stopComputeRunningInstance: (id: string) => void;
+
+  computeSettlements: ComputeSettlementItem[];
+  confirmComputeSettlement: (id: string) => void;
+  markComputeSettlementPaid: (id: string, invoiceNo?: string) => void;
+  generateComputeSettlement: (operator: string, period: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -199,8 +260,420 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [tasks, setTasks] = useState<TaskItem[]>(mockRichTasks);
   const [courses] = useState<CourseItem[]>(mockCourses);
   const [gpuInstances, setGpuInstances] = useState<GPUInstance[]>(mockGpuInstances);
+  const [myCustomImages, setMyCustomImages] = useState<MyCustomImage[]>(mockMyCustomImages);
+
+  const deleteMyCustomImage = (id: string) => {
+    setMyCustomImages(prev => prev.filter(img => img.id !== id));
+    showToast('已成功删除自定义镜像！');
+  };
+
+  const addMyCustomImageComment = (imageId: string, commentText: string) => {
+    if (!commentText.trim()) return;
+    setMyCustomImages(prev => prev.map(img => {
+      if (img.id === imageId) {
+        const newComment = {
+          id: `cm_${Date.now()}`,
+          userName: user.name || '冷库的雪人',
+          userAvatar: user.avatar,
+          createdAtAgo: '刚刚',
+          likes: 0,
+          content: commentText.trim()
+        };
+        return {
+          ...img,
+          comments: [newComment, ...img.comments]
+        };
+      }
+      return img;
+    }));
+    showToast('评论发表成功！');
+  };
+
+  const updateMyCustomImageDescription = (imageId: string, desc: string) => {
+    setMyCustomImages(prev => prev.map(img => {
+      if (img.id === imageId) {
+        return { ...img, description: desc };
+      }
+      return img;
+    }));
+    showToast('镜像详情描述已保存！');
+  };
   const [posts, setPosts] = useState<FeedPost[]>(mockFeedPosts);
   const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>(mockApiKeys);
+  
+  // 算力工坊后台管理状态
+  const [computeSpecs, setComputeSpecs] = useState<ComputeSpecItem[]>(mockComputeSpecs);
+  const [computeImages, setComputeImages] = useState<ComputeImageAdminItem[]>(mockComputeImages);
+  const [computePools, setComputePools] = useState<ComputePoolItem[]>(mockComputePools);
+  const [computeOrders, setComputeOrders] = useState<ComputeOrderItem[]>(mockComputeOrders);
+  const [computeRunningInstances, setComputeRunningInstances] = useState<ComputeRunningInstanceItem[]>(mockRunningInstances);
+  const [computeSettlements, setComputeSettlements] = useState<ComputeSettlementItem[]>(mockComputeSettlements);
+
+  // 1. 规格操作
+  const addComputeSpec = (spec: Omit<ComputeSpecItem, 'id' | 'createTime' | 'updateTime'>): boolean => {
+    // 前置依赖校验 1: 检查是否存在已启用的镜像
+    const hasEnabledImage = computeImages.some(img => img.status === '已启用' || img.status === '上架');
+    if (!hasEnabledImage) {
+      showToast('请先在镜像管理中添加并启用至少一个镜像');
+      return false;
+    }
+
+    // 前置依赖校验 2: 检查是否存在状态正常的资源池
+    const hasNormalPool = computePools.some(pool => pool.status === '正常');
+    if (!hasNormalPool) {
+      showToast('请先在资源池管理中添加并启用至少一个资源池');
+      return false;
+    }
+
+    // 关联镜像与运营商校验
+    if (!spec.linkedImageIds || spec.linkedImageIds.length === 0) {
+      showToast('请至少选择一个支持的镜像');
+      return false;
+    }
+    if (!spec.linkedOperators || spec.linkedOperators.length === 0) {
+      showToast('请至少选择一个可部署的运营商资源池');
+      return false;
+    }
+
+    const newSpec: ComputeSpecItem = {
+      ...spec,
+      id: `spec_${Date.now()}`,
+      totalUsedCount: spec.totalUsedCount ?? 0,
+      recent7DaysCount: spec.recent7DaysCount ?? 0,
+      createTime: new Date().toISOString().replace('T', ' ').substring(0, 19),
+      updateTime: new Date().toISOString().replace('T', ' ').substring(0, 19)
+    };
+    setComputeSpecs(prev => [newSpec, ...prev]);
+    showToast(`实例规格 "${spec.name}" 添加成功！`);
+    return true;
+  };
+
+  const updateComputeSpec = (id: string, updates: Partial<ComputeSpecItem>) => {
+    setComputeSpecs(prev => prev.map(s => s.id === id ? {
+      ...s,
+      ...updates,
+      updateTime: new Date().toISOString().replace('T', ' ').substring(0, 19)
+    } : s));
+    showToast('规格配置已更新！');
+  };
+
+  const deleteComputeSpec = (id: string): boolean => {
+    const spec = computeSpecs.find(s => s.id === id);
+    if (!spec) return false;
+
+    // 删除限制校验：若该规格累计创建过实例，或在订单/运行实例中存在，严禁删除
+    const isUsedInOrders = computeOrders.some(o => o.specName.includes(spec.name) || o.specName.includes(spec.gpuModel));
+    const isUsedInInstances = computeRunningInstances.some(i => i.specName.includes(spec.name) || i.specName.includes(spec.gpuModel));
+    const hasBeenCreated = (spec.totalUsedCount ?? 0) > 0;
+
+    if (hasBeenCreated || isUsedInOrders || isUsedInInstances) {
+      showToast('该规格已被使用，无法删除');
+      return false;
+    }
+
+    setComputeSpecs(prev => prev.filter(s => s.id !== id));
+    showToast('规格已删除！');
+    return true;
+  };
+
+  const toggleComputeSpecStatus = (id: string, status: '上架' | '下架') => {
+    setComputeSpecs(prev => prev.map(s => s.id === id ? {
+      ...s,
+      status,
+      updateTime: new Date().toISOString().replace('T', ' ').substring(0, 19)
+    } : s));
+    showToast(`规格状态已切换为: ${status}`);
+  };
+
+  // 2. 镜像操作
+  const addComputeImage = (image: Partial<ComputeImageAdminItem>) => {
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    const newImg: ComputeImageAdminItem = {
+      id: `img_${Date.now()}`,
+      name: image.name || '未命名镜像',
+      registryUrl: image.registryUrl || 'docker.io/library/ubuntu:latest',
+      category: image.category || '其他',
+      description: image.description || '',
+      size: image.size || '15.0 GB',
+      version: image.version || 'v1.0.0',
+      changelog: image.changelog || '首次创建镜像',
+      status: (image.status as any) || '已启用',
+      refCount: 0,
+      createdAt: nowStr,
+      updatedAt: nowStr,
+      type: image.type || '官方',
+      baseOs: image.baseOs || 'Ubuntu 22.04 LTS',
+      preinstalled: image.preinstalled || '',
+      maintainer: image.maintainer || '平台运维',
+      downloads: 0,
+      updateTime: nowStr,
+      createTime: nowStr,
+      ...image
+    };
+    setComputeImages(prev => [newImg, ...prev]);
+    showToast(`镜像【${newImg.name}】创建成功！`);
+  };
+
+  const updateComputeImage = (id: string, updates: Partial<ComputeImageAdminItem>) => {
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    setComputeImages(prev => prev.map(img => img.id === id ? { ...img, ...updates, updatedAt: nowStr, updateTime: nowStr } : img));
+    showToast('镜像配置已更新！');
+  };
+
+  const deleteComputeImage = (id: string) => {
+    const target = computeImages.find(img => img.id === id);
+    if (target && (target.refCount ?? 0) > 0) {
+      showToast(`【删除失败】该镜像当前正被 ${target.refCount} 台实例引用，不可删除！`);
+      return;
+    }
+    setComputeImages(prev => prev.filter(img => img.id !== id));
+    showToast('镜像已成功删除！');
+  };
+
+  const toggleComputeImageStatus = (id: string, nextStatus?: '已启用' | '已停用' | '上架' | '下架') => {
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    setComputeImages(prev => prev.map(img => {
+      if (img.id === id) {
+        let determinedStatus = nextStatus;
+        if (!determinedStatus) {
+          const isCurrentlyActive = img.status === '已启用' || img.status === '上架';
+          determinedStatus = isCurrentlyActive ? '已停用' : '已启用';
+        }
+        showToast(`镜像【${img.name}】状态已切换为: ${determinedStatus}`);
+        return { ...img, status: determinedStatus as any, updatedAt: nowStr, updateTime: nowStr };
+      }
+      return img;
+    }));
+  };
+
+  // 3. 资源池操作
+  const addComputePool = (pool: Partial<ComputePoolItem>) => {
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    const nextSyncStr = new Date(Date.now() + 5 * 60000).toISOString().replace('T', ' ').substring(0, 19);
+    const defaultDist = [
+      { gpuModel: 'NVIDIA RTX 4090', total: 32, allocated: 12, available: 20, rate: 37.5 },
+      { gpuModel: 'NVIDIA A100-SXM4-80GB', total: 16, allocated: 8, available: 8, rate: 50.0 }
+    ];
+    const initialDist = pool.distribution && pool.distribution.length > 0 ? pool.distribution : defaultDist;
+    const totalGpusVal = initialDist.reduce((acc, item) => acc + item.total, 0);
+    const usedGpusVal = initialDist.reduce((acc, item) => acc + item.allocated, 0);
+    const freeGpusVal = totalGpusVal - usedGpusVal;
+
+    const newPool: ComputePoolItem = {
+      id: `pool_${Date.now()}`,
+      name: pool.name || '新建智算资源池',
+      operator: pool.operator || '中国电信天翼云',
+      region: pool.region || '上海',
+      remark: pool.remark || '',
+      apiUrl: pool.apiUrl || 'https://api.compute-provider.com/v1/cluster/inventory',
+      authType: pool.authType || 'API Key',
+      authCredential: pool.authCredential || 'qj_key_' + Math.random().toString(36).substring(2, 12),
+      timeoutSeconds: pool.timeoutSeconds || 30,
+      saleStatus: pool.saleStatus || '已上架',
+      runStatus: pool.runStatus || '正常',
+      lastSyncTime: nowStr,
+      nextSyncTime: nextSyncStr,
+      gpuTypes: initialDist.map(d => d.gpuModel),
+      supportedSpecIds: pool.supportedSpecIds || [],
+      supportedSpecNames: pool.supportedSpecNames || [],
+      totalCapacity: totalGpusVal,
+      allocatedCount: usedGpusVal,
+      availableCount: freeGpusVal,
+      utilizationRate: totalGpusVal > 0 ? Number(((usedGpusVal / totalGpusVal) * 100).toFixed(1)) : 0,
+      status: '正常',
+      alertThreshold: pool.alertThreshold || 85,
+      totalNodes: Math.ceil(totalGpusVal / 8) || 4,
+      totalGpus: totalGpusVal,
+      usedGpus: usedGpusVal,
+      freeGpus: freeGpusVal,
+      distribution: initialDist,
+      logs: [
+        {
+          id: `log_${Date.now()}`,
+          time: nowStr,
+          operator: `${user.name} (管理员)`,
+          action: '手动新增资源池',
+          result: '成功',
+          detail: '添加基础配置与连接凭证并开启上架'
+        }
+      ]
+    };
+
+    setComputePools(prev => [newPool, ...prev]);
+    showToast(`资源池【${newPool.name}】新增成功！现可点击【同步】拉取集群规格`);
+  };
+
+  const updateComputePool = (id: string, updates: Partial<ComputePoolItem>) => {
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    setComputePools(prev => prev.map(p => {
+      if (p.id === id) {
+        const isCredentialChanged = (updates.apiUrl && updates.apiUrl !== p.apiUrl) || (updates.authCredential && updates.authCredential !== p.authCredential);
+        const newLogs = [
+          {
+            id: `log_${Date.now()}`,
+            time: nowStr,
+            operator: `${user.name} (管理员)`,
+            action: isCredentialChanged ? '修改连接配置凭证' : '更新资源池属性',
+            result: '成功' as const,
+            detail: isCredentialChanged ? '更新了 API 接入地址或鉴权 Key，需重新触发同步验证' : '编辑保存基础数据'
+          },
+          ...(p.logs || [])
+        ];
+
+        return {
+          ...p,
+          ...updates,
+          logs: newLogs
+        };
+      }
+      return p;
+    }));
+    showToast('资源池配置更新成功！');
+  };
+
+  const deleteComputePool = (id: string) => {
+    setComputePools(prev => prev.filter(p => p.id !== id));
+    showToast('资源池已成功删除！');
+  };
+
+  const syncComputePoolStatus = (poolId: string) => {
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    const nextSyncStr = new Date(Date.now() + 5 * 60000).toISOString().replace('T', ' ').substring(0, 19);
+
+    setComputePools(prev => prev.map(p => {
+      if (p.id === poolId) {
+        // 如果当前 distribution 为空，给予默认的算力硬件
+        const currentDist = p.distribution && p.distribution.length > 0 ? p.distribution : [
+          { gpuModel: 'NVIDIA RTX 4090', total: 40, allocated: 28, available: 12, rate: 70.0 },
+          { gpuModel: 'NVIDIA A100-SXM4-80GB', total: 20, allocated: 15, available: 5, rate: 75.0 }
+        ];
+
+        // 模拟拉取微调库存
+        const updatedDist = currentDist.map(item => {
+          const delta = Math.floor(Math.random() * 3) - 1; // -1, 0, 1
+          const newAllocated = Math.max(0, Math.min(item.total, item.allocated + delta));
+          const newAvailable = item.total - newAllocated;
+          const rate = Number(((newAllocated / item.total) * 100).toFixed(1));
+          return {
+            ...item,
+            allocated: newAllocated,
+            available: newAvailable,
+            rate
+          };
+        });
+
+        const totalGpusVal = updatedDist.reduce((acc, item) => acc + item.total, 0);
+        const usedGpusVal = updatedDist.reduce((acc, item) => acc + item.allocated, 0);
+        const freeGpusVal = totalGpusVal - usedGpusVal;
+        const utilRate = totalGpusVal > 0 ? Number(((usedGpusVal / totalGpusVal) * 100).toFixed(1)) : 0;
+
+        const syncLog = {
+          id: `log_${Date.now()}`,
+          time: nowStr,
+          operator: '系统 API 自动同步',
+          action: '拉取最新 GPU 规格与库存',
+          result: '成功' as const,
+          detail: `成功拉取 ${updatedDist.length} 种 GPU 型号，共 ${totalGpusVal} 卡，可用 ${freeGpusVal} 卡`
+        };
+
+        return {
+          ...p,
+          runStatus: '正常',
+          status: utilRate > (p.alertThreshold || 85) ? '告警' : '正常',
+          lastSyncTime: nowStr,
+          nextSyncTime: nextSyncStr,
+          distribution: updatedDist,
+          totalCapacity: totalGpusVal,
+          allocatedCount: usedGpusVal,
+          availableCount: freeGpusVal,
+          totalGpus: totalGpusVal,
+          usedGpus: usedGpusVal,
+          freeGpus: freeGpusVal,
+          utilizationRate: utilRate,
+          gpuTypes: updatedDist.map(d => d.gpuModel),
+          logs: [syncLog, ...(p.logs || [])]
+        };
+      }
+      return p;
+    }));
+
+    showToast('资源池同步成功！已自动更新 GPU 型号规格与实时库存');
+  };
+
+  const setComputePoolAlertThreshold = (poolId: string, threshold: number) => {
+    setComputePools(prev => prev.map(p => p.id === poolId ? { ...p, alertThreshold: threshold } : p));
+    showToast(`告警水位阈值已设置为 ${threshold}%`);
+  };
+
+  const toggleComputePoolMaintenance = (poolId: string) => {
+    setComputePools(prev => prev.map(p => {
+      if (p.id === poolId) {
+        const nextStatus = p.status === '维护中' ? '正常' : '维护中';
+        showToast(`资源池已切换为: ${nextStatus}`);
+        return { ...p, status: nextStatus };
+      }
+      return p;
+    }));
+  };
+
+  // 4. 实例订单操作
+  const stopComputeOrder = (orderId: string) => {
+    setComputeOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: '已停止' } : o));
+    showToast('实例已强制停止');
+  };
+
+  const releaseComputeOrder = (orderId: string) => {
+    setComputeOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: '已释放' } : o));
+    showToast('实例资源已强制释放并销毁');
+  };
+
+  const retryComputeOrder = (orderId: string) => {
+    setComputeOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: '运行中', errorMessage: undefined } : o));
+    showToast('已重新触发实例调度分配');
+  };
+
+  // 5. 运行实例操作
+  const restartComputeRunningInstance = (_id: string) => {
+    showToast('正在向宿主机下发实例容器重启指令...');
+  };
+
+  const stopComputeRunningInstance = (id: string) => {
+    setComputeRunningInstances(prev => prev.filter(i => i.id !== id));
+    showToast('实例容器已安全停止');
+  };
+
+  // 6. 对账结算操作
+  const confirmComputeSettlement = (id: string) => {
+    setComputeSettlements(prev => prev.map(s => s.id === id ? { ...s, status: '已确认' } : s));
+    showToast('对账单已确认核对无误！');
+  };
+
+  const markComputeSettlementPaid = (id: string, invoiceNo?: string) => {
+    setComputeSettlements(prev => prev.map(s => s.id === id ? { ...s, status: '已结算', invoiceNo: invoiceNo || `FP-${Date.now().toString().slice(-6)}`, settledAt: new Date().toLocaleString() } : s));
+    showToast('已完成对账结算与付款确认！');
+  };
+
+  const generateComputeSettlement = (operator: string, period: string) => {
+    const newStl: ComputeSettlementItem = {
+      id: `stl_${Date.now()}`,
+      operator,
+      period,
+      totalCardHours: 1560,
+      specDetails: [
+        { gpuModel: 'RTX 4090', hours: 960, agreedPrice: 1.50, subtotal: 1440.00, percentage: 61.5 },
+        { gpuModel: 'A100', hours: 600, agreedPrice: 1.50, subtotal: 900.00, percentage: 38.5 }
+      ],
+      agreedPrice: 1.50,
+      payableAmount: 2340.00,
+      platformRevenue: 3042.00,
+      platformGrossProfit: 702.00,
+      grossMargin: 23.1,
+      status: '待对账',
+      createdAt: new Date().toLocaleString()
+    };
+    setComputeSettlements(prev => [newStl, ...prev]);
+    showToast(`已生成 ${operator} ${period} 算力消耗对账单！`);
+  };
   
   // 任务导航状态
   const [selectedTaskIdForDetail, setSelectedTaskIdForDetail] = useState<string | null>(null);
@@ -915,6 +1388,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ]
     };
     setGpuInstances(prev => [newInst, ...prev]);
+
+    // 下游联动：规格使用次数+1，镜像引用次数+1
+    setComputeSpecs(prev => prev.map(s => {
+      if (s.gpuModel === gpuModel || s.name.includes(gpuModel) || gpuModel.includes(s.name)) {
+        return {
+          ...s,
+          totalUsedCount: (s.totalUsedCount ?? 0) + 1,
+          recent7DaysCount: (s.recent7DaysCount ?? 0) + 1
+        };
+      }
+      return s;
+    }));
+
+    setComputeImages(prev => prev.map(img => {
+      if (img.name === imageName || img.id === imageName || imageName.includes(img.name)) {
+        return {
+          ...img,
+          refCount: (img.refCount ?? 0) + 1
+        };
+      }
+      return img;
+    }));
+
     showToast(` ${instanceType === 'server' ? '云服务器' : '容器'}实例【${newInst.name}】成功发布并秒级拉起！`);
   };
 
@@ -924,6 +1420,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const nextStatus = inst.status === 'running' ? 'stopped' : 'running';
         showToast(`算力实例 ${inst.name} 已${nextStatus === 'running' ? '启动' : '停止'}`);
         return { ...inst, status: nextStatus };
+      }
+      return inst;
+    }));
+  };
+
+  const updateInstanceRemark = (instId: string, remark: string) => {
+    setGpuInstances(prev => prev.map(inst => {
+      if (inst.id === instId) {
+        showToast('实例备注更新成功');
+        return { ...inst, remark };
+      }
+      return inst;
+    }));
+  };
+
+  const changeInstanceRentalDuration = (instId: string, durationType: string, autoReturn: boolean) => {
+    const labelMap: Record<string, string> = { daily: '日租', weekly: '周租', monthly: '月租' };
+    const label = labelMap[durationType] || durationType;
+    setGpuInstances(prev => prev.map(inst => {
+      if (inst.id === instId) {
+        showToast(`实例计费方式已成功变更为【${label}】`);
+        return { 
+          ...inst, 
+          billingType: label, 
+          autoReturnOnExpiry: autoReturn 
+        };
+      }
+      return inst;
+    }));
+  };
+
+  const createImageFromInstance = (instId: string, autoShutdown: boolean, overwrite: boolean) => {
+    setGpuInstances(prev => prev.map(inst => {
+      if (inst.id === instId) {
+        showToast('已开始保存实例为镜像，任务完成后将自动停机');
+        return { 
+          ...inst, 
+          status: 'creating_image' 
+        };
       }
       return inst;
     }));
@@ -1021,6 +1556,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       tasks,
       courses,
       gpuInstances,
+      myCustomImages,
+      deleteMyCustomImage,
+      addMyCustomImageComment,
+      updateMyCustomImageDescription,
       posts,
       apiKeys,
       createApiKey,
@@ -1085,13 +1624,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       acceptTaskSubmission,
       rejectTaskSubmission,
       launchGpuInstance,
+      updateInstanceRemark,
+      changeInstanceRentalDuration,
+      createImageFromInstance,
       toggleGpuInstanceStatus,
       restartGpuInstance,
       deleteGpuInstance,
       createPost,
       likePost,
       toast,
-      showToast
+      showToast,
+      // 算力工坊后台管理
+      computeSpecs,
+      addComputeSpec,
+      updateComputeSpec,
+      deleteComputeSpec,
+      toggleComputeSpecStatus,
+      computeImages,
+      addComputeImage,
+      updateComputeImage,
+      deleteComputeImage,
+      toggleComputeImageStatus,
+      computePools,
+      addComputePool,
+      updateComputePool,
+      deleteComputePool,
+      syncComputePoolStatus,
+      setComputePoolAlertThreshold,
+      toggleComputePoolMaintenance,
+      computeOrders,
+      stopComputeOrder,
+      releaseComputeOrder,
+      retryComputeOrder,
+      computeRunningInstances,
+      restartComputeRunningInstance,
+      stopComputeRunningInstance,
+      computeSettlements,
+      confirmComputeSettlement,
+      markComputeSettlementPaid,
+      generateComputeSettlement
     }}>
       {children}
     </AppContext.Provider>

@@ -433,39 +433,24 @@ export const PublishTaskModal: React.FC<PublishTaskModalProps> = ({ isOpen, onCl
             <div className="space-y-4">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                <h4 className="text-sm font-black text-slate-900">交付周期</h4>
+                <h4 className="text-sm font-black text-slate-900">交付截止时间</h4>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-black text-slate-800 mb-1.5 block">
-                    开始时间
-                  </label>
-                  <input
-                    type="text"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    placeholder="YYYY-MM-DD HH:mm:ss"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs font-mono font-bold outline-none focus:bg-white focus:border-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-black text-slate-800 mb-1.5 block">
-                    结束时间
-                  </label>
-                  <input
-                    type="text"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    placeholder="YYYY-MM-DD HH:mm:ss"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs font-mono font-bold outline-none focus:bg-white focus:border-indigo-500"
-                  />
-                </div>
+              <div>
+                <label className="text-xs font-black text-slate-800 mb-1.5 block">
+                  任务截止时间
+                </label>
+                <input
+                  type="text"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  placeholder="YYYY-MM-DD HH:mm:ss"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs font-mono font-bold outline-none focus:bg-white focus:border-indigo-500"
+                />
               </div>
 
               <p className="text-[11px] text-slate-400 font-medium">
-                * 提示：任务将在开始时间自动上架，结束时间自动下架。
+                * 提示：任务发布并通过审核后将自动上架并进入【进行中】状态，到达截止时间后将自动下架打款。
               </p>
             </div>
 

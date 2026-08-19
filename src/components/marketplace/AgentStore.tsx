@@ -431,8 +431,8 @@ export const AgentStore: React.FC = () => {
                       </h3>
                       <div className="flex items-center gap-1 text-[11px] text-amber-500 font-bold mt-0.5">
                         <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        <span>{ag.rating.toFixed(1)}</span>
-                        <span className="text-slate-400 font-normal">({ag.ratingCount}人评价)</span>
+                        <span>{(ag.rating ?? 5.0).toFixed(1)}</span>
+                        <span className="text-slate-400 font-normal">({ag.ratingCount ?? 120}人评价)</span>
                       </div>
                     </div>
                   </div>

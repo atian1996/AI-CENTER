@@ -64,12 +64,13 @@ export const TasksView: React.FC = () => {
   // 过滤与排序
   const filteredTasks = useMemo(() => {
     return publicTasks.filter(task => {
-      // 搜索匹配 (标题、描述模糊匹配)
+      // 搜索匹配 (标题、描述、发布者模糊匹配)
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchTitle = task.title.toLowerCase().includes(q);
         const matchDesc = (task.brief || task.description || '').toLowerCase().includes(q);
-        if (!matchTitle && !matchDesc) return false;
+        const matchPublisher = (task.publisher || '').toLowerCase().includes(q);
+        if (!matchTitle && !matchDesc && !matchPublisher) return false;
       }
 
       // 任务状态筛选 (全部 / 进行中 / 已结束)
@@ -127,7 +128,7 @@ export const TasksView: React.FC = () => {
               <h1 className="text-2xl font-black text-slate-900 tracking-tight">任务大厅</h1>
               <span className="px-3 py-0.5 rounded-full text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200/80 flex items-center gap-1">
                 <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-                <span>前沿 AI & SaaS 需求撮合平台</span>
+                <span>找AI人才 · 接AI需求</span>
               </span>
             </div>
 
@@ -155,7 +156,7 @@ export const TasksView: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="搜索任务标题、需求描述或技术栈关键词..."
+            placeholder="搜索任务标题、需求描述或发布者"
             className="w-full pl-11 pr-10 py-3 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 text-xs font-semibold outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all placeholder:text-slate-400"
           />
           {searchQuery && (

@@ -134,7 +134,7 @@ export const WorkspaceOrders: React.FC = () => {
                   </span>
                 </td>
                 <td className="p-4 font-black text-slate-900">
-                  {ord.amountUnit === '积分' ? `${ord.amount} PTS` : `¥${ord.amount.toFixed(2)}`}
+                  {ord.amountUnit === '积分' ? `${ord.amount} PTS` : `¥${(ord.amount ?? 0).toFixed(2)}`}
                 </td>
                 <td className="p-4 font-medium text-slate-600">{ord.payMethod}</td>
                 <td className="p-4 text-slate-400 font-medium">{ord.payTime}</td>
@@ -192,7 +192,7 @@ export const WorkspaceOrders: React.FC = () => {
                 <div className="flex justify-between text-slate-500">
                   <span>支付金额</span>
                   <strong className="text-indigo-600 font-black text-sm">
-                    {selectedOrder.amountUnit === '积分' ? `${selectedOrder.amount} PTS` : `¥${selectedOrder.amount.toFixed(2)}`}
+                    {selectedOrder.amountUnit === '积分' ? `${selectedOrder.amount} PTS` : `¥${(selectedOrder.amount ?? 0).toFixed(2)}`}
                   </strong>
                 </div>
                 <div className="flex justify-between text-slate-500">

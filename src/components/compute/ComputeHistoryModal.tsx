@@ -141,8 +141,8 @@ export const ComputeHistoryModal: React.FC = () => {
                     </div>
 
                     <div className="text-[11px] font-mono text-slate-500 flex flex-wrap items-center gap-x-4 gap-y-1 pt-0.5">
-                      <span>⏱ 累计运行时长: <strong className="text-slate-800 font-bold">{item.runningHours.toFixed(1)}h</strong></span>
-                      <span>💰 产生算力费用: <strong className="text-amber-600 font-bold">¥{item.totalCost.toFixed(2)}</strong> (¥{item.hourlyCost.toFixed(2)}/h)</span>
+                      <span>⏱ 累计运行时长: <strong className="text-slate-800 font-bold">{(item.runningHours ?? 0).toFixed(1)}h</strong></span>
+                      <span>💰 产生算力费用: <strong className="text-amber-600 font-bold">¥{(item.totalCost ?? 0).toFixed(2)}</strong> (¥{(item.hourlyCost ?? 0).toFixed(2)}/h)</span>
                       <span>📅 创建时间: {item.createdAt}</span>
                     </div>
                   </div>

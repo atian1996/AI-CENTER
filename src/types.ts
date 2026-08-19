@@ -463,6 +463,7 @@ export interface TaskSubmissionRecord {
   taskId: string;
   username: string;
   userAvatar: string;
+  takeTime?: string;
   submitTime: string;
   notes: string;
   files: TaskFileItem[];
@@ -552,33 +553,6 @@ export interface TaskItem {
   milestones?: any;
 }
 
-export interface TaskBid extends TaskBidItem {}
-
-// 学习中心
-export interface CourseItem {
-  id: string;
-  title: string;
-  category: 'AI基础' | '大模型' | 'Agent开发' | '行业应用';
-  cover: string;
-  instructor: string;
-  instructorTitle: string;
-  studentsCount: number;
-  rating: number;
-  chaptersCount: number;
-  description: string;
-  hasCert: boolean;
-  chapters: { id: string; title: string; duration: string; notebookPreset?: string }[];
-}
-
-export interface LearningPathItem {
-  id: string;
-  title: string;
-  description: string;
-  stepCount: number;
-  badgeName: string;
-  targetRole: string;
-}
-
 // 算力工坊
 export type ComputeMode = 'container' | 'server'; // 容器实例 | 云服务器实例
 
@@ -596,6 +570,18 @@ export interface RentalGPUCard {
   cpu: string;
   ram: string;
   disk: string;
+  
+  // 多卡联动支持
+  allowedGpuCounts?: number[]; // 可选GPU数量列表，如 [1, 2, 3, 4, 5, 6, 7, 8] 或 [1, 2, 4, 8]
+  maxGpuCount?: number; // 最大可选GPU数量
+  singleCardCpu?: number; // 单卡CPU核数，如 14 或 16
+  singleCardRam?: number; // 单卡内存，如 56 或 60
+  singleCardDisk?: number; // 单卡硬盘，如 373 或 750
+  perCardCpu?: number; // 单卡CPU核数 (别名)
+  perCardRam?: number; // 单卡内存 (别名)
+  perCardDisk?: number; // 单卡硬盘 (别名)
+  cpuModel?: string; // CPU型号，如 "AMD EPYC 7453"
+  rawSpecId?: string;
 }
 
 export interface InstanceFileItem {
@@ -614,38 +600,72 @@ export interface InstanceSnapshot {
   gpuModel: string;
 }
 
+export interface ImageCommentItem {
+  id: string;
+  userName: string;
+  userAvatar?: string;
+  createdAtAgo: string;
+  likes: number;
+  content: string;
+}
+
+export interface MyCustomImage {
+  id: string;
+  name: string;
+  status: 'compressing' | 'ready'; // '正在压缩镜像文件' | '已创建'
+  size: string; // 如 "20.0 GB" 或 "0 B"
+  authorName: string;
+  authorAvatar?: string;
+  createdAt: string; // 如 "2026-08-19 14:28"
+  isPrivate: boolean; // 是否仅自己可见
+  tags?: string[];
+  description: string; // 镜像详情
+  comments: ImageCommentItem[];
+}
+
 export interface GPUInstance {
   id: string;
   name: string;
-  instanceType: ComputeMode; // 'container' | 'server'
-  scene: '大模型微调' | '文生图' | 'Notebook开发' | '推理服务' | '自定义';
-  gpuModel: string; // 'T4 16GB' | 'V100 24GB' | 'A100 80GB' | 'RTX 4090 24GB' | 'RTX 3090 24GB'
+  instanceType?: ComputeMode; // 'container' | 'server'
+  scene?: string;
+  gpuModel: string;
   gpuCount: number;
   vram: string;
   cpu: string;
   ram: string;
-  region: string; // '华北 · 北京' | '华东 · 上海' | '华南 · 广州'
-  billingType: '按量计费' | '包日' | '包周' | '包月' | '抢占式';
-  status: 'running' | 'stopped' | 'allocating' | 'failed' | 'destroyed';
+  disk?: string;
+  region?: string;
+  billingType: string;
+  status: 'running' | 'stopped' | 'allocating' | 'starting' | 'creating_image' | 'failed' | 'destroyed';
   isCpuOnly?: boolean;
   
+  // 截图列表与费用专有字段
+  startTime?: string; // 租用时间 2026-08-19 14:22
+  hourlyCost: number; // 元/小时
+  totalCost?: number; // 共计费用元
+  voucherDeduction?: number; // 积分抵扣元
+  remainingHours?: number; // 预计剩余可用小时
+  expireTime?: string; // 到期时间
+  progressPercent?: number; // 进度百分比，如 39%
+  remark?: string; // 备注说明，如 "这里是备注"
+  autoReturnOnExpiry?: boolean; // 到期后自动归还实例
+
   // 存储与网络
-  systemDisk: string; // '40GB SSD' | '100GB NVMe'
-  dataDisk: string; // '无' | '100GB NVMe' | '500GB NVMe'
-  publicIp: string; // IP 或 包含 10Mbps Bandwidth
-  osName: string; // 'Ubuntu 22.04 LTS' | 'Windows Server 2019'
+  systemDisk?: string;
+  dataDisk?: string;
+  publicIp?: string;
+  osName?: string;
   
   // 连接入口
-  ipAddress: string;
-  runningHours: number;
-  hourlyCost: number; // 元/小时
-  totalCost: number;
-  createdAt: string;
+  ipAddress?: string;
+  runningHours?: number;
+  createdAt?: string;
   jupyterUrl?: string;
   vncUrl?: string;
   vscodeUrl?: string;
+  pycharmUrl?: string;
   sshCommand?: string;
-  imageName: string;
+  imageName?: string;
 
   // 监控与数据
   monitoring?: {
@@ -884,7 +904,279 @@ export type AdminMenuKey =
   | 'marketplace_admin'   // AI集市管理
   | 'publish_audit'       // 任务管理 - 发布审核
   | 'task_monitor'        // 任务管理 - 任务监控
-  | 'compute_admin'       // 算力管理
+  | 'compute_spec'        // 算力管理 - 规格管理
+  | 'compute_image'       // 算力工坊 - 镜像管理
+  | 'compute_pool'        // 算力工坊 - 资源池管理
+  | 'compute_order'       // 算力工坊 - 实例订单管理
+  | 'compute_instance'    // 算力工坊 - 运行实例监控
+  | 'compute_stat'        // 算力工坊 - 资源使用统计
+  | 'compute_settlement'  // 算力工坊 - 对账结算
+  | 'compute_admin'       // 算力管理（兼容主入口）
   | 'competition_admin'   // 赛事管理
   | 'system_admin';       // 系统管理
+
+// ==========================================
+// 算力工坊后台管理类型定义
+// ==========================================
+
+// 1. 实例规格
+export interface ComputeSpecItem {
+  id: string;
+  name: string; // 规格名称如 "RTX 4090 标准版" (限30字)
+  gpuModel: string; // GPU型号 如 "NVIDIA RTX 4090"
+  allowedGpuCounts: number[]; // 可选GPU数量 (多选，如 [1, 2, 4, 8] 或 [1, 2, 3, 4, 5, 6, 7, 8])
+  maxGpuCount?: number; // 最大可选GPU数量
+  vram: string; // 显存 如 "24 GB"
+  vramValue?: number; // 24
+  vramUnit?: 'GB' | 'TB';
+  cpu: number; // 单卡CPU核数 如 16
+  cpuModel?: string; // CPU型号 如 "AMD EPYC 9354"
+  ram: number; // 单卡内存大小 如 60 (GB)
+  ramUnit?: 'GB' | 'TB';
+  disk: number; // 单卡硬盘大小 如 750 (GB)
+  diskUnit?: 'GB' | 'TB';
+  description?: string; // 规格描述，限200字符
+
+  // 关联配置 (支持多选)
+  linkedImageIds?: string[]; // 关联镜像ID列表
+  linkedOperators?: string[]; // 关联运营商资源池名称列表
+
+  // 定价策略
+  hourlyPrice: number; // 按量价格 (元/小时，必填)
+  dayPrice?: number; // 日租价格 (元/天，选填，留空不支持)
+  weekPrice?: number; // 周租价格 (元/周，选填，留空不支持)
+  monthPrice?: number; // 月租价格 (元/月，选填，留空不支持)
+
+  // 上架状态
+  status: '上架' | '下架'; // 控制前台算力工坊是否可见
+
+  // 使用统计
+  totalUsedCount: number; // 累计被用户创建实例的总次数
+  recent7DaysCount?: number; // 近7天使用次数
+
+  // 时间戳
+  createTime: string;
+  updateTime: string;
+
+  // 兼容老字段
+  stock?: number; // 可用库存 (台)
+  totalStock?: number; // 总库存 (台)
+  operator?: string; // 主运营商
+  tags?: string[];
+  features?: string[];
+}
+
+// 2. 镜像分类与管理
+export type ComputeImageCategory = 
+  | 'PyTorch' 
+  | 'TensorFlow' 
+  | 'Jupyter' 
+  | 'ComfyUI' 
+  | 'vLLM' 
+  | '大模型' 
+  | '其他';
+
+export interface ComputeImageAdminItem {
+  id: string;
+  name: string; // 运维人员识别用的名称，如 "PyTorch 2.2.2 - CUDA 12.1"
+  registryUrl: string; // 完整镜像仓库地址，如 "docker.io/pytorch/pytorch:2.2.2-cuda12.1"
+  category: ComputeImageCategory; // 镜像分类
+  description?: string; // 镜像描述，限200字符
+  size?: string; // 镜像大小，如 "15.3 GB"
+  version?: string; // 版本号，如 "v2.2.2"
+  changelog?: string; // 更新说明，本次新增或更新的内容说明
+  status: '已启用' | '已停用' | '上架' | '下架'; // 启用/停用，停用后创建实例时不可选
+  refCount: number; // 被引用次数，当前正在使用该镜像的实例数量
+  createdAt: string; // 创建时间
+  updatedAt: string; // 最后更新时间
+  // 历史兼容字段
+  type?: '官方' | '社区' | 'App市场';
+  baseOs?: string;
+  preinstalled?: string;
+  maintainer?: string;
+  downloads?: number;
+  cudaVersion?: string;
+  defaultPort?: number;
+  updateTime?: string;
+  createTime?: string;
+}
+
+// 3. 资源池
+export interface GpuDistributionItem {
+  gpuModel: string;
+  total: number;
+  allocated: number;
+  available: number;
+  rate: number; // 百分比
+}
+
+export interface ResourcePoolLogItem {
+  id: string;
+  time: string;
+  operator: string;
+  action: string;
+  result: '成功' | '失败';
+  detail?: string;
+}
+
+export interface ComputePoolItem {
+  id: string;
+  name: string; // "电信云-华东1"
+  operator: string; // "中国电信"
+  region: string; // "上海"
+  remark?: string; // 备注
+
+  // 连接配置
+  apiUrl?: string; // 接入地址
+  authType?: 'API Key' | '用户名密码';
+  authCredential?: string; // 对应Key或Token
+  timeoutSeconds?: number; // 超时时间（秒，默认30）
+
+  // 状态双维度
+  saleStatus?: '已上架' | '已下架'; // 人工控制，默认已上架
+  runStatus?: '正常' | '异常' | '维护中' | '已断开'; // 系统自动判断
+
+  lastSyncTime?: string;
+  nextSyncTime?: string;
+
+  distribution: GpuDistributionItem[];
+  logs?: ResourcePoolLogItem[];
+
+  gpuTypes?: string[]; // ["RTX 4090", "A100", "RTX 3060"]
+  supportedSpecIds?: string[]; // 支持的规格ID列表
+  supportedSpecNames?: string[]; // 支持的规格名称列表
+  totalCapacity?: number; // 100 卡
+  allocatedCount?: number; // 67 卡
+  availableCount?: number; // 33 卡
+  utilizationRate?: number; // 67%
+  status?: '正常' | '告警' | '维护中' | '异常' | string;
+  hourlyTrend?: { time: string; rate: number; created: number; released: number }[];
+  alertThreshold?: number; // 告警阈值 (默认85%)
+  totalNodes?: number;
+  totalGpus?: number;
+  usedGpus?: number;
+  freeGpus?: number;
+  networkArch?: string;
+  clusterPowerUsage?: string;
+}
+
+// 4. 实例订单
+export type ComputeOrderStatus = '待支付' | '已支付' | '分配中' | '运行中' | '已停止' | '已释放' | '创建失败' | '异常';
+
+export interface ComputeOrderItem {
+  id: string;
+  orderNo?: string; // "INST-20260815-001"
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  specName: string; // "RTX 4090"
+  specDetail?: string; // "24GB显存 / 16核 / 60GB内存 / 750GB硬盘"
+  imageName: string; // "PyTorch 2.2.2 + CUDA 12.1"
+  billingType: '按量' | '日租' | '周租' | '月租' | '按量计费' | '包日' | '包周' | '包月' | string;
+  orderAmount?: number; // 预付/冻结金额
+  currentCost?: number; // 累计费用
+  totalCost: number; // 兼容 totalCost
+  status: ComputeOrderStatus | string;
+  createTime?: string;
+  createdAt: string;
+  startTime?: string;
+  runningHours?: string | number; // "14小时20分钟" 或 14.5
+  runningDuration?: string; // "2小时15分钟"
+  operator: string; // "电信云-华东1"
+  instanceId?: string;
+  errorMessage?: string;
+}
+
+// 5. 运行实例监控
+export interface ComputeRunningInstanceItem {
+  id: string;
+  instanceId: string; // "i-abc123xyz"
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  specName: string;
+  gpuSpec?: string; // "RTX 4090 24GB"
+  imageName: string;
+  imageId?: string;
+  operator: string;
+  hostNode: string; // "node-gpu-05"
+  createdAt: string;
+  runningHours?: string | number;
+  runningDuration?: string; // "2小时15分钟"
+  gpuUsage?: number; // 78%
+  gpuUtil?: number; // 78%
+  vramUsage?: number; // 65%
+  vramUsed?: string; // "18.5GB"
+  vramTotal?: string; // "24GB"
+  ramUsage?: number; // 42%
+  ramUsed?: string; // "42GB / 60GB"
+  cpuUtil?: number; // 45%
+  diskUsage?: number; // 23%
+  temp?: number; // 68 °C
+  power?: string; // "320W / 450W"
+  health?: '良好' | '高载' | '告警' | string;
+  gpuUsageHistory?: number[];
+  vramUsageHistory?: number[];
+  sshCommand?: string; // "ssh root@10.0.1.123 -p 22"
+  jupyterUrl?: string; // "http://10.0.1.123:8888"
+  status?: '运行中' | '闲置' | '异常' | string;
+  logs?: { time: string; level: 'INFO' | 'WARN' | 'ERROR'; message: string }[];
+}
+
+// 6. 结算明细
+export interface SettlementSpecDetail {
+  gpuModel: string;
+  hours: number;
+  agreedPrice: number; // 协议单价
+  subtotal: number;
+  percentage: number;
+}
+
+export interface ComputeSettlementItem {
+  id: string;
+  operator: string; // "中国电信"
+  period: string; // "2026年8月"
+  totalCardHours: number; // 1240 卡时
+  specDetails: SettlementSpecDetail[];
+  agreedPrice: number; // 协议单价
+  payableAmount: number; // 应付金额
+  platformRevenue: number; // 平台收入
+  platformGrossProfit: number; // 平台毛利
+  grossMargin: number; // 毛利率 23.1%
+  status: '待对账' | '已确认' | '已结算';
+  invoiceNo?: string;
+  createdAt: string;
+  settledAt?: string;
+}
+
+export interface CourseItem {
+  id: string;
+  title: string;
+  cover: string;
+  description: string;
+  category: string;
+  level: string;
+  duration: string;
+  lessonsCount: number;
+  studentCount: number;
+  instructor?: string;
+  author: {
+    name: string;
+    avatar: string;
+    title: string;
+  };
+  rating: number;
+  tags: string[];
+}
+
+export interface LearningPathItem {
+  id: string;
+  title: string;
+  description: string;
+  stepsCount: number;
+  stepCount?: number;
+  estimatedHours: number;
+  difficulty: string;
+  courses: string[];
+}
 
