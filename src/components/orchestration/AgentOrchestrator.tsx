@@ -443,7 +443,9 @@ export const AgentOrchestrator: React.FC<AgentOrchestratorProps> = ({
 
                 <div className="flex items-center gap-2 shrink-0">
                   {tool.hasWarning && (
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500" title="该工具建议配置专属 API Token" />
+                    <span title="该工具建议配置专属 API Token">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                    </span>
                   )}
                   <button
                     onClick={() => handleDeleteTool(tool.id)}

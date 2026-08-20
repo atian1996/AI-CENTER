@@ -57,6 +57,50 @@ export const initialOnboardingTasks: OnboardingTask[] = [
 ];
 
 export const initialNotifications: AppNotification[] = [
+  { 
+    id: 'n_cmp_01', 
+    title: '💰 余额不足提醒', 
+    content: '您的账户当前余额为 ¥1.20，预计可支撑当前实例运行约 2 小时。请及时充值，以免因余额不足导致实例停止运行。', 
+    type: 'compute', 
+    time: '10分钟前', 
+    read: false, 
+    targetTab: 'compute',
+    actionLabel: '立即充值',
+    actionType: 'recharge'
+  },
+  { 
+    id: 'n_cmp_02', 
+    title: '⚠️ 实例已停机', 
+    content: '因账户余额不足，您的实例「RTX 4090-开发环境」已自动停止。\n实例数据将保留 3 天，请您在 3 天内完成充值，逾期实例将被释放，数据将无法恢复。', 
+    type: 'compute', 
+    time: '2小时前', 
+    read: false, 
+    targetTab: 'compute',
+    actionLabel: '立即充值',
+    actionType: 'recharge'
+  },
+  { 
+    id: 'n_cmp_03', 
+    title: '🚨 实例即将释放', 
+    content: '您的实例「RTX 4090-开发环境」因余额不足已停机超过 2 天，若 24 小时内仍未充值，实例将被释放，所有数据将永久删除。', 
+    type: 'compute', 
+    time: '昨天 09:30', 
+    read: false, 
+    targetTab: 'compute',
+    actionLabel: '立即充值',
+    actionType: 'recharge'
+  },
+  { 
+    id: 'n_cmp_04', 
+    title: '❌ 实例已释放', 
+    content: '因账户余额不足且未在缓冲期内充值，您的实例「RTX 4090-开发环境」已被释放，数据已清除。\n如有疑问，请联系客服', 
+    type: 'compute', 
+    time: '3天前', 
+    read: true, 
+    targetTab: 'compute',
+    actionLabel: '查看算力工坊',
+    actionType: 'link'
+  },
   { id: 'n1', title: '每日签到成功', content: '您已连续签到 5 天，获得 50 积分奖励！', type: 'points', time: '10分钟前', read: false },
   { id: 'n2', title: '任务投标被关注', content: '您提交的《医疗QA模型微调》竞标方案已被发布者审阅。', type: 'task', time: '1小时前', read: false, targetTab: 'tasks', targetId: 'tsk_101' },
   { id: 'n3', title: 'Agent 被调用提醒', content: '您的 Agent【代码重构与安全审计 Agent】今日累计调用次数突破 1,000 次！获得 +40 积分分成。', type: 'system', time: '3小时前', read: false, targetTab: 'workspace', targetId: 'assets' },
@@ -2122,9 +2166,16 @@ export const mockMyCustomImages: MyCustomImage[] = [
     status: 'compressing',
     size: '0 B',
     authorName: '冷库的雪人',
+    authorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+    userId: 'usr_88301',
+    userPhone: '138****9201',
     createdAt: '2026-08-19 14:28',
     isPrivate: true,
     description: '正在压缩备份的环境包含 PyTorch 2.2 + CUDA 12.1 + Stable Diffusion WebUI 扩展节点与 ControlNet 模型权重...',
+    baseImage: 'PyTorch 2.2.2 + CUDA 12.1',
+    lastUsedDays: 0,
+    lastUsedTime: '2026-08-19 14:28',
+    refCount: 0,
     comments: []
   },
   {
@@ -2133,19 +2184,75 @@ export const mockMyCustomImages: MyCustomImage[] = [
     status: 'ready',
     size: '20.0 GB',
     authorName: '冷库的雪人',
+    authorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+    userId: 'usr_88301',
+    userPhone: '138****9201',
     createdAt: '2026-08-19 14:28',
     isPrivate: true,
-    tags: [],
-    description: '这里是镜像详情',
-    comments: [
-      {
-        id: 'cm_01',
-        userName: '冷库的雪人',
-        createdAtAgo: '8分钟前',
-        likes: 0,
-        content: '11111111\n### 222222222'
-      }
-    ]
+    tags: ['Flux.1', 'ComfyUI', '自定义Lora'],
+    description: '集成 ComfyUI 定制节点工作流与多组 Lora 混合调优参数环境，已安装 TensorRT 与 xFormers 加速库。',
+    baseImage: 'Ubuntu 22.04 + CUDA 12.2',
+    lastUsedDays: 1,
+    lastUsedTime: '2026-08-18 19:40',
+    refCount: 1,
+    comments: []
+  },
+  {
+    id: 'my_img_03',
+    name: 'LLaMA3-8B-微调预处理专用环境',
+    status: 'ready',
+    size: '35.6 GB',
+    authorName: 'AI架构师-老王',
+    authorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80',
+    userId: 'usr_90214',
+    userPhone: '186****3312',
+    createdAt: '2026-06-12 11:20',
+    isPrivate: true,
+    tags: ['LLaMA-Factory', 'DeepSpeed', 'FlashAttn2'],
+    description: '内置 LLaMA-Factory 最新版、DeepSpeed ZeRO-3 配置文件与千亿 Token 分词器缓存。',
+    baseImage: 'PyTorch 2.2.0 + CUDA 12.1',
+    lastUsedDays: 45,
+    lastUsedTime: '2026-07-05 16:30',
+    refCount: 0,
+    comments: []
+  },
+  {
+    id: 'my_img_04',
+    name: 'AutoGPT-智能体沙箱环境-旧版',
+    status: 'ready',
+    size: '18.2 GB',
+    authorName: '深蓝极客',
+    authorAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80',
+    userId: 'usr_77192',
+    userPhone: '159****8821',
+    createdAt: '2025-11-20 09:15',
+    isPrivate: true,
+    tags: ['长期未使用', '待清理'],
+    description: 'AutoGPT 与 LangChain 早期试验运行镜像，已超过 210 天未启动。',
+    baseImage: 'Python 3.10-Slim',
+    lastUsedDays: 210,
+    lastUsedTime: '2026-01-18 10:12',
+    refCount: 0,
+    comments: []
+  },
+  {
+    id: 'my_img_05',
+    name: 'vLLM-Qwen2.5-蒸馏部署包-构建失败',
+    status: 'failed',
+    size: '0 B',
+    authorName: '视觉探索者',
+    authorAvatar: 'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=100&auto=format&fit=crop&q=80',
+    userId: 'usr_66310',
+    userPhone: '133****4455',
+    createdAt: '2026-08-17 18:04',
+    isPrivate: true,
+    tags: ['构建失败'],
+    description: 'Docker build 过程中网络超时导致依赖包安装中断，状态异常。',
+    baseImage: 'vLLM v0.4.2',
+    lastUsedDays: 2,
+    lastUsedTime: '2026-08-17 18:04',
+    refCount: 0,
+    comments: []
   }
 ];
 

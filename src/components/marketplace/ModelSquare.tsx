@@ -17,7 +17,10 @@ import {
   Search,
   Sparkles,
   Zap,
-  Server
+  Server,
+  RotateCcw,
+  SlidersHorizontal,
+  Cpu
 } from 'lucide-react';
 
 export const ModelSquare: React.FC = () => {
@@ -30,7 +33,10 @@ export const ModelSquare: React.FC = () => {
     showToast 
   } = useApp();
 
-  // 1. 左侧多维筛选条件 state (参考截图 1 左侧侧边栏)
+  // Search query
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // 1. 左侧多维筛选条件 state
   const [selectedAuthor, setSelectedAuthor] = useState('all');
   const [selectedProvider, setSelectedProvider] = useState('all');
   const [selectedInputModality, setSelectedInputModality] = useState('all');
@@ -40,7 +46,7 @@ export const ModelSquare: React.FC = () => {
   const [showMoreAuthors, setShowMoreAuthors] = useState(false);
   const [showMoreProviders, setShowMoreProviders] = useState(false);
 
-  // 2. 顶部分类 Tabs state (参考截图 1 顶部按钮: 全部 78, 文本 56, 图像 2, 音频 5, 视频 15, 向量 1)
+  // 2. 顶部分类 Tabs state
   const [topTabModality, setTopTabModality] = useState<string>('all');
 
   // 动态数据源
@@ -51,8 +57,35 @@ export const ModelSquare: React.FC = () => {
     '阿里云', '阿里云百炼', '百度千帆', '百度智能云', '捷查', '腾讯云', '火山引擎'
   ];
 
+  const handleResetFilters = () => {
+    setSelectedAuthor('all');
+    setSelectedProvider('all');
+    setSelectedInputModality('all');
+    setSelectedContextLength('all');
+    setTopTabModality('all');
+    setSearchQuery('');
+  };
+
+  const activeFiltersCount = 
+    (selectedAuthor !== 'all' ? 1 : 0) +
+    (selectedProvider !== 'all' ? 1 : 0) +
+    (selectedInputModality !== 'all' ? 1 : 0) +
+    (selectedContextLength !== 'all' ? 1 : 0) +
+    (topTabModality !== 'all' ? 1 : 0) +
+    (searchQuery.trim() ? 1 : 0);
+
   // 过滤函数
   const filteredModels = models.filter(m => {
+    // Search Query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchName = m.name.toLowerCase().includes(q);
+      const matchVendor = m.vendor.toLowerCase().includes(q);
+      const matchDesc = (m.description || '').toLowerCase().includes(q);
+      const matchAuthor = (m.author || '').toLowerCase().includes(q);
+      if (!matchName && !matchVendor && !matchDesc && !matchAuthor) return false;
+    }
+
     if (selectedAuthor !== 'all' && m.author !== selectedAuthor && m.vendor !== selectedAuthor) return false;
     if (selectedProvider !== 'all' && !m.providerList?.includes(selectedProvider)) return false;
     if (selectedInputModality !== 'all' && !m.inputModalities?.includes(selectedInputModality) && m.typeTag !== selectedInputModality) return false;
@@ -116,36 +149,138 @@ export const ModelSquare: React.FC = () => {
   return (
     <div className="flex flex-col lg:flex-row gap-6 select-none items-start">
       
-      {/* 1. 左侧多维筛选侧边栏 Panel (统一高质感 Slate 卡片) */}
-      <div className="w-full lg:w-60 bg-white rounded-2xl border border-slate-200/80 p-4 shrink-0 space-y-5 text-xs shadow-2xs font-medium">
+      {/* 1. 左侧多维筛选侧边栏 Panel (统一规范) */}
+      <div className="w-full lg:w-64 bg-white rounded-2xl border border-slate-200/80 p-4.5 shrink-0 space-y-5 text-xs shadow-2xs font-medium">
         
-        {/* 作者 Author Filter */}
+        {/* 侧边栏顶部标题与重置 */}
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2 text-slate-900 font-extrabold text-xs">
+            <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
+            <span>模型维度筛选</span>
+          </div>
+          {activeFiltersCount > 0 && (
+            <button
+              onClick={handleResetFilters}
+              className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 cursor-pointer transition"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>重置全部</span>
+            </button>
+          )}
+        </div>
+
+        {/* 输入模态 Input Modality Filter */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-slate-900 font-extrabold text-xs">
-            <span>作者</span>
+            <div className="flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-indigo-500" />
+              <span>输入模态</span>
+            </div>
+            {selectedInputModality !== 'all' && (
+              <button 
+                onClick={() => setSelectedInputModality('all')} 
+                className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold cursor-pointer"
+              >
+                重置
+              </button>
+            )}
+          </div>
+          <div className="space-y-1 text-slate-600">
+            {['all', '文本', '图像', '音频', '视频', '向量'].map(mod => {
+              const isActive = selectedInputModality === mod;
+              const count = mod === 'all' 
+                ? models.length 
+                : models.filter(m => (m.inputModalities && m.inputModalities.includes(mod)) || m.typeTag === mod || (mod === '向量' && m.typeTag === 'Embedding')).length;
+
+              return (
+                <button
+                  key={mod}
+                  onClick={() => setSelectedInputModality(mod)}
+                  className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer flex items-center justify-between text-xs ${
+                    isActive ? 'bg-indigo-50/90 text-indigo-700 font-extrabold' : 'hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <span>{mod === 'all' ? '全部模态' : mod}</span>
+                  {isActive ? (
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 font-mono">{count}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="h-px bg-slate-100"></div>
+
+        {/* 上下文长度 Context Length Filter */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-slate-900 font-extrabold text-xs">
+            <div className="flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-amber-500" />
+              <span>上下文长度</span>
+            </div>
+            {selectedContextLength !== 'all' && (
+              <button 
+                onClick={() => setSelectedContextLength('all')} 
+                className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold cursor-pointer"
+              >
+                重置
+              </button>
+            )}
+          </div>
+          <div className="space-y-1 text-slate-600">
+            {['all', '8K+', '32K+', '128K+', '200K+'].map(ctx => {
+              const isActive = selectedContextLength === ctx;
+              return (
+                <button
+                  key={ctx}
+                  onClick={() => setSelectedContextLength(ctx)}
+                  className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer flex items-center justify-between text-xs ${
+                    isActive ? 'bg-indigo-50/90 text-indigo-700 font-extrabold' : 'hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <span>{ctx === 'all' ? '全部长度' : ctx}</span>
+                  {isActive && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="h-px bg-slate-100"></div>
+
+        {/* 作者/开发商 Author Filter */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-slate-900 font-extrabold text-xs">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+              <span>开发机构/作者</span>
+            </div>
             {selectedAuthor !== 'all' && (
-              <button onClick={() => setSelectedAuthor('all')} className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold hover:underline cursor-pointer">
+              <button onClick={() => setSelectedAuthor('all')} className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold cursor-pointer">
                 重置
               </button>
             )}
           </div>
 
-          <div className="space-y-1 text-slate-600">
+          <div className="space-y-1 text-slate-600 max-h-52 overflow-y-auto pr-1 scrollbar-thin">
             <button
               onClick={() => setSelectedAuthor('all')}
-              className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer flex items-center justify-between ${
-                selectedAuthor === 'all' ? 'bg-indigo-50/80 text-indigo-700 font-extrabold' : 'hover:bg-slate-50 text-slate-700'
+              className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer flex items-center justify-between text-xs ${
+                selectedAuthor === 'all' ? 'bg-indigo-50/90 text-indigo-700 font-extrabold' : 'hover:bg-slate-50 text-slate-700'
               }`}
             >
-              <span>全部</span>
+              <span>全部机构</span>
               {selectedAuthor === 'all' && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
             </button>
             {(showMoreAuthors ? authorsList : authorsList.slice(0, 6)).map(author => (
               <button
                 key={author}
                 onClick={() => setSelectedAuthor(author)}
-                className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer truncate flex items-center justify-between ${
-                  selectedAuthor === author ? 'bg-indigo-50/80 text-indigo-700 font-extrabold' : 'hover:bg-slate-50 text-slate-700'
+                className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer truncate flex items-center justify-between text-xs ${
+                  selectedAuthor === author ? 'bg-indigo-50/90 text-indigo-700 font-extrabold' : 'hover:bg-slate-50 text-slate-700'
                 }`}
               >
                 <span className="truncate">{author}</span>
@@ -160,7 +295,7 @@ export const ModelSquare: React.FC = () => {
               {showMoreAuthors ? (
                 <>收起 <ChevronUp className="w-3 h-3" /></>
               ) : (
-                <>+12 更多作者 <ChevronDown className="w-3 h-3" /></>
+                <>+ 展开更多 <ChevronDown className="w-3 h-3" /></>
               )}
             </button>
           </div>
@@ -171,30 +306,33 @@ export const ModelSquare: React.FC = () => {
         {/* 服务商 Provider Filter */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-slate-900 font-extrabold text-xs">
-            <span>服务商</span>
+            <div className="flex items-center gap-1.5">
+              <Server className="w-3.5 h-3.5 text-blue-500" />
+              <span>部署服务商</span>
+            </div>
             {selectedProvider !== 'all' && (
-              <button onClick={() => setSelectedProvider('all')} className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold hover:underline cursor-pointer">
+              <button onClick={() => setSelectedProvider('all')} className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold cursor-pointer">
                 重置
               </button>
             )}
           </div>
 
-          <div className="space-y-1 text-slate-600">
+          <div className="space-y-1 text-slate-600 max-h-52 overflow-y-auto pr-1 scrollbar-thin">
             <button
               onClick={() => setSelectedProvider('all')}
-              className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer flex items-center justify-between ${
-                selectedProvider === 'all' ? 'bg-indigo-50/80 text-indigo-700 font-extrabold' : 'hover:bg-slate-50 text-slate-700'
+              className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer flex items-center justify-between text-xs ${
+                selectedProvider === 'all' ? 'bg-indigo-50/90 text-indigo-700 font-extrabold' : 'hover:bg-slate-50 text-slate-700'
               }`}
             >
-              <span>全部</span>
+              <span>全部服务商</span>
               {selectedProvider === 'all' && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
             </button>
             {(showMoreProviders ? providersList : providersList.slice(0, 5)).map(provider => (
               <button
                 key={provider}
                 onClick={() => setSelectedProvider(provider)}
-                className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer truncate flex items-center justify-between ${
-                  selectedProvider === provider ? 'bg-indigo-50/80 text-indigo-700 font-extrabold' : 'hover:bg-slate-50 text-slate-700'
+                className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer truncate flex items-center justify-between text-xs ${
+                  selectedProvider === provider ? 'bg-indigo-50/90 text-indigo-700 font-extrabold' : 'hover:bg-slate-50 text-slate-700'
                 }`}
               >
                 <span className="truncate">{provider}</span>
@@ -209,87 +347,63 @@ export const ModelSquare: React.FC = () => {
               {showMoreProviders ? (
                 <>收起 <ChevronUp className="w-3 h-3" /></>
               ) : (
-                <>+16 更多服务商 <ChevronDown className="w-3 h-3" /></>
+                <>+ 展开更多 <ChevronDown className="w-3 h-3" /></>
               )}
             </button>
           </div>
         </div>
 
-        <div className="h-px bg-slate-100"></div>
-
-        {/* 输入模态 Input Modality Filter */}
-        <div className="space-y-2">
-          <div className="text-slate-900 font-extrabold text-xs">输入模态</div>
-          <div className="space-y-1 text-slate-600">
-            {['all', '文本', '图像', '音频', '视频', '向量'].map(mod => (
-              <button
-                key={mod}
-                onClick={() => setSelectedInputModality(mod)}
-                className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer flex items-center justify-between ${
-                  selectedInputModality === mod ? 'bg-indigo-50/80 text-indigo-700 font-extrabold' : 'hover:bg-slate-50 text-slate-700'
-                }`}
-              >
-                <span>{mod === 'all' ? '全部模态' : mod}</span>
-                {selectedInputModality === mod && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="h-px bg-slate-100"></div>
-
-        {/* 上下文长度 Context Length Filter */}
-        <div className="space-y-2">
-          <div className="text-slate-900 font-extrabold text-xs">上下文长度</div>
-          <div className="space-y-1 text-slate-600">
-            {['all', '8K+', '32K+', '128K+', '200K+'].map(ctx => (
-              <button
-                key={ctx}
-                onClick={() => setSelectedContextLength(ctx)}
-                className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer flex items-center justify-between ${
-                  selectedContextLength === ctx ? 'bg-indigo-50/80 text-indigo-700 font-extrabold' : 'hover:bg-slate-50 text-slate-700'
-                }`}
-              >
-                <span>{ctx === 'all' ? '全部长度' : ctx}</span>
-                {selectedContextLength === ctx && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
-              </button>
-            ))}
-          </div>
-        </div>
-
       </div>
 
-      {/* 2. 右侧主框架 Area */}
-      <div className="flex-1 space-y-5 w-full">
+      {/* 2. 右侧主内容展示区 (Right Main Area) */}
+      <div className="flex-1 space-y-5 w-full min-w-0">
         
-        {/* Top Pills Tabs (精细 Indigo 主色配合与阴影效果) */}
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-2xs">
-          <div className="flex flex-wrap items-center gap-1.5 text-xs font-extrabold">
+        {/* Top Control Bar: Search Input & Quick Modality Tabs & Counter */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200/80 shadow-2xs">
+          
+          {/* Search Box */}
+          <div className="relative flex-1 w-full">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="搜索模型名称、厂商、能力或说明..."
+              className="w-full pl-10 pr-14 py-2 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100/50 transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-indigo-600 transition cursor-pointer"
+              >
+                清空
+              </button>
+            )}
+          </div>
+
+          {/* Quick Modality Switcher */}
+          <div className="flex flex-wrap items-center gap-1 bg-slate-100/90 p-1 rounded-xl shrink-0">
             {[
-              { id: 'all', label: '全部', count: models.length, icon: Layers },
-              { id: '文本', label: '文本', count: textCount, icon: FileText },
-              { id: '图像', label: '图像', count: imageCount, icon: ImageIcon },
-              { id: '音频', label: '音频', count: audioCount, icon: Music },
-              { id: '视频', label: '视频', count: videoCount, icon: Video },
-              { id: '向量', label: '向量', count: vectorCount, icon: Binary },
+              { id: 'all', label: '全部', count: models.length },
+              { id: '文本', label: '文本', count: textCount },
+              { id: '图像', label: '图像', count: imageCount },
+              { id: '音频', label: '音频', count: audioCount },
+              { id: '视频', label: '视频', count: videoCount },
+              { id: '向量', label: '向量', count: vectorCount },
             ].map(tab => {
-              const Icon = tab.icon;
               const isActive = topTabModality === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setTopTabModality(tab.id)}
-                  className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                     isActive
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 font-black'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-bold'
+                      ? 'bg-white text-indigo-600 shadow-3xs font-black'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
                   <span>{tab.label}</span>
-                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                    isActive ? 'bg-indigo-500/30 text-white' : 'bg-slate-200/60 text-slate-600'
-                  }`}>
+                  <span className={`text-[10px] font-mono ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>
                     {tab.count}
                   </span>
                 </button>
@@ -297,13 +411,15 @@ export const ModelSquare: React.FC = () => {
             })}
           </div>
 
-          <div className="text-xs text-slate-500 font-medium px-3">
-            符合条件模型：<span className="text-indigo-600 font-extrabold font-mono text-sm">{filteredModels.length}</span> 款
+          <div className="h-4 w-px bg-slate-200 hidden md:block"></div>
+
+          <div className="text-xs text-slate-500 font-medium whitespace-nowrap px-1">
+            符合条件：<span className="text-indigo-600 font-extrabold font-mono text-sm">{filteredModels.length}</span> 款
           </div>
         </div>
 
-        {/* Model Cards Grid Matrix (双列精细卡片) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Model Cards Grid Matrix (双列/三列精细卡片) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4.5">
           {filteredModels.map(m => {
             const isCompared = selectedCompareModels.some(cm => cm.id === m.id);
 
@@ -386,14 +502,57 @@ export const ModelSquare: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Bottom Action Row */}
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleCompareModel(m);
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 cursor-pointer ${
+                      isCompared 
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700 font-extrabold' 
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Scale className="w-3.5 h-3.5" />
+                    <span>{isCompared ? '已加入对比' : '加入对比'}</span>
+                  </button>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTryoutModel(m);
+                    }}
+                    className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>模型调试</span>
+                  </button>
+                </div>
+
               </div>
             );
           })}
         </div>
+
+        {filteredModels.length === 0 && (
+          <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 shadow-2xs">
+            <Cpu className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <h3 className="text-sm font-bold text-slate-700">没有找到符合条件的模型</h3>
+            <p className="text-xs text-slate-400 mt-1">请尝试更换搜索词或筛选组合。</p>
+            <button
+              onClick={handleResetFilters}
+              className="mt-4 px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-500 transition cursor-pointer"
+            >
+              清空所有筛选条件
+            </button>
+          </div>
+        )}
 
       </div>
 
     </div>
   );
 };
-

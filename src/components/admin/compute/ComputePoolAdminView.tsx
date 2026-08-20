@@ -58,7 +58,11 @@ export const ComputePoolAdminView: React.FC = () => {
     authType: 'API Key' as 'API Key' | '用户名密码',
     authCredential: '',
     timeoutSeconds: 30,
-    saleStatus: '已上架' as '已上架' | '已下架'
+    saleStatus: '已上架' as '已上架' | '已下架',
+    agreedPricings: [
+      { gpuModel: 'NVIDIA RTX 4090', agreedPrice: 1.45, effectiveDate: '2026-01-01' },
+      { gpuModel: 'NVIDIA A100-SXM4-80GB', agreedPrice: 6.80, effectiveDate: '2026-01-01' }
+    ]
   });
 
   // 删除确认 Modal
@@ -99,7 +103,11 @@ export const ComputePoolAdminView: React.FC = () => {
       authType: 'API Key',
       authCredential: 'qj_key_' + Math.random().toString(36).substring(2, 10),
       timeoutSeconds: 30,
-      saleStatus: '已上架'
+      saleStatus: '已上架',
+      agreedPricings: [
+        { gpuModel: 'NVIDIA RTX 4090', agreedPrice: 1.45, effectiveDate: '2026-01-01' },
+        { gpuModel: 'NVIDIA A100-SXM4-80GB', agreedPrice: 6.80, effectiveDate: '2026-01-01' }
+      ]
     });
     setEditModalOpen(true);
   };
@@ -117,9 +125,40 @@ export const ComputePoolAdminView: React.FC = () => {
       authType: pool.authType || 'API Key',
       authCredential: pool.authCredential || '',
       timeoutSeconds: pool.timeoutSeconds || 30,
-      saleStatus: pool.saleStatus || '已上架'
+      saleStatus: pool.saleStatus || '已上架',
+      agreedPricings: pool.agreedPricings && pool.agreedPricings.length > 0 ? pool.agreedPricings : [
+        { gpuModel: 'NVIDIA RTX 4090', agreedPrice: 1.45, effectiveDate: '2026-01-01' },
+        { gpuModel: 'NVIDIA A100-SXM4-80GB', agreedPrice: 6.80, effectiveDate: '2026-01-01' }
+      ]
     });
     setEditModalOpen(true);
+  };
+
+  // 添加协议价格行
+  const handleAddAgreedPricingRow = () => {
+    setFormData(prev => ({
+      ...prev,
+      agreedPricings: [
+        ...prev.agreedPricings,
+        { gpuModel: 'NVIDIA RTX 4090', agreedPrice: 1.50, effectiveDate: new Date().toISOString().slice(0, 10) }
+      ]
+    }));
+  };
+
+  // 删除协议价格行
+  const handleRemoveAgreedPricingRow = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      agreedPricings: prev.agreedPricings.filter((_, i) => i !== index)
+    }));
+  };
+
+  // 修改协议价格行
+  const handleUpdateAgreedPricingRow = (index: number, field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      agreedPricings: prev.agreedPricings.map((row, i) => i === index ? { ...row, [field]: value } : row)
+    }));
   };
 
   // 提交新增/编辑
@@ -156,9 +195,10 @@ export const ComputePoolAdminView: React.FC = () => {
         authType: formData.authType,
         authCredential: formData.authCredential.trim(),
         timeoutSeconds: Number(formData.timeoutSeconds) || 30,
-        saleStatus: formData.saleStatus
+        saleStatus: formData.saleStatus,
+        agreedPricings: formData.agreedPricings
       });
-      showToast(`资源池【${formData.name}】修改保存成功！`);
+      showToast(`资源池【${formData.name}】修改保存成功！协议价格已同步更新`);
     } else {
       addComputePool({
         name: formData.name.trim(),
@@ -170,7 +210,8 @@ export const ComputePoolAdminView: React.FC = () => {
         authCredential: formData.authCredential.trim(),
         timeoutSeconds: Number(formData.timeoutSeconds) || 30,
         saleStatus: formData.saleStatus,
-        runStatus: '正常'
+        runStatus: '正常',
+        agreedPricings: formData.agreedPricings
       });
     }
 
@@ -677,11 +718,93 @@ export const ComputePoolAdminView: React.FC = () => {
                 </div>
               </div>
 
-              {/* 第三部分：上架状态 */}
+              {/* 第三部分：协议价格配置 (与运营商结算协议价) */}
               <div className="space-y-3 p-4 bg-slate-950/60 border border-slate-800 rounded-xl">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="font-semibold text-slate-200 block">第三部分：上架状态</span>
+                    <span className="font-semibold text-slate-200 block text-xs flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>第三部分：协议价格配置 (与运营商结算标准)</span>
+                    </span>
+                    <span className="text-[11px] text-slate-400">配置平台向运营商采购各 GPU 算力的协议结算单价 (元/卡·时)，用于后台对账结算自动化核算。</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddAgreedPricingRow}
+                    className="px-2.5 py-1 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-lg text-xs font-medium flex items-center gap-1 transition cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>添加型号协议价</span>
+                  </button>
+                </div>
+
+                <div className="border border-slate-800 rounded-lg overflow-hidden bg-slate-900/60">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-950/80 text-slate-400 text-[10px] uppercase font-semibold border-b border-slate-800">
+                      <tr>
+                        <th className="py-2 px-3">GPU 型号</th>
+                        <th className="py-2 px-3">协议单价 (元/卡时)</th>
+                        <th className="py-2 px-3">生效日期</th>
+                        <th className="py-2 px-3 text-right">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {formData.agreedPricings.map((item, idx) => (
+                        <tr key={idx} className="hover:bg-slate-800/40">
+                          <td className="py-2 px-3">
+                            <input
+                              type="text"
+                              value={item.gpuModel}
+                              onChange={e => handleUpdateAgreedPricingRow(idx, 'gpuModel', e.target.value)}
+                              placeholder="如 NVIDIA RTX 4090"
+                              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 text-xs focus:outline-none focus:border-cyan-500"
+                            />
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="relative">
+                              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs">¥</span>
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0.1"
+                                value={item.agreedPrice}
+                                onChange={e => handleUpdateAgreedPricingRow(idx, 'agreedPrice', parseFloat(e.target.value) || 0)}
+                                className="w-full pl-6 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 text-xs font-mono focus:outline-none focus:border-cyan-500"
+                              />
+                            </div>
+                          </td>
+                          <td className="py-2 px-3">
+                            <input
+                              type="date"
+                              value={item.effectiveDate}
+                              onChange={e => handleUpdateAgreedPricingRow(idx, 'effectiveDate', e.target.value)}
+                              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 text-xs font-mono focus:outline-none focus:border-cyan-500"
+                            />
+                          </td>
+                          <td className="py-2 px-3 text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveAgreedPricingRow(idx)}
+                              disabled={formData.agreedPricings.length <= 1}
+                              className={`p-1 rounded text-slate-400 hover:text-red-400 hover:bg-slate-800 transition ${
+                                formData.agreedPricings.length <= 1 ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'
+                              }`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* 第四部分：上架状态 */}
+              <div className="space-y-3 p-4 bg-slate-950/60 border border-slate-800 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-semibold text-slate-200 block">第四部分：上架状态</span>
                     <span className="text-[11px] text-slate-400">开启后前台算力工坊创建实例时可调度分配该资源池的算力。</span>
                   </div>
 
@@ -888,6 +1011,56 @@ export const ComputePoolAdminView: React.FC = () => {
                                 </div>
                                 <span className="text-slate-300 font-semibold">{dist.rate}%</span>
                               </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* 协议结算价格配置 */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                    <Layers className="w-4 h-4 text-cyan-400" />
+                    <span>运营商协议结算价标准 (协议价)</span>
+                  </div>
+                  <span className="text-[11px] text-slate-400">用于月度对账自动化结算</span>
+                </div>
+
+                <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/40">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-950 text-slate-400 uppercase text-[10px] font-semibold border-b border-slate-800">
+                      <tr>
+                        <th className="py-2.5 px-3.5">GPU 型号</th>
+                        <th className="py-2.5 px-3.5 text-center">协议单价</th>
+                        <th className="py-2.5 px-3.5 text-center">计费周期单位</th>
+                        <th className="py-2.5 px-3.5 text-right">生效日期</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60 font-mono">
+                      {(!detailPool.agreedPricings || detailPool.agreedPricings.length === 0) ? (
+                        <tr>
+                          <td colSpan={4} className="py-6 text-center text-slate-500 font-sans">
+                            暂未配置协议结算价格（默认按基础单价结算）
+                          </td>
+                        </tr>
+                      ) : (
+                        detailPool.agreedPricings.map((ap, i) => (
+                          <tr key={i} className="hover:bg-slate-800/30">
+                            <td className="py-2.5 px-3.5 font-sans font-semibold text-slate-200">
+                              {ap.gpuModel}
+                            </td>
+                            <td className="py-2.5 px-3.5 text-center text-cyan-400 font-bold">
+                              ¥{ap.agreedPrice.toFixed(2)}
+                            </td>
+                            <td className="py-2.5 px-3.5 text-center text-slate-300 font-sans">
+                              元 / 卡·时
+                            </td>
+                            <td className="py-2.5 px-3.5 text-right text-slate-400">
+                              {ap.effectiveDate}
                             </td>
                           </tr>
                         ))

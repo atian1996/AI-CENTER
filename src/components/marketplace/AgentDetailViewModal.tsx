@@ -346,19 +346,21 @@ export const AgentDetailViewModal: React.FC<AgentDetailViewModalProps> = ({
 
           {/* Tab Content 4: 评价区 */}
           {activeTab === 'reviews' && (
-            <div className="space-y-3 text-xs">
-              {(agent.comments || [
-                { id: 'c1', userName: '张经理', userAvatar: '', rating: 5, content: '非常好用，多轮对话回复非常精准，给满分！', date: '2026-08-01' },
-                { id: 'c2', userName: '刘工', userAvatar: '', rating: 5, content: '接入速度快，API 响应很高效。', date: '2026-08-05' }
-              ]).map(c => (
-                <div key={c.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-900">{c.userName}</span>
-                    <span className="text-amber-500 font-bold">★ {c.rating}</span>
+            <div className="space-y-4 text-xs">
+              <div className="space-y-3">
+                {(agent.comments || [
+                  { id: 'c1', userName: '张经理', userAvatar: '', rating: 5, content: '非常好用，多轮对话回复非常精准，给满分！', date: '2026-08-01' },
+                  { id: 'c2', userName: '刘工', userAvatar: '', rating: 5, content: '接入速度快，API 响应很高效。', date: '2026-08-05' }
+                ]).map(c => (
+                  <div key={c.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-900">{c.userName}</span>
+                      <span className="text-amber-500 font-bold">★ {c.rating}.0</span>
+                    </div>
+                    <p className="text-slate-600">{c.content}</p>
                   </div>
-                  <p className="text-slate-600">{c.content}</p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
 

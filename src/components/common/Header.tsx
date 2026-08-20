@@ -32,6 +32,7 @@ export const Header: React.FC = () => {
     notifications, 
     unreadCount, 
     markAllNotificationsRead,
+    openRechargeModal,
     setWorkspaceSubTab,
     enterAdminMode,
     showToast
@@ -148,21 +149,42 @@ export const Header: React.FC = () => {
                   {notifications.map(n => (
                     <div
                       key={n.id}
-                      onClick={() => {
-                        if (n.targetTab) setActiveTab(n.targetTab);
-                        setNotifOpen(false);
-                      }}
-                      className={`p-3.5 text-xs cursor-pointer hover:bg-slate-50 transition ${
-                        !n.read ? 'bg-indigo-50/30' : ''
+                      className={`p-3.5 text-xs transition ${
+                        !n.read ? 'bg-indigo-50/30' : 'hover:bg-slate-50'
                       }`}
                     >
                       <div className="flex items-center justify-between text-slate-800 font-bold mb-1">
                         <span>{n.title}</span>
                         <span className="text-[10px] text-slate-400 font-normal">{n.time}</span>
                       </div>
-                      <div className="text-slate-600 line-clamp-2 leading-relaxed">
+                      <div className="text-slate-600 leading-relaxed">
                         {n.content}
                       </div>
+
+                      {/* 交互行动按钮 (如【立即充值】【查看工坊】) */}
+                      {n.actionLabel && (
+                        <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-end">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (n.actionType === 'recharge') {
+                                openRechargeModal(50);
+                              } else if (n.targetTab) {
+                                setActiveTab(n.targetTab);
+                              }
+                              setNotifOpen(false);
+                            }}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                              n.actionType === 'recharge'
+                                ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-xs'
+                                : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200'
+                            }`}
+                          >
+                            <span>{n.actionLabel}</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -212,7 +234,19 @@ export const Header: React.FC = () => {
                         <Wallet className="w-3.5 h-3.5 text-indigo-600" />
                         <span className="text-[11px] font-medium">可用余额</span>
                       </div>
-                      <span className="font-black text-slate-900 text-xs">¥{(user.balance ?? 128.00).toFixed(2)}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-black text-slate-900 text-xs">¥{(user.balance ?? 128.00).toFixed(2)}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            openRechargeModal();
+                            setUserMenuOpen(false);
+                          }}
+                          className="px-1.5 py-0.5 rounded bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] transition cursor-pointer"
+                        >
+                          充值
+                        </button>
+                      </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 text-slate-600">
@@ -229,7 +263,7 @@ export const Header: React.FC = () => {
                       }}
                       className="w-full mt-1 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[10px] transition text-center flex items-center justify-center gap-1 cursor-pointer"
                     >
-                      我的账户与充值 →
+                      账户账单与积分记录 →
                     </button>
                   </div>
                 </div>

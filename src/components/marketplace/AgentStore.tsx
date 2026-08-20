@@ -1,527 +1,513 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { AgentItem, AgentSubscriptionItem } from '../../types';
-import { SubscribeModal } from './SubscribeModal';
-import { QuotaExhaustedModal } from './QuotaExhaustedModal';
-import { AgentDetailViewModal } from './AgentDetailViewModal';
-import { motion, AnimatePresence } from 'motion/react';
+import { AgentItem } from '../../types';
+import { AgentDetailSubPage } from './AgentDetailSubPage';
 import { 
   Bot, 
   Star, 
   Play, 
   Sparkles, 
-  Heart, 
-  Plus, 
   Search, 
-  Building2, 
-  Zap, 
-  CheckCircle2,
-  ShieldCheck,
-  ArrowRight,
+  RotateCcw,
   SlidersHorizontal,
-  Flame,
   ChevronDown,
-  RotateCcw
+  ChevronUp,
+  Layers, 
+  LayoutGrid, 
+  Building2,
+  Check,
+  Flame,
+  ArrowUpDown
 } from 'lucide-react';
 
 export const AgentStore: React.FC = () => {
   const { 
     agents, 
-    toggleFavoriteAgent, 
-    favorites,
-    setActiveTab, 
-    setWorkspaceSubTab, 
-    setCreateAgentModalOpen,
-    showToast,
-    openAgentDetail,
-    openAgentSubscribe
+    subscriptions, 
+    payPerTokenAgents, 
+    trialCountLeft,
+    openAgentSubscribe,
+    showToast
   } = useApp();
 
-  // 搜索与筛选状态
+  // Selected agent for secondary page details (NULL means listing view)
+  const [selectedAgentForDetail, setSelectedAgentForDetail] = useState<AgentItem | null>(null);
+
+  // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [techFormFilter, setTechFormFilter] = useState<string>('all');
   const [sceneFilter, setSceneFilter] = useState<string>('all');
   const [industryFilter, setIndustryFilter] = useState<string>('all');
-  const [priceModeFilter, setPriceModeFilter] = useState<string>('all');
-  const [sortOption, setSortOption] = useState<'comprehensive' | 'rating' | 'usage' | 'latest' | 'priceAsc'>('comprehensive');
+  const [sortOption, setSortOption] = useState<'comprehensive' | 'rating' | 'usage' | 'latest'>('comprehensive');
 
-  // 控制高级筛选面板展示
-  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
-
-  // 用户与 Agent 的体验/订阅状态
-  const [trialCountLeft, setTrialCountLeft] = useState<number>(25); // 已登录用户每日30次额度，已用5次，剩25次
-  const [subscriptions, setSubscriptions] = useState<Record<string, AgentSubscriptionItem>>({});
-  const [payPerTokenAgents, setPayPerTokenAgents] = useState<Record<string, boolean>>({});
-
-  // 筛选字典
+  // Unified Taxonomy Dictionaries
   const techForms = [
-    { key: 'all', label: '全部' },
+    { key: 'all', label: '全部形态' },
     { key: 'Chatbot', label: 'Chatbot' },
     { key: 'Agent', label: 'Agent' },
-    { key: 'Chatflow', label: 'Chatflow' },
-    { key: 'Workflow', label: 'Workflow' },
+    { key: '对话流', label: '对话流' },
+    { key: '工作流', label: '工作流' },
     { key: '文本生成', label: '文本生成' },
   ];
 
-  const scenes = [
-    { key: 'all', label: '✨ 全部智能体' },
-    { key: '内容创作', label: '🎨 内容创作与视觉' },
-    { key: '营销推广', label: '📈 营销与商业增长' },
-    { key: '研究决策', label: '🔍 深度研究与决策' },
-    { key: '办公助理', label: '💼 办公与生产力' },
-    { key: '数据分析', label: '📊 数据分析与挖掘' },
-    { key: '编程开发', label: '💻 编程与技术开发' },
-    { key: '企业服务', label: '🏢 企业服务与法务' },
-    { key: '教育培训', label: '🎓 求职成长与教育' },
-    { key: '智能客服', label: '🎧 智能客服与运营' },
-    { key: '生活出行', label: '✈ 生活品质与出行' },
-    { key: '行业垂直', label: '🌐 行业垂直专家' },
+  const appScenarios = [
+    { key: 'all', label: '全部场景' },
+    { key: '内容创作', label: '内容创作' },
+    { key: '数据分析', label: '数据分析' },
+    { key: '智能客服', label: '智能客服' },
+    { key: '办公助理', label: '办公助理' },
+    { key: '编程开发', label: '编程开发' },
+    { key: '营销推广', label: '营销推广' },
+    { key: '教育培训', label: '教育培训' },
+    { key: '行业垂直', label: '行业垂直' },
   ];
 
   const industries = [
-    { key: 'all', label: '全部行业' },
-    { key: '通用', label: '通用领域' },
-    { key: '政务', label: '政务政工' },
-    { key: '制造', label: '智能制造' },
-    { key: '零售', label: '智慧零售' },
-    { key: '金融', label: '金融科技' },
-    { key: '医疗', label: '医疗健康' },
-    { key: '教育', label: '数字教育' },
-    { key: '文旅', label: '智慧文旅' },
-    { key: '企业', label: '企业管理' },
+    { key: 'all', label: '全部领域' },
+    { key: '通用', label: '通用' },
+    { key: '政务', label: '政务' },
+    { key: '制造', label: '制造' },
+    { key: '零售', label: '零售' },
+    { key: '金融', label: '金融' },
+    { key: '医疗', label: '医疗' },
+    { key: '教育', label: '教育' },
+    { key: '文旅', label: '文旅' },
+    { key: '物流', label: '物流' },
+    { key: '企业', label: '企业' },
   ];
 
-  const priceModes = [
-    { key: 'all', label: '全部价格' },
-    { key: 'free', label: '免费试用' },
-    { key: 'token', label: 'Token 计费' },
-  ];
-
-  // 数据过滤
-  let filteredAgents = agents.filter(a => {
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchName = a.name.toLowerCase().includes(q);
-      const matchDesc = a.description.toLowerCase().includes(q);
-      const matchTags = a.tags.some(t => t.toLowerCase().includes(q));
-      const matchDev = (a.developer || a.author).toLowerCase().includes(q);
-      if (!matchName && !matchDesc && !matchTags && !matchDev) return false;
-    }
-    if (techFormFilter !== 'all' && a.techForm !== techFormFilter) return false;
-    if (sceneFilter !== 'all') {
-      if (sceneFilter === '内容创作') {
-        if (a.scene !== '内容创作' && !a.tags.some(t => ['提示词', 'PPT', '创作者', '连载', '公众号', '文章', '海报', '文案', '设计', '小说'].some(k => t.includes(k)))) return false;
-      } else if (sceneFilter === '营销推广') {
-        if (a.scene !== '营销推广' && !a.tags.some(t => ['SEO', '私域', '出海', '广告', '营销', '推广', '增长', '转化'].some(k => t.includes(k)))) return false;
-      } else if (sceneFilter === '研究决策') {
-        if (a.scene !== '数据分析' && !a.tags.some(t => ['研究', '研报', '趋势', '股票', '估值', '思维', '决策', '分析', '智库', '研究员'].some(k => t.includes(k))) && !['深度研究', '雷达', '股票', '苏格拉底'].some(k => a.name.includes(k))) return false;
-      } else if (sceneFilter === '教育培训') {
-        if (a.scene !== '教育培训' && !a.tags.some(t => ['简历', '留学', '高考', '面试', '志愿', '培训', '教学', '考试'].some(k => t.includes(k)))) return false;
-      } else if (sceneFilter === '企业服务') {
-        if (a.industry !== '企业' && a.industry !== '制造' && !a.tags.some(t => ['供应链', '文档', '法律', '合同', '法条', '采购', 'Excel', '企业', '规章'].some(k => t.includes(k)))) return false;
-      } else if (sceneFilter === '生活出行') {
-        if (a.industry !== '文旅' && !a.tags.some(t => ['行程', '旅游', '命理', '传统文化', '塔罗', '出行', '美食', '生活', '健康'].some(k => t.includes(k)))) return false;
-      } else if (sceneFilter === '数据分析') {
-        if (a.scene !== '数据分析' && !a.tags.some(t => ['数据', '报表', '分析', '挖掘', 'BI', '图表', 'SQL'].some(k => t.includes(k)))) return false;
-      } else if (sceneFilter === '编程开发') {
-        if (a.scene !== '编程开发' && !a.tags.some(t => ['代码', '编程', '开发', 'API', 'Java', 'Python', 'React', '架构'].some(k => t.includes(k)))) return false;
-      } else if (sceneFilter === '智能客服') {
-        if (a.scene !== '智能客服' && !a.tags.some(t => ['客服', '工单', '回复', '问答', '售后'].some(k => t.includes(k)))) return false;
-      } else if (sceneFilter === '办公助理') {
-        if (a.scene !== '办公助理' && !a.tags.some(t => ['办公', '文档', '纪要', '日程', '表格', '邮件', '翻译', '助理'].some(k => t.includes(k)))) return false;
-      } else if (sceneFilter === '行业垂直') {
-        if (a.scene !== '行业垂直' && a.category !== 'vertical' && a.industry === '通用') return false;
-      } else {
-        if (a.scene !== sceneFilter) return false;
-      }
-    }
-    if (industryFilter !== 'all' && a.industry !== industryFilter) return false;
-    if (priceModeFilter === 'free' && a.priceType !== 'free') return false;
-    if (priceModeFilter === 'token' && a.priceType !== 'token' && a.priceModel !== '按Token计费') return false;
-    return true;
-  });
-
-  // 排序
-  filteredAgents.sort((a, b) => {
-    if (sortOption === 'rating') return b.rating - a.rating;
-    if (sortOption === 'usage') return b.usageCount - a.usageCount;
-    if (sortOption === 'latest') return new Date(b.createdAt || '2026-08-01').getTime() - new Date(a.createdAt || '2026-08-01').getTime();
-    if (sortOption === 'priceAsc') return a.priceValue - b.priceValue;
-    return 0;
-  });
-
-  // 重置所有筛选
+  // Reset all filters
   const handleResetFilters = () => {
     setTechFormFilter('all');
     setSceneFilter('all');
     setIndustryFilter('all');
-    setPriceModeFilter('all');
     setSearchQuery('');
   };
 
   const activeFiltersCount = 
     (techFormFilter !== 'all' ? 1 : 0) + 
     (sceneFilter !== 'all' ? 1 : 0) + 
-    (industryFilter !== 'all' ? 1 : 0) + 
-    (priceModeFilter !== 'all' ? 1 : 0);
+    (industryFilter !== 'all' ? 1 : 0) +
+    (searchQuery.trim() ? 1 : 0);
 
-  // 处理“免费试用”/ Agent卡片点击
+  // Filter and Search Logic
+  const filteredAgents = agents.filter(a => {
+    // 1. Search Query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchName = a.name.toLowerCase().includes(q);
+      const matchDesc = (a.description || '').toLowerCase().includes(q);
+      const matchSlogan = (a.slogan || '').toLowerCase().includes(q);
+      const matchTags = (a.tags || []).some(t => t.toLowerCase().includes(q));
+      const matchDev = (a.developer || a.author || '').toLowerCase().includes(q);
+      if (!matchName && !matchDesc && !matchSlogan && !matchTags && !matchDev) return false;
+    }
+
+    // 2. Technical Form Filter
+    if (techFormFilter !== 'all') {
+      const formMatch = 
+        a.techForm === techFormFilter || 
+        a.appType === techFormFilter ||
+        (techFormFilter === '工作流' && a.techForm === 'Workflow') ||
+        (techFormFilter === '对话流' && a.techForm === 'Chatflow');
+      if (!formMatch) return false;
+    }
+
+    // 3. Application Scene Filter
+    if (sceneFilter !== 'all') {
+      const hasScene = a.scene === sceneFilter;
+      const hasCategoryTag = a.categoryTags && a.categoryTags.includes(sceneFilter);
+      if (!hasScene && !hasCategoryTag) return false;
+    }
+
+    // 4. Industry Domain Filter
+    if (industryFilter !== 'all') {
+      const hasIndustry = a.industry === industryFilter;
+      const hasIndustryTag = a.industryTags && a.industryTags.includes(industryFilter);
+      if (!hasIndustry && !hasIndustryTag) return false;
+    }
+
+    return true;
+  });
+
+  // Sort
+  filteredAgents.sort((a, b) => {
+    if (sortOption === 'rating') return b.rating - a.rating;
+    if (sortOption === 'usage') return (b.usageCount ?? 0) - (a.usageCount ?? 0);
+    if (sortOption === 'latest') return new Date(b.createdAt || '2026-08-01').getTime() - new Date(a.createdAt || '2026-08-01').getTime();
+    return 0; // Comprehensive
+  });
+
+  // Actions
   const handleFreeTrialClick = (agent: AgentItem, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    openAgentDetail(agent);
+    const trialUrl = `${window.location.origin}${window.location.pathname}?trial=${agent.id}`;
+    window.open(trialUrl, '_blank');
   };
 
-  // 处理“立即订阅”按钮点击
-  const handleSubscribeClick = (agent: AgentItem, e?: React.MouseEvent) => {
+  const handleDetailClick = (agent: AgentItem, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    openAgentSubscribe(agent);
+    setSelectedAgentForDetail(agent);
   };
+
+  // Render SubPage if an agent is selected for details
+  if (selectedAgentForDetail) {
+    return (
+      <AgentDetailSubPage
+        agent={selectedAgentForDetail}
+        onBack={() => setSelectedAgentForDetail(null)}
+        userSubscription={subscriptions[selectedAgentForDetail.id]}
+        isPayPerTokenMode={!!payPerTokenAgents[selectedAgentForDetail.id]}
+        trialCountLeft={trialCountLeft}
+      />
+    );
+  }
 
   return (
-    <div className="space-y-6 select-none animate-fade-in pb-12">
-
-      {/* 精致的一行检索控制面板 (Control Row) */}
-      <div className="flex flex-col md:flex-row items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs relative z-10">
+    <div className="flex flex-col lg:flex-row gap-6 select-none items-start">
+      
+      {/* 1. 左侧统一多维筛选侧边栏 (Standardized Left Filter Sidebar) */}
+      <div className="w-full lg:w-64 bg-white rounded-2xl border border-slate-200/80 p-4.5 shrink-0 space-y-5 text-xs shadow-2xs font-medium">
         
-        {/* 左侧搜索框 */}
-        <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="在海量 AI 智能体中搜索名称、功能、场景或开发者..."
-            className="w-full pl-10 pr-16 py-2.5 bg-slate-50/50 hover:bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-medium text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100/50 shadow-2xs transition-all duration-300"
-          />
-          {searchQuery && (
+        {/* 侧边栏顶部标题与重置 */}
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2 text-slate-900 font-extrabold text-xs">
+            <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
+            <span>智能体筛选</span>
+          </div>
+          {activeFiltersCount > 0 && (
             <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer"
+              onClick={handleResetFilters}
+              className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 cursor-pointer transition"
             >
-              清空
+              <RotateCcw className="w-3 h-3" />
+              <span>重置全部</span>
             </button>
           )}
         </div>
 
-        {/* 筛选、排序与创建操作组合 */}
-        <div className="flex flex-wrap items-center justify-between w-full md:w-auto gap-3 shrink-0">
-          
-          {/* 高级筛选按钮 */}
-          <button
-            onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-2 cursor-pointer ${
-              isAdvancedOpen || activeFiltersCount > 0
-                ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-2xs'
-                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-            }`}
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span>高级过滤</span>
-            {activeFiltersCount > 0 && (
-              <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-black">
-                {activeFiltersCount}
-              </span>
+        {/* 1. 技术形态 Filter */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-slate-900 font-extrabold text-xs">
+            <div className="flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-indigo-500" />
+              <span>技术形态</span>
+            </div>
+            {techFormFilter !== 'all' && (
+              <button 
+                onClick={() => setTechFormFilter('all')} 
+                className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold cursor-pointer"
+              >
+                重置
+              </button>
             )}
-          </button>
-
-          {/* 排序下拉框 */}
-          <div className="relative">
-            <select
-              value={sortOption}
-              onChange={(e: any) => setSortOption(e.target.value)}
-              className="bg-white border border-slate-200 text-slate-700 rounded-xl px-3.5 py-2 text-xs font-bold outline-none cursor-pointer hover:bg-slate-50 appearance-none pr-8 shadow-2xs"
-            >
-              <option value="comprehensive">综合排序</option>
-              <option value="rating">好评优先</option>
-              <option value="usage">热度最高</option>
-              <option value="latest">最新上架</option>
-              <option value="priceAsc">价格低到高</option>
-            </select>
-            <ChevronDown className="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>
 
-          <div className="h-5 w-px bg-slate-200 hidden sm:block"></div>
+          <div className="space-y-1 text-slate-600">
+            {techForms.map(t => {
+              const isActive = techFormFilter === t.key;
+              const count = t.key === 'all' 
+                ? agents.length 
+                : agents.filter(a => a.techForm === t.key || a.appType === t.key || (t.key === '工作流' && a.techForm === 'Workflow')).length;
 
-          {/* 核心动作：我的 Agent */}
-          <button
-            onClick={() => {
-              setActiveTab('workspace');
-              setWorkspaceSubTab('assets');
-            }}
-            className="px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-slate-200/60"
-          >
-            <Bot className="w-3.5 h-3.5 text-slate-500" />
-            <span>我的 Agent</span>
-          </button>
-
-          {/* 核心动作：创建 Agent */}
-          <button
-            onClick={() => {
-              setActiveTab('workspace');
-              setWorkspaceSubTab('assets');
-              setCreateAgentModalOpen(true);
-            }}
-            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer hover:scale-[1.02] active:scale-95"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>发布智能体</span>
-          </button>
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setTechFormFilter(t.key)}
+                  className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer flex items-center justify-between text-xs ${
+                    isActive 
+                      ? 'bg-indigo-50/90 text-indigo-700 font-extrabold' 
+                      : 'hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <span>{t.label}</span>
+                  {isActive ? (
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 font-mono">{count}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        <div className="h-px bg-slate-100"></div>
+
+        {/* 2. 应用场景 Filter */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-slate-900 font-extrabold text-xs">
+            <div className="flex items-center gap-1.5">
+              <LayoutGrid className="w-3.5 h-3.5 text-cyan-600" />
+              <span>应用场景</span>
+            </div>
+            {sceneFilter !== 'all' && (
+              <button 
+                onClick={() => setSceneFilter('all')} 
+                className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold cursor-pointer"
+              >
+                重置
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-1 text-slate-600 max-h-56 overflow-y-auto pr-1 scrollbar-thin">
+            {appScenarios.map(s => {
+              const isActive = sceneFilter === s.key;
+              const count = s.key === 'all'
+                ? agents.length
+                : agents.filter(a => a.scene === s.key || (a.categoryTags && a.categoryTags.includes(s.key))).length;
+
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => setSceneFilter(s.key)}
+                  className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer flex items-center justify-between text-xs ${
+                    isActive 
+                      ? 'bg-indigo-50/90 text-indigo-700 font-extrabold' 
+                      : 'hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <span className="truncate">{s.label}</span>
+                  {isActive ? (
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 font-mono">{count}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="h-px bg-slate-100"></div>
+
+        {/* 3. 行业领域 Filter */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-slate-900 font-extrabold text-xs">
+            <div className="flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>行业领域</span>
+            </div>
+            {industryFilter !== 'all' && (
+              <button 
+                onClick={() => setIndustryFilter('all')} 
+                className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold cursor-pointer"
+              >
+                重置
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-1 text-slate-600 max-h-56 overflow-y-auto pr-1 scrollbar-thin">
+            {industries.map(i => {
+              const isActive = industryFilter === i.key;
+              const count = i.key === 'all'
+                ? agents.length
+                : agents.filter(a => a.industry === i.key || (a.industryTags && a.industryTags.includes(i.key))).length;
+
+              return (
+                <button
+                  key={i.key}
+                  onClick={() => setIndustryFilter(i.key)}
+                  className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer flex items-center justify-between text-xs ${
+                    isActive 
+                      ? 'bg-indigo-50/90 text-indigo-700 font-extrabold' 
+                      : 'hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <span className="truncate">{i.label}</span>
+                  {isActive ? (
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 font-mono">{count}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
       </div>
 
-      {/* 热门场景快捷分类圆角胶囊推荐 (Scenes Capsules Row) */}
-      <div className="flex items-center gap-2.5 overflow-x-auto py-1 scrollbar-none no-scrollbar">
-        <span className="text-xs text-slate-400 font-extrabold shrink-0 mr-1.5 flex items-center gap-1">
-          <Flame className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /> 推荐分类:
-        </span>
-        {scenes.map(s => {
-          const isActive = sceneFilter === s.key;
-          return (
-            <button
-              key={s.key}
-              onClick={() => setSceneFilter(s.key)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer border ${
-                isActive
-                  ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white border-transparent shadow-xs shadow-indigo-200'
-                  : 'bg-white text-slate-600 border-slate-200/80 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50/50'
-              }`}
-            >
-              {s.label}
-            </button>
-          );
-        })}
-      </div>
+      {/* 2. 右侧主内容展示区 (Right Main Content Area) */}
+      <div className="flex-1 space-y-5 w-full min-w-0">
+        
+        {/* Top Control Bar: Search Input, Sorter & Result Counter */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200/80 shadow-2xs">
+          
+          {/* Search Box */}
+          <div className="relative flex-1 w-full">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="搜索智能体名称、功能亮点、标签或开发者..."
+              className="w-full pl-10 pr-14 py-2 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100/50 transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-indigo-600 transition cursor-pointer"
+              >
+                清空
+              </button>
+            )}
+          </div>
 
-      {/* 高级参数过滤收纳面板 (Advanced Drawer with smooth transition) */}
-      <AnimatePresence>
-        {isAdvancedOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0, y: -10 }}
-            animate={{ opacity: 1, height: 'auto', y: 0 }}
-            exit={{ opacity: 0, height: 0, y: -10 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="overflow-hidden"
-          >
-            <div className="p-5 rounded-2xl bg-slate-50/80 border border-slate-200/60 shadow-2xs space-y-4">
-              
-              {/* Filter grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 text-xs">
-                
-                {/* 1. 技术形态 */}
-                <div className="space-y-2">
-                  <div className="font-extrabold text-slate-700 flex items-center justify-between">
-                    <span>开发框架 & 技术形态</span>
-                    {techFormFilter !== 'all' && (
-                      <button onClick={() => setTechFormFilter('all')} className="text-[10px] text-indigo-600 font-bold hover:underline">清除</button>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {techForms.map(t => (
-                      <button
-                        key={t.key}
-                        onClick={() => setTechFormFilter(t.key)}
-                        className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer text-[11px] ${
-                          techFormFilter === t.key 
-                            ? 'bg-indigo-600 text-white shadow-3xs' 
-                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
-                        }`}
-                      >
-                        {t.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 2. 行业领域 */}
-                <div className="space-y-2">
-                  <div className="font-extrabold text-slate-700 flex items-center justify-between">
-                    <span>垂直业务场景与行业</span>
-                    {industryFilter !== 'all' && (
-                      <button onClick={() => setIndustryFilter('all')} className="text-[10px] text-indigo-600 font-bold hover:underline">清除</button>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {industries.map(i => (
-                      <button
-                        key={i.key}
-                        onClick={() => setIndustryFilter(i.key)}
-                        className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer text-[11px] ${
-                          industryFilter === i.key 
-                            ? 'bg-indigo-600 text-white shadow-3xs' 
-                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
-                        }`}
-                      >
-                        {i.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 3. 计费模式与重置 */}
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <div className="font-extrabold text-slate-700 flex items-center justify-between">
-                      <span>价格与计费模式</span>
-                      {priceModeFilter !== 'all' && (
-                        <button onClick={() => setPriceModeFilter('all')} className="text-[10px] text-indigo-600 font-bold hover:underline">清除</button>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {priceModes.map(pm => (
-                        <button
-                          key={pm.key}
-                          onClick={() => setPriceModeFilter(pm.key)}
-                          className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer text-[11px] ${
-                            priceModeFilter === pm.key 
-                              ? 'bg-indigo-600 text-white shadow-3xs' 
-                              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
-                          }`}
-                        >
-                          {pm.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between">
-                    <span className="text-[10px] text-slate-400 font-medium">已激活 {activeFiltersCount} 项过滤条件</span>
-                    <button
-                      onClick={handleResetFilters}
-                      className="text-[11px] font-bold text-slate-500 hover:text-indigo-600 flex items-center gap-1 transition"
-                    >
-                      <RotateCcw className="w-3 h-3" />
-                      <span>重置全部筛选</span>
-                    </button>
-                  </div>
-                </div>
-
+          {/* Sorter & Counter */}
+          <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400 font-bold whitespace-nowrap">排序:</span>
+              <div className="relative">
+                <select
+                  value={sortOption}
+                  onChange={(e: any) => setSortOption(e.target.value)}
+                  className="pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none hover:border-slate-300 hover:bg-white transition cursor-pointer appearance-none min-w-[110px]"
+                >
+                  <option value="comprehensive">综合排序</option>
+                  <option value="rating">高分优先</option>
+                  <option value="usage">最受欢迎</option>
+                  <option value="latest">最新上线</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
-      {/* Agent Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filteredAgents.map(ag => {
-          const isFav = favorites.some(f => f.id === ag.id);
-          const isSubscribed = !!subscriptions[ag.id];
+            <div className="h-4 w-px bg-slate-200 hidden sm:block"></div>
 
-          return (
-            <div
-              key={ag.id}
-              onClick={(e) => handleFreeTrialClick(ag, e)}
-              className="group bg-white rounded-2xl border border-slate-200/80 hover:border-indigo-400 p-5 shadow-xs hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 flex flex-col justify-between cursor-pointer"
-            >
-              <div>
-                {/* Header info */}
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-2xl shadow-xs shrink-0 group-hover:scale-105 transition-transform">
-                      {ag.avatar}
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1 flex items-center gap-1.5">
-                        <span>{ag.name}</span>
-                        {isSubscribed && (
-                          <span className="bg-emerald-100 text-emerald-800 text-[9px] font-extrabold px-1.5 py-0.2 rounded-md">
-                            已订阅
-                          </span>
+            <div className="text-xs text-slate-500 font-medium whitespace-nowrap">
+              符合条件：<span className="text-indigo-600 font-extrabold font-mono text-sm">{filteredAgents.length}</span> 款
+            </div>
+          </div>
+
+        </div>
+
+        {/* Agent Cards Grid Matrix */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4.5">
+          {filteredAgents.map(ag => {
+            const isSubscribed = !!subscriptions[ag.id];
+
+            // Compute exact scenarios and industries to display
+            const displayScenarios: string[] = 
+              ag.categoryTags && ag.categoryTags.length > 0 
+                ? ag.categoryTags 
+                : (ag.scene ? [ag.scene] : []);
+
+            const displayIndustries: string[] = 
+              ag.industryTags && ag.industryTags.length > 0 
+                ? ag.industryTags 
+                : (ag.industry ? [ag.industry] : []);
+
+            return (
+              <div
+                key={ag.id}
+                onClick={() => setSelectedAgentForDetail(ag)}
+                className="group bg-white rounded-2xl border border-slate-200/80 hover:border-indigo-400 p-5 shadow-2xs hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 flex flex-col justify-between cursor-pointer"
+              >
+                <div>
+                  {/* Header Information */}
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xl shadow-xs shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+                        {ag.avatar && ag.avatar.startsWith('http') ? (
+                          <img src={ag.avatar} alt={ag.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span>{ag.avatar || '🤖'}</span>
                         )}
-                      </h3>
-                      <div className="flex items-center gap-1 text-[11px] text-amber-500 font-bold mt-0.5">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        <span>{(ag.rating ?? 5.0).toFixed(1)}</span>
-                        <span className="text-slate-400 font-normal">({ag.ratingCount ?? 120}人评价)</span>
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors truncate flex items-center gap-1.5">
+                          <span className="truncate">{ag.name}</span>
+                          {isSubscribed && (
+                            <span className="bg-emerald-100 text-emerald-800 text-[9px] font-extrabold px-1.5 py-0.2 rounded-md shrink-0">
+                              已订阅
+                            </span>
+                          )}
+                        </h3>
+                        <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-[11px] mt-0.5">
+                          <div className="flex items-center gap-0.5 text-amber-500 font-bold">
+                            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                            <span>{(ag.rating ?? 5.0).toFixed(1)}</span>
+                          </div>
+                          <span className="text-slate-300 font-normal">•</span>
+                          <span className="text-slate-400 font-normal">({ag.ratingCount ?? 120})</span>
+                          <span className="text-slate-300 font-normal">•</span>
+                          <span className="text-indigo-600 font-extrabold">{(ag.subscribersCount ?? 128).toLocaleString()}人使用</span>
+                        </div>
                       </div>
                     </div>
                   </div>
 
+                  {/* Combined Badges Line */}
+                  <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                    {/* Technical Form Tag */}
+                    {ag.techForm && (
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100/70 whitespace-nowrap">
+                        {ag.techForm}
+                      </span>
+                    )}
+
+                    {/* Application Scenario Tags */}
+                    {displayScenarios.map((sc, idx) => (
+                      <span key={idx} className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-100/70 whitespace-nowrap">
+                        {sc}
+                      </span>
+                    ))}
+
+                    {/* Industry Domain Tags */}
+                    {displayIndustries.map((ind, idx) => (
+                      <span key={idx} className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100/70 whitespace-nowrap">
+                        {ind}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Agent Slogan (一句话介绍) */}
+                  <div className="text-xs font-semibold text-slate-700 leading-relaxed mb-4 pl-2 border-l-2 border-indigo-500 bg-slate-50/70 p-2 rounded-r-lg line-clamp-2 h-14">
+                    {ag.slogan || ag.description?.slice(0, 45) || "极高阶人工智能自动化代理助手"}
+                  </div>
+                </div>
+
+                {/* Action Buttons: [ 免费试用 ] 和 [ Agent详情 ] */}
+                <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFavoriteAgent(ag.id);
-                    }}
-                    className="text-slate-400 hover:text-rose-500 p-1 rounded-lg transition cursor-pointer"
-                    title={isFav ? '已收藏' : '收藏'}
+                    onClick={(e) => handleFreeTrialClick(ag, e)}
+                    className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    <Heart className={`w-4 h-4 ${isFav ? 'fill-rose-500 text-rose-500' : ''}`} />
+                    <Play className="w-3.5 h-3.5 fill-current text-indigo-600" />
+                    <span>免费试用</span>
+                  </button>
+                  
+                  <button
+                    onClick={(e) => handleDetailClick(ag, e)}
+                    className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Agent详情</span>
                   </button>
                 </div>
 
-                {/* Badges line: 形态 · 场景 · 行业 */}
-                <div className="flex flex-wrap gap-1.5 mb-2.5">
-                  {ag.techForm && (
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
-                      {ag.techForm}
-                    </span>
-                  )}
-                  {ag.scene && (
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-100">
-                      {ag.scene}
-                    </span>
-                  )}
-                  {ag.industry && (
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                      {ag.industry}
-                    </span>
-                  )}
-                </div>
-
-                {/* Description */}
-                <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-3">
-                  {ag.description}
-                </p>
-
-                {/* Service info & Developer */}
-                <div className="text-[11px] text-slate-500 flex items-center justify-between font-medium mb-3 bg-slate-50 p-2 rounded-xl border border-slate-100">
-                  <span className="flex items-center gap-1">
-                    <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                    <span>已服务 {ag.servicedCount ? ag.servicedCount.toLocaleString() : '1,234'} 家机构</span>
-                  </span>
-                  <span className="text-slate-700 font-bold">{ag.developer || ag.author}</span>
-                </div>
-
-                {/* Price tag */}
-                <div className="text-xs font-bold text-slate-700 flex items-center gap-1.5 mb-4">
-                  <span>💰</span>
-                  <span className="text-amber-800 font-extrabold">
-                    免费试用 · ¥49/周起
-                  </span>
-                </div>
               </div>
-
-              {/* Action Buttons: 仅保留 [ 免费试用 ] 和 [ 立即订阅 ] 两个按钮 */}
-              <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
-                <button
-                  onClick={(e) => handleFreeTrialClick(ag, e)}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Play className="w-3.5 h-3.5 fill-current text-indigo-600" />
-                  <span>免费试用</span>
-                </button>
-                
-                <button
-                  onClick={(e) => handleSubscribeClick(ag, e)}
-                  className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Zap className="w-3.5 h-3.5" />
-                  <span>立即订阅</span>
-                </button>
-              </div>
-
-            </div>
-          );
-        })}
-      </div>
-
-      {filteredAgents.length === 0 && (
-        <div className="p-12 text-center bg-white rounded-2xl border border-slate-200">
-          <Bot className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-sm font-bold text-slate-700">没有找到符合条件的 Agent</h3>
-          <p className="text-xs text-slate-400 mt-1">请尝试更换搜索词或筛选组合。</p>
+            );
+          })}
         </div>
-      )}
+
+        {filteredAgents.length === 0 && (
+          <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 shadow-2xs">
+            <Bot className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <h3 className="text-sm font-bold text-slate-700">没有找到符合条件的 Agent</h3>
+            <p className="text-xs text-slate-400 mt-1">请尝试更换搜索词或筛选组合。</p>
+            <button
+              onClick={handleResetFilters}
+              className="mt-4 px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-500 transition cursor-pointer"
+            >
+              清空所有筛选条件
+            </button>
+          </div>
+        )}
+
+      </div>
 
     </div>
   );

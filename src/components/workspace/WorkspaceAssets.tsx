@@ -132,7 +132,7 @@ export const WorkspaceAssets: React.FC = () => {
     if (selectedTypeFilter !== 'all') {
       const form = ag.appType || ag.techForm || '';
       if (selectedTypeFilter === '工作流' && !form.includes('工作流') && !form.includes('Workflow')) return false;
-      if (selectedTypeFilter === 'Chatflow' && !form.includes('Chatflow')) return false;
+      if (selectedTypeFilter === '对话流' && !form.includes('对话流')) return false;
       if (selectedTypeFilter === '聊天助手' && !form.includes('聊天助手') && !form.includes('Chatbot')) return false;
       if (selectedTypeFilter === 'Agent' && !form.includes('Agent')) return false;
       if (selectedTypeFilter === '文本生成应用' && !form.includes('文本生成')) return false;
@@ -150,7 +150,7 @@ export const WorkspaceAssets: React.FC = () => {
 
   // Render App Type Badge on Card Icon
   const renderAppTypeIconBadge = (ag: AgentItem) => {
-    const form = ag.appType || ag.techForm || '工作流';
+    const form = (ag.appType || ag.techForm || '工作流') as string;
     if (form === '工作流' || form === 'Workflow') {
       return (
         <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center ring-2 ring-white text-[9px] shadow-xs">
@@ -158,7 +158,7 @@ export const WorkspaceAssets: React.FC = () => {
         </div>
       );
     }
-    if (form === 'Chatflow') {
+    if (form === '对话流') {
       return (
         <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-sky-500 text-white flex items-center justify-center ring-2 ring-white text-[9px] shadow-xs">
           <MessageSquareShare className="w-2.5 h-2.5" />
@@ -345,7 +345,7 @@ export const WorkspaceAssets: React.FC = () => {
                     {[
                       { key: 'all', label: '全部类型' },
                       { key: '工作流', label: '工作流' },
-                      { key: 'Chatflow', label: 'Chatflow' },
+                      { key: '对话流', label: '对话流' },
                       { key: '聊天助手', label: '聊天助手' },
                       { key: 'Agent', label: 'Agent' },
                       { key: '文本生成应用', label: '文本生成应用' },
@@ -593,7 +593,7 @@ export const WorkspaceAssets: React.FC = () => {
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <span>我挂载/收藏的</span>
+                <span>已订阅/授权的</span>
                 <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
                   datasetScopeTab === 'mounted' ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-600'
                 }`}>
@@ -634,7 +634,7 @@ export const WorkspaceAssets: React.FC = () => {
                   <th className="p-4">数据集名称与仓库</th>
                   <th className="p-4">模态 / 任务类型</th>
                   <th className="p-4">数据规模 / 格式</th>
-                  <th className="p-4">容器挂载路径</th>
+                  <th className="p-4">领域与标签</th>
                   <th className="p-4">开源协议</th>
                   <th className="p-4">状态</th>
                   <th className="p-4 text-right">操作</th>
@@ -680,19 +680,12 @@ export const WorkspaceAssets: React.FC = () => {
                     </td>
 
                     <td className="p-4">
-                      <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-700 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200/60 max-w-[210px]">
-                        <span className="truncate">{ds.mountPath || `/home/mw/input/${ds.id}`}</span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigator.clipboard.writeText(ds.mountPath || `/home/mw/input/${ds.id}`);
-                            showToast(`已复制挂载路径: ${ds.mountPath || '/home/mw/input/' + ds.id}`);
-                          }}
-                          className="text-blue-600 hover:text-blue-700 p-0.5"
-                          title="复制路径"
-                        >
-                          <Copy className="w-3 h-3" />
-                        </button>
+                      <div className="flex flex-wrap items-center gap-1 max-w-[220px]">
+                        {(ds.domainTags && ds.domainTags.length > 0 ? ds.domainTags : ['数据科学', '分析']).slice(0, 2).map((t: string) => (
+                          <span key={t} className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold">
+                            #{t}
+                          </span>
+                        ))}
                       </div>
                     </td>
 
@@ -701,12 +694,8 @@ export const WorkspaceAssets: React.FC = () => {
                     </td>
 
                     <td className="p-4">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
-                        ds.isMounted
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {ds.isMounted ? '已挂载' : '已就绪'}
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-700">
+                        已就绪
                       </span>
                     </td>
 
@@ -723,7 +712,7 @@ export const WorkspaceAssets: React.FC = () => {
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          const snippet = `import pandas as pd\ndf = pd.read_csv("${ds.mountPath || '/home/mw/input/' + ds.id}/订单表.csv")\nprint(df.head())`;
+                          const snippet = `import pandas as pd\ndf = pd.read_csv("./${ds.files?.[0]?.name || 'data.csv'}")\nprint(df.head())`;
                           navigator.clipboard.writeText(snippet);
                           showToast('已复制 Python Pandas 读取代码！');
                         }}

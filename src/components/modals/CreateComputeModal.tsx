@@ -11,7 +11,11 @@ import {
   Sparkles, 
   ChevronDown,
   Layers,
-  Info
+  Info,
+  Wallet,
+  Coins,
+  AlertCircle,
+  ArrowRight
 } from 'lucide-react';
 
 export const CreateComputeModal: React.FC = () => {
@@ -22,8 +26,14 @@ export const CreateComputeModal: React.FC = () => {
     setCreateComputePreset,
     launchGpuInstance,
     computeImages,
+    user,
+    openRechargeModal,
     showToast 
   } = useApp();
+
+  // 余额不足预警状态
+  const [showInsufficientBalanceWarning, setShowInsufficientBalanceWarning] = useState<boolean>(false);
+  const [pendingRequiredAmount, setPendingRequiredAmount] = useState<number>(0);
 
   // Selected GPU Card default: PRO 6000 96GB
   const defaultCard: RentalGPUCard = {
@@ -174,6 +184,22 @@ export const CreateComputeModal: React.FC = () => {
     if (billingType === 'daily') mappedBilling = '包日';
     if (billingType === 'weekly') mappedBilling = '包周';
     if (billingType === 'monthly') mappedBilling = '包月';
+
+    // 计算创建启动实例所需的预估启动金额
+    const requiredAmount = 
+      billingType === 'daily' ? (scaledDaily ?? singleHourly * 24 * gpuCount) :
+      billingType === 'weekly' ? (scaledWeekly ?? singleHourly * 24 * 7 * gpuCount) :
+      billingType === 'monthly' ? (scaledMonthly ?? singleHourly * 24 * 30 * gpuCount) :
+      (Number(scaledHourly)); // 按量使用首小时启动额
+
+    const userBalance = user?.balance ?? 0;
+
+    // 判断当前用户的账户余额或积分是否允许他创建启动实例
+    if (userBalance < requiredAmount) {
+      setPendingRequiredAmount(requiredAmount);
+      setShowInsufficientBalanceWarning(true);
+      return;
+    }
 
     launchGpuInstance(
       'Notebook开发',
@@ -581,7 +607,7 @@ export const CreateComputeModal: React.FC = () => {
         </div>
 
         {/* Modal Bottom Action Bar (动态读取 allowedGpuCounts 渲染卡数下拉选项) */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+        <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
           {/* Card Selector Dropdown - 动态基于规格配置生成 */}
           <div className="flex items-center gap-3">
             <div className="relative">
@@ -599,34 +625,126 @@ export const CreateComputeModal: React.FC = () => {
               <ChevronDown className="w-4 h-4 text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
 
-            <span className="text-xs text-slate-500 hidden sm:inline">
+            <span className="text-xs text-slate-500 hidden md:inline">
               最大可选 {Math.max(...allowedCounts)} 卡 · {currentBillingLabel} {currentDisplayPrice}
             </span>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                setCreateComputeModalOpen(false);
-                setCreateComputePreset(null);
-              }}
-              className="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs cursor-pointer transition"
-            >
-              取消
-            </button>
+          {/* User Balance Status & Actions */}
+          <div className="flex items-center gap-4">
+            
+            {/* Balance Preview Badge */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200/90 text-xs">
+              <span className="text-slate-500">账户余额:</span>
+              <span className="font-black text-slate-900 font-mono">¥{(user?.balance ?? 0).toFixed(2)}</span>
+              <button
+                type="button"
+                onClick={() => openRechargeModal()}
+                className="text-indigo-600 hover:text-indigo-700 font-black text-xs hover:underline cursor-pointer ml-1 flex items-center gap-0.5"
+              >
+                <span>充值</span>
+              </button>
+            </div>
 
-            <button
-              onClick={handleStartUse}
-              className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs cursor-pointer shadow-md shadow-indigo-500/20 transition flex items-center gap-1.5"
-            >
-              <span>创建并启动</span>
-              <span className="font-mono text-xs opacity-90">({currentDisplayPrice})</span>
-            </button>
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2.5">
+              <button
+                onClick={() => {
+                  setCreateComputeModalOpen(false);
+                  setCreateComputePreset(null);
+                }}
+                className="px-4 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs cursor-pointer transition"
+              >
+                取消
+              </button>
+
+              <button
+                onClick={handleStartUse}
+                className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs cursor-pointer shadow-md shadow-indigo-500/20 transition flex items-center gap-1.5"
+              >
+                <span>创建并启动</span>
+                <span className="font-mono text-xs opacity-90">({currentDisplayPrice})</span>
+              </button>
+            </div>
           </div>
         </div>
 
       </div>
+
+      {/* 账户余额或积分不足提示弹窗 */}
+      {showInsufficientBalanceWarning && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-scale-up">
+            <div className="p-5 bg-gradient-to-r from-amber-500 to-rose-500 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                  <AlertCircle className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm">账户余额不足提醒</h3>
+                  <p className="text-[11px] text-amber-100 mt-0.5">需充值后方可成功创建并调度算力实例</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowInsufficientBalanceWarning(false)}
+                className="p-1 rounded-lg hover:bg-white/20 text-white transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">实例启动预估费用：</span>
+                  <span className="font-black text-rose-600 text-sm font-mono">¥{pendingRequiredAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">当前可用账户余额：</span>
+                  <span className="font-bold text-slate-800 font-mono">¥{(user?.balance ?? 0).toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">当前可用积分：</span>
+                  <span className="font-bold text-amber-600 font-mono">{(user?.points ?? 0).toLocaleString()} 积分</span>
+                </div>
+                <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
+                  <span className="text-slate-700 font-bold">尚需充值金额：</span>
+                  <span className="font-black text-rose-600 text-base font-mono">
+                    ¥{Math.max(0, pendingRequiredAmount - (user?.balance ?? 0)).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                提示：为保障实例稳定运行，按量计费实例创建时需账户至少保有 1 小时预估运行资金。点击下方充值按钮可直接在当前页面打开充值弹窗。
+              </p>
+
+              <div className="pt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowInsufficientBalanceWarning(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
+                >
+                  稍后充值
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowInsufficientBalanceWarning(false);
+                    openRechargeModal(Math.max(50, Math.ceil(pendingRequiredAmount - (user?.balance ?? 0))));
+                  }}
+                  className="flex-[1.8] py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-extrabold text-xs shadow-md shadow-indigo-200 transition cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Wallet className="w-4 h-4" />
+                  <span>立即充值</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

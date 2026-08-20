@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
+import Markdown from 'react-markdown';
 import { DatasetItem, DatasetFileItem, DatasetCommentItem } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { 
   ArrowLeft, 
   Download, 
-  Heart, 
-  Bookmark, 
-  HardDrive, 
   Share2, 
   Copy, 
   Check, 
@@ -14,21 +12,17 @@ import {
   Table, 
   MessageSquare, 
   FileText, 
-  Info, 
   Layers, 
   Calendar, 
   Eye, 
-  ThumbsUp, 
-  User, 
   Send, 
   Search, 
-  ExternalLink,
-  Code2,
-  ShieldAlert,
   Database,
-  Sparkles,
   ChevronRight,
-  FolderOpen
+  FolderOpen,
+  Tag,
+  Building2,
+  HardDrive
 } from 'lucide-react';
 
 interface DatasetDetailProps {
@@ -42,29 +36,21 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack })
   // Active Tab: overview | files | comments
   const [activeTab, setActiveTab] = useState<'overview' | 'files' | 'comments'>('overview');
 
-  // Interactive states
-  const [isMounted, setIsMounted] = useState<boolean>(dataset.isMounted ?? false);
-  const [isLiked, setIsLiked] = useState<boolean>(dataset.isLiked ?? false);
-  const [likesCount, setLikesCount] = useState<number>(dataset.likesCount ?? 0);
-  const [isFavorite, setIsFavorite] = useState<boolean>(dataset.isFavorite ?? false);
-  const [favoritesCount, setFavoritesCount] = useState<number>(dataset.favoritesCount ?? 0);
-  const [copiedPath, setCopiedPath] = useState(false);
-
   // Files Tab State
-  const filesList = dataset.files && dataset.files.length > 0 ? dataset.files : [
+  const filesList: DatasetFileItem[] = dataset.files && dataset.files.length > 0 ? dataset.files : [
     {
       id: 'f_default_1',
-      name: `${dataset.name}.csv`,
-      size: dataset.scale || '10.5 MB',
-      format: 'csv',
-      rowsCount: 50000,
+      name: `${dataset.name || 'dataset'}.${dataset.formats?.[0]?.toLowerCase()?.includes('json') ? 'json' : 'csv'}`,
+      size: dataset.fileSize || dataset.scale || '10.5 MB',
+      format: dataset.formats?.[0]?.toLowerCase()?.includes('json') ? 'json' : 'csv',
+      rowsCount: 25000,
       colsCount: 6,
       encoding: 'UTF-8',
-      headers: ['ID', 'Field_A', 'Field_B', 'Field_C', 'Value', 'Timestamp'],
+      headers: ['ID', 'Category', 'Feature_A', 'Feature_B', 'Label_Value', 'Timestamp'],
       sampleRows: [
-        { ID: '1001', Field_A: 'Sample_A', Field_B: 'Alpha', Field_C: 'Active', Value: 128.5, Timestamp: '2026-08-01' },
-        { ID: '1002', Field_A: 'Sample_B', Field_B: 'Beta', Field_C: 'Pending', Value: 94.2, Timestamp: '2026-08-02' },
-        { ID: '1003', Field_A: 'Sample_C', Field_B: 'Gamma', Field_C: 'Completed', Value: 310.0, Timestamp: '2026-08-03' }
+        { ID: '1001', Category: 'Sample_A', Feature_A: 'Alpha_01', Feature_B: 'Active', Label_Value: 128.5, Timestamp: '2026-08-01' },
+        { ID: '1002', Category: 'Sample_B', Feature_A: 'Beta_02', Feature_B: 'Pending', Label_Value: 94.2, Timestamp: '2026-08-02' },
+        { ID: '1003', Category: 'Sample_C', Feature_A: 'Gamma_03', Feature_B: 'Completed', Label_Value: 310.0, Timestamp: '2026-08-03' }
       ]
     }
   ];
@@ -79,56 +65,22 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack })
   const [commentsList, setCommentsList] = useState<DatasetCommentItem[]>(dataset.comments && dataset.comments.length > 0 ? dataset.comments : [
     {
       id: 'c_default_1',
-      userName: '数据探索先锋',
+      userName: '数据科学研究员',
       userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
       time: '2 天前',
-      content: '这个数据集的字段清洗得很规整，可以直接导入做模型验证，非常推荐！',
-      likes: 4
+      content: '这个数据集的字段清洗得很规整，可以直接导入做模型验证，非常推荐！'
     }
   ]);
   const [newCommentText, setNewCommentText] = useState('');
   const [replyTargetId, setReplyTargetId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
 
-  const handleCopyMountPath = () => {
-    const path = dataset.mountPath || `/home/mw/input/${dataset.id}`;
-    navigator.clipboard.writeText(path);
-    setCopiedPath(true);
-    showToast(`已复制挂载路径: ${path}`);
-    setTimeout(() => setCopiedPath(false), 2500);
-  };
-
-  const toggleMount = () => {
-    const nextState = !isMounted;
-    setIsMounted(nextState);
-    if (nextState) {
-      showToast(`已成功将数据集【${dataset.name}】挂载到当前开发容器！路径: ${dataset.mountPath || '/home/mw/input/' + dataset.id}`);
+  const handleShare = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href);
+      showToast('已复制数据集公开分享链接到剪贴板！');
     } else {
-      showToast(`已从容器卸载数据集【${dataset.name}】`);
-    }
-  };
-
-  const toggleLike = () => {
-    if (isLiked) {
-      setIsLiked(false);
-      setLikesCount(prev => Math.max(0, prev - 1));
-      showToast('已取消点赞');
-    } else {
-      setIsLiked(true);
-      setLikesCount(prev => prev + 1);
-      showToast('感谢点赞！已记录您的支持');
-    }
-  };
-
-  const toggleFav = () => {
-    if (isFavorite) {
-      setIsFavorite(false);
-      setFavoritesCount(prev => Math.max(0, prev - 1));
-      showToast('已从收藏夹移除');
-    } else {
-      setIsFavorite(true);
-      setFavoritesCount(prev => prev + 1);
-      showToast('已收藏至【我的资产 - 我的收藏】');
+      showToast('已生成数据集分享链接！');
     }
   };
 
@@ -139,11 +91,10 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack })
     }
     const newComment: DatasetCommentItem = {
       id: `c_${Date.now()}`,
-      userName: '极客开发者（当前用户）',
+      userName: '当前登录用户',
       userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
       time: '刚刚',
-      content: newCommentText.trim(),
-      likes: 0
+      content: newCommentText.trim()
     };
     setCommentsList(prev => [newComment, ...prev]);
     setNewCommentText('');
@@ -161,7 +112,7 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack })
             ...replies,
             {
               id: `r_${Date.now()}`,
-              userName: '极客开发者（当前用户）',
+              userName: '当前登录用户',
               userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
               time: '刚刚',
               content: replyText.trim()
@@ -183,6 +134,11 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack })
     return Object.values(row).some(val => String(val).toLowerCase().includes(q));
   });
 
+  const modalitiesText = dataset.modalities?.join('、') || dataset.modalityCategory || '表格数据';
+  const taskTypesText = dataset.taskTypes?.join('、') || dataset.taskType || '分类任务';
+  const domainsList = dataset.domains || dataset.domainTags || [];
+  const formatsText = dataset.formats?.join(' / ') || dataset.fileFormats || dataset.format || 'CSV';
+
   return (
     <div className="space-y-6 select-none animate-fade-in max-w-7xl mx-auto pb-16">
       
@@ -190,10 +146,10 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack })
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white border border-slate-200/80 text-xs font-bold text-slate-700 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50/50 shadow-2xs transition cursor-pointer"
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white border border-slate-200/80 text-xs font-bold text-slate-700 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50/50 shadow-2xs transition cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>返回数据集列表</span>
+          <span>返回数据集广场</span>
         </button>
 
         <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
@@ -209,37 +165,20 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack })
           
           {/* Left info */}
           <div className="space-y-3 flex-1 min-w-0">
-            {/* Repo path & Author badge */}
-            <div className="flex flex-wrap items-center gap-2.5">
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 border border-slate-200 text-xs font-mono font-bold text-slate-700">
-                <Database className="w-3.5 h-3.5 text-blue-600" />
-                <span>{dataset.repoPath || `${dataset.author}/${dataset.id}`}</span>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(dataset.repoPath || dataset.name);
-                    showToast('已复制数据集仓库路径');
-                  }}
-                  className="hover:text-blue-600 ml-1 p-0.5"
-                  title="复制路径"
-                >
-                  <Copy className="w-3 h-3 text-slate-400 hover:text-slate-700" />
-                </button>
-              </div>
+            {/* Badges: Modality, Task Type, Format */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-3 py-1 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200/80 text-xs font-bold flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5" />
+                <span>{modalitiesText}</span>
+              </span>
 
-              {dataset.modalityCategory && (
-                <span className="px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-200/80 text-xs font-bold">
-                  {dataset.modalityCategory}
-                </span>
-              )}
+              <span className="px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-xs font-bold flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5" />
+                <span>{taskTypesText}</span>
+              </span>
 
-              {dataset.taskType && (
-                <span className="px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-xs font-bold">
-                  {dataset.taskType}
-                </span>
-              )}
-
-              <span className="px-2.5 py-1 rounded-xl bg-slate-100 text-slate-600 text-xs font-medium">
-                {dataset.license || '开源协议'}
+              <span className="px-3 py-1 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 text-xs font-mono font-bold">
+                {formatsText}
               </span>
             </div>
 
@@ -248,45 +187,43 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack })
               {dataset.name}
             </h1>
 
-            {/* Author meta & Date */}
+            {/* Brief Introduction */}
+            {dataset.brief && (
+              <p className="text-xs text-slate-600 font-medium leading-relaxed bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                {dataset.brief}
+              </p>
+            )}
+
+            {/* Metadata Chips: Update Time, Views, Downloads */}
             <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 font-medium pt-1">
-              <div className="flex items-center gap-2">
-                <img
-                  src={dataset.authorAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
-                  alt={dataset.author}
-                  className="w-5 h-5 rounded-full object-cover ring-1 ring-slate-200"
-                />
-                <span className="font-bold text-slate-800">{dataset.author}</span>
-                {dataset.authorOrg && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-normal">
-                    {dataset.authorOrg}
-                  </span>
-                )}
+              <div className="flex items-center gap-1.5 text-slate-500">
+                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                <span>更新时间：{dataset.updatedAt}</span>
               </div>
 
-              <div className="flex items-center gap-1 text-slate-400">
-                <Calendar className="w-3.5 h-3.5" />
-                <span>更新于 {dataset.updatedAt}</span>
-                {dataset.relativeTime && <span>({dataset.relativeTime})</span>}
+              <div className="flex items-center gap-1.5 text-slate-500">
+                <HardDrive className="w-3.5 h-3.5 text-slate-400" />
+                <span>数据大小：<strong className="font-mono text-slate-800">{dataset.fileSize || dataset.scale || '0 B'}</strong></span>
               </div>
 
               <div className="flex items-center gap-3 text-slate-400">
                 <span className="flex items-center gap-1">
-                  <Eye className="w-3.5 h-3.5" /> {dataset.viewsCount ?? 72} 浏览
+                  <Eye className="w-3.5 h-3.5" /> {dataset.viewsCount ?? 0} 次浏览
                 </span>
                 <span className="flex items-center gap-1">
-                  <Download className="w-3.5 h-3.5" /> {dataset.downloadCount ?? 9} 下载
+                  <Download className="w-3.5 h-3.5" /> {dataset.downloadCount ?? 0} 次下载
                 </span>
               </div>
             </div>
 
             {/* Domain Tags */}
-            {dataset.domainTags && dataset.domainTags.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5 pt-2">
-                {dataset.domainTags.map(tag => (
+            {domainsList.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[11px] text-slate-400 font-medium">行业领域：</span>
+                {domainsList.map(tag => (
                   <span
                     key={tag}
-                    className="px-2.5 py-0.5 rounded-lg bg-slate-100/90 text-slate-600 text-[11px] font-bold"
+                    className="px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-bold"
                   >
                     #{tag}
                   </span>
@@ -296,74 +233,24 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack })
           </div>
 
           {/* Right Action Buttons */}
-          <div className="flex flex-wrap lg:flex-col items-center lg:items-end gap-3 shrink-0">
-            <div className="flex items-center gap-2">
-              
-              {/* Like Button */}
-              <button
-                onClick={toggleLike}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 cursor-pointer ${
-                  isLiked 
-                    ? 'bg-rose-50 border-rose-200 text-rose-600 shadow-2xs' 
-                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <Heart className={`w-4 h-4 ${isLiked ? 'fill-rose-600 text-rose-600' : 'text-slate-400'}`} />
-                <span>{likesCount}</span>
-              </button>
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            {/* Share Button */}
+            <button
+              onClick={handleShare}
+              className="px-4 py-2.5 rounded-xl text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition flex items-center gap-1.5 cursor-pointer bg-white shadow-2xs"
+            >
+              <Share2 className="w-4 h-4 text-slate-400" />
+              <span>分享</span>
+            </button>
 
-              {/* Favorite Button */}
-              <button
-                onClick={toggleFav}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 cursor-pointer ${
-                  isFavorite 
-                    ? 'bg-amber-50 border-amber-200 text-amber-600 shadow-2xs' 
-                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <Bookmark className={`w-4 h-4 ${isFavorite ? 'fill-amber-600 text-amber-600' : 'text-slate-400'}`} />
-                <span>{favoritesCount}</span>
-              </button>
-
-              {/* Download Package */}
-              <button
-                onClick={() => showToast(`已启动下载任务【${dataset.name}】(${dataset.fileSize || dataset.scale})`)}
-                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition flex items-center gap-2 cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>下载 ({dataset.fileSize || dataset.scale || '完整包'})</span>
-              </button>
-
-              {/* Direct Mount Button */}
-              <button
-                onClick={toggleMount}
-                className={`px-4 py-2 rounded-xl text-xs font-bold shadow-xs transition flex items-center gap-2 cursor-pointer ${
-                  isMounted
-                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white ring-2 ring-emerald-300'
-                    : 'bg-blue-600 hover:bg-blue-500 text-white ring-2 ring-blue-300'
-                }`}
-              >
-                <HardDrive className="w-3.5 h-3.5" />
-                <span>{isMounted ? '已挂载至容器' : '直接挂载'}</span>
-              </button>
-            </div>
-
-            {/* Mount Path snippet */}
-            <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 font-mono">
-              <span className="text-slate-400">挂载路径:</span>
-              <span className="font-bold text-slate-900 truncate max-w-[200px]">
-                {dataset.mountPath || `/home/mw/input/${dataset.id}`}
-              </span>
-              <button
-                onClick={handleCopyMountPath}
-                className="text-blue-600 hover:text-blue-700 p-0.5 cursor-pointer font-sans text-xs font-bold flex items-center gap-0.5"
-                title="复制挂载路径"
-              >
-                {copiedPath ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                <span>{copiedPath ? '已复制' : '复制'}</span>
-              </button>
-            </div>
-
+            {/* Download Package */}
+            <button
+              onClick={() => showToast(`已启动数据集文件包下载【${dataset.name}】(${dataset.fileSize || dataset.scale || '完整包'})`)}
+              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-sm shadow-indigo-500/20 transition flex items-center gap-2 cursor-pointer"
+            >
+              <Download className="w-4 h-4" />
+              <span>下载完整数据 ({dataset.fileSize || dataset.scale || '完整包'})</span>
+            </button>
           </div>
 
         </div>
@@ -383,7 +270,7 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack })
                 onClick={() => setActiveTab(tab.key as any)}
                 className={`pb-2 px-3 border-b-2 flex items-center gap-2 transition cursor-pointer text-sm ${
                   isActive
-                    ? 'border-blue-600 text-blue-600 font-black'
+                    ? 'border-indigo-600 text-indigo-600 font-black'
                     : 'border-transparent text-slate-500 hover:text-slate-800'
                 }`}
               >
@@ -391,7 +278,7 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack })
                 <span>{tab.label}</span>
                 {tab.count !== undefined && (
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'
+                    isActive ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'
                   }`}>
                     {tab.count}
                   </span>
@@ -405,170 +292,25 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack })
 
       {/* ================= TAB 1: 概述 (Overview) ================= */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 md:p-8 shadow-2xs space-y-4">
+          <div className="flex items-center gap-2 text-slate-900 font-black text-sm pb-3 border-b border-slate-100">
+            <FileText className="w-4 h-4 text-indigo-600" />
+            <span>数据描述</span>
+          </div>
           
-          {/* Main 2 Cols Content */}
-          <div className="lg:col-span-2 space-y-6">
-            
-            {/* Background Section */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-2xs space-y-3">
-              <div className="flex items-center gap-2 text-slate-900 font-black text-sm">
-                <div className="w-2 h-4 rounded-full bg-blue-600" />
-                <span>数据背景</span>
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                {dataset.backgroundDesc || dataset.description || '本项目数据集依托真实业务环境与仿真数据沉淀构建，旨在提供高质量的标准训练与分析语料。'}
-              </p>
-            </div>
-
-            {/* Data Description Section */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-2xs space-y-3">
-              <div className="flex items-center gap-2 text-slate-900 font-black text-sm">
-                <div className="w-2 h-4 rounded-full bg-emerald-600" />
-                <span>数据描述</span>
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                {dataset.dataDesc || '数据采用高内聚、弱耦合的范式组织，示例数据是完整数据的子集，可以在 Excel 中直接查看或使用 Python/R/PowerBI 等工具进行批量流式处理。字段命名规范且结构符合真实商业逻辑。'}
-              </p>
-              
-              {/* Quick file stats chips */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-[10px] text-slate-400 font-bold uppercase">文件大小</div>
-                  <div className="text-sm font-black text-slate-900 mt-0.5">{dataset.fileSize || dataset.scale || '267.5 MB'}</div>
-                </div>
-                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-[10px] text-slate-400 font-bold uppercase">包含文件数</div>
-                  <div className="text-sm font-black text-slate-900 mt-0.5">{dataset.filesCount || filesList.length} 个子文件</div>
-                </div>
-                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-[10px] text-slate-400 font-bold uppercase">主要格式</div>
-                  <div className="text-sm font-black text-slate-900 mt-0.5">{dataset.fileFormats || dataset.format || 'CSV / XLSX'}</div>
-                </div>
-                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-[10px] text-slate-400 font-bold uppercase">语种 / 区域</div>
-                  <div className="text-sm font-black text-slate-900 mt-0.5">{dataset.language || '中文'}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Data Source Section */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-2xs space-y-3">
-              <div className="flex items-center gap-2 text-slate-900 font-black text-sm">
-                <div className="w-2 h-4 rounded-full bg-purple-600" />
-                <span>数据来源</span>
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                {dataset.sourceDesc || '数据由开源社区贡献者及专业机构联合脱敏整理，通过多轮规则过滤与隐私擦除验证，确保合规与可用性。'}
-              </p>
-            </div>
-
-            {/* Problem & Scenarios Section */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-2xs space-y-3">
-              <div className="flex items-center gap-2 text-slate-900 font-black text-sm">
-                <div className="w-2 h-4 rounded-full bg-amber-500" />
-                <span>该数据能解决什么问题？适用于什么场景</span>
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                {dataset.problemDesc || '适用于大模型垂直领域微调、知识库 RAG 向量切片构建、智能体工具调用测试与专业数据可视化看板建模。'}
-              </p>
-            </div>
-
+          {/* Render Backend Markdown Description */}
+          <div className="prose prose-sm prose-slate max-w-none text-slate-700 text-xs leading-relaxed">
+            <Markdown>
+              {dataset.description || dataset.brief || '暂无数据描述。'}
+            </Markdown>
           </div>
-
-          {/* Right Sidebar Metadata */}
-          <div className="space-y-6">
-            
-            {/* Quick Python Integration Code Card */}
-            <div className="bg-slate-900 rounded-3xl border border-slate-800 p-6 text-white space-y-4 shadow-xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-bold text-blue-400">
-                  <Code2 className="w-4 h-4" />
-                  <span>Python / Pandas 快速读取</span>
-                </div>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">
-                  Python 3.10+
-                </span>
-              </div>
-
-              <pre className="p-3.5 rounded-2xl bg-slate-950/80 text-[11px] font-mono text-emerald-300 overflow-x-auto leading-relaxed border border-slate-800">
-{`import pandas as pd
-
-# 1. 直接通过挂载路径读取
-path = "${dataset.mountPath || '/home/mw/input/' + dataset.id}/${filesList[0]?.name || 'data.csv'}"
-df = pd.read_csv(path)
-
-# 2. 查看前 5 行样本
-print(f"数据总维度: {df.shape}")
-print(df.head())`}
-              </pre>
-
-              <button
-                onClick={() => {
-                  const snippet = `import pandas as pd\npath = "${dataset.mountPath || '/home/mw/input/' + dataset.id}/${filesList[0]?.name || 'data.csv'}"\ndf = pd.read_csv(path)\nprint(df.head())`;
-                  navigator.clipboard.writeText(snippet);
-                  showToast('已复制代码片段到剪贴板！');
-                }}
-                className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-              >
-                <Copy className="w-3.5 h-3.5" />
-                <span>复制代码</span>
-              </button>
-            </div>
-
-            {/* Dataset Metadata details */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-2xs space-y-4">
-              <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                <Info className="w-3.5 h-3.5 text-blue-600" />
-                <span>元数据属性</span>
-              </h3>
-
-              <div className="space-y-3 text-xs">
-                <div className="flex justify-between py-1.5 border-b border-slate-100">
-                  <span className="text-slate-400 font-medium">技术领域:</span>
-                  <span className="font-bold text-slate-800">{dataset.techDomain || dataset.theme || '数据挖掘'}</span>
-                </div>
-                <div className="flex justify-between py-1.5 border-b border-slate-100">
-                  <span className="text-slate-400 font-medium">任务类型:</span>
-                  <span className="font-bold text-slate-800">{dataset.taskType || '表格回归'}</span>
-                </div>
-                <div className="flex justify-between py-1.5 border-b border-slate-100">
-                  <span className="text-slate-400 font-medium">模态大类:</span>
-                  <span className="font-bold text-slate-800">{dataset.modalityCategory || '表格数据'}</span>
-                </div>
-                <div className="flex justify-between py-1.5 border-b border-slate-100">
-                  <span className="text-slate-400 font-medium">许可证协议:</span>
-                  <span className="font-bold text-blue-600">{dataset.license || 'CC-BY-4.0'}</span>
-                </div>
-                <div className="flex justify-between py-1.5 border-b border-slate-100">
-                  <span className="text-slate-400 font-medium">容器挂载状态:</span>
-                  <span className={`font-bold ${isMounted ? 'text-emerald-600' : 'text-slate-500'}`}>
-                    {isMounted ? '● 已挂载就绪' : '○ 未挂载'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Recommended Workflow / Agents Banner */}
-            <div className="bg-gradient-to-br from-blue-50/80 to-indigo-50/80 rounded-3xl border border-blue-200/80 p-6 space-y-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-blue-900">
-                <Sparkles className="w-4 h-4 text-blue-600" />
-                <span>智能体推荐适配</span>
-              </div>
-              <p className="text-[11px] text-blue-800/80 font-medium leading-relaxed">
-                该数据集非常契合【数据洞察与可视化图表生成 Agent】及【销售漏斗分析工作流】，可一键编排接入进行智能报表生成。
-              </p>
-            </div>
-
-          </div>
-
         </div>
       )}
 
       {/* ================= TAB 2: 文件 (Files) ================= */}
       {activeTab === 'files' && (
         <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[640px]">
+          <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[600px]">
             
             {/* Left Col: File Explorer Tree (4 Cols) */}
             <div className="lg:col-span-4 border-r border-slate-200/80 p-4 space-y-4 bg-slate-50/60">
@@ -581,7 +323,7 @@ print(df.head())`}
                   placeholder="搜索子文件..."
                   value={fileSearchQuery}
                   onChange={(e) => setFileSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  className="w-full pl-8 pr-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
@@ -591,7 +333,7 @@ print(df.head())`}
               </div>
 
               {/* Files Tree List */}
-              <div className="space-y-1.5 overflow-y-auto max-h-[520px]">
+              <div className="space-y-1.5 overflow-y-auto max-h-[500px]">
                 {filesList
                   .filter(f => f.name.toLowerCase().includes(fileSearchQuery.toLowerCase()))
                   .map(f => {
@@ -602,8 +344,8 @@ print(df.head())`}
                         onClick={() => setSelectedFileId(f.id)}
                         className={`w-full text-left p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 cursor-pointer ${
                           isSelected
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                            : 'bg-white border-slate-200/80 text-slate-700 hover:border-blue-200 hover:bg-slate-100/80'
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                            : 'bg-white border-slate-200/80 text-slate-700 hover:border-indigo-200 hover:bg-slate-100/80'
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
@@ -620,14 +362,14 @@ print(df.head())`}
                             <div className={`text-xs font-bold truncate ${isSelected ? 'text-white' : 'text-slate-900'}`}>
                               {f.name}
                             </div>
-                            <div className={`text-[10px] font-medium ${isSelected ? 'text-blue-100' : 'text-slate-400'}`}>
+                            <div className={`text-[10px] font-medium ${isSelected ? 'text-indigo-100' : 'text-slate-400'}`}>
                               {f.rowsCount ? `${f.rowsCount.toLocaleString()} 行 · ` : ''}{f.colsCount ? `${f.colsCount} 列` : ''}
                             </div>
                           </div>
                         </div>
 
                         <div className={`text-[11px] font-mono shrink-0 font-bold ${
-                          isSelected ? 'text-blue-100' : 'text-slate-500'
+                          isSelected ? 'text-indigo-100' : 'text-slate-500'
                         }`}>
                           {f.size}
                         </div>
@@ -646,7 +388,7 @@ print(df.head())`}
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-black text-slate-900">{currentFile?.name}</span>
-                    <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold">
+                    <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold">
                       {currentFile?.format?.toUpperCase() || 'CSV'}
                     </span>
                     <span className="text-xs text-slate-400 font-mono">编码: {currentFile?.encoding || 'UTF-8'}</span>
@@ -654,7 +396,7 @@ print(df.head())`}
                   <div className="text-xs text-slate-500 font-medium">
                     文件大小: <span className="font-bold text-slate-800">{currentFile?.size}</span> · 
                     数据规模: <span className="font-bold text-slate-800">{currentFile?.rowsCount?.toLocaleString() || '10,000+'}</span> 行 · 
-                    字段数: <span className="font-bold text-slate-800">{currentFile?.colsCount || (currentFile?.headers?.length || 8)}</span> 列
+                    字段数: <span className="font-bold text-slate-800">{currentFile?.colsCount || (currentFile?.headers?.length || 6)}</span> 列
                   </div>
                 </div>
 
@@ -667,7 +409,7 @@ print(df.head())`}
                       placeholder="过滤表格样本..."
                       value={tableSearchQuery}
                       onChange={(e) => setTableSearchQuery(e.target.value)}
-                      className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-blue-500"
+                      className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                     />
                   </div>
 
@@ -682,7 +424,7 @@ print(df.head())`}
               </div>
 
               {/* Table Data View */}
-              <div className="flex-1 overflow-x-auto border border-slate-200/80 rounded-2xl bg-white shadow-2xs max-h-[480px]">
+              <div className="flex-1 overflow-x-auto border border-slate-200/80 rounded-2xl bg-white shadow-2xs max-h-[440px]">
                 {currentFile?.headers && currentFile.headers.length > 0 ? (
                   <table className="w-full text-left text-xs border-collapse">
                     <thead className="bg-slate-50 text-slate-700 font-extrabold sticky top-0 z-10 border-b border-slate-200 shadow-2xs">
@@ -699,7 +441,7 @@ print(df.head())`}
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {filteredSampleRows.map((row, idx) => (
-                        <tr key={idx} className="hover:bg-blue-50/40 transition">
+                        <tr key={idx} className="hover:bg-indigo-50/40 transition">
                           <td className="py-2 px-3 border-r border-slate-100 text-center text-slate-400 font-mono text-[10px]">
                             {idx + 1}
                           </td>
@@ -715,7 +457,7 @@ print(df.head())`}
                 ) : (
                   <div className="p-8 text-center text-slate-400 text-xs space-y-2">
                     <Table className="w-8 h-8 mx-auto text-slate-300" />
-                    <div>当前文件为二进制或非结构化格式，请挂载到容器后直接读取解析。</div>
+                    <div>当前文件为非结构化格式，请下载后使用对应工具读取解析。</div>
                   </div>
                 )}
               </div>
@@ -723,10 +465,10 @@ print(df.head())`}
               {/* Footer row counter */}
               <div className="flex items-center justify-between text-xs text-slate-400 pt-2 font-medium">
                 <div>
-                  展示前 <span className="font-bold text-slate-700">{filteredSampleRows.length}</span> 条采样样本（完整数据共 {currentFile?.rowsCount?.toLocaleString() || '260万+'} 条）
+                  展示前 <span className="font-bold text-slate-700">{filteredSampleRows.length}</span> 条采样样本（完整数据共 {currentFile?.rowsCount?.toLocaleString() || '10,000+'} 条）
                 </div>
-                <div className="text-[11px] text-blue-600 font-bold">
-                  ● 真实结构化视图已就绪
+                <div className="text-[11px] text-indigo-600 font-bold">
+                  ● 结构化样本视图已就绪
                 </div>
               </div>
 
@@ -743,26 +485,26 @@ print(df.head())`}
           {/* Post Comment Card */}
           <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-2xs space-y-4">
             <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
-              <MessageSquare className="w-4 h-4 text-blue-600" />
+              <MessageSquare className="w-4 h-4 text-indigo-600" />
               <span>发表讨论与问题反馈</span>
             </div>
 
             <textarea
               rows={3}
-              placeholder="分享您对该数据集的使用心得、清洗体验或向作者提问..."
+              placeholder="分享您对该数据集的使用心得、清洗体验或向发布者反馈..."
               value={newCommentText}
               onChange={(e) => setNewCommentText(e.target.value)}
-              className="w-full p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white leading-relaxed resize-none"
+              className="w-full p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white leading-relaxed resize-none"
             />
 
             <div className="flex items-center justify-between pt-1">
               <span className="text-[11px] text-slate-400">请保持友好交流，文明用语</span>
               <button
                 onClick={handleAddComment}
-                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-xs transition flex items-center gap-2 cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-xs transition flex items-center gap-2 cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>发布评论</span>
+                <span>发布讨论</span>
               </button>
             </div>
           </div>
@@ -770,8 +512,8 @@ print(df.head())`}
           {/* Comments List */}
           <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-2xs space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-xs font-black text-slate-900">全部评论 ({commentsList.length})</h3>
-              <span className="text-xs text-slate-400">按时间排序</span>
+              <h3 className="text-xs font-black text-slate-900">全部讨论 ({commentsList.length})</h3>
+              <span className="text-xs text-slate-400">按时间倒序</span>
             </div>
 
             <div className="space-y-6">
@@ -791,14 +533,6 @@ print(df.head())`}
                         <div className="text-[10px] text-slate-400">{comment.time}</div>
                       </div>
                     </div>
-
-                    <button
-                      onClick={() => showToast(`已点赞 ${comment.userName} 的评论`)}
-                      className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-rose-600 transition"
-                    >
-                      <ThumbsUp className="w-3.5 h-3.5" />
-                      <span>{comment.likes || 0}</span>
-                    </button>
                   </div>
 
                   {/* Comment Text */}
@@ -810,7 +544,7 @@ print(df.head())`}
                   <div className="pl-9 flex items-center gap-3 text-[11px]">
                     <button
                       onClick={() => setReplyTargetId(replyTargetId === comment.id ? null : comment.id)}
-                      className="text-blue-600 hover:text-blue-700 font-bold cursor-pointer"
+                      className="text-indigo-600 hover:text-indigo-700 font-bold cursor-pointer"
                     >
                       {replyTargetId === comment.id ? '取消回复' : '回复'}
                     </button>
@@ -824,18 +558,18 @@ print(df.head())`}
                         placeholder={`回复 @${comment.userName}...`}
                         value={replyText}
                         onChange={(e) => setReplyText(e.target.value)}
-                        className="w-full p-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
+                        className="w-full p-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-indigo-500"
                       />
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => setReplyTargetId(null)}
-                          className="px-3 py-1 rounded-lg text-xs text-slate-500 hover:bg-slate-200"
+                          className="px-3 py-1 rounded-lg text-xs text-slate-500 hover:bg-slate-200 cursor-pointer"
                         >
                           取消
                         </button>
                         <button
                           onClick={() => handleAddReply(comment.id)}
-                          className="px-4 py-1 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-500"
+                          className="px-4 py-1 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-500 cursor-pointer"
                         >
                           发送
                         </button>
@@ -856,11 +590,6 @@ print(df.head())`}
                                 className="w-5 h-5 rounded-full object-cover ring-1 ring-slate-200"
                               />
                               <span className="font-bold text-slate-800">{reply.userName}</span>
-                              {reply.userName === dataset.author && (
-                                <span className="px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 text-[10px] font-bold">
-                                  作者
-                                </span>
-                              )}
                             </div>
                             <span className="text-[10px] text-slate-400">{reply.time}</span>
                           </div>
@@ -884,3 +613,4 @@ print(df.head())`}
     </div>
   );
 };
+

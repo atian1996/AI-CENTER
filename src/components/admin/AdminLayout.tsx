@@ -9,6 +9,8 @@ import { ComputeOrderAdminView } from './compute/ComputeOrderAdminView';
 import { ComputeInstanceMonitorView } from './compute/ComputeInstanceMonitorView';
 import { ComputeStatsAdminView } from './compute/ComputeStatsAdminView';
 import { ComputeSettlementAdminView } from './compute/ComputeSettlementAdminView';
+import { AgentAdminViews } from './agent/AgentAdminViews';
+import { DatasetAdminViews } from './dataset/DatasetAdminViews';
 import {
   LayoutDashboard,
   Store,
@@ -35,6 +37,7 @@ import {
   FileCheck,
   ShieldAlert,
   Database,
+  Tag,
   Layers,
   Terminal,
   Zap,
@@ -43,7 +46,8 @@ import {
   AlertCircle,
   Check,
   Coins,
-  Receipt
+  Receipt,
+  Bot
 } from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {
@@ -65,6 +69,10 @@ export const AdminLayout: React.FC = () => {
   const [taskMenuExpanded, setTaskMenuExpanded] = useState<boolean>(true);
   // Compute sub-menu collapse state
   const [computeMenuExpanded, setComputeMenuExpanded] = useState<boolean>(true);
+  // Agent sub-menu collapse state
+  const [agentMenuExpanded, setAgentMenuExpanded] = useState<boolean>(true);
+  // Dataset sub-menu collapse state
+  const [datasetMenuExpanded, setDatasetMenuExpanded] = useState<boolean>(true);
 
   // Search keyword inside admin view
   const [adminSearch, setAdminSearch] = useState('');
@@ -76,20 +84,71 @@ export const AdminLayout: React.FC = () => {
 
   const isTaskSubMenu = activeAdminMenu === 'publish_audit' || activeAdminMenu === 'task_monitor';
   const isComputeSubMenu = activeAdminMenu.startsWith('compute_');
+  const isAgentSubMenu = ['agent_list', 'agent_orders', 'agent_stats', 'agent_tags'].includes(activeAdminMenu);
+  const isDatasetSubMenu = ['dataset_list', 'dataset_tags', 'dataset_stats'].includes(activeAdminMenu);
 
   // Navigation Items
   const mainNav = [
     {
       id: 'operations' as AdminMenuKey,
       label: '运营中心',
-      icon: <LayoutDashboard className="w-4 h-4" />,
-      badge: 'PRO'
+      icon: <LayoutDashboard className="w-4 h-4" />
     },
     {
       id: 'marketplace_admin' as AdminMenuKey,
       label: 'AI集市管理',
-      icon: <Store className="w-4 h-4" />,
-      count: agents.length + models.length
+      icon: <Store className="w-4 h-4" />
+    },
+    {
+      id: 'agent_admin_group',
+      label: 'Agent管理',
+      icon: <Bot className="w-4 h-4" />,
+      isGroup: true,
+      children: [
+        {
+          id: 'agent_list' as AdminMenuKey,
+          label: 'Agent管理',
+          icon: <Bot className="w-3.5 h-3.5" />
+        },
+        {
+          id: 'agent_orders' as AdminMenuKey,
+          label: 'Agent订单管理',
+          icon: <Receipt className="w-3.5 h-3.5" />
+        },
+        {
+          id: 'agent_stats' as AdminMenuKey,
+          label: '用量统计',
+          icon: <Activity className="w-3.5 h-3.5" />
+        },
+        {
+          id: 'agent_tags' as AdminMenuKey,
+          label: '分类标签管理',
+          icon: <Layers className="w-3.5 h-3.5" />
+        }
+      ]
+    },
+    {
+      id: 'dataset_admin_group',
+      label: '数据集管理',
+      icon: <Database className="w-4 h-4" />,
+      isGroup: true,
+      children: [
+        {
+          id: 'dataset_list' as AdminMenuKey,
+          label: '数据集管理',
+          icon: <Database className="w-3.5 h-3.5" />
+        },
+        {
+          id: 'dataset_tags' as AdminMenuKey,
+          label: '分类标签管理',
+          icon: <Tag className="w-3.5 h-3.5" />
+        },
+        {
+          id: 'dataset_stats' as AdminMenuKey,
+          label: '数据集使用统计',
+          icon: <Activity className="w-3.5 h-3.5" />
+        }
+      ]
     },
     {
       id: 'task_admin_group',
@@ -100,14 +159,12 @@ export const AdminLayout: React.FC = () => {
         {
           id: 'publish_audit' as AdminMenuKey,
           label: '发布审核',
-          icon: <FileCheck className="w-3.5 h-3.5" />,
-          badge: '待审 3'
+          icon: <FileCheck className="w-3.5 h-3.5" />
         },
         {
           id: 'task_monitor' as AdminMenuKey,
           label: '任务监控',
-          icon: <Activity className="w-3.5 h-3.5" />,
-          badge: `${tasks.length} 进行中`
+          icon: <Activity className="w-3.5 h-3.5" />
         }
       ]
     },
@@ -120,8 +177,7 @@ export const AdminLayout: React.FC = () => {
         {
           id: 'compute_spec' as AdminMenuKey,
           label: '规格管理',
-          icon: <Cpu className="w-3.5 h-3.5" />,
-          badge: `${computeSpecs.length}款`
+          icon: <Cpu className="w-3.5 h-3.5" />
         },
         {
           id: 'compute_image' as AdminMenuKey,
@@ -141,8 +197,7 @@ export const AdminLayout: React.FC = () => {
         {
           id: 'compute_instance' as AdminMenuKey,
           label: '运行实例监控',
-          icon: <Activity className="w-3.5 h-3.5" />,
-          badge: '实时'
+          icon: <Activity className="w-3.5 h-3.5" />
         },
         {
           id: 'compute_stat' as AdminMenuKey,
@@ -159,8 +214,7 @@ export const AdminLayout: React.FC = () => {
     {
       id: 'competition_admin' as AdminMenuKey,
       label: '赛事管理',
-      icon: <Trophy className="w-4 h-4" />,
-      count: competitions.length
+      icon: <Trophy className="w-4 h-4" />
     },
     {
       id: 'system_admin' as AdminMenuKey,
@@ -185,6 +239,55 @@ export const AdminLayout: React.FC = () => {
           subtitle: '管理平台智能体 (Agent)、大模型、精选数据集与开发者扩展技能插件',
           category: '资产管理',
           crumb: ['后台管理', 'AI集市管理']
+        };
+      case 'agent_list':
+        return {
+          title: 'Agent 列表及配置',
+          subtitle: '发布与维护全平台智能体、设置上架属性、配置接口网关与计费单价套餐',
+          category: '智能体管理',
+          crumb: ['后台管理', 'Agent管理', '列表及配置']
+        };
+      case 'agent_orders':
+        return {
+          title: 'Agent 订单管理',
+          subtitle: '追踪用户订购套餐流水、流式计费消耗流水、周期会员卡开通及结算日志',
+          category: '智能体管理',
+          crumb: ['后台管理', 'Agent管理', '订单管理']
+        };
+      case 'agent_stats':
+        return {
+          title: '智能体用量统计',
+          subtitle: '全站智能体 API 调用频次、Token 吞吐流量、热门排行与营收统计大盘',
+          category: '用量与统计',
+          crumb: ['后台管理', 'Agent管理', '用量统计']
+        };
+      case 'agent_tags':
+        return {
+          title: '分类标签管理',
+          subtitle: '动态维护技术形态、应用场景和行业垂直领域的动态元数据选项字典',
+          category: '元数据字典',
+          crumb: ['后台管理', 'Agent管理', '分类标签管理']
+        };
+      case 'dataset_list':
+        return {
+          title: '数据集管理',
+          subtitle: '全站开放数据集发布、多模态与任务类型元数据配置、文件大小自动识别及上下架状态管控',
+          category: '数据集管理',
+          crumb: ['后台管理', '数据集管理', '数据集管理']
+        };
+      case 'dataset_tags':
+        return {
+          title: '分类标签管理',
+          subtitle: '模态、任务类型、行业领域、文件格式等 4 大基础维度的元数据字典与关联引用管理',
+          category: '数据集管理',
+          crumb: ['后台管理', '数据集管理', '分类标签管理']
+        };
+      case 'dataset_stats':
+        return {
+          title: '数据集使用统计',
+          subtitle: '总数据集数、累计下载量、近7天热度趋势、Top 10 排行榜、模态与行业领域分布大盘',
+          category: '数据集管理',
+          crumb: ['后台管理', '数据集管理', '数据集使用统计']
         };
       case 'publish_audit':
         return {
@@ -314,20 +417,7 @@ export const AdminLayout: React.FC = () => {
               </div>
             </div>
 
-            {/* 返回前台快捷按钮 */}
-            <div className="p-3 border-b border-slate-800/60">
-              <button
-                id="admin-return-frontend-btn"
-                onClick={exitAdminMode}
-                className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/90 text-slate-300 hover:text-white border border-slate-700/70 text-xs font-bold transition duration-200 cursor-pointer group shadow-2xs"
-              >
-                <div className="flex items-center gap-2">
-                  <ArrowLeft className="w-3.5 h-3.5 text-indigo-400 group-hover:-translate-x-0.5 transition-transform" />
-                  <span>返回前台平台</span>
-                </div>
-                <span className="text-[10px] text-slate-400 group-hover:text-slate-200">门户 →</span>
-              </button>
-            </div>
+
 
             {/* 导航菜单列表 */}
             <nav className="p-3 space-y-1.5 overflow-y-auto max-h-[calc(100vh-260px)]">
@@ -339,11 +429,15 @@ export const AdminLayout: React.FC = () => {
                 if (item.isGroup && item.children) {
                   const isCompute = item.id === 'compute_admin_group';
                   const isTask = item.id === 'task_admin_group';
-                  const isGroupActive = isCompute ? isComputeSubMenu : isTaskSubMenu;
-                  const isExpanded = isCompute ? computeMenuExpanded : taskMenuExpanded;
+                  const isAgent = item.id === 'agent_admin_group';
+                  const isDataset = item.id === 'dataset_admin_group';
+                  const isGroupActive = isCompute ? isComputeSubMenu : isTask ? isTaskSubMenu : isAgent ? isAgentSubMenu : isDatasetSubMenu;
+                  const isExpanded = isCompute ? computeMenuExpanded : isTask ? taskMenuExpanded : isAgent ? agentMenuExpanded : datasetMenuExpanded;
                   const toggleExpanded = () => {
                     if (isCompute) setComputeMenuExpanded(!computeMenuExpanded);
                     if (isTask) setTaskMenuExpanded(!taskMenuExpanded);
+                    if (isAgent) setAgentMenuExpanded(!agentMenuExpanded);
+                    if (isDataset) setDatasetMenuExpanded(!datasetMenuExpanded);
                   };
 
                   return (
@@ -364,7 +458,6 @@ export const AdminLayout: React.FC = () => {
                           <span>{item.label}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <span className="text-[10px] text-slate-400 font-normal">{item.children.length} 项</span>
                           {isExpanded ? (
                             <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                           ) : (
@@ -393,13 +486,7 @@ export const AdminLayout: React.FC = () => {
                                   <span>{sub.icon}</span>
                                   <span>{sub.label}</span>
                                 </div>
-                                {sub.badge && (
-                                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
-                                    isSubActive ? 'bg-white/20 text-white' : 'bg-slate-800 text-amber-400 border border-slate-700'
-                                  }`}>
-                                    {sub.badge}
-                                  </span>
-                                )}
+
                               </button>
                             );
                           })}
@@ -429,20 +516,7 @@ export const AdminLayout: React.FC = () => {
                       <span>{item.label}</span>
                     </div>
 
-                    {item.badge && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
-                        isActive ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                      }`}>
-                        {item.badge}
-                      </span>
-                    )}
-                    {item.count !== undefined && !item.badge && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
-                        isActive ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'
-                      }`}>
-                        {item.count}
-                      </span>
-                    )}
+
                   </button>
                 );
               })}
@@ -564,6 +638,16 @@ export const AdminLayout: React.FC = () => {
             {activeAdminMenu === 'marketplace_admin' && <MarketplaceAdminView />}
             {activeAdminMenu === 'publish_audit' && <PublishAuditAdminView />}
             {activeAdminMenu === 'task_monitor' && <TaskMonitorAdminView />}
+            
+            {/* Agent管理 4 大核心子视图 */}
+            {['agent_list', 'agent_orders', 'agent_stats', 'agent_tags'].includes(activeAdminMenu) && (
+              <AgentAdminViews activeSubMenu={activeAdminMenu} />
+            )}
+
+            {/* 数据集管理 3 大核心子视图 */}
+            {['dataset_list', 'dataset_tags', 'dataset_stats'].includes(activeAdminMenu) && (
+              <DatasetAdminViews activeSubMenu={activeAdminMenu} />
+            )}
             
             {/* 算力管理 7 大核心模块 */}
             {activeAdminMenu === 'compute_spec' && <ComputeSpecAdminView />}

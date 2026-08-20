@@ -33,7 +33,7 @@ export type AgentCategory =
   | 'image' 
   | 'vertical';
 
-export type ModelTypeTag = '文本' | '图像' | '音频' | '视频' | 'Embedding' | '重排';
+export type ModelTypeTag = '文本' | '图像' | '音频' | '视频' | 'Embedding' | '重排' | '向量';
 
 // 用户信息与积分
 export interface UserProfile {
@@ -95,16 +95,18 @@ export interface AppNotification {
   id: string;
   title: string;
   content: string;
-  type: 'system' | 'interaction' | 'task' | 'points';
+  type: 'system' | 'interaction' | 'task' | 'points' | 'compute';
   time: string;
   read: boolean;
   targetTab?: MainTabType;
   targetId?: string;
+  actionLabel?: string;
+  actionType?: 'recharge' | 'link' | 'view';
 }
 
 // Agent 资产分类与形态筛选
 export type AppType = '工作流' | 'Chatflow' | '聊天助手' | 'Agent' | '文本生成应用';
-export type TechFormType = 'Chatbot' | 'Agent' | 'Chatflow' | 'Workflow' | '文本生成' | AppType;
+export type TechFormType = 'Chatbot' | 'Agent' | 'Chatflow' | 'Workflow' | '对话流' | '工作流' | '文本生成' | AppType;
 export type AppSceneType = '内容创作' | '数据分析' | '智能客服' | '办公助理' | '编程开发' | '营销推广' | '教育培训' | '行业垂直';
 export type IndustryDomainType = '政务' | '制造' | '零售' | '金融' | '医疗' | '教育' | '文旅' | '通用' | '企业' | '物流';
 export type PriceModeFilterType = 'all' | 'free' | 'token';
@@ -166,6 +168,26 @@ export interface AgentItem {
   isPurchased?: boolean;
   isDeveloped?: boolean;
   publishStatus?: 'published' | 'reviewing' | 'offline';
+  slogan?: string;
+  pricePerTenThousandTokens?: number;
+  linkedModel?: string;
+  subscribersCount?: number;
+  hasTrialQuota?: boolean;
+  trialQuotaVal?: number;
+  trialQuotaValidityDays?: number;
+  weekCardPrice?: number;
+  weekCardTokens?: number;
+  monthCardPrice?: number;
+  monthCardTokens?: number;
+  quarterCardPrice?: number;
+  quarterCardTokens?: number;
+  yearCardPrice?: number;
+  yearCardTokens?: number;
+  apiAddress?: string;
+  status?: '已上架' | '已停止新订阅' | '已下架' | '草稿';
+  freeTrialCount?: number; // 免费试用次数
+  categoryTags?: string[];
+  industryTags?: string[];
 }
 
 // Agent 订阅套餐定义
@@ -312,6 +334,24 @@ export interface DatasetItem {
   fields?: { name: string; type: string; desc: string }[];
   lineage?: string[];
   isPrivate?: boolean;
+  status?: '已上架' | '已下架' | '草稿';
+  brief?: string; // 一句话简介 (限50字)
+  modalities?: string[]; // 多选模态
+  taskTypes?: string[]; // 多选任务类型
+  domains?: string[]; // 多选行业领域
+  formats?: string[]; // 多选文件格式
+  lastDownloadTime?: string; // 最近一次下载时间
+}
+
+// 数据集分类标签项
+export interface DatasetTagItem {
+  id: string;
+  name: string;
+  dimension: 'modality' | 'taskType' | 'domain' | 'format';
+  count: number; // 关联数据集数量
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Skill 插件文件节点
@@ -505,6 +545,7 @@ export interface TaskItem {
   // 交付周期
   startTime: string; // YYYY-MM-DD HH:mm:ss
   endTime: string; // YYYY-MM-DD HH:mm:ss
+  deadline?: string; // 兼容字段
   remainingDays?: number; // 剩余天数
   
   // 发布者信息
@@ -612,15 +653,22 @@ export interface ImageCommentItem {
 export interface MyCustomImage {
   id: string;
   name: string;
-  status: 'compressing' | 'ready'; // '正在压缩镜像文件' | '已创建'
+  status: 'compressing' | 'ready' | 'failed' | 'available'; // '正在压缩镜像文件' | '已创建' / '可用' / '创建失败'
   size: string; // 如 "20.0 GB" 或 "0 B"
   authorName: string;
   authorAvatar?: string;
+  userId?: string;
+  userPhone?: string;
   createdAt: string; // 如 "2026-08-19 14:28"
   isPrivate: boolean; // 是否仅自己可见
   tags?: string[];
   description: string; // 镜像详情
   comments: ImageCommentItem[];
+  baseImage?: string; // 基础环境
+  lastUsedDays?: number; // 距离上次使用天数
+  lastUsedTime?: string;
+  refCount?: number; // 引用实例数
+  isViolating?: boolean; // 是否被标记为违规
 }
 
 export interface GPUInstance {
@@ -913,7 +961,31 @@ export type AdminMenuKey =
   | 'compute_settlement'  // 算力工坊 - 对账结算
   | 'compute_admin'       // 算力管理（兼容主入口）
   | 'competition_admin'   // 赛事管理
-  | 'system_admin';       // 系统管理
+  | 'system_admin'        // 系统管理
+  | 'agent_list'          // Agent管理 - 列表及配置
+  | 'agent_orders'        // Agent管理 - 订单管理
+  | 'agent_stats'         // Agent管理 - 用量统计
+  | 'agent_tags'          // Agent管理 - 分类标签管理
+  | 'dataset_list'        // 数据集管理 - 数据集列表及配置
+  | 'dataset_tags'        // 数据集管理 - 分类标签管理
+  | 'dataset_stats';      // 数据集管理 - 数据集使用统计
+
+export interface AgentOrderItem {
+  id: string; // 订单号 (系统生成)
+  userName: string; // 下单用户
+  userAvatar?: string;
+  agentId: string;
+  agentName: string;
+  orderType: '免费领取' | '按Token订阅' | '周卡' | '月卡' | '季卡' | '年卡';
+  orderAmount: number; // 实付金额
+  tokenAmount: number; // 包含的Token数
+  status: '已生效' | '已用完' | '已过期';
+  createdAt: string;
+  payTime: string;
+  startTime: string;
+  expireTime: string;
+  usedTokens: number;
+}
 
 // ==========================================
 // 算力工坊后台管理类型定义
@@ -1042,6 +1114,13 @@ export interface ComputePoolItem {
   distribution: GpuDistributionItem[];
   logs?: ResourcePoolLogItem[];
 
+  // 协议价格配置（平台与运营商结算协议单价）
+  agreedPricings?: {
+    gpuModel: string;
+    agreedPrice: number; // 元/卡时
+    effectiveDate: string; // 生效日期 YYYY-MM-DD
+  }[];
+
   gpuTypes?: string[]; // ["RTX 4090", "A100", "RTX 3060"]
   supportedSpecIds?: string[]; // 支持的规格ID列表
   supportedSpecNames?: string[]; // 支持的规格名称列表
@@ -1063,64 +1142,136 @@ export interface ComputePoolItem {
 // 4. 实例订单
 export type ComputeOrderStatus = '待支付' | '已支付' | '分配中' | '运行中' | '已停止' | '已释放' | '创建失败' | '异常';
 
+export interface ComputeOrderBillingLog {
+  id: string;
+  time: string;
+  type: '预扣冻结' | '按量扣费' | '包周期抵扣' | '存储保全费' | '计费变更调整' | '退款返还';
+  amount: number; // 正数为扣费，负数为退费
+  balanceAfter: number;
+  note: string;
+}
+
+export interface ComputeOrderBillingChange {
+  id: string;
+  changeTime: string;
+  oldBillingType: string;
+  newBillingType: string;
+  operator: string;
+  reason: string;
+  adjustedAmount?: number;
+}
+
+export interface ComputeOrderStatusTimeline {
+  time: string;
+  status: string;
+  title: string;
+  description: string;
+  operator?: string;
+}
+
 export interface ComputeOrderItem {
   id: string;
   orderNo?: string; // "INST-20260815-001"
   userId: string;
   userName: string;
   userAvatar?: string;
-  specName: string; // "RTX 4090"
+  userPhone?: string;
+  specName: string; // "RTX 4090 (单卡)"
   specDetail?: string; // "24GB显存 / 16核 / 60GB内存 / 750GB硬盘"
-  imageName: string; // "PyTorch 2.2.2 + CUDA 12.1"
+  gpuModel?: string; // "NVIDIA RTX 4090"
+  gpuCount?: number; // 1
+  imageName: string; // "PyTorch 2.3.1 + CUDA 12.1"
   billingType: '按量' | '日租' | '周租' | '月租' | '按量计费' | '包日' | '包周' | '包月' | string;
+  unitPrice?: number; // 单价，如 1.88 元/时 或 42.00 元/天
+  unitPriceLabel?: string; // "¥1.88 / 小时"
   orderAmount?: number; // 预付/冻结金额
+  pendingAmount?: number; // 待结算金额
   currentCost?: number; // 累计费用
-  totalCost: number; // 兼容 totalCost
+  totalCost: number; // 实际累计结算/扣款总额
+  refundAmount?: number; // 已退款金额
   status: ComputeOrderStatus | string;
   createTime?: string;
   createdAt: string;
-  startTime?: string;
+  payTime?: string; // 支付时间
+  startTime?: string; // 实例启动就绪时间
+  stopTime?: string; // 关机停止时间
+  releaseTime?: string; // 彻底释放时间
   runningHours?: string | number; // "14小时20分钟" 或 14.5
   runningDuration?: string; // "2小时15分钟"
-  operator: string; // "电信云-华东1"
+  operator: string; // 资源池或运营商 "电信云-华东1 (临港集群)"
+  poolId?: string;
   instanceId?: string;
   errorMessage?: string;
+  refundLogs?: {
+    id: string;
+    time: string;
+    amount: number;
+    reason: string;
+    operator: string;
+    status: '已退款' | '处理中' | '已拒绝';
+  }[];
+  billingLogs?: ComputeOrderBillingLog[];
+  billingChanges?: ComputeOrderBillingChange[];
+  timeline?: ComputeOrderStatusTimeline[];
 }
 
 // 5. 运行实例监控
+export interface ComputeInstanceMetricPoint {
+  time: string;
+  gpu: number;
+  vram: number;
+  cpu: number;
+  ram: number;
+  temp: number;
+  power: number;
+}
+
 export interface ComputeRunningInstanceItem {
   id: string;
   instanceId: string; // "i-abc123xyz"
+  orderId?: string; // 关联订单ID "INST-20260818-001"
   userId: string;
   userName: string;
   userAvatar?: string;
+  userPhone?: string;
   specName: string;
-  gpuSpec?: string; // "RTX 4090 24GB"
+  gpuSpec?: string; // "RTX 4090 · 24GB"
+  gpuModel?: string; // "NVIDIA RTX 4090"
+  gpuCount?: number; // 1
+  cpuCores?: number; // 16
+  ramGb?: number; // 60
+  diskGb?: number; // 750
   imageName: string;
   imageId?: string;
-  operator: string;
-  hostNode: string; // "node-gpu-05"
+  operator: string; // 运营商
+  poolId?: string;
+  hostNode: string; // 物理节点 "node-gpu-sh-05"
+  ipAddress?: string; // "10.0.1.123"
+  publicIp?: string; // "123.57.190.22"
   createdAt: string;
+  startTime?: string;
+  stoppedAt?: string;
   runningHours?: string | number;
   runningDuration?: string; // "2小时15分钟"
   gpuUsage?: number; // 78%
   gpuUtil?: number; // 78%
   vramUsage?: number; // 65%
-  vramUsed?: string; // "18.5GB"
-  vramTotal?: string; // "24GB"
-  ramUsage?: number; // 42%
-  ramUsed?: string; // "42GB / 60GB"
-  cpuUtil?: number; // 45%
-  diskUsage?: number; // 23%
-  temp?: number; // 68 °C
+  vramUsed?: string; // "16.3GB"
+  vramTotal?: string; // "24.0GB"
+  ramUsage?: number; // 45%
+  ramUsed?: string; // "27.0GB / 60GB"
+  cpuUtil?: number; // 52%
+  diskUsage?: number; // 28%
+  temp?: number; // 64 °C
   power?: string; // "320W / 450W"
-  health?: '良好' | '高载' | '告警' | string;
+  health?: '良好' | '高载' | '告警' | '故障' | string;
   gpuUsageHistory?: number[];
   vramUsageHistory?: number[];
-  sshCommand?: string; // "ssh root@10.0.1.123 -p 22"
+  metricHistory?: ComputeInstanceMetricPoint[];
+  sshCommand?: string; // "ssh root@10.0.1.123 -p 22022"
   jupyterUrl?: string; // "http://10.0.1.123:8888"
-  status?: '运行中' | '闲置' | '异常' | string;
-  logs?: { time: string; level: 'INFO' | 'WARN' | 'ERROR'; message: string }[];
+  status?: '运行中' | '已停止' | '已关机' | '调度中' | '异常' | string;
+  logs?: { time: string; level: 'INFO' | 'WARN' | 'ERROR'; message: string; source?: string }[];
 }
 
 // 6. 结算明细
@@ -1134,19 +1285,96 @@ export interface SettlementSpecDetail {
 
 export interface ComputeSettlementItem {
   id: string;
-  operator: string; // "中国电信"
+  statementNo?: string; // 对账单编号，如 "ST-202608-001"
+  operator: string; // "中国电信天翼云"
   period: string; // "2026年8月"
   totalCardHours: number; // 1240 卡时
   specDetails: SettlementSpecDetail[];
-  agreedPrice: number; // 协议单价
-  payableAmount: number; // 应付金额
-  platformRevenue: number; // 平台收入
-  platformGrossProfit: number; // 平台毛利
-  grossMargin: number; // 毛利率 23.1%
+  agreedPrice: number; // 加权协议单价
+  payableAmount: number; // 应付金额 (需支付给运营商)
+  platformRevenue: number; // 平台收入 (该周期从用户收到的已结算费用)
+  platformGrossProfit: number; // 平台毛利 (平台收入 - 应付金额)
+  grossMargin: number; // 毛利率 (平台毛利 / 平台收入 × 100%)
   status: '待对账' | '已确认' | '已结算';
   invoiceNo?: string;
-  createdAt: string;
+  paymentVoucher?: string;
+  paymentMethod?: string;
+  confirmedAt?: string;
+  confirmedBy?: string;
   settledAt?: string;
+  paidBy?: string;
+  createdAt: string;
+  remark?: string;
+}
+
+// 7. 资源使用统计详细明细类型
+export interface ComputeUserUsageDetail {
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  phone?: string;
+  userPhone?: string;
+  organization?: string;
+  company?: string;
+  totalCost: number; // 累计消费金额
+  totalSpent?: number;
+  totalHours: number; // 使用总时长(卡时)
+  instanceCount: number; // 累计实例数
+  orderCount?: number; // 订单数
+  runningCount: number; // 当前在线运行实例数
+  runningInstanceCount?: number;
+  primarySpec?: string; // 偏好 GPU 型号
+  lastActiveAt?: string; // 最后活跃时间
+  lastUsedTime?: string;
+}
+
+export interface ComputeSpecUsageDetail {
+  specId: string;
+  specName: string;
+  gpuModel: string;
+  memory?: string;
+  unitPrice: number;
+  totalInstances: number; // 总实例数
+  runningInstances: number; // 当前运行中实例数
+  totalHours: number; // 总运行时长(卡时)
+  totalCardHours?: number;
+  totalRevenue: number; // 总消费金额
+  utilizationRate: number; // 平均利用率
+}
+
+export interface ComputeStatsData {
+  totalInstances: number;
+  runningInstances: number;
+  avgGpuUtilization: number;
+  monthlyRevenue: number;
+  dailyTrend: { date: string; revenue: number; orders: number }[];
+  instanceTrends: { date: string; createdCount: number; activeCount: number }[];
+  utilizationTrends: { time: string; rate: number }[];
+  specDistribution: { name: string; specName: string; count: number; value: number; percentage: number; color: string }[];
+  operatorContribution: { name: string; cards: number; share: number; totalCards: number; allocatedCards: number; rate: number }[];
+  topUsers: { rank: number; name: string; userId: string; userName: string; company: string; cardHours: number; totalHours: number; totalSpent: number; totalCost: number; instanceCount: number }[];
+  billingTypeDistribution?: { pay_as_you_go: number; daily: number; weekly: number; monthly: number };
+  userDetails?: ComputeUserUsageDetail[];
+  specUsageDetails?: ComputeSpecUsageDetail[];
+  refreshMeta?: {
+    lastRefreshed?: string;
+    gpuUtilFreq?: string;
+    runningInstFreq?: string;
+    revenueFreq?: string;
+    trendFreq?: string;
+    userRankFreq?: string;
+    operatorFreq?: string;
+    instances?: string;
+    users?: string;
+    revenue?: string;
+  };
+}
+
+export interface CourseChapterItem {
+  id: string;
+  title: string;
+  duration: string;
+  notebookPreset?: string;
 }
 
 export interface CourseItem {
@@ -1155,28 +1383,35 @@ export interface CourseItem {
   cover: string;
   description: string;
   category: string;
-  level: string;
-  duration: string;
-  lessonsCount: number;
-  studentCount: number;
+  level?: string;
+  duration?: string;
+  lessonsCount?: number;
+  chaptersCount?: number;
+  studentCount?: number;
+  studentsCount?: number;
   instructor?: string;
-  author: {
+  instructorTitle?: string;
+  author?: {
     name: string;
     avatar: string;
     title: string;
   };
   rating: number;
-  tags: string[];
+  tags?: string[];
+  hasCert?: boolean;
+  chapters?: CourseChapterItem[];
 }
 
 export interface LearningPathItem {
   id: string;
   title: string;
   description: string;
-  stepsCount: number;
+  stepsCount?: number;
   stepCount?: number;
-  estimatedHours: number;
-  difficulty: string;
-  courses: string[];
+  estimatedHours?: number;
+  difficulty?: string;
+  courses?: string[];
+  badgeName?: string;
+  targetRole?: string;
 }
 

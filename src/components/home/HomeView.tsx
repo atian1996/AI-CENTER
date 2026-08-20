@@ -309,22 +309,6 @@ export const HomeView: React.FC = () => {
       type: 'agent',
       typeLabel: '热门Agent',
       typeBadgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-      title: '智能全科客服与售后工单 Agent',
-      desc: '自动解答多轮咨询，支持对接企业 ERP 并生成故障工单。',
-      rating: 4.9,
-      hotMetric: '3.4k次使用',
-      date: '2026-08-12',
-      price: '免费',
-      icon: '🤖',
-      onClick: () => {
-        const target = agents.find(a => a.id === 'ag_01') || agents[0];
-        openAgentDetail(target);
-      }
-    },
-    {
-      type: 'agent',
-      typeLabel: '热门Agent',
-      typeBadgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
       title: '股票价值投资分析与财报研报 Agent',
       desc: '输入股票代码，自动抓取财报并输出巴菲特估值决策分析。',
       rating: 4.8,

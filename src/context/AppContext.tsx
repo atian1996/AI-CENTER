@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
   MainTabType, 
   MarketplaceSubTab, 
@@ -97,6 +97,7 @@ interface AppContextType {
 
   // Data Collections
   agents: AgentItem[];
+  setAgents: React.Dispatch<React.SetStateAction<AgentItem[]>>;
   userAgents: AgentItem[];
   models: ModelItem[];
   datasets: DatasetItem[];
@@ -108,7 +109,7 @@ interface AppContextType {
   gpuInstances: GPUInstance[];
   posts: FeedPost[];
   apiKeys: ApiKeyItem[];
-  createApiKey: (name: string, scope: string, limit: number) => void;
+  createApiKey: (nameOrItem: string | Omit<ApiKeyItem, 'id'>, scope?: string, limit?: number) => void;
   revokeApiKey: (id: string) => void;
 
   // Modal Triggers & Selection State
@@ -164,11 +165,21 @@ interface AppContextType {
   selectedTaskForVerification: TaskItem | null;
   setSelectedTaskForVerification: (task: TaskItem | null) => void;
 
+  // 充值中心弹窗
+  rechargeModalOpen: boolean;
+  setRechargeModalOpen: (open: boolean) => void;
+  openRechargeModal: (defaultAmount?: number) => void;
+
   // 我租用的实例与我的镜像
   myCustomImages: MyCustomImage[];
   deleteMyCustomImage: (id: string) => void;
+  forceDeleteUserCustomImage: (id: string, reason?: string) => void;
   addMyCustomImageComment: (imageId: string, commentText: string) => void;
   updateMyCustomImageDescription: (imageId: string, desc: string) => void;
+  userImageQuota: number;
+  setUserImageQuota: (quota: number) => void;
+  userImageAutoCleanupDays: number;
+  setUserImageAutoCleanupDays: (days: number) => void;
 
   // Interactive Operations
   addAgent: (agent: Omit<AgentItem, 'id' | 'rating' | 'ratingCount' | 'usageCount' | 'createdAt'>) => void;
@@ -221,18 +232,38 @@ interface AppContextType {
   toggleComputePoolMaintenance: (poolId: string) => void;
 
   computeOrders: ComputeOrderItem[];
+  focusedComputeOrderId: string | null;
+  setFocusedComputeOrderId: (id: string | null) => void;
+  navigateToComputeOrder: (orderId: string) => void;
   stopComputeOrder: (orderId: string) => void;
   releaseComputeOrder: (orderId: string) => void;
   retryComputeOrder: (orderId: string) => void;
+  refundComputeOrder: (orderId: string, refundAmount: number, reason: string) => void;
+  changeComputeOrderBilling: (orderId: string, newBillingType: string, reason: string) => void;
 
   computeRunningInstances: ComputeRunningInstanceItem[];
+  focusedComputeInstanceId: string | null;
+  setFocusedComputeInstanceId: (id: string | null) => void;
+  navigateToComputeInstance: (instanceId: string) => void;
   restartComputeRunningInstance: (id: string) => void;
   stopComputeRunningInstance: (id: string) => void;
+  releaseComputeRunningInstance: (id: string) => void;
 
   computeSettlements: ComputeSettlementItem[];
   confirmComputeSettlement: (id: string) => void;
-  markComputeSettlementPaid: (id: string, invoiceNo?: string) => void;
+  markComputeSettlementPaid: (id: string, invoiceNo?: string, paymentVoucher?: string, paymentMethod?: string, remark?: string) => void;
   generateComputeSettlement: (operator: string, period: string) => void;
+
+  // 数据集后台管理
+  addDataset: (dataset: Partial<DatasetItem>) => void;
+  updateDataset: (id: string, updates: Partial<DatasetItem>) => void;
+  deleteDataset: (id: string) => boolean;
+  toggleDatasetStatus: (id: string, status: '已上架' | '已下架' | '草稿') => void;
+  datasetTagDimensions: { modality: string[]; taskType: string[]; domain: string[]; format: string[] };
+  addDatasetTag: (dimension: 'modality' | 'taskType' | 'domain' | 'format', tag: string) => boolean;
+  updateDatasetTag: (dimension: 'modality' | 'taskType' | 'domain' | 'format', oldTag: string, newTag: string) => boolean;
+  deleteDatasetTag: (dimension: 'modality' | 'taskType' | 'domain' | 'format', tag: string) => boolean;
+  reorderDatasetTags: (dimension: 'modality' | 'taskType' | 'domain' | 'format', startIndex: number, endIndex: number) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -252,19 +283,281 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [notifications, setNotifications] = useState<AppNotification[]>(initialNotifications);
   
-  const [agents, setAgents] = useState<AgentItem[]>(mockAgents);
+  const [agents, setAgents] = useState<AgentItem[]>(() => 
+    mockAgents.map(a => {
+      const origForm = (a.techForm || a.appType || 'Agent') as string;
+      const mappedForm = origForm === 'Chatflow' ? '对话流' : origForm === 'Workflow' ? '工作流' : (origForm || 'Agent');
+      
+      // Normalize scene
+      let sceneVal = a.scene;
+      if (!sceneVal) {
+        if (a.category === 'coding') sceneVal = '编程开发';
+        else if (a.category === 'data') sceneVal = '数据分析';
+        else if (a.category === 'image') sceneVal = '内容创作';
+        else if (a.category === 'dialogue') sceneVal = '办公助理';
+        else sceneVal = '内容创作';
+      }
+      
+      // Normalize industry
+      const industryVal = a.industry || '通用';
+
+      return {
+        ...a,
+        techForm: mappedForm as any,
+        scene: sceneVal as any,
+        industry: industryVal as any,
+        categoryTags: a.categoryTags && a.categoryTags.length > 0 ? a.categoryTags : [sceneVal as any],
+        industryTags: a.industryTags && a.industryTags.length > 0 ? a.industryTags : [industryVal as any],
+        slogan: a.slogan || a.description?.slice(0, 30) || '高阶自动化智能体应用',
+        subscribersCount: a.subscribersCount || Math.floor(Math.random() * 450 + 90),
+      };
+    })
+  );
   const [models] = useState<ModelItem[]>(mockModels);
-  const [datasets] = useState<DatasetItem[]>(mockDatasets);
+  const [datasets, setDatasets] = useState<DatasetItem[]>(() =>
+    mockDatasets.map((ds, idx) => ({
+      ...ds,
+      status: (ds.status || (idx === 3 ? '草稿' : idx === 4 ? '已下架' : '已上架')) as any,
+      brief: ds.brief || ds.description?.slice(0, 50) || '精选高质量开放数据集，适用于多场景深度学习与数据挖掘',
+      modalities: ds.modalities && ds.modalities.length > 0 
+        ? ds.modalities 
+        : [ds.modalityCategory === '表格' ? '表格数据' : (ds.modalityCategory || '表格数据')],
+      taskTypes: ds.taskTypes && ds.taskTypes.length > 0 
+        ? ds.taskTypes 
+        : [ds.taskType || '分类任务'],
+      domains: ds.domains && ds.domains.length > 0 
+        ? ds.domains 
+        : (ds.domainTags && ds.domainTags.length > 0 ? ds.domainTags : [ds.theme || '商业/管理']),
+      formats: ds.formats && ds.formats.length > 0 
+        ? ds.formats 
+        : [ds.fileFormats?.toLowerCase().includes('csv') ? 'CSV/XLSX' : ds.fileFormats?.toLowerCase().includes('json') ? 'JSON/JSONL' : 'Parquet'],
+      lastDownloadTime: ds.lastDownloadTime || (idx === 0 ? '2026-08-19 15:42:10' : idx === 1 ? '2026-08-19 11:20:05' : '2026-08-18 09:15:33'),
+    }))
+  );
+
+  // 数据集分类标签字典维度
+  const [datasetTagDimensions, setDatasetTagDimensions] = useState<{
+    modality: string[];
+    taskType: string[];
+    domain: string[];
+    format: string[];
+  }>({
+    modality: ['表格数据', '计算机视觉', '自然语言处理', '音频', '多模态'],
+    taskType: [
+      '分类任务', '回归任务', '时间序列预测', '物体检测', 
+      '图像分类', '图像分割', '图像生成', '文本分类', 
+      '文本生成', '文本摘要', '翻译', '问答', '视觉问答', '语音识别'
+    ],
+    domain: [
+      '商业/管理', '电商', '科技互联网', '金融', '医疗健康', 
+      '教育', '科研', '政务/公共管理', '制造业', '农业', 
+      '能源', '法律', '气象/环境', '地理遥感', '数理逻辑'
+    ],
+    format: [
+      'CSV/XLSX', 'JSON/JSONL', 'Parquet', 'TXT', 
+      'NetCDF/GeoTIFF', 'PNG/JPG', 'WAV/MP3', 'MP4/AVI', 'PDF'
+    ]
+  });
+
+  const addDataset = (datasetData: Partial<DatasetItem>) => {
+    const newId = `ds_${Date.now()}`;
+    const newDs: DatasetItem = {
+      id: newId,
+      name: datasetData.name || '新建数据集',
+      repoPath: `${user.name || 'admin'}/${datasetData.name || 'dataset'}`,
+      author: user.name || '平台运营管理员',
+      authorAvatar: user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      authorOrg: '千机智算中心',
+      updatedAt: '2026/08/20 10:00',
+      relativeTime: '刚刚',
+      viewsCount: 1,
+      downloadCount: 0,
+      likesCount: 0,
+      favoritesCount: 0,
+      isLiked: false,
+      isFavorite: false,
+      isCreatedByMe: true,
+      isMounted: false,
+      modalityCategory: (datasetData.modalities?.[0] === '表格数据' ? '表格' : datasetData.modalities?.[0] as any) || '表格',
+      taskType: datasetData.taskTypes?.[0] || '分类任务',
+      domainTags: datasetData.domains || ['商业/管理'],
+      license: datasetData.license || 'CC-BY-4.0',
+      language: '中文',
+      description: datasetData.description || datasetData.brief || '暂无详细描述',
+      backgroundDesc: datasetData.description?.slice(0, 100) || '',
+      dataDesc: datasetData.description || '',
+      sourceDesc: '平台原创上传',
+      problemDesc: '可用于算法训练与数据科学建模',
+      mountPath: `/datasets/shared/${newId}`,
+      fileFormats: datasetData.formats?.join(', ') || '.csv',
+      fileSize: datasetData.fileSize || '10.5 MB',
+      filesCount: 1,
+      theme: datasetData.domains?.[0] || '商业/管理',
+      techDomain: datasetData.taskTypes?.[0] || '数据分析',
+      files: [],
+      comments: [],
+      status: datasetData.status || '已上架',
+      brief: datasetData.brief || datasetData.description?.slice(0, 50) || '',
+      modalities: datasetData.modalities || ['表格数据'],
+      taskTypes: datasetData.taskTypes || ['分类任务'],
+      domains: datasetData.domains || ['商业/管理'],
+      formats: datasetData.formats || ['CSV/XLSX'],
+      lastDownloadTime: '暂无下载记录',
+      ...datasetData
+    };
+
+    setDatasets(prev => [newDs, ...prev]);
+    showToast(`数据集【${newDs.name}】已成功${newDs.status === '草稿' ? '保存为草稿' : '创建并发布'}！`);
+  };
+
+  const updateDataset = (id: string, updates: Partial<DatasetItem>) => {
+    setDatasets(prev => prev.map(ds => {
+      if (ds.id === id) {
+        return {
+          ...ds,
+          ...updates,
+          updatedAt: '2026/08/20 10:00',
+          relativeTime: '刚刚'
+        };
+      }
+      return ds;
+    }));
+    showToast('数据集配置已成功更新！');
+  };
+
+  const deleteDataset = (id: string): boolean => {
+    const target = datasets.find(d => d.id === id);
+    if (!target) return false;
+    setDatasets(prev => prev.filter(d => d.id !== id));
+    showToast(`已删除数据集【${target.name}】`);
+    return true;
+  };
+
+  const toggleDatasetStatus = (id: string, status: '已上架' | '已下架' | '草稿') => {
+    setDatasets(prev => prev.map(ds => {
+      if (ds.id === id) {
+        return { ...ds, status };
+      }
+      return ds;
+    }));
+    showToast(`数据集状态已变更为【${status}】`);
+  };
+
+  const addDatasetTag = (dimension: 'modality' | 'taskType' | 'domain' | 'format', tag: string): boolean => {
+    const trimmed = tag.trim();
+    if (!trimmed) return false;
+    if (datasetTagDimensions[dimension].includes(trimmed)) {
+      showToast(`该${dimension === 'modality' ? '模态' : dimension === 'taskType' ? '任务类型' : dimension === 'domain' ? '行业领域' : '文件格式'}标签已存在！`);
+      return false;
+    }
+    setDatasetTagDimensions(prev => ({
+      ...prev,
+      [dimension]: [...prev[dimension], trimmed]
+    }));
+    showToast(`已成功添加标签【${trimmed}】`);
+    return true;
+  };
+
+  const updateDatasetTag = (dimension: 'modality' | 'taskType' | 'domain' | 'format', oldTag: string, newTag: string): boolean => {
+    const trimmed = newTag.trim();
+    if (!trimmed || oldTag === trimmed) return false;
+    setDatasetTagDimensions(prev => ({
+      ...prev,
+      [dimension]: prev[dimension].map(t => t === oldTag ? trimmed : t)
+    }));
+    // 同步更新已存在的数据集对应字段
+    setDatasets(prev => prev.map(ds => {
+      if (dimension === 'modality') {
+        const nextMods = ds.modalities?.map(m => m === oldTag ? trimmed : m);
+        return { ...ds, modalities: nextMods };
+      }
+      if (dimension === 'taskType') {
+        const nextTasks = ds.taskTypes?.map(t => t === oldTag ? trimmed : t);
+        return { ...ds, taskTypes: nextTasks, taskType: ds.taskType === oldTag ? trimmed : ds.taskType };
+      }
+      if (dimension === 'domain') {
+        const nextDomains = ds.domains?.map(d => d === oldTag ? trimmed : d);
+        return { ...ds, domains: nextDomains, domainTags: ds.domainTags?.map(d => d === oldTag ? trimmed : d) };
+      }
+      if (dimension === 'format') {
+        const nextFormats = ds.formats?.map(f => f === oldTag ? trimmed : f);
+        return { ...ds, formats: nextFormats };
+      }
+      return ds;
+    }));
+    showToast(`标签【${oldTag}】已重命名为【${trimmed}】并已同步相关数据集！`);
+    return true;
+  };
+
+  const deleteDatasetTag = (dimension: 'modality' | 'taskType' | 'domain' | 'format', tag: string): boolean => {
+    // 检查是否有数据集正在使用该标签
+    const inUseCount = datasets.filter(ds => {
+      if (dimension === 'modality') return ds.modalities?.includes(tag) || ds.modalityCategory === tag;
+      if (dimension === 'taskType') return ds.taskTypes?.includes(tag) || ds.taskType === tag;
+      if (dimension === 'domain') return ds.domains?.includes(tag) || ds.domainTags?.includes(tag);
+      if (dimension === 'format') return ds.formats?.includes(tag);
+      return false;
+    }).length;
+
+    if (inUseCount > 0) {
+      showToast(`无法删除：当前有 ${inUseCount} 个数据集正在使用此标签【${tag}】，请先解绑或修改数据集！`);
+      return false;
+    }
+
+    setDatasetTagDimensions(prev => ({
+      ...prev,
+      [dimension]: prev[dimension].filter(t => t !== tag)
+    }));
+    showToast(`已成功删除标签【${tag}】`);
+    return true;
+  };
+
+  const reorderDatasetTags = (dimension: 'modality' | 'taskType' | 'domain' | 'format', startIndex: number, endIndex: number) => {
+    setDatasetTagDimensions(prev => {
+      const list = [...prev[dimension]];
+      const [moved] = list.splice(startIndex, 1);
+      list.splice(endIndex, 0, moved);
+      return { ...prev, [dimension]: list };
+    });
+    showToast('标签排序已更新');
+  };
   const [skills] = useState<SkillPluginItem[]>(mockSkills);
   const [favoriteAgentIds, setFavoriteAgentIds] = useState<string[]>(['ag_01', 'ag_03']);
   const [tasks, setTasks] = useState<TaskItem[]>(mockRichTasks);
   const [courses] = useState<CourseItem[]>(mockCourses);
   const [gpuInstances, setGpuInstances] = useState<GPUInstance[]>(mockGpuInstances);
   const [myCustomImages, setMyCustomImages] = useState<MyCustomImage[]>(mockMyCustomImages);
+  const [rechargeModalOpen, setRechargeModalOpen] = useState<boolean>(false);
+  const [userImageQuota, setUserImageQuota] = useState<number>(200); // 默认存储配额 200 GB
+  const [userImageAutoCleanupDays, setUserImageAutoCleanupDays] = useState<number>(180); // 长期未使用清理阈值 180 天
+
+  const openRechargeModal = (defaultAmount?: number) => {
+    setRechargeModalOpen(true);
+  };
 
   const deleteMyCustomImage = (id: string) => {
     setMyCustomImages(prev => prev.filter(img => img.id !== id));
-    showToast('已成功删除自定义镜像！');
+    showToast('已成功删除自定义镜像，存储空间已立即释放！');
+  };
+
+  const forceDeleteUserCustomImage = (id: string, reason?: string) => {
+    const targetImage = myCustomImages.find(img => img.id === id);
+    if (!targetImage) return;
+
+    setMyCustomImages(prev => prev.filter(img => img.id !== id));
+    
+    // 下发系统通知给该用户
+    const newNotice: AppNotification = {
+      id: `n_violation_${Date.now()}`,
+      title: '🚨 用户镜像违规强制删除提醒',
+      content: `您的自定义镜像【${targetImage.name}】因${reason || '包含违规或安全风险文件'}已被平台系统管理员强制删除并释放存储空间。如有疑问请联系客服申诉。`,
+      type: 'system',
+      time: '刚刚',
+      read: false,
+      targetTab: 'compute'
+    };
+    setNotifications(prev => [newNotice, ...prev]);
+    showToast(`已强制下线并销毁用户镜像【${targetImage.name}】，已向用户发送合规处理通知`);
   };
 
   const addMyCustomImageComment = (imageId: string, commentText: string) => {
@@ -308,6 +601,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [computeOrders, setComputeOrders] = useState<ComputeOrderItem[]>(mockComputeOrders);
   const [computeRunningInstances, setComputeRunningInstances] = useState<ComputeRunningInstanceItem[]>(mockRunningInstances);
   const [computeSettlements, setComputeSettlements] = useState<ComputeSettlementItem[]>(mockComputeSettlements);
+
+  // 算力后台联动高亮与定位状态
+  const [focusedComputeOrderId, setFocusedComputeOrderId] = useState<string | null>(null);
+  const [focusedComputeInstanceId, setFocusedComputeInstanceId] = useState<string | null>(null);
+
+  const navigateToComputeOrder = (orderId: string) => {
+    setFocusedComputeOrderId(orderId);
+    setActiveAdminMenu('compute_order');
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  };
+
+  const navigateToComputeInstance = (instanceId: string) => {
+    setFocusedComputeInstanceId(instanceId);
+    setActiveAdminMenu('compute_instance');
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  };
 
   // 1. 规格操作
   const addComputeSpec = (spec: Omit<ComputeSpecItem, 'id' | 'createTime' | 'updateTime'>): boolean => {
@@ -616,63 +925,453 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
-  // 4. 实例订单操作
+  // 4. 实例订单操作与双向联动
   const stopComputeOrder = (orderId: string) => {
-    setComputeOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: '已停止' } : o));
-    showToast('实例已强制停止');
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    let linkedInstId: string | undefined;
+
+    setComputeOrders(prev => prev.map(o => {
+      if (o.id === orderId || o.orderNo === orderId) {
+        linkedInstId = o.instanceId;
+        const newTimeline = [
+          ...(o.timeline || []),
+          { time: nowStr, status: '已停止', title: '管理员强制关机', description: '管理员从后台控制台下发停机指令，GPU计算资源已停止计费挂起', operator: `${user.name} (管理员)` }
+        ];
+        return {
+          ...o,
+          status: '已停止',
+          stopTime: nowStr,
+          timeline: newTimeline
+        };
+      }
+      return o;
+    }));
+
+    // 同步更新监控中的运行实例状态为“已关机/已停止”
+    if (linkedInstId) {
+      setComputeRunningInstances(prev => prev.map(inst => {
+        if (inst.id === linkedInstId || inst.instanceId === linkedInstId || inst.orderId === orderId) {
+          const newLogs = [
+            ...(inst.logs || []),
+            { time: nowStr.slice(11), level: 'WARN' as const, message: 'Received forced shutdown signal from management plane.', source: 'Admin Console' }
+          ];
+          return {
+            ...inst,
+            status: '已停止',
+            gpuUsage: 0,
+            gpuUtil: 0,
+            vramUsage: 0,
+            vramUsed: '0.0GB',
+            ramUsage: 5,
+            ramUsed: '2.0GB',
+            cpuUtil: 0,
+            temp: 35,
+            power: '25W',
+            health: '良好',
+            stoppedAt: nowStr,
+            logs: newLogs
+          };
+        }
+        return inst;
+      }));
+    }
+
+    showToast(`订单 ${orderId} 对应实例已强制停机，并同步更新运行监控状态`);
   };
 
   const releaseComputeOrder = (orderId: string) => {
-    setComputeOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: '已释放' } : o));
-    showToast('实例资源已强制释放并销毁');
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    let linkedInstId: string | undefined;
+
+    setComputeOrders(prev => prev.map(o => {
+      if (o.id === orderId || o.orderNo === orderId) {
+        linkedInstId = o.instanceId;
+        const newTimeline = [
+          ...(o.timeline || []),
+          { time: nowStr, status: '已释放', title: '实例强制释放销毁', description: '管理员从后台彻底释放实例资源，回收显卡硬件并结清账单', operator: `${user.name} (管理员)` }
+        ];
+        return {
+          ...o,
+          status: '已释放',
+          releaseTime: nowStr,
+          pendingAmount: 0,
+          timeline: newTimeline
+        };
+      }
+      return o;
+    }));
+
+    // 实例已释放，不再占用实时运维硬件监控，安全从监控大盘中移除
+    setComputeRunningInstances(prev => prev.filter(inst => {
+      if (inst.orderId === orderId || (linkedInstId && (inst.id === linkedInstId || inst.instanceId === linkedInstId))) {
+        return false;
+      }
+      return true;
+    }));
+
+    showToast(`订单 ${orderId} 实例资源已强制释放并销毁，监控列表已同步移除`);
   };
 
   const retryComputeOrder = (orderId: string) => {
-    setComputeOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: '运行中', errorMessage: undefined } : o));
-    showToast('已重新触发实例调度分配');
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    const newInstId = `i-retry${Date.now().toString().slice(-6)}`;
+
+    setComputeOrders(prev => prev.map(o => {
+      if (o.id === orderId || o.orderNo === orderId) {
+        const newTimeline = [
+          ...(o.timeline || []),
+          { time: nowStr, status: '运行中', title: '重新分配调度就绪', description: `管理员手动重试调度，已重新在资源池完成物理节点绑定并就绪 (实例ID: ${newInstId})`, operator: `${user.name} (管理员)` }
+        ];
+        return {
+          ...o,
+          status: '运行中',
+          instanceId: newInstId,
+          startTime: nowStr,
+          errorMessage: undefined,
+          timeline: newTimeline
+        };
+      }
+      return o;
+    }));
+
+    // 在运行实例监控中补充分配成功的实例
+    const targetOrder = computeOrders.find(o => o.id === orderId || o.orderNo === orderId);
+    if (targetOrder) {
+      const newRunningInst: ComputeRunningInstanceItem = {
+        id: newInstId,
+        instanceId: newInstId,
+        orderId: targetOrder.id,
+        userId: targetOrder.userId,
+        userName: targetOrder.userName,
+        userAvatar: targetOrder.userAvatar,
+        userPhone: targetOrder.userPhone || '13800000000',
+        specName: targetOrder.specName,
+        gpuSpec: targetOrder.specName,
+        gpuModel: targetOrder.gpuModel || 'NVIDIA GPU',
+        gpuCount: targetOrder.gpuCount || 1,
+        cpuCores: 16,
+        ramGb: 64,
+        diskGb: 500,
+        imageName: targetOrder.imageName,
+        operator: targetOrder.operator,
+        poolId: targetOrder.poolId,
+        hostNode: 'node-gpu-failover-01',
+        ipAddress: '10.0.9.99',
+        publicIp: '123.57.199.99',
+        createdAt: nowStr,
+        startTime: nowStr,
+        runningHours: '0.1h',
+        runningDuration: '刚刚启动',
+        gpuUsage: 12,
+        gpuUtil: 12,
+        vramUsage: 18,
+        vramUsed: '4.2GB',
+        vramTotal: '24.0GB',
+        ramUsage: 20,
+        ramUsed: '12.8GB / 64GB',
+        cpuUtil: 15,
+        diskUsage: 15,
+        temp: 45,
+        power: '120W / 450W',
+        health: '良好',
+        gpuUsageHistory: [10, 12],
+        vramUsageHistory: [15, 18],
+        metricHistory: [
+          { time: nowStr.slice(11, 16), gpu: 12, vram: 18, cpu: 15, ram: 20, temp: 45, power: 120 }
+        ],
+        sshCommand: 'ssh root@123.57.199.99 -p 22022',
+        jupyterUrl: 'http://123.57.199.99:8888',
+        status: '运行中',
+        logs: [
+          { time: nowStr.slice(11), level: 'INFO', message: 'Manual failover allocation succeeded. Container booted.', source: 'Scheduler' }
+        ]
+      };
+      setComputeRunningInstances(prev => [newRunningInst, ...prev]);
+    }
+
+    showToast('已重新触发实例调度分配，新实例已启动并加入实时监控');
   };
 
-  // 5. 运行实例操作
-  const restartComputeRunningInstance = (_id: string) => {
-    showToast('正在向宿主机下发实例容器重启指令...');
+  const refundComputeOrder = (orderId: string, refundAmount: number, reason: string) => {
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    setComputeOrders(prev => prev.map(o => {
+      if (o.id === orderId || o.orderNo === orderId) {
+        const currentRefund = (o.refundAmount || 0) + refundAmount;
+        const newRefundLogs = [
+          ...(o.refundLogs || []),
+          {
+            id: `rf_${Date.now()}`,
+            time: nowStr,
+            amount: refundAmount,
+            reason: reason || '管理员后台发起财务退款',
+            operator: `${user.name} (管理员)`,
+            status: '已退款' as const
+          }
+        ];
+        const newBillingLogs = [
+          ...(o.billingLogs || []),
+          {
+            id: `bl_rf_${Date.now()}`,
+            time: nowStr,
+            type: '退款返还' as const,
+            amount: -refundAmount,
+            balanceAfter: (o.orderAmount || 0) - currentRefund,
+            note: `后台退款: ${reason || '订单退费核算处理'}`
+          }
+        ];
+        const newTimeline = [
+          ...(o.timeline || []),
+          {
+            time: nowStr,
+            status: o.status,
+            title: '财务退款处理完成',
+            description: `成功退款 ¥${refundAmount.toFixed(2)}。原因：${reason || '核算退费'}`,
+            operator: `${user.name} (管理员)`
+          }
+        ];
+
+        return {
+          ...o,
+          refundAmount: currentRefund,
+          refundLogs: newRefundLogs,
+          billingLogs: newBillingLogs,
+          timeline: newTimeline
+        };
+      }
+      return o;
+    }));
+
+    showToast(`订单 ${orderId} 成功处理退款 ¥${refundAmount.toFixed(2)}，已生成财务对账流水！`);
+  };
+
+  const changeComputeOrderBilling = (orderId: string, newBillingType: string, reason: string) => {
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    setComputeOrders(prev => prev.map(o => {
+      if (o.id === orderId || o.orderNo === orderId) {
+        const oldType = o.billingType;
+        const newChanges = [
+          ...(o.billingChanges || []),
+          {
+            id: `bc_${Date.now()}`,
+            changeTime: nowStr,
+            oldBillingType: oldType,
+            newBillingType: newBillingType,
+            operator: `${user.name} (管理员)`,
+            reason: reason || '管理员调整计费模式'
+          }
+        ];
+        const newTimeline = [
+          ...(o.timeline || []),
+          {
+            time: nowStr,
+            status: o.status,
+            title: '计费模式变更',
+            description: `计费模式由【${oldType}】调整为【${newBillingType}】。说明：${reason || '后台配置变更'}`,
+            operator: `${user.name} (管理员)`
+          }
+        ];
+
+        return {
+          ...o,
+          billingType: newBillingType,
+          billingChanges: newChanges,
+          timeline: newTimeline
+        };
+      }
+      return o;
+    }));
+
+    showToast(`订单 ${orderId} 计费模式已成功调整为【${newBillingType}】！`);
+  };
+
+  // 5. 运行实例操作与双向联动
+  const restartComputeRunningInstance = (id: string) => {
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    setComputeRunningInstances(prev => prev.map(inst => {
+      if (inst.id === id || inst.instanceId === id) {
+        const newLogs = [
+          ...(inst.logs || []),
+          { time: nowStr.slice(11), level: 'INFO' as const, message: 'Instance soft restart executed by operator. Container recycled.', source: 'Admin Action' }
+        ];
+        return {
+          ...inst,
+          logs: newLogs
+        };
+      }
+      return inst;
+    }));
+    showToast(`已向宿主机下发实例 ${id} 重启指令，容器正在重新初始化...`);
   };
 
   const stopComputeRunningInstance = (id: string) => {
-    setComputeRunningInstances(prev => prev.filter(i => i.id !== id));
-    showToast('实例容器已安全停止');
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    let targetOrderId: string | undefined;
+
+    setComputeRunningInstances(prev => prev.map(i => {
+      if (i.id === id || i.instanceId === id) {
+        targetOrderId = i.orderId;
+        const newLogs = [
+          ...(i.logs || []),
+          { time: nowStr.slice(11), level: 'WARN' as const, message: 'Instance manually powered off from monitor console.', source: 'Ops Console' }
+        ];
+        return {
+          ...i,
+          status: '已停止',
+          gpuUsage: 0,
+          gpuUtil: 0,
+          vramUsage: 0,
+          vramUsed: '0.0GB',
+          ramUsage: 5,
+          ramUsed: '2.0GB',
+          cpuUtil: 0,
+          temp: 35,
+          power: '25W',
+          health: '良好',
+          stoppedAt: nowStr,
+          logs: newLogs
+        };
+      }
+      return i;
+    }));
+
+    // 同步更新订单状态为已停止
+    if (targetOrderId || id) {
+      setComputeOrders(prev => prev.map(o => {
+        if (o.id === targetOrderId || o.orderNo === targetOrderId || o.instanceId === id) {
+          const newTimeline = [
+            ...(o.timeline || []),
+            { time: nowStr, status: '已停止', title: '运维监控停机', description: '运维人员在监控中心强制关机，GPU资源已挂起', operator: `${user.name} (运维)` }
+          ];
+          return {
+            ...o,
+            status: '已停止',
+            stopTime: nowStr,
+            timeline: newTimeline
+          };
+        }
+        return o;
+      }));
+    }
+
+    showToast(`实例 ${id} 已安全关机，对应订单状态已联动更新为【已停止】`);
+  };
+
+  const releaseComputeRunningInstance = (id: string) => {
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    let targetOrderId: string | undefined;
+
+    const targetInst = computeRunningInstances.find(i => i.id === id || i.instanceId === id);
+    if (targetInst) {
+      targetOrderId = targetInst.orderId;
+    }
+
+    // 从监控列表中安全移除
+    setComputeRunningInstances(prev => prev.filter(i => i.id !== id && i.instanceId !== id));
+
+    // 同步更新订单状态为已释放
+    setComputeOrders(prev => prev.map(o => {
+      if (o.id === targetOrderId || o.orderNo === targetOrderId || o.instanceId === id) {
+        const newTimeline = [
+          ...(o.timeline || []),
+          { time: nowStr, status: '已释放', title: '运维监控强制释放', description: '运维人员在监控中心强制释放销毁实例，GPU已归还资源池', operator: `${user.name} (运维)` }
+        ];
+        return {
+          ...o,
+          status: '已释放',
+          releaseTime: nowStr,
+          pendingAmount: 0,
+          timeline: newTimeline
+        };
+      }
+      return o;
+    }));
+
+    showToast(`实例 ${id} 已彻底释放并销毁，对应订单已结清并更新为【已释放】`);
   };
 
   // 6. 对账结算操作
   const confirmComputeSettlement = (id: string) => {
-    setComputeSettlements(prev => prev.map(s => s.id === id ? { ...s, status: '已确认' } : s));
-    showToast('对账单已确认核对无误！');
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    setComputeSettlements(prev => prev.map(s => s.id === id ? {
+      ...s,
+      status: '已确认',
+      confirmedAt: nowStr,
+      confirmedBy: `${user.name} (财务主管)`
+    } : s));
+    showToast('对账单已成功确认，进入待打款/结算状态！');
   };
 
-  const markComputeSettlementPaid = (id: string, invoiceNo?: string) => {
-    setComputeSettlements(prev => prev.map(s => s.id === id ? { ...s, status: '已结算', invoiceNo: invoiceNo || `FP-${Date.now().toString().slice(-6)}`, settledAt: new Date().toLocaleString() } : s));
-    showToast('已完成对账结算与付款确认！');
+  const markComputeSettlementPaid = (
+    id: string,
+    invoiceNo?: string,
+    paymentVoucher?: string,
+    paymentMethod: string = '企业对公银行电汇',
+    remark?: string
+  ) => {
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    setComputeSettlements(prev => prev.map(s => s.id === id ? {
+      ...s,
+      status: '已结算',
+      invoiceNo: invoiceNo || `FP-${Date.now().toString().slice(-6)}`,
+      paymentVoucher: paymentVoucher || `VOUCHER-${Date.now().toString().slice(-8)}`,
+      paymentMethod,
+      settledAt: nowStr,
+      paidBy: `${user.name} (出纳专员)`,
+      remark: remark || s.remark
+    } : s));
+    showToast('已完成对账结算打款确认并归档！');
   };
 
   const generateComputeSettlement = (operator: string, period: string) => {
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    const count = computeSettlements.length + 1;
+    const periodTag = period.replace(/[^0-9]/g, '').slice(0, 6) || '202608';
+    const statementNo = `ST-${periodTag}-${String(count).padStart(3, '0')}`;
+
+    // 查找该运营商在资源池里的规格与协议单价
+    const matchedPool = computePools.find(p => p.operator.includes(operator) || operator.includes(p.operator));
+    const agreedList = matchedPool?.agreedPricings || [
+      { gpuModel: 'RTX 4090 (单卡)', agreedPrice: 1.45, effectiveDate: '2026-01-01' },
+      { gpuModel: 'A100 SXM4 (80G)', agreedPrice: 6.80, effectiveDate: '2026-01-01' }
+    ];
+
+    const specDetails = agreedList.map((item, idx) => {
+      const hours = idx === 0 ? 1120 : 640;
+      const subtotal = Number((hours * item.agreedPrice).toFixed(2));
+      return {
+        gpuModel: item.gpuModel,
+        hours,
+        agreedPrice: item.agreedPrice,
+        subtotal,
+        percentage: idx === 0 ? 63.6 : 36.4
+      };
+    });
+
+    const totalCardHours = specDetails.reduce((a, b) => a + b.hours, 0);
+    const payableAmount = Number(specDetails.reduce((a, b) => a + b.subtotal, 0).toFixed(2));
+    const avgAgreedPrice = totalCardHours > 0 ? Number((payableAmount / totalCardHours).toFixed(2)) : 1.5;
+    const platformRevenue = Number((payableAmount * 1.32).toFixed(2));
+    const platformGrossProfit = Number((platformRevenue - payableAmount).toFixed(2));
+    const grossMargin = Number(((platformGrossProfit / platformRevenue) * 100).toFixed(1));
+
     const newStl: ComputeSettlementItem = {
       id: `stl_${Date.now()}`,
+      statementNo,
       operator,
       period,
-      totalCardHours: 1560,
-      specDetails: [
-        { gpuModel: 'RTX 4090', hours: 960, agreedPrice: 1.50, subtotal: 1440.00, percentage: 61.5 },
-        { gpuModel: 'A100', hours: 600, agreedPrice: 1.50, subtotal: 900.00, percentage: 38.5 }
-      ],
-      agreedPrice: 1.50,
-      payableAmount: 2340.00,
-      platformRevenue: 3042.00,
-      platformGrossProfit: 702.00,
-      grossMargin: 23.1,
+      totalCardHours,
+      specDetails,
+      agreedPrice: avgAgreedPrice,
+      payableAmount,
+      platformRevenue,
+      platformGrossProfit,
+      grossMargin,
       status: '待对账',
-      createdAt: new Date().toLocaleString()
+      createdAt: nowStr,
+      remark: `系统自动汇总 ${operator} 在 ${period} 的实际 GPU 消耗数据并生成对账单`
     };
     setComputeSettlements(prev => [newStl, ...prev]);
-    showToast(`已生成 ${operator} ${period} 算力消耗对账单！`);
+    showToast(`已生成 ${operator}【${statementNo}】算力消耗对账单！`);
   };
   
   // 任务导航状态
@@ -684,7 +1383,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [detailModalAgent, setDetailModalAgent] = useState<AgentItem | null>(null);
   const [subscribeModalAgent, setSubscribeModalAgent] = useState<AgentItem | null>(null);
   const [quotaModalAgent, setQuotaModalAgent] = useState<AgentItem | null>(null);
-  const [trialCountLeft, setTrialCountLeft] = useState<number>(25);
+  const [trialCountLeft, setTrialCountLeft] = useState<number>(() => {
+    const saved = localStorage.getItem('trialCountLeft');
+    return saved !== null ? Number(saved) : 25;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('trialCountLeft', String(trialCountLeft));
+  }, [trialCountLeft]);
+
   const [subscriptions, setSubscriptions] = useState<Record<string, AgentSubscriptionItem>>({});
   const [payPerTokenAgents, setPayPerTokenAgents] = useState<Record<string, boolean>>({});
 
@@ -856,22 +1563,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     else if (modalType === 'history') setHistoryModalOpen(true);
   };
 
-  const createApiKey = (name: string, scope: string, limit: number) => {
-    const newKey: ApiKeyItem = {
-      id: `key_${Date.now()}`,
-      name,
-      prefix: `qj_sk_${Math.random().toString(36).substring(2, 8)}...`,
-      keySecret: `qj_sk_${Math.random().toString(36).substring(2, 18)}`,
-      scope,
-      dailyLimit: limit,
-      usedToday: 0,
-      totalCalls: 0,
-      createdAt: '刚刚',
-      lastUsedAt: '从未使用',
-      status: 'active'
-    };
-    setApiKeys(prev => [newKey, ...prev]);
-    showToast(`成功创建 API Key【${name}】！`);
+  const createApiKey = (nameOrItem: string | Omit<ApiKeyItem, 'id'>, scope?: string, limit?: number) => {
+    if (typeof nameOrItem === 'object') {
+      const newKey: ApiKeyItem = {
+        id: `key_${Date.now()}`,
+        ...nameOrItem
+      };
+      setApiKeys(prev => [newKey, ...prev]);
+    } else {
+      const rawSecret = `qj_sk_${Math.random().toString(36).substring(2, 18)}`;
+      const newKey: ApiKeyItem = {
+        id: `key_${Date.now()}`,
+        name: nameOrItem,
+        prefix: `qj_sk_${Math.random().toString(36).substring(2, 8)}...`,
+        keySecret: rawSecret,
+        scope: scope || 'Full Access',
+        dailyLimit: limit || 10000,
+        usedToday: 0,
+        totalCalls: 0,
+        createdAt: '刚刚',
+        lastUsedAt: '从未使用',
+        status: 'active'
+      };
+      setApiKeys(prev => [newKey, ...prev]);
+    }
+    showToast('成功创建 API Key！');
   };
 
   const revokeApiKey = (id: string) => {
@@ -1547,6 +2263,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       markAllNotificationsRead,
       markNotificationAsRead,
       agents,
+      setAgents,
       userAgents,
       models,
       datasets,
@@ -1556,10 +2273,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       tasks,
       courses,
       gpuInstances,
+      // 充值中心
+      rechargeModalOpen,
+      setRechargeModalOpen,
+      openRechargeModal,
+      // 我租用的实例与我的镜像
       myCustomImages,
       deleteMyCustomImage,
+      forceDeleteUserCustomImage,
       addMyCustomImageComment,
       updateMyCustomImageDescription,
+      userImageQuota,
+      setUserImageQuota,
+      userImageAutoCleanupDays,
+      setUserImageAutoCleanupDays,
       posts,
       apiKeys,
       createApiKey,
@@ -1653,16 +2380,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setComputePoolAlertThreshold,
       toggleComputePoolMaintenance,
       computeOrders,
+      focusedComputeOrderId,
+      setFocusedComputeOrderId,
+      navigateToComputeOrder,
       stopComputeOrder,
       releaseComputeOrder,
       retryComputeOrder,
+      refundComputeOrder,
+      changeComputeOrderBilling,
       computeRunningInstances,
+      focusedComputeInstanceId,
+      setFocusedComputeInstanceId,
+      navigateToComputeInstance,
       restartComputeRunningInstance,
       stopComputeRunningInstance,
+      releaseComputeRunningInstance,
       computeSettlements,
       confirmComputeSettlement,
       markComputeSettlementPaid,
-      generateComputeSettlement
+      generateComputeSettlement,
+      // 数据集后台管理
+      addDataset,
+      updateDataset,
+      deleteDataset,
+      toggleDatasetStatus,
+      datasetTagDimensions,
+      addDatasetTag,
+      updateDatasetTag,
+      deleteDatasetTag,
+      reorderDatasetTags
     }}>
       {children}
     </AppContext.Provider>

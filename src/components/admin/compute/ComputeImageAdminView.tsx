@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import Markdown from 'react-markdown';
 import { useApp } from '../../../context/AppContext';
 import { ComputeImageAdminItem, ComputeImageCategory } from '../../../types';
+import { UserImageAdminTab } from './UserImageAdminTab';
 import {
   Plus,
   Search,
@@ -92,6 +93,7 @@ const ALL_CATEGORIES: ComputeImageCategory[] = [
 export const ComputeImageAdminView: React.FC = () => {
   const {
     computeImages,
+    myCustomImages,
     addComputeImage,
     updateComputeImage,
     deleteComputeImage,
@@ -99,6 +101,9 @@ export const ComputeImageAdminView: React.FC = () => {
     computeRunningInstances,
     showToast
   } = useApp();
+
+  // 顶层 TAB 页：'platform' (平台镜像) | 'user' (用户镜像)
+  const [activeImageTab, setActiveImageTab] = useState<'platform' | 'user'>('platform');
 
   // 搜索与筛选状态
   const [searchTerm, setSearchTerm] = useState('');
@@ -321,8 +326,60 @@ export const ComputeImageAdminView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* 搜索、筛选与操作工具栏 */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+      {/* 顶层 TAB 页切换：平台镜像 / 用户镜像 */}
+      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setActiveImageTab('platform')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+              activeImageTab === 'platform'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+            }`}
+          >
+            <Box className="w-3.5 h-3.5" />
+            <span>平台镜像</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+              activeImageTab === 'platform' ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'
+            }`}>
+              {computeImages.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveImageTab('user')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+              activeImageTab === 'user'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>用户镜像</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+              activeImageTab === 'user' ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'
+            }`}>
+              {myCustomImages.length}
+            </span>
+          </button>
+        </div>
+
+        <div className="text-xs text-slate-400 hidden sm:flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span>
+            {activeImageTab === 'platform' 
+              ? '当前视图：管理系统官方及平台预设的计算镜像' 
+              : '当前视图：审计与维护用户创建的自定义镜像 (仅支持查看与违规删除)'}
+          </span>
+        </div>
+      </div>
+
+      {activeImageTab === 'user' ? (
+        <UserImageAdminTab />
+      ) : (
+        <>
+          {/* 搜索、筛选与操作工具栏 */}
+          <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm">
         <div className="flex flex-wrap items-center gap-3 flex-1 min-w-[300px]">
           {/* 搜索框 */}
           <div className="relative flex-1 min-w-[220px] max-w-md">
@@ -568,7 +625,7 @@ export const ComputeImageAdminView: React.FC = () => {
 
                           {/* 停用 / 启用 */}
                           <button
-                            onClick={() => toggleComputeImageStatus(img.id)}
+                            onClick={() => toggleComputeImageStatus(img.id, isActive ? '下架' : '上架')}
                             className={`px-2.5 py-1 text-xs rounded-md transition-colors border cursor-pointer ${
                               isActive
                                 ? 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/20 text-amber-400'
@@ -1045,10 +1102,11 @@ export const ComputeImageAdminView: React.FC = () => {
                     </button>
                     <button
                       onClick={() => {
-                        toggleComputeImageStatus(detailImage.id);
+                        const nextStatus = (detailImage.status === '已启用' || detailImage.status === '上架') ? '下架' : '上架';
+                        toggleComputeImageStatus(detailImage.id, nextStatus);
                         setDetailImage(prev => prev ? {
                           ...prev,
-                          status: (prev.status === '已启用' || prev.status === '上架') ? '已停用' : '已启用'
+                          status: nextStatus === '下架' ? '已停用' : '已启用'
                         } : null);
                       }}
                       className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
@@ -1184,6 +1242,8 @@ export const ComputeImageAdminView: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

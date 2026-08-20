@@ -531,6 +531,11 @@ export const mockComputePools: ComputePoolItem[] = [
       { gpuModel: 'NVIDIA A100-SXM4-80GB', total: 40, allocated: 34, available: 6, rate: 85.0 },
       { gpuModel: 'NVIDIA Tesla V100S-PCIE-32GB', total: 20, allocated: 6, available: 14, rate: 30.0 }
     ],
+    agreedPricings: [
+      { gpuModel: 'NVIDIA RTX 4090', agreedPrice: 1.45, effectiveDate: '2026-01-01' },
+      { gpuModel: 'NVIDIA A100-SXM4-80GB', agreedPrice: 6.80, effectiveDate: '2026-01-01' },
+      { gpuModel: 'NVIDIA Tesla V100S-PCIE-32GB', agreedPrice: 1.80, effectiveDate: '2026-01-01' }
+    ],
     logs: [
       { id: 'log_01', time: '2026-08-19 00:55:00', operator: '系统自动同步', action: 'API实时拉取库存', result: '成功', detail: '成功获取 3 种 GPU 型号，共 120 卡数据' },
       { id: 'log_02', time: '2026-08-18 10:00:00', operator: '张智算 (运维主管)', action: '连接凭证更新', result: '成功', detail: '更替了天翼云 API Key 密钥' }
@@ -699,21 +704,45 @@ export const mockComputeOrders: ComputeOrderItem[] = [
     userId: 'u_10086',
     userName: '张三 (极客先锋)',
     userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+    userPhone: '13812345678',
     specName: 'RTX 4090 (单卡)',
     specDetail: '24GB显存 / 16核 / 60GB内存 / 750GB硬盘',
+    gpuModel: 'NVIDIA RTX 4090',
+    gpuCount: 1,
     imageName: 'PyTorch 2.3.1 + CUDA 12.1',
     billingType: '按量',
-    orderAmount: 1.88,
+    unitPrice: 1.88,
+    unitPriceLabel: '¥1.88 / 小时',
+    orderAmount: 20.00, // 初始预授权冻结额
+    pendingAmount: 10.60, // 待结算/可用扣减预扣额
     currentCost: 9.40,
     totalCost: 9.40,
+    refundAmount: 0,
     status: '运行中',
     createTime: '2026-08-18 14:30:22',
     createdAt: '2026-08-18 14:30:22',
+    payTime: '2026-08-18 14:30:25',
     startTime: '2026-08-18 14:32:10',
     runningHours: '5.0小时',
     runningDuration: '5小时00分钟',
     operator: '电信云-华东1 (临港集群)',
-    instanceId: 'i-abc123xyz'
+    poolId: 'pool_dx_sh1',
+    instanceId: 'i-abc123xyz',
+    billingLogs: [
+      { id: 'bl_01', time: '2026-08-18 14:30:25', type: '预扣冻结', amount: 20.00, balanceAfter: 180.00, note: '启动按量实例预冻结押金余额' },
+      { id: 'bl_02', time: '2026-08-18 15:32:10', type: '按量扣费', amount: 1.88, balanceAfter: 18.12, note: '第1个计费小时周期结算 (运行1小时)' },
+      { id: 'bl_03', time: '2026-08-18 16:32:10', type: '按量扣费', amount: 1.88, balanceAfter: 16.24, note: '第2个计费小时周期结算 (运行2小时)' },
+      { id: 'bl_04', time: '2026-08-18 17:32:10', type: '按量扣费', amount: 1.88, balanceAfter: 14.36, note: '第3个计费小时周期结算 (运行3小时)' },
+      { id: 'bl_05', time: '2026-08-18 18:32:10', type: '按量扣费', amount: 1.88, balanceAfter: 12.48, note: '第4个计费小时周期结算 (运行4小时)' },
+      { id: 'bl_06', time: '2026-08-18 19:32:10', type: '按量扣费', amount: 1.88, balanceAfter: 10.60, note: '第5个计费小时周期结算 (运行5小时)' }
+    ],
+    billingChanges: [],
+    timeline: [
+      { time: '2026-08-18 14:30:22', status: '待支付', title: '订单创建', description: '用户下单创建按量实例订单' },
+      { time: '2026-08-18 14:30:25', status: '已支付', title: '扣款冻结成功', description: '平台成功预扣 ¥20.00 余额' },
+      { time: '2026-08-18 14:30:30', status: '分配中', title: '底层资源调度', description: '向电信云-华东1 (临港集群) 申请分配 node-gpu-sh-05 物理卡' },
+      { time: '2026-08-18 14:32:10', status: '运行中', title: '实例就绪并开机', description: '容器初始化完毕，Jupyter 与 SSH 端口已就绪' }
+    ]
   },
   {
     id: 'INST-20260818-002',
@@ -721,21 +750,41 @@ export const mockComputeOrders: ComputeOrderItem[] = [
     userId: 'u_10088',
     userName: '极客小千 (你)',
     userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    userPhone: '18688889999',
     specName: 'RTX 4090 (单卡)',
     specDetail: '24GB显存 / 16核 / 60GB内存 / 750GB硬盘',
+    gpuModel: 'NVIDIA RTX 4090',
+    gpuCount: 1,
     imageName: 'ComfyUI 生产级一键整合包 (Flux.1 / SDXL)',
     billingType: '日租',
+    unitPrice: 42.00,
+    unitPriceLabel: '¥42.00 / 天',
     orderAmount: 42.00,
+    pendingAmount: 0.00,
     currentCost: 42.00,
     totalCost: 42.00,
+    refundAmount: 0,
     status: '运行中',
     createTime: '2026-08-18 09:10:00',
     createdAt: '2026-08-18 09:10:00',
+    payTime: '2026-08-18 09:10:05',
     startTime: '2026-08-18 09:11:45',
     runningHours: '10.5小时',
     runningDuration: '10小时35分钟',
     operator: '电信云-华东1 (临港集群)',
-    instanceId: 'i-4090cfy88'
+    poolId: 'pool_dx_sh1',
+    instanceId: 'i-4090cfy88',
+    billingLogs: [
+      { id: 'bl_11', time: '2026-08-18 09:10:05', type: '包周期抵扣', amount: 42.00, balanceAfter: 858.00, note: '一次性支付日租费用（有效期24小时）' }
+    ],
+    billingChanges: [
+      { id: 'bc_01', changeTime: '2026-08-18 11:30:00', oldBillingType: '按量', newBillingType: '日租', operator: '用户自主变更', reason: '用户在控制台将短期按量转换为性价比日租包' }
+    ],
+    timeline: [
+      { time: '2026-08-18 09:10:00', status: '待支付', title: '订单创建', description: '用户创建 ComfyUI 生图环境实例' },
+      { time: '2026-08-18 09:10:05', status: '已支付', title: '支付完成', description: '账户余额全额扣除 ¥42.00' },
+      { time: '2026-08-18 09:11:45', status: '运行中', title: '启动运行', description: '挂载 Flux.1 与 SDXL 大模型权重' }
+    ]
   },
   {
     id: 'INST-20260817-003',
@@ -743,21 +792,39 @@ export const mockComputeOrders: ComputeOrderItem[] = [
     userId: 'u_10092',
     userName: '李工_NLP实验室',
     userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+    userPhone: '13977889900',
     specName: 'A100 SXM4 (80GB)',
     specDetail: '80GB显存 / 32核 / 128GB内存 / 1500GB硬盘',
+    gpuModel: 'NVIDIA A100-SXM4-80GB',
+    gpuCount: 1,
     imageName: 'DeepSeek-R1 / V3 全栈推理与微调镜像',
     billingType: '周租',
+    unitPrice: 1320.00,
+    unitPriceLabel: '¥1320.00 / 周',
     orderAmount: 1320.00,
+    pendingAmount: 0.00,
     currentCost: 1320.00,
     totalCost: 1320.00,
+    refundAmount: 0,
     status: '运行中',
     createTime: '2026-08-17 11:00:00',
     createdAt: '2026-08-17 11:00:00',
+    payTime: '2026-08-17 11:00:10',
     startTime: '2026-08-17 11:04:12',
     runningHours: '32.6小时',
     runningDuration: '1天8小时35分钟',
     operator: '联通云-华北2 (亦庄智算)',
-    instanceId: 'i-a100nlp99'
+    poolId: 'pool_lt_bj2',
+    instanceId: 'i-a100nlp99',
+    billingLogs: [
+      { id: 'bl_21', time: '2026-08-17 11:00:10', type: '包周期抵扣', amount: 1320.00, balanceAfter: 4880.00, note: 'A100 SXM4 80G 周租全额抵扣' }
+    ],
+    billingChanges: [],
+    timeline: [
+      { time: '2026-08-17 11:00:00', status: '待支付', title: '订单创建', description: '大模型微调团队周租下单' },
+      { time: '2026-08-17 11:00:10', status: '已支付', title: '支付成功', description: '扣除高校课题组企业钱包 ¥1320.00' },
+      { time: '2026-08-17 11:04:12', status: '运行中', title: '实例开机', description: 'InfiniBand 网络连接正常，NVLink 通道已开启' }
+    ]
   },
   {
     id: 'INST-20260818-004',
@@ -765,21 +832,41 @@ export const mockComputeOrders: ComputeOrderItem[] = [
     userId: 'u_10099',
     userName: '王五_视觉感知',
     userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+    userPhone: '15011223344',
     specName: 'RTX 3090 (24GB)',
     specDetail: '24GB显存 / 12核 / 48GB内存 / 500GB硬盘',
+    gpuModel: 'NVIDIA RTX 3090',
+    gpuCount: 1,
     imageName: 'Stable Diffusion WebUI Forge 极速版',
     billingType: '按量',
-    orderAmount: 1.35,
+    unitPrice: 1.35,
+    unitPriceLabel: '¥1.35 / 小时',
+    orderAmount: 15.00,
+    pendingAmount: 6.90,
     currentCost: 8.10,
     totalCost: 8.10,
+    refundAmount: 0,
     status: '已停止',
     createTime: '2026-08-18 08:20:00',
     createdAt: '2026-08-18 08:20:00',
+    payTime: '2026-08-18 08:20:03',
     startTime: '2026-08-18 08:22:00',
+    stopTime: '2026-08-18 14:22:00',
     runningHours: '6.0小时',
     runningDuration: '6小时00分钟',
     operator: '移动云-华南1 (广州枢纽)',
-    instanceId: 'i-3090sd01'
+    poolId: 'pool_yd_gz1',
+    instanceId: 'i-3090sd01',
+    billingLogs: [
+      { id: 'bl_31', time: '2026-08-18 08:20:03', type: '预扣冻结', amount: 15.00, balanceAfter: 120.00, note: '初始预扣款' },
+      { id: 'bl_32', time: '2026-08-18 14:22:00', type: '按量扣费', amount: 8.10, balanceAfter: 126.90, note: '累计运行6小时，结算扣除 ¥8.10，剩余预扣款解冻' }
+    ],
+    billingChanges: [],
+    timeline: [
+      { time: '2026-08-18 08:20:00', status: '待支付', title: '订单创建', description: '按量计费创建实例' },
+      { time: '2026-08-18 08:22:00', status: '运行中', title: '实例开机', description: '部署完成并启动 WebUI Forge' },
+      { time: '2026-08-18 14:22:00', status: '已停止', title: '用户主动关机', description: '用户在控制台保存并关机，GPU资源已挂起' }
+    ]
   },
   {
     id: 'INST-20260818-005',
@@ -787,21 +874,39 @@ export const mockComputeOrders: ComputeOrderItem[] = [
     userId: 'u_10105',
     userName: '智算AI小组',
     userAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80',
+    userPhone: '13399001122',
     specName: 'H800 80GB (PCIe)',
     specDetail: '80GB显存 / 64核 / 256GB内存 / 2000GB硬盘',
+    gpuModel: 'NVIDIA H800 80GB PCIe',
+    gpuCount: 1,
     imageName: 'vLLM 大模型高吞吐分布式推理引擎',
     billingType: '月租',
+    unitPrice: 10500.00,
+    unitPriceLabel: '¥10500.00 / 月',
     orderAmount: 10500.00,
+    pendingAmount: 0.00,
     currentCost: 10500.00,
     totalCost: 10500.00,
+    refundAmount: 0,
     status: '运行中',
     createTime: '2026-08-18 10:15:00',
     createdAt: '2026-08-18 10:15:00',
+    payTime: '2026-08-18 10:15:15',
     startTime: '2026-08-18 10:18:20',
     runningHours: '9.4小时',
     runningDuration: '9小时25分钟',
     operator: '中科智算-西部枢纽 (中卫集群)',
-    instanceId: 'i-h800zk02'
+    poolId: 'pool_zk_xb1',
+    instanceId: 'i-h800zk02',
+    billingLogs: [
+      { id: 'bl_41', time: '2026-08-18 10:15:15', type: '包周期抵扣', amount: 10500.00, balanceAfter: 32500.00, note: '企业账户月度包租一次性全额扣款' }
+    ],
+    billingChanges: [],
+    timeline: [
+      { time: '2026-08-18 10:15:00', status: '待支付', title: '订单创建', description: '企业购买 H800 月租实例' },
+      { time: '2026-08-18 10:15:15', status: '已支付', title: '支付成功', description: '企业对公钱包完成结算扣费' },
+      { time: '2026-08-18 10:18:20', status: '运行中', title: '开机运行', description: 'vLLM 引擎已启动，对外暴露 OpenAI 兼容接口' }
+    ]
   },
   {
     id: 'INST-20260818-006',
@@ -809,39 +914,73 @@ export const mockComputeOrders: ComputeOrderItem[] = [
     userId: 'u_10112',
     userName: '算法新手_小陈',
     userAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80',
+    userPhone: '17766554433',
     specName: 'RTX 4090 (单卡)',
     specDetail: '24GB显存 / 16核 / 60GB内存 / 750GB硬盘',
+    gpuModel: 'NVIDIA RTX 4090',
+    gpuCount: 1,
     imageName: 'PyTorch 2.3.1 + CUDA 12.1',
     billingType: '按量',
-    orderAmount: 1.88,
+    unitPrice: 1.88,
+    unitPriceLabel: '¥1.88 / 小时',
+    orderAmount: 10.00,
+    pendingAmount: 10.00,
     currentCost: 0.00,
     totalCost: 0.00,
+    refundAmount: 0,
     status: '待支付',
     createTime: '2026-08-18 19:20:00',
     createdAt: '2026-08-18 19:20:00',
-    operator: '电信云-华东1 (临港集群)'
+    operator: '电信云-华东1 (临港集群)',
+    poolId: 'pool_dx_sh1',
+    billingLogs: [],
+    billingChanges: [],
+    timeline: [
+      { time: '2026-08-18 19:20:00', status: '待支付', title: '订单已生成', description: '等待用户完成收银台支付或充值' }
+    ]
   },
   {
-    id: 'INST-20260818-007',
-    orderNo: 'INST-20260818-007',
+    id: 'INST-20260817-007',
+    orderNo: 'INST-20260817-007',
     userId: 'u_10077',
     userName: '医疗图像AI社',
     userAvatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&auto=format&fit=crop&q=80',
+    userPhone: '18933221100',
     specName: 'A100 SXM4 (80GB)',
     specDetail: '80GB显存 / 32核 / 128GB内存 / 1500GB硬盘',
+    gpuModel: 'NVIDIA A100-SXM4-80GB',
+    gpuCount: 1,
     imageName: 'PyTorch 2.3.1 + CUDA 12.1',
     billingType: '按量',
-    orderAmount: 8.50,
+    unitPrice: 8.50,
+    unitPriceLabel: '¥8.50 / 小时',
+    orderAmount: 100.00,
+    pendingAmount: 0.00,
     currentCost: 68.00,
     totalCost: 68.00,
+    refundAmount: 0,
     status: '已释放',
     createTime: '2026-08-17 09:00:00',
     createdAt: '2026-08-17 09:00:00',
+    payTime: '2026-08-17 09:00:05',
     startTime: '2026-08-17 09:02:10',
+    stopTime: '2026-08-17 17:02:10',
+    releaseTime: '2026-08-17 17:02:10',
     runningHours: '8.0小时',
     runningDuration: '8小时00分钟',
     operator: '联通云-华北2 (亦庄智算)',
-    instanceId: 'i-a100rel01'
+    poolId: 'pool_lt_bj2',
+    instanceId: 'i-a100rel01',
+    billingLogs: [
+      { id: 'bl_71', time: '2026-08-17 09:00:05', type: '预扣冻结', amount: 100.00, balanceAfter: 420.00, note: '初始押金预授权' },
+      { id: 'bl_72', time: '2026-08-17 17:02:10', type: '按量扣费', amount: 68.00, balanceAfter: 452.00, note: '8小时训练结束，扣除 ¥68.00，退回多余押金 ¥32.00' }
+    ],
+    billingChanges: [],
+    timeline: [
+      { time: '2026-08-17 09:00:00', status: '待支付', title: '订单创建', description: '按量购买 A100 训练卡' },
+      { time: '2026-08-17 09:02:10', status: '运行中', title: '开机运行', description: '挂载医学图像 DICOM 数据集' },
+      { time: '2026-08-17 17:02:10', status: '已释放', title: '用户主动释放', description: '训练完成，保存权重至网盘并彻底释放实例' }
+    ]
   },
   {
     id: 'INST-20260818-008',
@@ -849,18 +988,40 @@ export const mockComputeOrders: ComputeOrderItem[] = [
     userId: 'u_10120',
     userName: '机器人动力学团队',
     userAvatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80',
+    userPhone: '13611229988',
     specName: 'Tesla V100 (32GB)',
     specDetail: '32GB显存 / 16核 / 64GB内存 / 800GB硬盘',
+    gpuModel: 'NVIDIA Tesla V100S-PCIE-32GB',
+    gpuCount: 1,
     imageName: 'TensorFlow 2.15.0 (Legacy)',
     billingType: '按量',
-    orderAmount: 2.60,
+    unitPrice: 2.60,
+    unitPriceLabel: '¥2.60 / 小时',
+    orderAmount: 20.00,
+    pendingAmount: 0.00,
     currentCost: 0.00,
     totalCost: 0.00,
+    refundAmount: 20.00,
     status: '创建失败',
     createTime: '2026-08-18 08:30:00',
     createdAt: '2026-08-18 08:30:00',
+    payTime: '2026-08-18 08:30:04',
     operator: '电信云-华东1 (临港集群)',
-    errorMessage: '运营商机房底层物理节点驱动掉线 (NVML Driver Mismatch Error)，系统已自动取消冻结并回退余额。'
+    poolId: 'pool_dx_sh1',
+    errorMessage: '运营商机房底层物理节点驱动掉线 (NVML Driver Mismatch Error)，系统已自动取消冻结并回退余额。',
+    refundLogs: [
+      { id: 'rf_01', time: '2026-08-18 08:31:10', amount: 20.00, reason: '机房底层驱动异常导致调度失败，系统自动全额退款', operator: '系统自动处理', status: '已退款' }
+    ],
+    billingLogs: [
+      { id: 'bl_81', time: '2026-08-18 08:30:04', type: '预扣冻结', amount: 20.00, balanceAfter: 150.00, note: '下单预冻结' },
+      { id: 'bl_82', time: '2026-08-18 08:31:10', type: '退款返还', amount: -20.00, balanceAfter: 170.00, note: '调度失败解冻并退回预扣金额' }
+    ],
+    timeline: [
+      { time: '2026-08-18 08:30:00', status: '待支付', title: '订单创建', description: '用户创建 V100 训练实例' },
+      { time: '2026-08-18 08:30:04', status: '已支付', title: '扣款完成', description: '成功预扣账户余额' },
+      { time: '2026-08-18 08:30:50', status: '分配中', title: '调度失败', description: '宿主机 NVML 驱动响应超时' },
+      { time: '2026-08-18 08:31:10', status: '创建失败', title: '回滚退款', description: '系统触发故障容灾回滚，已退款 ¥20.00' }
+    ]
   },
   {
     id: 'INST-20260818-009',
@@ -868,21 +1029,41 @@ export const mockComputeOrders: ComputeOrderItem[] = [
     userId: 'u_10135',
     userName: '信创算力先锋',
     userAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80',
+    userPhone: '15522334455',
     specName: '昇腾 910B (64GB)',
     specDetail: '64GB显存 / 32核 / 128GB内存 / 1500GB硬盘',
-    imageName: 'PyTorch 2.3.1 + CUDA 12.1',
+    gpuModel: 'Huawei Ascend 910B NPU',
+    gpuCount: 1,
+    imageName: 'PyTorch 2.3.1 + CANN 8.0',
     billingType: '按量',
-    orderAmount: 6.80,
+    unitPrice: 6.80,
+    unitPriceLabel: '¥6.80 / 小时',
+    orderAmount: 50.00,
+    pendingAmount: 29.60,
     currentCost: 20.40,
     totalCost: 20.40,
+    refundAmount: 0,
     status: '运行中',
     createTime: '2026-08-18 16:40:00',
     createdAt: '2026-08-18 16:40:00',
+    payTime: '2026-08-18 16:40:06',
     startTime: '2026-08-18 16:42:15',
     runningHours: '3.0小时',
     runningDuration: '3小时00分钟',
     operator: '贵安智算-西南中心 (信创池)',
-    instanceId: 'i-910bxc01'
+    poolId: 'pool_ga_xn1',
+    instanceId: 'i-910bxc01',
+    billingLogs: [
+      { id: 'bl_91', time: '2026-08-18 16:40:06', type: '预扣冻结', amount: 50.00, balanceAfter: 280.00, note: '初始预扣款' },
+      { id: 'bl_92', time: '2026-08-18 17:42:15', type: '按量扣费', amount: 6.80, balanceAfter: 43.20, note: '第1小时费用' },
+      { id: 'bl_93', time: '2026-08-18 18:42:15', type: '按量扣费', amount: 6.80, balanceAfter: 36.40, note: '第2小时费用' },
+      { id: 'bl_94', time: '2026-08-18 19:42:15', type: '按量扣费', amount: 6.80, balanceAfter: 29.60, note: '第3小时费用' }
+    ],
+    billingChanges: [],
+    timeline: [
+      { time: '2026-08-18 16:40:00', status: '待支付', title: '订单创建', description: '昇腾国产芯片算力下单' },
+      { time: '2026-08-18 16:42:15', status: '运行中', title: '实例启动就绪', description: 'CANN 8.0 驱动加载完成' }
+    ]
   },
   {
     id: 'INST-20260818-010',
@@ -890,40 +1071,68 @@ export const mockComputeOrders: ComputeOrderItem[] = [
     userId: 'u_10142',
     userName: '多模态视频工作室',
     userAvatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&auto=format&fit=crop&q=80',
+    userPhone: '13799887766',
     specName: 'NVIDIA L40S (48GB)',
     specDetail: '48GB显存 / 32核 / 128GB内存 / 1200GB硬盘',
+    gpuModel: 'NVIDIA L40S 48GB',
+    gpuCount: 1,
     imageName: 'ComfyUI 生产级一键整合包 (Flux.1 / SDXL)',
     billingType: '日租',
+    unitPrice: 128.00,
+    unitPriceLabel: '¥128.00 / 天',
     orderAmount: 128.00,
+    pendingAmount: 0.00,
     currentCost: 128.00,
     totalCost: 128.00,
+    refundAmount: 0,
     status: '运行中',
     createTime: '2026-08-18 12:00:00',
     createdAt: '2026-08-18 12:00:00',
+    payTime: '2026-08-18 12:00:10',
     startTime: '2026-08-18 12:03:00',
     runningHours: '7.7小时',
     runningDuration: '7小时40分钟',
     operator: '移动云-华南1 (广州枢纽)',
-    instanceId: 'i-l40svid02'
+    poolId: 'pool_yd_gz1',
+    instanceId: 'i-l40svid02',
+    billingLogs: [
+      { id: 'bl_101', time: '2026-08-18 12:00:10', type: '包周期抵扣', amount: 128.00, balanceAfter: 1540.00, note: 'L40S 48G 日租全额结算' }
+    ],
+    billingChanges: [],
+    timeline: [
+      { time: '2026-08-18 12:00:00', status: '待支付', title: '订单创建', description: '视频渲染工作流下单' },
+      { time: '2026-08-18 12:03:00', status: '运行中', title: '实例开机', description: '已加载 AnimateDiff 视频生成管道' }
+    ]
   }
 ];
 
 // ==========================================
-// 5. 运行实例监控 Mock 数据
+// 5. 运行实例监控 Mock 数据 (仅当前运行中 + 已关机实例)
 // ==========================================
 export const mockRunningInstances: ComputeRunningInstanceItem[] = [
   {
     id: 'i-abc123xyz',
     instanceId: 'i-abc123xyz',
+    orderId: 'INST-20260818-001',
     userId: 'u_10086',
     userName: '张三 (极客先锋)',
     userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+    userPhone: '13812345678',
     specName: 'RTX 4090 (单卡)',
     gpuSpec: 'RTX 4090 · 24GB',
+    gpuModel: 'NVIDIA RTX 4090',
+    gpuCount: 1,
+    cpuCores: 16,
+    ramGb: 60,
+    diskGb: 750,
     imageName: 'PyTorch 2.3.1 + CUDA 12.1',
-    operator: '电信云-华东1 (临港)',
+    operator: '电信云-华东1 (临港集群)',
+    poolId: 'pool_dx_sh1',
     hostNode: 'node-gpu-sh-05',
+    ipAddress: '10.0.1.123',
+    publicIp: '123.57.190.22',
     createdAt: '2026-08-18 14:32:10',
+    startTime: '2026-08-18 14:32:10',
     runningHours: '5.0h',
     runningDuration: '5小时00分钟',
     gpuUsage: 78,
@@ -940,29 +1149,49 @@ export const mockRunningInstances: ComputeRunningInstanceItem[] = [
     health: '良好',
     gpuUsageHistory: [45, 52, 60, 68, 75, 78, 82, 78],
     vramUsageHistory: [30, 42, 55, 60, 65, 65, 68, 68],
-    sshCommand: 'ssh root@10.0.1.123 -p 22022',
-    jupyterUrl: 'http://10.0.1.123:8888/?token=qianji_jupyter_abc123',
+    metricHistory: [
+      { time: '14:30', gpu: 45, vram: 30, cpu: 35, ram: 25, temp: 50, power: 180 },
+      { time: '15:00', gpu: 52, vram: 42, cpu: 40, ram: 30, temp: 55, power: 220 },
+      { time: '16:00', gpu: 60, vram: 55, cpu: 46, ram: 38, temp: 59, power: 260 },
+      { time: '17:00', gpu: 68, vram: 60, cpu: 50, ram: 42, temp: 62, power: 290 },
+      { time: '18:00', gpu: 75, vram: 65, cpu: 52, ram: 45, temp: 64, power: 310 },
+      { time: '19:00', gpu: 82, vram: 68, cpu: 55, ram: 46, temp: 65, power: 330 },
+      { time: '19:30', gpu: 78, vram: 68, cpu: 52, ram: 45, temp: 64, power: 320 }
+    ],
+    sshCommand: 'ssh root@123.57.190.22 -p 22022',
+    jupyterUrl: 'http://123.57.190.22:8888/?token=qianji_jupyter_abc123',
     status: '运行中',
     logs: [
-      { time: '14:32:10', level: 'INFO', message: 'Container initialized successfully with NVIDIA Container Runtime.' },
-      { time: '14:32:18', level: 'INFO', message: 'JupyterLab server listening on 0.0.0.0:8888.' },
-      { time: '14:35:00', level: 'INFO', message: 'User logged in via SSH terminal (10.0.1.123:22022).' },
-      { time: '14:40:22', level: 'INFO', message: 'PyTorch training worker train_ddp.py launched, allocated 16.3GB VRAM.' },
-      { time: '19:30:00', level: 'INFO', message: 'Checkpoint saved: /workspace/checkpoints/epoch_12.pt (Loss: 0.342).' }
+      { time: '14:32:10', level: 'INFO', message: 'Container initialized successfully with NVIDIA Container Runtime.', source: 'Docker Daemon' },
+      { time: '14:32:18', level: 'INFO', message: 'JupyterLab server listening on 0.0.0.0:8888 (Token authenticated).', source: 'Jupyter' },
+      { time: '14:35:00', level: 'INFO', message: 'User logged in via SSH terminal (Client IP: 222.66.108.92:54321).', source: 'sshd' },
+      { time: '14:40:22', level: 'INFO', message: 'PyTorch training worker train_ddp.py launched, allocated 16.3GB VRAM.', source: 'PyTorch CUDA' },
+      { time: '19:30:00', level: 'INFO', message: 'Checkpoint saved: /workspace/checkpoints/epoch_12.pt (Loss: 0.342).', source: 'Training Script' }
     ]
   },
   {
     id: 'i-4090cfy88',
     instanceId: 'i-4090cfy88',
+    orderId: 'INST-20260818-002',
     userId: 'u_10088',
     userName: '极客小千 (你)',
     userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    userPhone: '18688889999',
     specName: 'RTX 4090 (单卡)',
     gpuSpec: 'RTX 4090 · 24GB',
+    gpuModel: 'NVIDIA RTX 4090',
+    gpuCount: 1,
+    cpuCores: 16,
+    ramGb: 60,
+    diskGb: 750,
     imageName: 'ComfyUI 生产级一键整合包',
-    operator: '电信云-华东1 (临港)',
+    operator: '电信云-华东1 (临港集群)',
+    poolId: 'pool_dx_sh1',
     hostNode: 'node-gpu-sh-12',
+    ipAddress: '10.0.1.188',
+    publicIp: '123.57.190.88',
     createdAt: '2026-08-18 09:11:45',
+    startTime: '2026-08-18 09:11:45',
     runningHours: '10.5h',
     runningDuration: '10小时35分钟',
     gpuUsage: 94,
@@ -979,28 +1208,47 @@ export const mockRunningInstances: ComputeRunningInstanceItem[] = [
     health: '高载',
     gpuUsageHistory: [20, 40, 85, 95, 90, 88, 96, 94],
     vramUsageHistory: [25, 45, 78, 86, 88, 91, 91, 91],
-    sshCommand: 'ssh root@10.0.1.188 -p 22022',
-    jupyterUrl: 'http://10.0.1.188:8188',
+    metricHistory: [
+      { time: '09:30', gpu: 20, vram: 25, cpu: 28, ram: 20, temp: 48, power: 160 },
+      { time: '11:00', gpu: 85, vram: 78, cpu: 60, ram: 45, temp: 68, power: 380 },
+      { time: '13:00', gpu: 95, vram: 86, cpu: 70, ram: 55, temp: 73, power: 430 },
+      { time: '15:00', gpu: 90, vram: 88, cpu: 65, ram: 58, temp: 71, power: 410 },
+      { time: '17:00', gpu: 96, vram: 91, cpu: 72, ram: 60, temp: 74, power: 435 },
+      { time: '19:40', gpu: 94, vram: 91, cpu: 68, ram: 62, temp: 72, power: 425 }
+    ],
+    sshCommand: 'ssh root@123.57.190.88 -p 22022',
+    jupyterUrl: 'http://123.57.190.88:8188',
     status: '运行中',
     logs: [
-      { time: '09:11:45', level: 'INFO', message: 'ComfyUI web server loaded with Flux.1 Dev model weights (12GB).' },
-      { time: '09:15:00', level: 'INFO', message: 'Batch image generation queue active, 4 concurrent jobs queued.' },
-      { time: '14:20:10', level: 'WARN', message: 'VRAM peak reached 21.8GB / 24GB (90.8%), running close to memory ceiling.' },
-      { time: '19:42:00', level: 'INFO', message: 'InstantID portrait rendering complete in 4.2 seconds.' }
+      { time: '09:11:45', level: 'INFO', message: 'ComfyUI web server loaded with Flux.1 Dev model weights (12GB).', source: 'ComfyUI Core' },
+      { time: '09:15:00', level: 'INFO', message: 'Batch image generation queue active, 4 concurrent jobs queued.', source: 'Task Queue' },
+      { time: '14:20:10', level: 'WARN', message: 'VRAM peak reached 21.8GB / 24GB (90.8%), running close to memory ceiling.', source: 'NVML Watchdog' },
+      { time: '19:42:00', level: 'INFO', message: 'InstantID portrait rendering complete in 4.2 seconds.', source: 'ComfyUI Node' }
     ]
   },
   {
     id: 'i-a100nlp99',
     instanceId: 'i-a100nlp99',
+    orderId: 'INST-20260817-003',
     userId: 'u_10092',
     userName: '李工_NLP实验室',
     userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+    userPhone: '13977889900',
     specName: 'A100 SXM4 (80GB)',
     gpuSpec: 'A100 SXM4 · 80GB',
+    gpuModel: 'NVIDIA A100-SXM4-80GB',
+    gpuCount: 1,
+    cpuCores: 32,
+    ramGb: 128,
+    diskGb: 1500,
     imageName: 'DeepSeek-R1 / V3 微调镜像',
-    operator: '联通云-华北2 (亦庄)',
+    operator: '联通云-华北2 (亦庄智算)',
+    poolId: 'pool_lt_bj2',
     hostNode: 'node-gpu-bj-01',
+    ipAddress: '10.0.2.201',
+    publicIp: '124.64.22.105',
     createdAt: '2026-08-17 11:04:12',
+    startTime: '2026-08-17 11:04:12',
     runningHours: '32.6h',
     runningDuration: '1天8小时35分钟',
     gpuUsage: 98,
@@ -1017,27 +1265,94 @@ export const mockRunningInstances: ComputeRunningInstanceItem[] = [
     health: '高载',
     gpuUsageHistory: [92, 95, 98, 98, 97, 98, 99, 98],
     vramUsageHistory: [92, 94, 95, 95, 95, 95, 95, 95],
-    sshCommand: 'ssh root@10.0.2.201 -p 22022',
-    jupyterUrl: 'http://10.0.2.201:8888',
+    metricHistory: [
+      { time: '昨日12:00', gpu: 92, vram: 92, cpu: 75, ram: 65, temp: 65, power: 360 },
+      { time: '昨日18:00', gpu: 98, vram: 95, cpu: 82, ram: 72, temp: 67, power: 380 },
+      { time: '今日00:00', gpu: 98, vram: 95, cpu: 84, ram: 76, temp: 68, power: 385 },
+      { time: '今日06:00', gpu: 97, vram: 95, cpu: 80, ram: 76, temp: 67, power: 375 },
+      { time: '今日12:00', gpu: 99, vram: 95, cpu: 85, ram: 78, temp: 69, power: 388 },
+      { time: '今日19:40', gpu: 98, vram: 95, cpu: 84, ram: 78, temp: 68, power: 380 }
+    ],
+    sshCommand: 'ssh root@124.64.22.105 -p 22022',
+    jupyterUrl: 'http://124.64.22.105:8888',
     status: '运行中',
     logs: [
-      { time: '11:04:12', level: 'INFO', message: 'Unsloth 4-bit LoRA training loop initialized across 80GB HBM2e.' },
-      { time: '15:30:00', level: 'INFO', message: 'Epoch 3/5 in progress, average step latency 182ms, Loss: 0.642.' },
-      { time: '19:40:00', level: 'INFO', message: 'FlashAttention-2 kernel optimized forward pass active.' }
+      { time: '11:04:12', level: 'INFO', message: 'Unsloth 4-bit LoRA training loop initialized across 80GB HBM2e.', source: 'Unsloth Engine' },
+      { time: '15:30:00', level: 'INFO', message: 'Epoch 3/5 in progress, average step latency 182ms, Loss: 0.642.', source: 'Trainer' },
+      { time: '19:40:00', level: 'INFO', message: 'FlashAttention-2 kernel optimized forward pass active.', source: 'PyTorch' }
+    ]
+  },
+  {
+    id: 'i-3090sd01',
+    instanceId: 'i-3090sd01',
+    orderId: 'INST-20260818-004',
+    userId: 'u_10099',
+    userName: '王五_视觉感知',
+    userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+    userPhone: '15011223344',
+    specName: 'RTX 3090 (24GB)',
+    gpuSpec: 'RTX 3090 · 24GB',
+    gpuModel: 'NVIDIA RTX 3090',
+    gpuCount: 1,
+    cpuCores: 12,
+    ramGb: 48,
+    diskGb: 500,
+    imageName: 'Stable Diffusion WebUI Forge 极速版',
+    operator: '移动云-华南1 (广州枢纽)',
+    poolId: 'pool_yd_gz1',
+    hostNode: 'node-gpu-gz-03',
+    ipAddress: '10.0.3.45',
+    publicIp: '183.6.12.99',
+    createdAt: '2026-08-18 08:22:00',
+    stoppedAt: '2026-08-18 14:22:00',
+    runningHours: '6.0h',
+    runningDuration: '6小时00分钟',
+    gpuUsage: 0,
+    gpuUtil: 0,
+    vramUsage: 0,
+    vramUsed: '0.0GB',
+    vramTotal: '24.0GB',
+    ramUsage: 5,
+    ramUsed: '2.4GB / 48GB',
+    cpuUtil: 0,
+    diskUsage: 32,
+    temp: 36,
+    power: '25W / 350W',
+    health: '良好',
+    gpuUsageHistory: [40, 70, 75, 80, 75, 60, 0, 0],
+    vramUsageHistory: [35, 60, 65, 70, 65, 50, 0, 0],
+    metricHistory: [],
+    sshCommand: 'ssh root@183.6.12.99 -p 22022',
+    jupyterUrl: '',
+    status: '已停止',
+    logs: [
+      { time: '08:22:00', level: 'INFO', message: 'Instance container started and SD WebUI Forge initialized.', source: 'System' },
+      { time: '14:22:00', level: 'INFO', message: 'Instance stopped by user request. GPU hardware released to pool.', source: 'ControlPlane' }
     ]
   },
   {
     id: 'i-h800zk02',
     instanceId: 'i-h800zk02',
+    orderId: 'INST-20260818-005',
     userId: 'u_10105',
     userName: '智算AI小组',
     userAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80',
+    userPhone: '13399001122',
     specName: 'H800 80GB (PCIe)',
     gpuSpec: 'H800 80GB · PCIe',
+    gpuModel: 'NVIDIA H800 80GB PCIe',
+    gpuCount: 1,
+    cpuCores: 64,
+    ramGb: 256,
+    diskGb: 2000,
     imageName: 'vLLM 大模型推理引擎',
-    operator: '中科智算-西部枢纽',
+    operator: '中科智算-西部枢纽 (中卫集群)',
+    poolId: 'pool_zk_xb1',
     hostNode: 'node-gpu-nx-04',
+    ipAddress: '10.0.4.110',
+    publicIp: '218.75.14.88',
     createdAt: '2026-08-18 10:18:20',
+    startTime: '2026-08-18 10:18:20',
     runningHours: '9.4h',
     runningDuration: '9小时25分钟',
     gpuUsage: 86,
@@ -1054,27 +1369,45 @@ export const mockRunningInstances: ComputeRunningInstanceItem[] = [
     health: '良好',
     gpuUsageHistory: [70, 78, 85, 88, 84, 86, 88, 86],
     vramUsageHistory: [65, 80, 89, 89, 89, 89, 89, 89],
-    sshCommand: 'ssh root@10.0.4.110 -p 22022',
-    jupyterUrl: 'http://10.0.4.110:8000',
+    metricHistory: [
+      { time: '11:00', gpu: 70, vram: 65, cpu: 45, ram: 40, temp: 55, power: 250 },
+      { time: '13:00', gpu: 78, vram: 80, cpu: 52, ram: 48, temp: 58, power: 280 },
+      { time: '15:00', gpu: 85, vram: 89, cpu: 58, ram: 52, temp: 60, power: 300 },
+      { time: '17:00', gpu: 88, vram: 89, cpu: 62, ram: 54, temp: 62, power: 315 },
+      { time: '19:40', gpu: 86, vram: 89, cpu: 60, ram: 54, temp: 61, power: 310 }
+    ],
+    sshCommand: 'ssh root@218.75.14.88 -p 22022',
+    jupyterUrl: 'http://218.75.14.88:8000',
     status: '运行中',
     logs: [
-      { time: '10:18:20', level: 'INFO', message: 'vLLM server started with PagedAttention engine, max model len 8192.' },
-      { time: '10:20:00', level: 'INFO', message: 'Serving OpenAI compatible API endpoint at /v1/chat/completions.' },
-      { time: '19:44:00', level: 'INFO', message: 'Current QPS: 42.6 req/s, avg generation throughput: 820 tokens/sec.' }
+      { time: '10:18:20', level: 'INFO', message: 'vLLM server started with PagedAttention engine, max model len 8192.', source: 'vLLM Service' },
+      { time: '10:20:00', level: 'INFO', message: 'Serving OpenAI compatible API endpoint at /v1/chat/completions.', source: 'API Gateway' },
+      { time: '19:44:00', level: 'INFO', message: 'Current QPS: 42.6 req/s, avg generation throughput: 820 tokens/sec.', source: 'Metrics Reporter' }
     ]
   },
   {
     id: 'i-910bxc01',
     instanceId: 'i-910bxc01',
+    orderId: 'INST-20260818-009',
     userId: 'u_10135',
     userName: '信创算力先锋',
     userAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80',
+    userPhone: '15522334455',
     specName: '昇腾 910B (64GB)',
     gpuSpec: '昇腾 910B · 64GB',
+    gpuModel: 'Huawei Ascend 910B NPU',
+    gpuCount: 1,
+    cpuCores: 32,
+    ramGb: 128,
+    diskGb: 1500,
     imageName: 'PyTorch 2.3.1 + CANN 8.0',
-    operator: '贵安智算-西南中心',
+    operator: '贵安智算-西南中心 (信创池)',
+    poolId: 'pool_ga_xn1',
     hostNode: 'node-npu-gz-02',
+    ipAddress: '10.0.5.88',
+    publicIp: '117.135.19.45',
     createdAt: '2026-08-18 16:42:15',
+    startTime: '2026-08-18 16:42:15',
     runningHours: '3.0h',
     runningDuration: '3小时00分钟',
     gpuUsage: 65,
@@ -1091,26 +1424,43 @@ export const mockRunningInstances: ComputeRunningInstanceItem[] = [
     health: '良好',
     gpuUsageHistory: [30, 45, 58, 62, 65, 66, 64, 65],
     vramUsageHistory: [20, 35, 50, 58, 58, 58, 58, 58],
-    sshCommand: 'ssh root@10.0.5.88 -p 22022',
-    jupyterUrl: 'http://10.0.5.88:8888',
+    metricHistory: [
+      { time: '16:45', gpu: 30, vram: 20, cpu: 25, ram: 30, temp: 48, power: 180 },
+      { time: '17:30', gpu: 45, vram: 35, cpu: 32, ram: 35, temp: 52, power: 210 },
+      { time: '18:30', gpu: 62, vram: 58, cpu: 36, ram: 40, temp: 55, power: 250 },
+      { time: '19:40', gpu: 65, vram: 58, cpu: 38, ram: 40, temp: 56, power: 260 }
+    ],
+    sshCommand: 'ssh root@117.135.19.45 -p 22022',
+    jupyterUrl: 'http://117.135.19.45:8888',
     status: '运行中',
     logs: [
-      { time: '16:42:15', level: 'INFO', message: 'Huawei CANN 8.0 NPU driver initialized successfully.' },
-      { time: '16:45:00', level: 'INFO', message: 'MindSpore transformer model loaded, NPU device index 0 active.' }
+      { time: '16:42:15', level: 'INFO', message: 'Huawei CANN 8.0 NPU driver initialized successfully.', source: 'Ascend Driver' },
+      { time: '16:45:00', level: 'INFO', message: 'MindSpore transformer model loaded, NPU device index 0 active.', source: 'MindSpore' }
     ]
   },
   {
     id: 'i-l40svid02',
     instanceId: 'i-l40svid02',
+    orderId: 'INST-20260818-010',
     userId: 'u_10142',
     userName: '多模态视频工作室',
     userAvatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&auto=format&fit=crop&q=80',
+    userPhone: '13799887766',
     specName: 'NVIDIA L40S (48GB)',
     gpuSpec: 'NVIDIA L40S · 48GB',
+    gpuModel: 'NVIDIA L40S 48GB',
+    gpuCount: 1,
+    cpuCores: 32,
+    ramGb: 128,
+    diskGb: 1200,
     imageName: 'ComfyUI 生产级整合包',
-    operator: '移动云-华南1 (广州)',
+    operator: '移动云-华南1 (广州枢纽)',
+    poolId: 'pool_yd_gz1',
     hostNode: 'node-gpu-gz-06',
+    ipAddress: '10.0.3.166',
+    publicIp: '183.6.12.166',
     createdAt: '2026-08-18 12:03:00',
+    startTime: '2026-08-18 12:03:00',
     runningHours: '7.7h',
     runningDuration: '7小时40分钟',
     gpuUsage: 91,
@@ -1127,12 +1477,20 @@ export const mockRunningInstances: ComputeRunningInstanceItem[] = [
     health: '告警',
     gpuUsageHistory: [50, 75, 88, 92, 95, 94, 92, 91],
     vramUsageHistory: [40, 60, 78, 82, 82, 82, 82, 82],
-    sshCommand: 'ssh root@10.0.3.166 -p 22022',
-    jupyterUrl: 'http://10.0.3.166:8188',
+    metricHistory: [
+      { time: '13:00', gpu: 50, vram: 40, cpu: 45, ram: 35, temp: 62, power: 220 },
+      { time: '15:00', gpu: 75, vram: 60, cpu: 60, ram: 42, temp: 71, power: 280 },
+      { time: '17:00', gpu: 92, vram: 82, cpu: 70, ram: 48, temp: 79, power: 330 },
+      { time: '18:15', gpu: 95, vram: 82, cpu: 75, ram: 50, temp: 84, power: 348 },
+      { time: '19:40', gpu: 91, vram: 82, cpu: 72, ram: 50, temp: 83, power: 345 }
+    ],
+    sshCommand: 'ssh root@183.6.12.166 -p 22022',
+    jupyterUrl: 'http://183.6.12.166:8188',
     status: '运行中',
     logs: [
-      { time: '12:03:00', level: 'INFO', message: 'AnimateDiff video generation rendering pipeline loaded.' },
-      { time: '18:15:00', level: 'WARN', message: 'GPU Core temperature elevated to 83°C, fan speed increased to 95%.' }
+      { time: '12:03:00', level: 'INFO', message: 'AnimateDiff video generation rendering pipeline loaded.', source: 'ComfyUI' },
+      { time: '18:15:00', level: 'WARN', message: 'GPU Core temperature elevated to 84°C, fan speed increased to 95%.', source: 'Thermal Monitor' },
+      { time: '19:10:00', level: 'WARN', message: 'Power draw near TDP limit (348W / 350W). Automatic throttling active.', source: 'Power Manager' }
     ]
   }
 ];
@@ -1145,39 +1503,87 @@ export const mockComputeStats = {
   runningInstances: 312,
   avgGpuUtilization: 77.4,
   monthlyRevenue: 238650.00,
+  refreshMeta: {
+    lastRefreshed: '2026-08-19 10:30:00',
+    gpuUtilFreq: '5分钟',
+    runningInstFreq: '5分钟',
+    revenueFreq: '每日凌晨',
+    trendFreq: '每日凌晨',
+    userRankFreq: '每小时',
+    operatorFreq: '5分钟'
+  },
   dailyTrend: [
-    { date: '08-12', utilization: 72.5, instances: 260, revenue: 6820 },
-    { date: '08-13', utilization: 74.2, instances: 275, revenue: 7240 },
-    { date: '08-14', utilization: 76.0, instances: 288, revenue: 7680 },
-    { date: '08-15', utilization: 75.8, instances: 295, revenue: 7920 },
-    { date: '08-16', utilization: 78.4, instances: 308, revenue: 8350 },
-    { date: '08-17', utilization: 79.1, instances: 318, revenue: 8640 },
-    { date: '08-18', utilization: 77.4, instances: 312, revenue: 8420 }
+    { date: '08-12', utilization: 72.5, instances: 260, newOrders: 142, revenue: 6820, orders: 142 },
+    { date: '08-13', utilization: 74.2, instances: 275, newOrders: 156, revenue: 7240, orders: 156 },
+    { date: '08-14', utilization: 76.0, instances: 288, newOrders: 168, revenue: 7680, orders: 168 },
+    { date: '08-15', utilization: 75.8, instances: 295, newOrders: 172, revenue: 7920, orders: 172 },
+    { date: '08-16', utilization: 78.4, instances: 308, newOrders: 185, revenue: 8350, orders: 185 },
+    { date: '08-17', utilization: 79.1, instances: 318, newOrders: 196, revenue: 8640, orders: 196 },
+    { date: '08-18', utilization: 77.4, instances: 312, newOrders: 178, revenue: 8420, orders: 178 }
   ],
+  instanceTrends: [
+    { date: '08-12', createdCount: 142, activeCount: 260 },
+    { date: '08-13', createdCount: 156, activeCount: 275 },
+    { date: '08-14', createdCount: 168, activeCount: 288 },
+    { date: '08-15', createdCount: 172, activeCount: 295 },
+    { date: '08-16', createdCount: 185, activeCount: 308 },
+    { date: '08-17', createdCount: 196, activeCount: 318 },
+    { date: '08-18', createdCount: 178, activeCount: 312 }
+  ],
+  utilizationTrends: [
+    { time: '00:00', rate: 64.2 },
+    { time: '04:00', rate: 58.0 },
+    { time: '08:00', rate: 71.5 },
+    { time: '12:00', rate: 82.3 },
+    { time: '16:00', rate: 89.1 },
+    { time: '20:00', rate: 84.6 },
+    { time: '23:59', rate: 77.4 }
+  ],
+  billingTypeDistribution: {
+    pay_as_you_go: 49.0,
+    daily: 26.0,
+    weekly: 15.1,
+    monthly: 9.9
+  },
   specDistribution: [
-    { name: 'RTX 4090 (24G)', value: 42, count: 131, color: '#6366f1' },
-    { name: 'A100 SXM4 (80G)', value: 26, count: 81, color: '#10b981' },
-    { name: 'H800 / H100 (80G)', value: 16, count: 50, color: '#f59e0b' },
-    { name: 'L40S / 3090 (24~48G)', value: 11, count: 34, color: '#06b6d4' },
-    { name: '昇腾 / 国产信创', value: 5, count: 16, color: '#8b5cf6' }
+    { name: 'RTX 4090 (24G)', specName: 'RTX 4090', value: 42, count: 131, percentage: 42, color: '#6366f1' },
+    { name: 'A100 SXM4 (80G)', specName: 'A100 SXM4', value: 26, count: 81, percentage: 26, color: '#10b981' },
+    { name: 'H800 / H100 (80G)', specName: 'H800 / H100', value: 16, count: 50, percentage: 16, color: '#f59e0b' },
+    { name: 'L40S / 3090 (24~48G)', specName: 'L40S / 3090', value: 11, count: 34, percentage: 11, color: '#06b6d4' },
+    { name: '昇腾 / 国产信创', specName: '昇腾 910B', value: 5, count: 16, percentage: 5, color: '#8b5cf6' }
   ],
   topUsers: [
-    { rank: 1, name: '李工_NLP实验室', company: '清华大学智算课题组', cardHours: 1240, totalSpent: 10540.00 },
-    { rank: 2, name: '智算AI小组', company: '深睿医疗影像研发部', cardHours: 980, totalSpent: 8330.00 },
-    { rank: 3, name: '张三 (极客先锋)', company: '极客AI创研中心', cardHours: 760, totalSpent: 5820.00 },
-    { rank: 4, name: '多模态视频工作室', company: '影眸科技AIGC特效组', cardHours: 620, totalSpent: 4960.00 },
-    { rank: 5, name: '极客小千 (你)', company: '千机签约架构师', cardHours: 540, totalSpent: 4120.00 },
-    { rank: 6, name: '王五_视觉感知', company: '商汤自动驾驶算法组', cardHours: 480, totalSpent: 3680.00 },
-    { rank: 7, name: '陈博士_Robotics', company: '浙江大学控制学院', cardHours: 410, totalSpent: 3240.00 },
-    { rank: 8, name: '信创算力先锋', company: '航天宏图AI工程部', cardHours: 360, totalSpent: 2820.00 },
-    { rank: 9, name: '量化交易极客', company: '九坤投资算法部', cardHours: 320, totalSpent: 2450.00 },
-    { rank: 10, name: '光影视觉创意社', company: '个人独立开发者联盟', cardHours: 280, totalSpent: 1980.00 }
+    { rank: 1, userId: 'u_10023', userName: '李工_NLP实验室', name: '李工_NLP实验室', company: '清华大学智算课题组', phone: '138****9201', cardHours: 1240, totalHours: 1240, totalSpent: 10540.00, totalCost: 10540.00, orderCount: 42, instanceCount: 42, runningInstanceCount: 4, lastUsedTime: '10分钟前' },
+    { rank: 2, userId: 'u_10045', userName: '智算AI小组', name: '智算AI小组', company: '深睿医疗影像研发部', phone: '139****1122', cardHours: 980, totalHours: 980, totalSpent: 8330.00, totalCost: 8330.00, orderCount: 31, instanceCount: 31, runningInstanceCount: 3, lastUsedTime: '25分钟前' },
+    { rank: 3, userId: 'u_10018', userName: '张三 (极客先锋)', name: '张三 (极客先锋)', company: '极客AI创研中心', phone: '137****5678', cardHours: 760, totalHours: 760, totalSpent: 5820.00, totalCost: 5820.00, orderCount: 28, instanceCount: 28, runningInstanceCount: 2, lastUsedTime: '1小时前' },
+    { rank: 4, userId: 'u_10088', userName: '多模态视频工作室', name: '多模态视频工作室', company: '影眸科技AIGC特效组', phone: '186****3421', cardHours: 620, totalHours: 620, totalSpent: 4960.00, totalCost: 4960.00, orderCount: 19, instanceCount: 19, runningInstanceCount: 2, lastUsedTime: '2小时前' },
+    { rank: 5, userId: 'u_10001', userName: '极客小千 (你)', name: '极客小千 (你)', company: '千机签约架构师', phone: '138****0001', cardHours: 540, totalHours: 540, totalSpent: 4120.00, totalCost: 4120.00, orderCount: 16, instanceCount: 16, runningInstanceCount: 1, lastUsedTime: '刚刚' },
+    { rank: 6, userId: 'u_10112', userName: '王五_视觉感知', name: '王五_视觉感知', company: '商汤自动驾驶算法组', phone: '150****8890', cardHours: 480, totalHours: 480, totalSpent: 3680.00, totalCost: 3680.00, orderCount: 14, instanceCount: 14, runningInstanceCount: 1, lastUsedTime: '3小时前' },
+    { rank: 7, userId: 'u_10066', userName: '陈博士_Robotics', name: '陈博士_Robotics', company: '浙江大学控制学院', phone: '135****4432', cardHours: 410, totalHours: 410, totalSpent: 3240.00, totalCost: 3240.00, orderCount: 12, instanceCount: 12, runningInstanceCount: 1, lastUsedTime: '5小时前' },
+    { rank: 8, userId: 'u_10156', userName: '信创算力先锋', name: '信创算力先锋', company: '航天宏图AI工程部', phone: '188****7712', cardHours: 360, totalHours: 360, totalSpent: 2820.00, totalCost: 2820.00, orderCount: 9, instanceCount: 9, runningInstanceCount: 0, lastUsedTime: '昨天' },
+    { rank: 9, userId: 'u_10201', userName: '量化交易极客', name: '量化交易极客', company: '九坤投资算法部', phone: '177****6621', cardHours: 320, totalHours: 320, totalSpent: 2450.00, totalCost: 2450.00, orderCount: 8, instanceCount: 8, runningInstanceCount: 1, lastUsedTime: '昨天' },
+    { rank: 10, userId: 'u_10332', userName: '光影视觉创意社', name: '光影视觉创意社', company: '个人独立开发者联盟', phone: '189****9012', cardHours: 280, totalHours: 280, totalSpent: 1980.00, totalCost: 1980.00, orderCount: 7, instanceCount: 7, runningInstanceCount: 0, lastUsedTime: '2天前' }
+  ],
+  userDetails: [
+    { userId: 'u_10023', userName: '李工_NLP实验室', userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=60', phone: '138****9201', organization: '清华大学智算课题组', company: '清华大学智算课题组', totalCost: 10540.00, totalSpent: 10540.00, totalHours: 1240, instanceCount: 42, orderCount: 42, runningCount: 4, runningInstanceCount: 4, primarySpec: 'A100 SXM4 (80G)', lastActiveAt: '10分钟前', lastUsedTime: '10分钟前' },
+    { userId: 'u_10045', userName: '智算AI小组', userAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=60', phone: '139****1122', organization: '深睿医疗影像研发部', company: '深睿医疗影像研发部', totalCost: 8330.00, totalSpent: 8330.00, totalHours: 980, instanceCount: 31, orderCount: 31, runningCount: 3, runningInstanceCount: 3, primarySpec: 'RTX 4090 (24G)', lastActiveAt: '25分钟前', lastUsedTime: '25分钟前' },
+    { userId: 'u_10018', userName: '张三 (极客先锋)', userAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=60', phone: '137****5678', organization: '极客AI创研中心', company: '极客AI创研中心', totalCost: 5820.00, totalSpent: 5820.00, totalHours: 760, instanceCount: 28, orderCount: 28, runningCount: 2, runningInstanceCount: 2, primarySpec: 'RTX 4090 (24G)', lastActiveAt: '1小时前', lastUsedTime: '1小时前' },
+    { userId: 'u_10088', userName: '多模态视频工作室', userAvatar: 'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=100&auto=format&fit=crop&q=60', phone: '186****3421', organization: '影眸科技AIGC特效组', company: '影眸科技AIGC特效组', totalCost: 4960.00, totalSpent: 4960.00, totalHours: 620, instanceCount: 19, orderCount: 19, runningCount: 2, runningInstanceCount: 2, primarySpec: 'H800 80GB PCIe', lastActiveAt: '2小时前', lastUsedTime: '2小时前' },
+    { userId: 'u_10001', userName: '极客小千 (你)', userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60', phone: '138****0001', organization: '千机签约架构师', company: '千机签约架构师', totalCost: 4120.00, totalSpent: 4120.00, totalHours: 540, instanceCount: 16, orderCount: 16, runningCount: 1, runningInstanceCount: 1, primarySpec: 'RTX 4090 (24G)', lastActiveAt: '刚刚', lastUsedTime: '刚刚' }
   ],
   operatorContribution: [
-    { name: '中国电信天翼云 (上海/贵安)', share: 36, cards: 170 },
-    { name: '中国联通沃云智算 (北京亦庄)', share: 29, cards: 100 },
-    { name: '中国移动九天算力 (广州大学城)', share: 21, cards: 80 },
-    { name: '中科智算/世纪互联 (宁夏中卫)', share: 14, cards: 60 }
+    { name: '中国电信天翼云 (上海/贵安)', share: 36, cards: 170, totalCapacity: 200, totalCards: 200, usedCards: 142, allocatedCards: 142, utilization: 71.0, rate: 71.0, revenueShare: 38.2 },
+    { name: '中国联通沃云智算 (北京亦庄)', share: 29, cards: 100, totalCapacity: 120, totalCards: 120, usedCards: 98, allocatedCards: 98, utilization: 81.6, rate: 81.6, revenueShare: 32.5 },
+    { name: '中国移动九天算力 (广州大学城)', share: 21, cards: 80, totalCapacity: 100, totalCards: 100, usedCards: 62, allocatedCards: 62, utilization: 62.0, rate: 62.0, revenueShare: 18.1 },
+    { name: '中科智算/世纪互联 (宁夏中卫)', share: 14, cards: 60, totalCapacity: 80, totalCards: 80, usedCards: 55, allocatedCards: 55, utilization: 68.7, rate: 68.7, revenueShare: 11.2 }
+  ],
+  specUsageDetails: [
+    { specId: 'spec_4090_01', specName: 'RTX 4090 标准版', gpuModel: 'NVIDIA RTX 4090', memory: '24 GB GDDR6X', unitPrice: 1.88, totalInstances: 2450, runningInstances: 131, totalHours: 38400, totalCardHours: 38400, totalRevenue: 71808.00, utilizationRate: 81.2 },
+    { specId: 'spec_a100_80g', specName: 'A100 SXM4 大模型训练版', gpuModel: 'NVIDIA A100-SXM4-80GB', memory: '80 GB HBM2e', unitPrice: 8.50, totalInstances: 1520, runningInstances: 81, totalHours: 19800, totalCardHours: 19800, totalRevenue: 89100.00, utilizationRate: 85.0 },
+    { specId: 'spec_h800_80g', specName: 'H800 PCIe 极速推理版', gpuModel: 'NVIDIA H800 80GB PCIe', memory: '80 GB HBM3', unitPrice: 16.80, totalInstances: 780, runningInstances: 35, totalHours: 9200, totalCardHours: 9200, totalRevenue: 46920.00, utilizationRate: 76.5 },
+    { specId: 'spec_h100_sxm5', specName: 'H100 SXM5 顶配旗舰版', gpuModel: 'NVIDIA H100-SXM5-80GB', memory: '80 GB HBM3', unitPrice: 22.50, totalInstances: 360, runningInstances: 15, totalHours: 4100, totalCardHours: 4100, totalRevenue: 28700.00, utilizationRate: 93.8 },
+    { specId: 'spec_l40s_48g', specName: 'NVIDIA L40S 多模态渲染版', gpuModel: 'NVIDIA L40S 48GB', memory: '48 GB GDDR6', unitPrice: 5.50, totalInstances: 430, runningInstances: 20, totalHours: 5200, totalCardHours: 5200, totalRevenue: 18200.00, utilizationRate: 66.0 },
+    { specId: 'spec_3090_01', specName: 'RTX 3090 科研普惠版', gpuModel: 'NVIDIA GeForce RTX 3090', memory: '24 GB GDDR6X', unitPrice: 1.35, totalInstances: 890, runningInstances: 30, totalHours: 11200, totalCardHours: 11200, totalRevenue: 15120.00, utilizationRate: 62.5 }
   ]
 };
 
@@ -1187,6 +1593,7 @@ export const mockComputeStats = {
 export const mockComputeSettlements: ComputeSettlementItem[] = [
   {
     id: 'stl_dx_202608',
+    statementNo: 'ST-202608-001',
     operator: '中国电信天翼云',
     period: '2026年8月 (上半月对账)',
     totalCardHours: 1840,
@@ -1200,10 +1607,12 @@ export const mockComputeSettlements: ComputeSettlementItem[] = [
     platformGrossProfit: 2160.00,
     grossMargin: 24.9,
     status: '待对账',
-    createdAt: '2026-08-18 00:00:00'
+    createdAt: '2026-08-18 00:00:00',
+    remark: '8月上半月常规对账，天翼云上海临港机房节点'
   },
   {
     id: 'stl_lt_202608',
+    statementNo: 'ST-202608-002',
     operator: '中国联通沃云智算',
     period: '2026年8月 (上半月对账)',
     totalCardHours: 1560,
@@ -1218,10 +1627,14 @@ export const mockComputeSettlements: ComputeSettlementItem[] = [
     platformGrossProfit: 3966.00,
     grossMargin: 20.7,
     status: '已确认',
-    createdAt: '2026-08-17 10:00:00'
+    confirmedAt: '2026-08-18 15:20:00',
+    confirmedBy: '李财务 (财务总监)',
+    createdAt: '2026-08-17 10:00:00',
+    remark: '联通北京亦庄集群大模型训练算力消耗'
   },
   {
     id: 'stl_yd_202608',
+    statementNo: 'ST-202608-003',
     operator: '中国移动九天算力',
     period: '2026年8月 (上半月对账)',
     totalCardHours: 980,
@@ -1236,10 +1649,12 @@ export const mockComputeSettlements: ComputeSettlementItem[] = [
     platformGrossProfit: 463.00,
     grossMargin: 23.3,
     status: '待对账',
-    createdAt: '2026-08-16 14:00:00'
+    createdAt: '2026-08-16 14:00:00',
+    remark: '广州大学城节点学术渲染用量'
   },
   {
     id: 'stl_zk_202608',
+    statementNo: 'ST-202608-004',
     operator: '世纪互联智算中心',
     period: '2026年8月 (上半月对账)',
     totalCardHours: 850,
@@ -1253,10 +1668,12 @@ export const mockComputeSettlements: ComputeSettlementItem[] = [
     platformGrossProfit: 2685.00,
     grossMargin: 22.1,
     status: '待对账',
-    createdAt: '2026-08-17 18:00:00'
+    createdAt: '2026-08-17 18:00:00',
+    remark: '宁夏中卫智算集群绿色电力节点'
   },
   {
     id: 'stl_dx_202607',
+    statementNo: 'ST-202607-001',
     operator: '中国电信天翼云',
     period: '2026年7月 (月度结算)',
     totalCardHours: 4250,
@@ -1271,7 +1688,13 @@ export const mockComputeSettlements: ComputeSettlementItem[] = [
     grossMargin: 23.6,
     status: '已结算',
     invoiceNo: 'FP-20260731-DX88902',
+    paymentVoucher: 'VOUCHER-BANK-20260805-0992',
+    paymentMethod: '企业对公银行电汇',
+    confirmedAt: '2026-08-01 11:30:00',
+    confirmedBy: '李财务 (财务总监)',
+    settledAt: '2026-08-05 16:30:00',
+    paidBy: '张出纳 (出纳专员)',
     createdAt: '2026-07-31 23:59:59',
-    settledAt: '2026-08-05 16:30:00'
+    remark: '7月份全量结算款项已结清'
   }
 ];

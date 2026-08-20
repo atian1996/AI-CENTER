@@ -15,6 +15,7 @@ import { GlobalSearchModal } from './components/common/GlobalSearchModal';
 import { CreateBlankAppModal } from './components/modals/CreateBlankAppModal';
 import { CreateComputeModal } from './components/modals/CreateComputeModal';
 import { PublishTaskModal } from './components/modals/PublishTaskModal';
+import { RechargeModal } from './components/modals/RechargeModal';
 import { InstanceDetailModal } from './components/compute/InstanceDetailModal';
 import { ComputeHistoryModal } from './components/compute/ComputeHistoryModal';
 import { AgentSandboxModal } from './components/modals/AgentSandboxModal';
@@ -25,12 +26,14 @@ import { ModelTryoutModal } from './components/modals/ModelTryoutModal';
 import { ModelDetailModal } from './components/modals/ModelDetailModal';
 import { ModelCompareBar } from './components/modals/ModelCompareBar';
 import { Toast } from './components/common/Toast';
+import { AgentTrialPageView } from './components/marketplace/AgentTrialPageView';
 
 const AppContent: React.FC = () => {
   const { 
     activeTab, 
     tabResetKey,
     isAdminMode,
+    agents,
     detailModalAgent, 
     setDetailModalAgent, 
     subscribeModalAgent, 
@@ -58,6 +61,32 @@ const AppContent: React.FC = () => {
     if (document.body) document.body.scrollTop = 0;
   }, [activeTab, tabResetKey, isAdminMode]);
 
+  // Check if trial mode is requested via URL search parameters
+  const queryParams = new URLSearchParams(window.location.search);
+  const trialId = queryParams.get('trial');
+  if (trialId) {
+    const trialAgent = agents.find(a => a.id === trialId);
+    if (trialAgent) {
+      return (
+        <div className="min-h-screen w-full bg-slate-50 text-slate-800 font-sans">
+          <AgentTrialPageView agent={trialAgent} />
+          {subscribeModalAgent && (
+            <SubscribeModal
+              agent={subscribeModalAgent}
+              isOpen={!!subscribeModalAgent}
+              onClose={() => setSubscribeModalAgent(null)}
+              currentTrialLeft={trialCountLeft}
+              onSuccess={(newSub) => {
+                setSubscriptions(prev => ({ ...prev, [newSub.agentId]: newSub }));
+              }}
+            />
+          )}
+          <Toast />
+        </div>
+      );
+    }
+  }
+
   // 如果处于后台管理模式，渲染后台左侧导航专属界面
   if (isAdminMode) {
     return (
@@ -68,6 +97,7 @@ const AppContent: React.FC = () => {
         <GlobalSearchModal />
         <CreateBlankAppModal />
         <CreateComputeModal />
+        <RechargeModal />
         <PublishTaskModal
           isOpen={publishTaskModalOpen}
           onClose={() => setPublishTaskModalOpen(false)}
@@ -85,12 +115,10 @@ const AppContent: React.FC = () => {
             onOpenQuotaModal={(ag) => setQuotaModalAgent(ag)}
             userSubscription={subscriptions[detailModalAgent.id]}
             isPayPerTokenMode={!!payPerTokenAgents[detailModalAgent.id]}
-            onTogglePayPerTokenMode={() => {
-              setPayPerTokenAgents(prev => ({
-                ...prev,
-                [detailModalAgent.id]: !prev[detailModalAgent.id]
-              }));
-              showToast(payPerTokenAgents[detailModalAgent.id] ? '已切换为免费额度优先' : '已开启按量后付费模式');
+            trialCountLeft={trialCountLeft}
+            setTrialCountLeft={setTrialCountLeft}
+            setPayPerTokenMode={(enabled) => {
+              setPayPerTokenAgents(prev => ({ ...prev, [detailModalAgent.id]: enabled }));
             }}
           />
         )}
@@ -143,6 +171,7 @@ const AppContent: React.FC = () => {
       <GlobalSearchModal />
       <CreateBlankAppModal />
       <CreateComputeModal />
+      <RechargeModal />
       <PublishTaskModal
         isOpen={publishTaskModalOpen}
         onClose={() => setPublishTaskModalOpen(false)}

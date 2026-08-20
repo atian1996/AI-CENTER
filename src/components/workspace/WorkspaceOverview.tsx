@@ -38,7 +38,7 @@ export const WorkspaceOverview: React.FC = () => {
 
   // Todos count
   const pendingAgentAuditCount = 1;
-  const pendingTaskCount = tasks.filter(t => t.status === '招募中' || t.status === '进行中').length;
+  const pendingTaskCount = tasks.filter(t => t.status === '已发布' || t.status === '进行中').length;
   const pendingOrderCount = 1;
   const pendingDatasetApplyCount = 1;
 
