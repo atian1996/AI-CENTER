@@ -42,33 +42,21 @@ import {
   Server,
   Sparkle,
   Search,
-  Code2
+  Code2,
+  Gift,
+  X
 } from 'lucide-react';
 
-// 创意空间 5 大方向卡片数据（融合高质感科技插画背景与前沿赛题）
-const creativeHubCards = [
-  {
-    id: 'ai_design',
-    title: 'AI创意方案',
-    englishTitle: 'AI Creative Solutions',
-    slogan: '用AI设计看得见的未来',
-    desc: '从AIGC多模态内容生成到软硬件方案，用AI工具把想法变成可落地的设计。',
-    tag: 'AIGC 方案赛',
-    icon: Palette,
-    colorClass: 'text-purple-600',
-    bgClass: 'bg-purple-50/40 hover:bg-purple-50/80 border-purple-200/80 hover:border-purple-300',
-    iconBg: 'bg-purple-100 text-purple-600',
-    image: 'https://images.unsplash.com/photo-1633167606207-d840b5070fc2?w=500&auto=format&fit=crop&q=80',
-    accentGradient: 'from-purple-500/15 via-indigo-500/5 to-transparent',
-    url: 'https://adworld.xctf.org.cn/competitions-hall/competitions'
-  },
+// 赛事中心 4 大官方赛道卡片数据（融合高质感科技插画背景与前沿赛题）
+const competitionTrackCards = [
   {
     id: 'ai_data_science',
-    title: 'AI数据科学',
-    englishTitle: 'AI Data Science',
-    slogan: '用数据训练更聪明的模型',
-    desc: '在真实业务数据集中打磨算法，构建销量预测、分类识别与时序预测模型。',
+    title: 'AI数据科学赛道',
+    englishTitle: 'AI Data Science Track',
+    slogan: '挖掘时序与多模态数据深度特征',
+    desc: '基于近千万条金融行情与脱敏新闻语料，构建高精度分类预测模型与多模态决策算法。',
     tag: '数据科学赛',
+    prize: '¥50,000 奖金池',
     icon: BarChart3,
     colorClass: 'text-cyan-600',
     bgClass: 'bg-cyan-50/40 hover:bg-cyan-50/80 border-cyan-200/80 hover:border-cyan-300',
@@ -79,11 +67,12 @@ const creativeHubCards = [
   },
   {
     id: 'ai_security',
-    title: 'AI安全挑战',
-    englishTitle: 'AI Security Challenge',
-    slogan: '用AI对抗AI，守护数字世界',
-    desc: '在真实模拟攻防中，用智能体（Agent）去发现漏洞、破解谜题、抵御未知攻击。',
-    tag: '渗透解题赛',
+    title: 'AI安全挑战赛道',
+    englishTitle: 'AI Security Track',
+    slogan: '探索大模型攻防对抗与防御护栏',
+    desc: '在真实沙箱中挖掘提示词注入（Prompt Injection）、越狱攻击以及智能体越权漏洞。',
+    tag: '网络攻防赛',
+    prize: '¥50,000 奖金池',
     icon: ShieldAlert,
     colorClass: 'text-emerald-600',
     bgClass: 'bg-emerald-50/40 hover:bg-emerald-50/80 border-emerald-200/80 hover:border-emerald-300',
@@ -93,33 +82,35 @@ const creativeHubCards = [
     url: 'https://adworld.xctf.org.cn/competitions-hall/competitions'
   },
   {
-    id: 'gov_humanities',
-    title: '政务人文',
-    englishTitle: 'Gov & Humanities',
-    slogan: '用创意点亮城市人文',
-    desc: '挖掘本地文化故事、辅助政务宣传创意、用AI视角重新发现与构建城市的美好。',
-    tag: '政务宣传平台',
-    icon: Landmark,
-    colorClass: 'text-amber-600',
-    bgClass: 'bg-amber-50/40 hover:bg-amber-50/80 border-amber-200/80 hover:border-amber-300',
-    iconBg: 'bg-amber-100 text-amber-600',
-    image: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=500&auto=format&fit=crop&q=80',
-    accentGradient: 'from-amber-500/15 via-orange-500/5 to-transparent'
+    id: 'aigc_creation',
+    title: 'AIGC多模态创作赛道',
+    englishTitle: 'AIGC Creative Track',
+    slogan: '东方美学与未来赛博视觉生成',
+    desc: '利用 Flux、ComfyUI 或自研 LoRA 生成高水准数字概念视觉大片与连贯动态视频。',
+    tag: 'AIGC 生成赛',
+    prize: '¥50,000 奖金池',
+    icon: Palette,
+    colorClass: 'text-purple-600',
+    bgClass: 'bg-purple-50/40 hover:bg-purple-50/80 border-purple-200/80 hover:border-purple-300',
+    iconBg: 'bg-purple-100 text-purple-600',
+    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=80',
+    accentGradient: 'from-purple-500/15 via-indigo-500/5 to-transparent',
+    url: 'http://10.4.5.3/page/mg/project-hall'
   },
   {
     id: 'ai_application',
-    title: 'AI应用创意',
-    englishTitle: 'AI Application Showcase',
-    slogan: '用AI解决真实世界的问题',
-    desc: '从智能助手到行业应用落地，汇集各类脑洞大开的落地 AI 项目与前沿集成。',
-    tag: '项目集成平台',
+    title: 'AI产品应用创新赛道',
+    englishTitle: 'AI Application Track',
+    slogan: '聚焦产业痛点与多Agent协同落地',
+    desc: '针对医疗、政务或工业场景，开发具备可用交互与完整商业闭环的 AI 原生应用。',
+    tag: '产品应用赛',
+    prize: '¥50,000 奖金池',
     icon: Rocket,
     colorClass: 'text-indigo-600',
     bgClass: 'bg-indigo-50/40 hover:bg-indigo-50/80 border-indigo-200/80 hover:border-indigo-300',
     iconBg: 'bg-indigo-100 text-indigo-600',
-    image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=500&auto=format&fit=crop&q=80',
-    accentGradient: 'from-indigo-500/15 via-purple-500/5 to-transparent',
-    url: 'http://10.4.5.3/page/mg/project-hall'
+    image: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=500&auto=format&fit=crop&q=80',
+    accentGradient: 'from-indigo-500/15 via-purple-500/5 to-transparent'
   }
 ];
 
@@ -135,6 +126,7 @@ const partnerList = [
 
 export const HomeView: React.FC = () => {
   const { 
+    user,
     setActiveTab, 
     setMarketplaceTab,
     setWorkspaceSubTab, 
@@ -147,6 +139,8 @@ export const HomeView: React.FC = () => {
     agents,
     tasks,
     skills,
+    competitions,
+    openCompetitionDetail,
     openAgentDetail,
     setSandboxAgent,
     showToast
@@ -154,6 +148,9 @@ export const HomeView: React.FC = () => {
 
   // Banner 状态与自动轮播
   const [currentBanner, setCurrentBanner] = useState(0);
+
+  // 每日签到弹窗控制
+  const [showCheckInModal, setShowCheckInModal] = useState(false);
 
   // 区域四 Tab 切换
   const [contentTab, setContentTab] = useState<'hot' | 'latest_agents' | 'latest_tasks' | 'creative' | 'hot_posts'>('hot');
@@ -262,7 +259,7 @@ export const HomeView: React.FC = () => {
       targetName: '【定制基于 Qwen2.5 的律所合同审查 Agent】',
       preview: '赏金 ¥8,000，急需合同审核与合规风险识别专家...',
       time: '2小时前',
-      actionBtn: '去投标',
+      actionBtn: '去接单',
       onAction: () => setActiveTab('tasks')
     },
     {
@@ -287,7 +284,7 @@ export const HomeView: React.FC = () => {
       targetName: '【ComfyUI Official + Flux.1 Base】',
       preview: '上海机房 RTX 4090 24GB 正在渲染超清插画。',
       time: '4小时前',
-      actionBtn: '去看看',
+      actionBtn: '去租赁',
       onAction: () => setActiveTab('compute')
     },
     {
@@ -312,9 +309,9 @@ export const HomeView: React.FC = () => {
       title: '股票价值投资分析与财报研报 Agent',
       desc: '输入股票代码，自动抓取财报并输出巴菲特估值决策分析。',
       rating: 4.8,
-      hotMetric: '2.8k次使用',
+      hotMetric: '2.8k次调用',
       date: '2026-08-11',
-      price: '¥0.01/次',
+      price: '按Token扣费',
       icon: '📈',
       onClick: () => {
         const target = agents.find(a => a.id === 'ag_02') || agents[1];
@@ -328,9 +325,9 @@ export const HomeView: React.FC = () => {
       title: '【悬赏】定制基于 Qwen2.5 的律所合同审查 Agent',
       desc: '自动识别劳动合同与采购协议风险，支持输出红线修改建议。',
       rating: 5.0,
-      hotMetric: '14人投标',
+      hotMetric: '14人已接单',
       date: '剩余12天',
-      price: '¥8,000',
+      price: '¥8,000 赏金',
       icon: '📋',
       onClick: () => setActiveTab('tasks')
     },
@@ -343,22 +340,29 @@ export const HomeView: React.FC = () => {
       rating: 4.9,
       hotMetric: '8家团队竞标',
       date: '剩余28天',
-      price: '¥35,000',
+      price: '¥35,000 赏金',
       icon: '🩺',
       onClick: () => setActiveTab('tasks')
     },
     {
-      type: 'creative',
-      typeLabel: '创意竞赛',
+      type: 'competition',
+      typeLabel: '热门赛事',
       typeBadgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
-      title: '“创新杯” AI 创意方案与赛博朋克生成赛',
-      desc: '用AI设计看得见的未来，5大方向赛题面向全网征集。',
-      rating: 4.9,
-      hotMetric: '1,200人关注',
-      date: '火热报名中',
-      price: '50,000积分',
-      icon: '💡',
-      onClick: () => setActiveTab('creative')
+      title: '2026 AI 创新巅峰赛 (4大官方赛道开放)',
+      desc: '中国人工智能学会主办，国家级高水平综合挑战赛，争夺 20万+ 现金大奖与顶会推优。',
+      rating: 5.0,
+      hotMetric: '1,892次提交',
+      date: '火热进行中',
+      price: '¥200,000总奖池',
+      icon: '🏆',
+      onClick: () => {
+        const comp = competitions[0];
+        if (comp) {
+          openCompetitionDetail(comp.id);
+        } else {
+          setActiveTab('creative');
+        }
+      }
     },
     {
       type: 'post',
@@ -369,7 +373,7 @@ export const HomeView: React.FC = () => {
       rating: 5.0,
       hotMetric: '128赞 · 34评',
       date: '2小时前',
-      price: '干货精选',
+      price: '社区精选',
       icon: '📝',
       onClick: () => setActiveTab('community')
     },
@@ -380,9 +384,9 @@ export const HomeView: React.FC = () => {
       title: '股票价值投资分析系统 (ClawHub插件)',
       desc: '标准 Tool 规范，赋能任意智能体一键解析 A 股深度估值。',
       rating: 4.9,
-      hotMetric: '3.3万次安装',
+      hotMetric: '3.3万次调用',
       date: 'v1.0.0',
-      price: '免费开源',
+      price: '开源免费',
       icon: '⚡',
       onClick: () => {
         setActiveTab('marketplace');
@@ -396,9 +400,9 @@ export const HomeView: React.FC = () => {
       title: '多语言代码重构与单元测试生成 Agent',
       desc: '支持 Python/TS/Java/Go 代码异味识别与一键生成全覆盖用例。',
       rating: 4.8,
-      hotMetric: '1.9k次使用',
+      hotMetric: '1.9k次调用',
       date: '2026-08-10',
-      price: '按Token计费',
+      price: '¥19/月 (支持积分抵扣)',
       icon: '💻',
       onClick: () => {
         const target = agents.find(a => a.id === 'ag_03') || agents[2];
@@ -514,7 +518,7 @@ export const HomeView: React.FC = () => {
           </div>
         </div>
 
-        {/* 右侧快捷入口（网格布局 2列 × 3行，共 6 个入口，科技质感卡片） */}
+        {/* 右侧快捷入口（网格布局 2列 × 3行，共 6 个入口，严格匹配目标方案） */}
         <div className="lg:col-span-4 grid grid-cols-2 gap-3.5">
           
           {/* 1. 使用Agent */}
@@ -523,147 +527,146 @@ export const HomeView: React.FC = () => {
               setActiveTab('marketplace');
               setMarketplaceTab('agent');
             }}
-            className="p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-indigo-400 hover:shadow-lg hover:shadow-indigo-500/10 hover:-translate-y-0.5 transition-all shadow-2xs flex flex-col justify-between text-left cursor-pointer group relative overflow-hidden"
+            className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-indigo-400 hover:shadow-lg hover:shadow-indigo-500/10 hover:-translate-y-0.5 transition-all shadow-2xs flex flex-col justify-between text-left cursor-pointer group relative overflow-hidden"
           >
-            {/* 科技背景底纹 */}
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-500/10 to-transparent rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform" />
             <div className="absolute inset-0 bg-[radial-gradient(#6366f1_0.5px,transparent_0.5px)] [background-size:12px_12px] opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none" />
 
             <div className="flex items-center justify-between relative z-10">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors shadow-2xs">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors shadow-2xs">
                 <Bot className="w-5 h-5" />
               </div>
-              <div className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition" />
-              </div>
+              <span className="text-[9px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded-md truncate max-w-[90px]">
+                想快速用AI的用户
+              </span>
             </div>
-            <div className="mt-3 relative z-10">
+            <div className="mt-2.5 relative z-10">
               <div className="text-xs font-black text-slate-900 group-hover:text-indigo-600 flex items-center gap-1">
                 🤖 使用Agent
               </div>
-              <div className="text-[11px] text-slate-500 mt-0.5 truncate">
-                浏览与运行已上架智能体
+              <div className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 truncate">
+                Agent商店 · 即开即用
               </div>
             </div>
           </button>
 
-          {/* 2. 启动算力 */}
+          {/* 2. 查找模型 */}
           <button
-            onClick={() => setCreateComputeModalOpen(true)}
-            className="p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-cyan-400 hover:shadow-lg hover:shadow-cyan-500/10 hover:-translate-y-0.5 transition-all shadow-2xs flex flex-col justify-between text-left cursor-pointer group relative overflow-hidden"
+            onClick={() => {
+              setActiveTab('marketplace');
+              setMarketplaceTab('model');
+            }}
+            className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-blue-400 hover:shadow-lg hover:shadow-blue-500/10 hover:-translate-y-0.5 transition-all shadow-2xs flex flex-col justify-between text-left cursor-pointer group relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500/10 to-transparent rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform" />
+            <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_0.5px,transparent_0.5px)] [background-size:12px_12px] opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none" />
+
+            <div className="flex items-center justify-between relative z-10">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-2xs">
+                <Search className="w-5 h-5" />
+              </div>
+              <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded-md truncate max-w-[90px]">
+                大模型开发者
+              </span>
+            </div>
+            <div className="mt-2.5 relative z-10">
+              <div className="text-xs font-black text-slate-900 group-hover:text-blue-600 flex items-center gap-1">
+                🔍 查找模型
+              </div>
+              <div className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 truncate">
+                模型广场 · 直调API
+              </div>
+            </div>
+          </button>
+
+          {/* 3. 启动算力 */}
+          <button
+            onClick={() => {
+              setActiveTab('compute');
+              setCreateComputeModalOpen(true);
+            }}
+            className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-cyan-400 hover:shadow-lg hover:shadow-cyan-500/10 hover:-translate-y-0.5 transition-all shadow-2xs flex flex-col justify-between text-left cursor-pointer group relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform" />
             <div className="absolute inset-0 bg-[radial-gradient(#06b6d4_0.5px,transparent_0.5px)] [background-size:12px_12px] opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none" />
 
             <div className="flex items-center justify-between relative z-10">
-              <div className="w-10 h-10 rounded-xl bg-cyan-50 border border-cyan-100 flex items-center justify-center text-cyan-600 group-hover:bg-cyan-600 group-hover:text-white transition-colors shadow-2xs">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-cyan-50 border border-cyan-100 flex items-center justify-center text-cyan-600 group-hover:bg-cyan-600 group-hover:text-white transition-colors shadow-2xs">
                 <Cpu className="w-5 h-5" />
               </div>
-              <div className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
-                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-cyan-600 group-hover:translate-x-0.5 transition" />
-              </div>
+              <span className="text-[9px] font-bold text-cyan-700 bg-cyan-50 border border-cyan-100 px-1.5 py-0.5 rounded-md truncate max-w-[90px]">
+                GPU训练用户
+              </span>
             </div>
-            <div className="mt-3 relative z-10">
+            <div className="mt-2.5 relative z-10">
               <div className="text-xs font-black text-slate-900 group-hover:text-cyan-600 flex items-center gap-1">
                 ⚡ 启动算力
               </div>
-              <div className="text-[11px] text-slate-500 mt-0.5 truncate">
-                Jupyter / ComfyUI 一键拉起
-              </div>
-            </div>
-          </button>
-
-          {/* 3. 创建Agent */}
-          <button
-            onClick={() => {
-              setActiveTab('workspace');
-              setWorkspaceSubTab('assets');
-              setCreateAgentModalOpen(true);
-            }}
-            className="p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-purple-400 hover:shadow-lg hover:shadow-purple-500/10 hover:-translate-y-0.5 transition-all shadow-2xs flex flex-col justify-between text-left cursor-pointer group relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-500/10 to-transparent rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform" />
-            <div className="absolute inset-0 bg-[radial-gradient(#a855f7_0.5px,transparent_0.5px)] [background-size:12px_12px] opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none" />
-
-            <div className="flex items-center justify-between relative z-10">
-              <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors shadow-2xs">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
-                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-purple-600 group-hover:translate-x-0.5 transition" />
-              </div>
-            </div>
-            <div className="mt-3 relative z-10">
-              <div className="text-xs font-black text-slate-900 group-hover:text-purple-600 flex items-center gap-1">
-                ✨ 创建Agent
-              </div>
-              <div className="text-[11px] text-slate-500 mt-0.5 truncate">
-                向导式自定义专属智能体
+              <div className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 truncate">
+                算力工坊 · 秒级启动
               </div>
             </div>
           </button>
 
           {/* 4. 发布任务 */}
           <button
-            onClick={() => setPublishTaskModalOpen(true)}
-            className="p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-amber-400 hover:shadow-lg hover:shadow-amber-500/10 hover:-translate-y-0.5 transition-all shadow-2xs flex flex-col justify-between text-left cursor-pointer group relative overflow-hidden"
+            onClick={() => {
+              setActiveTab('tasks');
+              setPublishTaskModalOpen(true);
+            }}
+            className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-amber-400 hover:shadow-lg hover:shadow-amber-500/10 hover:-translate-y-0.5 transition-all shadow-2xs flex flex-col justify-between text-left cursor-pointer group relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-500/10 to-transparent rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform" />
             <div className="absolute inset-0 bg-[radial-gradient(#f59e0b_0.5px,transparent_0.5px)] [background-size:12px_12px] opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none" />
 
             <div className="flex items-center justify-between relative z-10">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-colors shadow-2xs">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-colors shadow-2xs">
                 <Briefcase className="w-5 h-5" />
               </div>
-              <div className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-amber-600 group-hover:translate-x-0.5 transition" />
-              </div>
+              <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded-md truncate max-w-[90px]">
+                AI需求外包方
+              </span>
             </div>
-            <div className="mt-3 relative z-10">
+            <div className="mt-2.5 relative z-10">
               <div className="text-xs font-black text-slate-900 group-hover:text-amber-600 flex items-center gap-1">
                 📋 发布任务
               </div>
-              <div className="text-[11px] text-slate-500 mt-0.5 truncate">
-                悬赏与定制需求在线撮合
+              <div className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 truncate">
+                任务大厅 · 悬赏发布
               </div>
             </div>
           </button>
 
-          {/* 5. 创意空间 */}
+          {/* 5. 我要参赛 */}
           <button
             onClick={() => setActiveTab('creative')}
-            className="p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-blue-400 hover:shadow-lg hover:shadow-blue-500/10 hover:-translate-y-0.5 transition-all shadow-2xs flex flex-col justify-between text-left cursor-pointer group relative overflow-hidden"
+            className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-purple-400 hover:shadow-lg hover:shadow-purple-500/10 hover:-translate-y-0.5 transition-all shadow-2xs flex flex-col justify-between text-left cursor-pointer group relative overflow-hidden"
           >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500/10 to-transparent rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform" />
-            <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_0.5px,transparent_0.5px)] [background-size:12px_12px] opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-500/10 to-transparent rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform" />
+            <div className="absolute inset-0 bg-[radial-gradient(#a855f7_0.5px,transparent_0.5px)] [background-size:12px_12px] opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none" />
 
             <div className="flex items-center justify-between relative z-10">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-2xs">
-                <Zap className="w-5 h-5" />
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors shadow-2xs">
+                <Trophy className="w-5 h-5" />
               </div>
-              <div className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-0.5 transition" />
-              </div>
+              <span className="text-[9px] font-bold text-purple-700 bg-purple-50 border border-purple-100 px-1.5 py-0.5 rounded-md truncate max-w-[90px]">
+                参赛/观赛用户
+              </span>
             </div>
-            <div className="mt-3 relative z-10">
-              <div className="text-xs font-black text-slate-900 group-hover:text-blue-600 flex items-center gap-1">
-                💡 创意空间
+            <div className="mt-2.5 relative z-10">
+              <div className="text-xs font-black text-slate-900 group-hover:text-purple-600 flex items-center gap-1">
+                🏆 我要参赛
               </div>
-              <div className="text-[11px] text-slate-500 mt-0.5 truncate">
-                5 大前沿赛题方向探索
+              <div className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 truncate">
+                赛事中心 · 前沿角逐
               </div>
             </div>
           </button>
 
           {/* 6. 每日签到 */}
           <button
-            onClick={checkInToday}
-            className={`p-4 rounded-2xl bg-white border ${
+            onClick={() => setShowCheckInModal(true)}
+            className={`p-3.5 sm:p-4 rounded-2xl bg-white border ${
               hasCheckedInToday ? 'border-emerald-300 bg-emerald-50/20' : 'border-slate-200/80 hover:border-emerald-400'
             } hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5 transition-all shadow-2xs flex flex-col justify-between text-left cursor-pointer group relative overflow-hidden`}
           >
@@ -671,21 +674,21 @@ export const HomeView: React.FC = () => {
             <div className="absolute inset-0 bg-[radial-gradient(#10b981_0.5px,transparent_0.5px)] [background-size:12px_12px] opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none" />
 
             <div className="flex items-center justify-between relative z-10">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors shadow-2xs ${
+              <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-colors shadow-2xs ${
                 hasCheckedInToday ? 'bg-emerald-600 text-white' : 'bg-emerald-50 border border-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white'
               }`}>
                 <CheckCircle2 className="w-5 h-5" />
               </div>
-              <span className="text-[10px] font-black text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full border border-emerald-200">
-                +5 积分
+              <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded-md truncate max-w-[90px]">
+                所有用户赚积分
               </span>
             </div>
-            <div className="mt-3 relative z-10">
+            <div className="mt-2.5 relative z-10">
               <div className="text-xs font-black text-slate-900 group-hover:text-emerald-600 flex items-center gap-1">
                 ✅ 每日签到
               </div>
-              <div className="text-[11px] text-slate-500 mt-0.5 truncate">
-                {hasCheckedInToday ? '今日已签到 (明日再来)' : '点击签到领 5 积分'}
+              <div className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 truncate">
+                {hasCheckedInToday ? '今日已签到 (点击看明细)' : '签到弹窗 · 领取积分'}
               </div>
             </div>
           </button>
@@ -919,9 +922,9 @@ export const HomeView: React.FC = () => {
                   </div>
 
                   <span className={`font-bold text-xs ${
-                    ag.priceType === 'free' ? 'text-emerald-600' : 'text-indigo-600'
+                    ag.priceType === 'free' ? 'text-amber-700 font-semibold' : 'text-indigo-600'
                   }`}>
-                    {ag.priceType === 'free' ? '免费' : `¥${ag.priceValue}/次`}
+                    {ag.priceText || (ag.priceType === 'free' ? '体验版 (可抵扣)' : ag.priceType === 'points' ? `${ag.priceValue} 积分/次` : `¥${ag.priceValue || 0.01}/次`)}
                   </span>
                 </div>
               </div>
@@ -969,7 +972,7 @@ export const HomeView: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                    <span>{task.bidCount || 10} 人报名</span>
+                    <span>{task.bidCount || 10} 人接单</span>
                     <span>· 剩 {idx % 2 === 0 ? '3天' : '15天'}</span>
                   </div>
                 </div>
@@ -978,20 +981,25 @@ export const HomeView: React.FC = () => {
           </div>
         )}
 
-        {/* Tab 4: 💡 创意空间（5个创意方向固定卡片展示） */}
+        {/* Tab 4: 🏆 赛事中心（4个官方赛道前沿卡片展示） */}
         {contentTab === 'creative' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {creativeHubCards.map((c) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {competitionTrackCards.map((c) => {
               const Icon = c.icon;
               return (
                 <div
                   key={c.id}
                   onClick={() => {
                     if (c.url) {
-                      showToast(`正在跳转至【${c.title}】外部平台...`);
+                      showToast(`正在前往【${c.title}】外部平台...`);
                       window.open(c.url, '_blank', 'noopener,noreferrer');
                     } else {
-                      setActiveTab('creative');
+                      const comp = competitions[0];
+                      if (comp) {
+                        openCompetitionDetail(comp.id);
+                      } else {
+                        setActiveTab('creative');
+                      }
                     }
                   }}
                   className={`rounded-2xl border ${c.bgClass} hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between overflow-hidden cursor-pointer group bg-white`}
@@ -1031,11 +1039,11 @@ export const HomeView: React.FC = () => {
                     </div>
 
                     <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        官方赛道
+                      <span className="text-[10px] text-amber-600 font-bold">
+                        {c.prize}
                       </span>
                       <span className="text-xs font-bold text-indigo-600 flex items-center gap-0.5 group-hover:translate-x-1 transition-transform">
-                        进入 <ArrowRight className="w-3.5 h-3.5" />
+                        进入赛道 <ArrowRight className="w-3.5 h-3.5" />
                       </span>
                     </div>
                   </div>
@@ -1120,7 +1128,7 @@ export const HomeView: React.FC = () => {
               {contentTab === 'hot' ? '查看更多热门资产' :
                contentTab === 'latest_agents' ? '前往 Agent 商店浏览全部' :
                contentTab === 'latest_tasks' ? '前往 任务大厅 查看更多悬赏' :
-               contentTab === 'creative' ? '进入 创意空间 探索完整方向' :
+               contentTab === 'creative' ? '进入 赛事中心 查看完整赛程' :
                '进入 社区广场 查看更多讨论'}
             </span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -1130,42 +1138,42 @@ export const HomeView: React.FC = () => {
       </div>
 
       {/* =========================================================================
-          区域五：创意空间（固定卡片入口区，独立展示）
+          区域五：赛事中心 · 官方赛道专区（独立展示）
       ========================================================================= */}
       <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xs">
         
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center shadow-2xs">
-              <Zap className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl bg-purple-50 border border-purple-100 text-purple-600 flex items-center justify-center shadow-2xs">
+              <Trophy className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-black text-slate-900 tracking-tight">
-                  💡 用AI创造无限可能 · 创意空间
+                  🏆 2026 AI 创新巅峰赛 · 官方赛道
                 </h2>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                  5 大方向全面开放
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                  4 大官方赛道火热开放
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                覆盖 AIGC方案、数据科学、安全攻防对抗、政务人文及真实项目落地
+                中国人工智能学会主办，国家级综合赛事，争夺 ¥200,000+ 奖池与算力直通绿卡
               </p>
             </div>
           </div>
 
           <button
             onClick={() => setActiveTab('creative')}
-            className="px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 text-indigo-600 font-bold text-xs transition shadow-2xs flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 hover:bg-purple-50 hover:border-purple-300 text-purple-600 font-bold text-xs transition shadow-2xs flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
           >
-            <span>进入创意空间主页</span>
+            <span>进入赛事中心主页</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* 5 个固定卡片横向网格 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          {creativeHubCards.map((card) => {
+        {/* 4 个官方赛道卡片横向网格 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {competitionTrackCards.map((card) => {
             const Icon = card.icon;
             return (
               <div
@@ -1175,7 +1183,12 @@ export const HomeView: React.FC = () => {
                     showToast(`正在前往【${card.title}】外部平台...`);
                     window.open(card.url, '_blank', 'noopener,noreferrer');
                   } else {
-                    setActiveTab('creative');
+                    const comp = competitions[0];
+                    if (comp) {
+                      openCompetitionDetail(comp.id);
+                    } else {
+                      setActiveTab('creative');
+                    }
                   }
                 }}
                 className={`rounded-2xl border ${card.bgClass} hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between overflow-hidden cursor-pointer group bg-white`}
@@ -1212,6 +1225,15 @@ export const HomeView: React.FC = () => {
                     <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
                       {card.desc}
                     </p>
+                  </div>
+
+                  <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-[10px] text-amber-600 font-bold">
+                      {card.prize}
+                    </span>
+                    <span className="text-xs font-bold text-indigo-600 flex items-center gap-0.5 group-hover:translate-x-1 transition-transform">
+                      进入赛道 <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1503,6 +1525,148 @@ export const HomeView: React.FC = () => {
         </div>
 
       </div>
+
+      {/* =========================================================================
+          每日签到弹窗（面向所有用户赚积分）
+      ========================================================================= */}
+      {showCheckInModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* 弹窗头部 */}
+            <div className="p-6 bg-gradient-to-br from-emerald-600 via-teal-600 to-indigo-700 text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+              
+              <div className="flex items-center justify-between relative z-10">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white shadow-inner">
+                    <Gift className="w-5 h-5 text-amber-300 animate-bounce" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black tracking-tight flex items-center gap-1.5">
+                      <span>每日签到领积分</span>
+                    </h3>
+                    <p className="text-xs text-emerald-100 font-medium">
+                      连续签到赢好礼 · 积分消费享抵扣
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowCheckInModal(false)}
+                  className="w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center text-white/80 hover:text-white transition cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* 签到核心数据 */}
+              <div className="mt-5 p-4 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-between">
+                <div>
+                  <div className="text-[11px] text-emerald-100 font-medium">
+                    连续签到天数
+                  </div>
+                  <div className="text-2xl font-black font-mono mt-0.5 flex items-baseline gap-1">
+                    <span>3</span>
+                    <span className="text-xs font-normal">天</span>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <div className="text-[11px] text-emerald-100 font-medium">
+                    我的积分总额
+                  </div>
+                  <div className="text-2xl font-black font-mono text-amber-300 mt-0.5">
+                    {user?.points?.toLocaleString() || 1250} <span className="text-xs text-white font-normal">分</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 弹窗主体 */}
+            <div className="p-6 space-y-5">
+              
+              {/* 今日签到奖励卡片 */}
+              <div className={`p-4 rounded-2xl border flex items-center justify-between ${
+                hasCheckedInToday 
+                  ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900' 
+                  : 'bg-amber-50/70 border-amber-200 text-amber-900'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black ${
+                    hasCheckedInToday ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
+                  }`}>
+                    {hasCheckedInToday ? <CheckCircle2 className="w-6 h-6" /> : <Coins className="w-6 h-6" />}
+                  </div>
+                  <div>
+                    <div className="text-xs font-black">
+                      {hasCheckedInToday ? '今日已成功签到' : '今日签到可得'}
+                    </div>
+                    <div className="text-[11px] opacity-80 mt-0.5">
+                      {hasCheckedInToday ? '奖励已发放至积分账户' : '每日 00:00 刷新签到机会'}
+                    </div>
+                  </div>
+                </div>
+
+                <span className="font-mono font-black text-sm px-2.5 py-1 rounded-lg bg-white/90 shadow-2xs">
+                  +50 积分
+                </span>
+              </div>
+
+              {/* 积分规则与使用场景 */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5 text-xs text-slate-600">
+                <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <span>积分价值与抵扣说明</span>
+                </div>
+                <div className="text-[11px] leading-relaxed space-y-1 text-slate-600">
+                  <p className="font-semibold text-amber-700 bg-amber-50/80 p-2 rounded-lg border border-amber-100/90">
+                    💡 提示：当前可用于 <strong>Agent商店</strong> 订阅抵扣，更多场景陆续开放中。
+                  </p>
+                  <p>• <strong>兑换比例：</strong> 1 积分 = ¥0.01 元人民币，用于消费抵扣。</p>
+                  <p>• <strong>抵扣比例：</strong> 每笔支持抵扣的订单，最多可用积分抵扣订单金额的 <strong>30%</strong>。</p>
+                  <p>• <strong>长期有效：</strong> 每日签到积分长期有效，不设过期时间。</p>
+                </div>
+              </div>
+
+              {/* 操作按钮 */}
+              <div className="space-y-2.5 pt-1">
+                {hasCheckedInToday ? (
+                  <button
+                    disabled
+                    className="w-full py-3.5 rounded-2xl bg-slate-100 text-slate-400 font-black text-sm flex items-center justify-center gap-2 cursor-not-allowed border border-slate-200"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <span>今日已签到（明日再来）</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      checkInToday();
+                    }}
+                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                  >
+                    <Gift className="w-4 h-4 text-amber-300" />
+                    <span>一键签到 领取 50 积分</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => {
+                    setShowCheckInModal(false);
+                    setActiveTab('workspace');
+                    setWorkspaceSubTab('points');
+                  }}
+                  className="w-full py-2.5 text-xs text-indigo-600 hover:text-indigo-800 font-bold flex items-center justify-center gap-1 cursor-pointer transition"
+                >
+                  <span>前往我的账户查看积分收支明细</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -213,9 +213,14 @@ export const WorkspacePoints: React.FC = () => {
                 </span>
               </div>
 
-              <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-xs border border-white/10 text-xs text-amber-100/90 font-medium flex items-center gap-2">
-                <span className="text-amber-300 text-sm">💡</span>
-                <span>1积分 = ¥0.01 · 每笔订单最高抵扣 30%</span>
+              <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-xs border border-white/10 text-xs text-amber-100/90 font-medium space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-amber-300 text-sm">💡</span>
+                  <span>1积分 = ¥0.01 · 每笔订单最高抵扣 30%</span>
+                </div>
+                <div className="text-[11px] text-amber-200/90 font-medium pl-6">
+                  提示：当前可用于 Agent商店 订阅抵扣，更多场景陆续开放中
+                </div>
               </div>
             </div>
 
@@ -224,6 +229,30 @@ export const WorkspacePoints: React.FC = () => {
           {/* Background Ambient Glow */}
           <div className="absolute -right-10 -bottom-10 w-60 h-60 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
         </div>
+      </div>
+
+      {/* 积分使用提示 Banner */}
+      <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200/80 text-amber-900 text-xs font-medium flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-xl bg-amber-500 text-white shrink-0 shadow-xs">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="font-extrabold text-amber-950 text-xs flex items-center gap-1.5">
+              <span>积分使用提示</span>
+              <span className="px-2 py-0.5 rounded-md bg-amber-200/60 text-amber-900 text-[10px] font-bold">官方提示</span>
+            </div>
+            <div className="text-amber-800 text-xs mt-0.5">
+              当前可用于 <strong className="font-black text-amber-950">Agent商店</strong> 订阅抵扣，更多场景陆续开放中
+            </div>
+          </div>
+        </div>
+        <button 
+          onClick={() => setShowRulesModal(true)}
+          className="self-start sm:self-center px-3 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-xs transition cursor-pointer shrink-0"
+        >
+          查看抵扣规则
+        </button>
       </div>
 
       {/* 下方：Tab切换 (5个Tab) */}
@@ -543,11 +572,13 @@ export const WorkspacePoints: React.FC = () => {
             </div>
 
             <div className="text-xs space-y-3 text-slate-600 leading-relaxed font-medium">
-              <div className="p-3 rounded-2xl bg-amber-50 border border-amber-100 text-amber-900 font-bold">
-                💡 1 积分 = ¥0.01 元人民币，用于消费抵扣。
+              <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-100 text-amber-900 font-bold space-y-1">
+                <div>💡 1 积分 = ¥0.01 元人民币，用于消费抵扣。</div>
+                <div className="text-[11px] text-amber-800 font-medium">提示：当前可用于 Agent商店 订阅抵扣，更多场景陆续开放中。</div>
               </div>
               <ul className="space-y-2 list-disc pl-4 text-slate-700">
-                <li><strong>抵扣比例：</strong> 每笔算力租赁或 Agent 消费订单，最多可用积分抵扣订单金额的 <strong>30%</strong>。</li>
+                <li><strong>适用场景：</strong> 当前可用于 <strong className="text-amber-700">Agent商店</strong> 订阅抵扣，更多场景陆续开放中。</li>
+                <li><strong>抵扣比例：</strong> 每笔支持抵扣的订单，最多可用积分抵扣订单金额的 <strong>30%</strong>。</li>
                 <li><strong>每日签到：</strong> 每日点击签到可获得 50 积分奖励。</li>
                 <li><strong>发布 Agent：</strong> 成功上架 Agent 可额外奖励 100 积分。</li>
                 <li><strong>积分有效期：</strong> 积分长期有效，不设过期时间。</li>

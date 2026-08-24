@@ -41,18 +41,15 @@ import {
 interface SkillDetailProps {
   skill: SkillPluginItem;
   onBack: () => void;
-  initialTab?: 'overview' | 'files' | 'comments' | 'history' | 'benchmark';
+  initialTab?: 'overview' | 'files' | 'comments';
 }
 
 export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initialTab = 'overview' }) => {
   const { showToast } = useApp();
 
-  // Active Tab: overview | files | comments | history | benchmark
-  const [activeTab, setActiveTab] = useState<'overview' | 'files' | 'comments' | 'history' | 'benchmark'>(initialTab);
+  // Active Tab: overview | files | comments
+  const [activeTab, setActiveTab] = useState<'overview' | 'files' | 'comments'>(initialTab);
 
-  // Voting and Stats
-  const [voteCount, setVoteCount] = useState<number>(skill.voteCount || skill.likesCount || 175);
-  const [hasVoted, setHasVoted] = useState<boolean>(skill.hasVoted ?? false);
   const [copiedCmd, setCopiedCmd] = useState<string | null>(null);
 
   // Files Tab State
@@ -130,19 +127,6 @@ export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initial
   });
 
   const emojis = ['😊', '😂', '🥰', '👍', '🎉', '🔥', '👏'];
-
-  // Handlers
-  const handleVote = () => {
-    if (hasVoted) {
-      setHasVoted(false);
-      setVoteCount(prev => Math.max(0, prev - 1));
-      showToast('已取消投票');
-    } else {
-      setHasVoted(true);
-      setVoteCount(prev => prev + 1);
-      showToast(`已为【${skill.name}】投出支持的一票！`);
-    }
-  };
 
   const handleShare = () => {
     const url = window.location.href;
@@ -331,50 +315,12 @@ export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initial
                 <div className="text-xs font-mono text-slate-500">
                   {skill.repoPath || `@user_a38fd8a2/${skill.id}`}
                 </div>
-
-                {/* Star Ratings, Safety and Source Badges */}
-                <div className="flex flex-wrap items-center gap-3 pt-0.5 text-xs">
-                  <div className="flex items-center gap-1">
-                    <div className="flex items-center text-amber-500 text-xs">
-                      {'★'.repeat(4)}{'☆'}
-                    </div>
-                    <span className="font-bold text-slate-800 ml-1">
-                      {skill.aiRatingDesc || `${skill.aiRating || 4.3} 优秀 (AI 评分)`}
-                    </span>
-                  </div>
-
-                  <span className="text-slate-300">•</span>
-
-                  <div className="flex items-center gap-1 text-emerald-600 font-medium">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>{skill.securityStatus || '安全'}</span>
-                  </div>
-
-                  <span className="text-slate-300">•</span>
-
-                  <div className="flex items-center gap-1 text-blue-600 font-medium">
-                    <Puzzle className="w-3.5 h-3.5" />
-                    <span>源自 {skill.source || 'SkillHub'}</span>
-                  </div>
-                </div>
               </div>
 
             </div>
 
-            {/* Right: Actions (为 TA 投票, 分享, 下载) */}
+            {/* Right: Actions (分享, 下载) */}
             <div className="flex items-center gap-2.5 shrink-0 self-start">
-              <button
-                onClick={handleVote}
-                className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                  hasVoted
-                    ? 'bg-slate-900 text-white shadow-xs'
-                    : 'bg-slate-900 hover:bg-slate-800 text-white shadow-xs'
-                }`}
-              >
-                <ArrowUp className="w-3.5 h-3.5" />
-                <span>为 TA 投票 ({voteCount})</span>
-              </button>
-
               <button
                 onClick={handleShare}
                 className="px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer"
@@ -415,7 +361,7 @@ export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initial
 
       </div>
 
-      {/* 2. Navigation Tabs (Matching exact underline tabs style) */}
+      {/* 2. Navigation Tabs */}
       <div className="flex items-center gap-8 border-b border-slate-200 text-sm font-medium px-2">
         <button
           onClick={() => setActiveTab('overview')}
@@ -461,34 +407,6 @@ export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initial
             {comments.length}
           </span>
           {activeTab === 'comments' && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 rounded-full" />
-          )}
-        </button>
-
-        <button
-          onClick={() => setActiveTab('history')}
-          className={`pb-3 relative transition cursor-pointer ${
-            activeTab === 'history'
-              ? 'text-slate-900 font-black'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <span>版本历史</span>
-          {activeTab === 'history' && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 rounded-full" />
-          )}
-        </button>
-
-        <button
-          onClick={() => setActiveTab('benchmark')}
-          className={`pb-3 relative transition cursor-pointer ${
-            activeTab === 'benchmark'
-              ? 'text-slate-900 font-black'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <span>评测报告</span>
-          {activeTab === 'benchmark' && (
             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 rounded-full" />
           )}
         </button>
@@ -994,58 +912,6 @@ export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initial
 
           </div>
 
-        </div>
-      )}
-
-      {/* 3.4 TAB: 版本历史 (Version History) */}
-      {activeTab === 'history' && (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-          <h3 className="text-sm font-bold text-slate-900">版本迭代历史</h3>
-          <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-slate-900 text-white text-xs font-mono font-bold">
-                    {skill.version}
-                  </span>
-                  <span className="text-xs font-bold text-slate-900">首发正式版</span>
-                </div>
-                <span className="text-xs text-slate-400">{skill.updatedAt || '4个月前更新'}</span>
-              </div>
-              <ul className="list-disc list-inside text-xs text-slate-600 space-y-1 pt-1">
-                <li>集成晨星护城河五步检验法分析框架</li>
-                <li>实现 DCF 自由现金流折现三阶段估值模型</li>
-                <li>增加全量财务健康指标审计与杜邦分解能力</li>
-                <li>支持输出格式化 Markdown 研报与一键复制</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 3.5 TAB: 评测报告 (Benchmark Report) */}
-      {activeTab === 'benchmark' && (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-          <h3 className="text-sm font-bold text-slate-900">AI 自动化安全与性能评测报告</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200 space-y-1">
-              <div className="text-xs text-emerald-700 font-bold">代码安全合规</div>
-              <div className="text-2xl font-black text-emerald-800">100%</div>
-              <div className="text-[11px] text-emerald-600">无高危系统调用与外联敏感数据</div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-blue-50/60 border border-blue-200 space-y-1">
-              <div className="text-xs text-blue-700 font-bold">Agent 执行平均延迟</div>
-              <div className="text-2xl font-black text-blue-800">120 ms</div>
-              <div className="text-[11px] text-blue-600">极速本地执行与规则推理</div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-purple-50/60 border border-purple-200 space-y-1">
-              <div className="text-xs text-purple-700 font-bold">综合能力评分</div>
-              <div className="text-2xl font-black text-purple-800">4.3 / 5.0</div>
-              <div className="text-[11px] text-purple-600">评级为“优秀”实用级 Skill</div>
-            </div>
-          </div>
         </div>
       )}
 

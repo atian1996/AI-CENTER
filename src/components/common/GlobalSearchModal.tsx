@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { Search, X, Bot, Cpu, Database, Briefcase, GraduationCap, MessageSquare, ArrowRight, Zap } from 'lucide-react';
+import { Search, X, Bot, Cpu, Database, Briefcase, MessageSquare, ArrowRight, Zap } from 'lucide-react';
 
 export const GlobalSearchModal: React.FC = () => {
   const { 

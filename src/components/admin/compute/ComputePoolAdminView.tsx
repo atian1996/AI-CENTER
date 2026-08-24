@@ -18,7 +18,11 @@ import {
   Layers,
   History,
   Activity,
-  AlertCircle
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle2,
+  XCircle,
+  Cpu
 } from 'lucide-react';
 
 export const ComputePoolAdminView: React.FC = () => {
@@ -303,6 +307,401 @@ export const ComputePoolAdminView: React.FC = () => {
     return matched.length || 1;
   };
 
+  // =========================================================================
+  // 一、新增/编辑资源池 二级页面 (Early Return)
+  // =========================================================================
+  if (editModalOpen) {
+    return (
+      <div className="space-y-6 text-slate-100 animate-in fade-in duration-200">
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-6 text-slate-100">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setEditModalOpen(false)}
+                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>返回资源池列表</span>
+              </button>
+              <div>
+                <h3 className="text-base font-bold text-slate-100">
+                  {editingPoolId ? `编辑资源池: ${formData.name}` : '新增算力资源池'}
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  配置基础设施集群的 API 自动化调度对接配置、上架状态及与各规格关联的协议采购价格
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleSubmitForm}
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition cursor-pointer"
+            >
+              {editingPoolId ? '保存修改' : '确认创建'}
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmitForm} className="space-y-6 text-xs">
+            {/* 表单 1：集群基本信息 */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-xs font-bold text-blue-400 uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                集群基本信息
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-200">资源池名称 *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="例: 华东-杭州一区集群"
+                    value={formData.name}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-200">算力运营商 *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="例: 算力云官方 / 运营商A"
+                    value={formData.operator}
+                    onChange={e => setFormData({ ...formData, operator: e.target.value })}
+                    className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-200">物理节点区域 *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="例: 华东 / 华北"
+                    value={formData.region}
+                    onChange={e => setFormData({ ...formData, region: e.target.value })}
+                    className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-200">资源池备注说明 (选填)</label>
+                <input
+                  type="text"
+                  placeholder="例: 高性能 NVLink 互联集群，专用于万亿参数大模型训练"
+                  value={formData.remark}
+                  onChange={e => setFormData({ ...formData, remark: e.target.value })}
+                  className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* 表单 2：接口对接配置 */}
+            <div className="space-y-4 pt-4 border-t border-slate-800">
+              <div className="flex items-center gap-2 text-xs font-bold text-indigo-400 uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                API 自动化调度对接配置
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="font-semibold text-slate-200">集群 API 端点 URL *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="例: https://pool-hz01.suanli-cloud.internal/v1"
+                    value={formData.apiUrl}
+                    onChange={e => setFormData({ ...formData, apiUrl: e.target.value })}
+                    className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500 font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-200">认证方式 *</label>
+                  <select
+                    value={formData.authType}
+                    onChange={e => setFormData({ ...formData, authType: e.target.value as any })}
+                    className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500 cursor-pointer font-mono"
+                  >
+                    <option value="BearerToken">Bearer Token 令牌认证</option>
+                    <option value="AK/SK">AK/SK 签名认证</option>
+                    <option value="OAuth2">OAuth2 协议</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-200">认证密钥/凭证 *</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="请输入加密 Token 或 AK/SK"
+                    value={formData.authCredential}
+                    onChange={e => setFormData({ ...formData, authCredential: e.target.value })}
+                    className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500 font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 表单 3：与规格价格协议结算 */}
+            <div className="space-y-4 pt-4 border-t border-slate-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  协议采购价与供给结算规则
+                </div>
+                <span className="text-[11px] text-slate-400">设置运营商内部成本/采购协议价</span>
+              </div>
+
+              <div className="space-y-3">
+                {formData.agreedPricings.map((pricing, idx) => (
+                  <div key={idx} className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                    <div>
+                      <div className="font-bold text-slate-200 flex items-center gap-2">
+                        <span className="text-[11px] font-mono text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded">
+                          {pricing.gpuModel}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-1">
+                        生效日期: <span className="text-slate-300 font-mono">{pricing.effectiveDate || '2026-01-01'}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[11px] text-slate-400">运营商结算协议价:</span>
+                      <div className="flex items-center gap-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1">
+                        <span className="text-amber-400 font-mono text-xs font-bold">¥</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={pricing.agreedPrice}
+                          onChange={e => handleUpdateAgreedPricingRow(idx, 'agreedPrice', Number(e.target.value))}
+                          className="w-20 bg-transparent text-amber-400 font-bold font-mono text-xs focus:outline-none"
+                        />
+                        <span className="text-slate-500 text-[10px]">/h</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAgreedPricingRow(idx)}
+                        className="p-1 text-slate-500 hover:text-rose-400 transition"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={handleAddAgreedPricingRow}
+                  className="w-full py-2 border border-dashed border-slate-700 hover:border-slate-600 rounded-xl text-slate-400 hover:text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>添加 GPU 协议单价规则</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 表单 4：上架状态 */}
+            <div className="space-y-4 pt-4 border-t border-slate-800">
+              <div className="flex items-center justify-between">
+                <label className="font-semibold text-slate-200">资源池调度上线状态 *</label>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, saleStatus: '已上架' })}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border cursor-pointer ${
+                      formData.saleStatus === '已上架'
+                        ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300'
+                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>已上架 (允许分配)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, saleStatus: '已下架' })}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border cursor-pointer ${
+                      formData.saleStatus === '已下架'
+                        ? 'bg-rose-500/20 border-rose-500 text-rose-300'
+                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <XCircle className="w-3.5 h-3.5" />
+                    <span>已下架 (暂停分配)</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setEditModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition"
+              >
+                取消
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-500/20 transition"
+              >
+                {editingPoolId ? '保存修改' : '确认创建'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 二、查看详情 二级页面 (Early Return)
+  // =========================================================================
+  if (detailModalOpen && detailPool) {
+    return (
+      <div className="space-y-6 text-slate-100 animate-in fade-in duration-200">
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-6 text-slate-100">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setDetailModalOpen(false)}
+                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>返回资源池列表</span>
+              </button>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h3 className="text-base font-bold text-slate-100">{detailPool.name}</h3>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    detailPool.runStatus === '正常'
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                  }`}>
+                    {detailPool.runStatus}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5 font-mono">{detailPool.apiUrl}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setDetailModalOpen(false);
+                handleOpenEdit(detailPool);
+              }}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-md transition cursor-pointer flex items-center gap-1.5"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>编辑资源池</span>
+            </button>
+          </div>
+
+          <div className="space-y-6 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800">
+              <div>
+                <span className="text-[11px] text-slate-500 block">所属运营商</span>
+                <span className="text-xs font-semibold text-slate-200 mt-0.5 block">
+                  {detailPool.operator}
+                </span>
+              </div>
+              <div>
+                <span className="text-[11px] text-slate-500 block">物理机房区域</span>
+                <span className="text-xs font-semibold text-slate-200 mt-0.5 block">
+                  {detailPool.region}
+                </span>
+              </div>
+              <div>
+                <span className="text-[11px] text-slate-500 block">上架状态</span>
+                <span className="text-xs font-semibold mt-0.5 block">
+                  {detailPool.saleStatus === '已上架' ? (
+                    <span className="text-emerald-400">已上架 (正常派单)</span>
+                  ) : (
+                    <span className="text-rose-400">已下架 (暂停派单)</span>
+                  )}
+                </span>
+              </div>
+              <div>
+                <span className="text-[11px] text-slate-500 block">更新/同步时间</span>
+                <span className="text-xs text-slate-400 mt-0.5 block font-mono">
+                  {detailPool.lastSyncTime || '2026-08-20 12:00'}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="font-bold text-slate-300 flex items-center gap-2">
+                <Cpu className="w-4 h-4 text-cyan-400" />
+                集群实时 GPU 库存与在用分布
+              </h4>
+              <div className="rounded-xl border border-slate-800 bg-slate-950/60 overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-900/80 text-slate-400 border-b border-slate-800 text-[11px]">
+                    <tr>
+                      <th className="py-2.5 px-3.5">GPU 型号</th>
+                      <th className="py-2.5 px-3.5">已用卡数</th>
+                      <th className="py-2.5 px-3.5">总容量卡数</th>
+                      <th className="py-2.5 px-3.5">使用率</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/50 font-mono text-slate-300">
+                    {(detailPool.distribution && detailPool.distribution.length > 0) ? (
+                      detailPool.distribution.map((item, idx) => {
+                        const used = item.allocated ?? 0;
+                        const total = item.total ?? 0;
+                        const pct = item.rate ?? (total > 0 ? Math.round((used / total) * 100) : 0);
+                        return (
+                          <tr key={idx} className="hover:bg-slate-800/30">
+                            <td className="py-2.5 px-3.5 font-bold text-slate-100">{item.gpuModel}</td>
+                            <td className="py-2.5 px-3.5 text-cyan-400">{used} 卡</td>
+                            <td className="py-2.5 px-3.5">{total} 卡</td>
+                            <td className="py-2.5 px-3.5">
+                              <div className="flex items-center gap-2">
+                                <div className="w-16 bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                  <div
+                                    className="bg-cyan-500 h-full rounded-full"
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                                <span className="text-[11px] text-slate-400">{pct}%</span>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="py-4 text-center text-slate-500 italic">
+                          暂无库存明细
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+            <span className="text-xs text-slate-500 font-mono">资源池 ID: {detailPool.id}</span>
+            <button
+              onClick={() => setDetailModalOpen(false)}
+              className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 rounded-xl transition cursor-pointer"
+            >
+              关闭
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* 顶部标题栏与新增按钮 */}
@@ -556,28 +955,37 @@ export const ComputePoolAdminView: React.FC = () => {
         </div>
       </div>
 
-      {/* 新增/编辑资源池 Modal */}
+      {/* 新增/编辑资源池 二级页面 */}
       {editModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-          <div className="relative w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
-              <div className="flex items-center gap-2">
-                <Server className="w-5 h-5 text-blue-400" />
-                <h3 className="text-base font-bold text-slate-100">
-                  {editingPoolId ? '编辑资源池信息' : '新增算力集群资源池'}
-                </h3>
-              </div>
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-6 text-slate-100">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={() => setEditModalOpen(false)}
-                className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
               >
-                <X className="w-5 h-5" />
+                <ArrowLeft className="w-4 h-4" />
+                <span>返回资源池列表</span>
               </button>
+              <div>
+                <h3 className="text-base font-bold text-slate-100">
+                  {editingPoolId ? `编辑资源池: ${formData.name}` : '新增算力集群资源池'}
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">请填写资源池基础设施信息、API对接秘钥与下属集群协议价格</p>
+              </div>
             </div>
+            <button
+              onClick={handleSubmitForm}
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition cursor-pointer"
+            >
+              {editingPoolId ? '保存修改' : '立即创建'}
+            </button>
+          </div>
 
-            {/* Form Body */}
-            <form onSubmit={handleSubmitForm} className="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
+          {/* Form Body */}
+          <form onSubmit={handleSubmitForm} className="space-y-6 text-xs">
               {/* 第一部分：基础信息 */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 pb-1 border-b border-slate-800/80 text-blue-400 font-bold">
@@ -842,45 +1250,54 @@ export const ComputePoolAdminView: React.FC = () => {
                 </button>
               </div>
             </form>
-          </div>
         </div>
       )}
 
-      {/* 查看详情 Modal */}
+      {/* 查看详情 二级页面 */}
       {detailModalOpen && detailPool && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-          <div className="relative w-full max-w-3xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
-              <div className="flex items-center gap-2.5">
-                <Server className="w-5 h-5 text-blue-400" />
-                <div>
-                  <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                    <span>{detailPool.name}</span>
-                    <span className="text-xs font-normal text-slate-400">({detailPool.operator})</span>
-                  </h3>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleTriggerSync(detailPool.id)}
-                  disabled={syncingPoolId === detailPool.id}
-                  className="px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-medium transition cursor-pointer flex items-center gap-1.5"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${syncingPoolId === detailPool.id ? 'animate-spin' : ''}`} />
-                  <span>{syncingPoolId === detailPool.id ? '正在同步...' : '立即同步'}</span>
-                </button>
-                <button
-                  onClick={() => setDetailModalOpen(false)}
-                  className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-6 text-slate-100">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setDetailModalOpen(false)}
+                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>返回资源池列表</span>
+              </button>
+              <div>
+                <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                  <span>{detailPool.name}</span>
+                  <span className="text-xs font-normal text-slate-400">({detailPool.operator})</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">资源池集群通信参数与可用 GPU 硬件规格分发</p>
               </div>
             </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleTriggerSync(detailPool.id)}
+                disabled={syncingPoolId === detailPool.id}
+                className="px-3.5 py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${syncingPoolId === detailPool.id ? 'animate-spin' : ''}`} />
+                <span>{syncingPoolId === detailPool.id ? '正在同步...' : '立即同步'}</span>
+              </button>
+              <button
+                onClick={() => {
+                  setDetailModalOpen(false);
+                  handleOpenEdit(detailPool);
+                }}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-md transition cursor-pointer"
+              >
+                编辑资源池
+              </button>
+            </div>
+          </div>
 
-            {/* Content Body */}
-            <div className="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
+          {/* Content Body */}
+          <div className="space-y-6 text-xs">
               {/* 基本信息区 */}
               <div className="space-y-3">
                 <div className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
@@ -1125,7 +1542,6 @@ export const ComputePoolAdminView: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
         </div>
       )}
 

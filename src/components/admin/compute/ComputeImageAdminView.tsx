@@ -32,7 +32,8 @@ import {
   FileCode,
   ShieldCheck,
   TrendingUp,
-  Tag
+  Tag,
+  ArrowLeft
 } from 'lucide-react';
 
 const CATEGORY_CONFIG: Record<ComputeImageCategory, { label: string; bg: string; text: string; border: string }> = {
@@ -323,6 +324,348 @@ export const ComputeImageAdminView: React.FC = () => {
       return matchImageName || matchId;
     });
   };
+
+  // =========================================================================
+  // 一、新增/编辑镜像 二级页面 (Early Return)
+  // =========================================================================
+  if (editModalOpen) {
+    return (
+      <div className="space-y-6 text-slate-100 animate-in fade-in duration-200">
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-6 text-slate-100">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setEditModalOpen(false)}
+                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>返回镜像列表</span>
+              </button>
+              <div>
+                <h3 className="text-base font-bold text-white">
+                  {isEditing ? `编辑镜像: ${currentImage?.name}` : '新增镜像'}
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {isEditing ? `修改镜像【${currentImage?.name}】的基础信息与配置` : '配置并发布新的官方或应用市场 GPU 容器镜像'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleSave}
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition cursor-pointer"
+            >
+              {isEditing ? '保存修改' : '确认创建'}
+            </button>
+          </div>
+
+          <form onSubmit={handleSave} className="space-y-5 text-xs">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-200">镜像名称 *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="例: PyTorch 2.2.2-cuda12.1-cudnn8-devel"
+                  value={formData.name}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-200">所属分类 *</label>
+                <select
+                  value={formData.category}
+                  onChange={e => setFormData({ ...formData, category: e.target.value as ComputeImageCategory })}
+                  className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500 cursor-pointer"
+                >
+                  {ALL_CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-semibold text-slate-200">Docker Registry 镜像仓库完整 URL *</label>
+              <input
+                type="text"
+                required
+                placeholder="例: registry.cn-hangzhou.aliyuncs.com/suanli-ai/pytorch:2.2.2-cuda12.1"
+                value={formData.registryUrl}
+                onChange={e => setFormData({ ...formData, registryUrl: e.target.value })}
+                className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500 font-mono"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-200">版本号</label>
+                <input
+                  type="text"
+                  placeholder="例: v2.2.2"
+                  value={formData.version}
+                  onChange={e => setFormData({ ...formData, version: e.target.value })}
+                  className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500 font-mono"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-200">解压镜像文件体积</label>
+                <input
+                  type="text"
+                  placeholder="例: 15.3 GB"
+                  value={formData.size}
+                  onChange={e => setFormData({ ...formData, size: e.target.value })}
+                  className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500 font-mono"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-200">启用状态</label>
+                <select
+                  value={formData.status}
+                  onChange={e => setFormData({ ...formData, status: e.target.value as any })}
+                  className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500 cursor-pointer"
+                >
+                  <option value="已启用">已启用 (前台可见)</option>
+                  <option value="已停用">已停用 (前台隐藏)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-semibold text-slate-200">镜像简介说明</label>
+              <textarea
+                rows={2}
+                placeholder="简要描述镜像预装的 CUDA/cuDNN 及常用 Python 库..."
+                value={formData.description}
+                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl p-3 focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="font-semibold text-slate-200">预装环境与 Changelog 说明 (支持 Markdown)</label>
+                <div className="flex rounded-lg bg-slate-950 p-1 border border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setMdEditorTab('edit')}
+                    className={`px-3 py-1 rounded-md text-[11px] font-semibold transition ${
+                      mdEditorTab === 'edit' ? 'bg-slate-800 text-blue-400' : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    编辑内容
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMdEditorTab('preview')}
+                    className={`px-3 py-1 rounded-md text-[11px] font-semibold transition ${
+                      mdEditorTab === 'preview' ? 'bg-slate-800 text-blue-400' : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    实时预览
+                  </button>
+                </div>
+              </div>
+
+              {mdEditorTab === 'edit' ? (
+                <textarea
+                  rows={5}
+                  placeholder="### 预装包清单:&#10;- torch 2.2.2&#10;- torchvision 0.17.2&#10;- flash-attn 2.5.6"
+                  value={formData.changelog}
+                  onChange={e => setFormData({ ...formData, changelog: e.target.value })}
+                  className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl p-3 focus:outline-none focus:border-blue-500 font-mono"
+                />
+              ) : (
+                <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl min-h-[120px] text-xs text-slate-300">
+                  {formData.changelog ? (
+                    <div className="markdown-body">
+                      <Markdown>{formData.changelog}</Markdown>
+                    </div>
+                  ) : (
+                    <span className="text-slate-500 italic">暂无 Changelog 内容</span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setEditModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition"
+              >
+                取消
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-500/20 transition"
+              >
+                {isEditing ? '保存修改' : '确认创建'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 二、镜像详情 二级页面 (Early Return)
+  // =========================================================================
+  if (detailModalOpen && detailImage) {
+    return (
+      <div className="space-y-6 text-slate-100 animate-in fade-in duration-200">
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-6 text-slate-100">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setDetailModalOpen(false)}
+                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>返回镜像列表</span>
+              </button>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-white">{detailImage.name}</h3>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                    CATEGORY_CONFIG[detailImage.category]?.bg || 'bg-slate-500/10'
+                  } ${CATEGORY_CONFIG[detailImage.category]?.text || 'text-slate-400'} border ${
+                    CATEGORY_CONFIG[detailImage.category]?.border || 'border-slate-500/20'
+                  }`}>
+                    {detailImage.category}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5 font-mono">{detailImage.registryUrl}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setDetailModalOpen(false);
+                handleOpenEdit(detailImage);
+              }}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-md transition cursor-pointer flex items-center gap-1.5"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>编辑镜像</span>
+            </button>
+          </div>
+
+          <div className="space-y-6 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800">
+              <div>
+                <span className="text-[11px] text-slate-500 block">版本号</span>
+                <span className="text-xs font-semibold text-slate-200 mt-0.5 block font-mono">
+                  {detailImage.version || 'v1.0.0'}
+                </span>
+              </div>
+              <div>
+                <span className="text-[11px] text-slate-500 block">镜像文件大小</span>
+                <span className="text-xs font-semibold text-cyan-400 mt-0.5 block font-mono">
+                  {detailImage.size || '10.0 GB'}
+                </span>
+              </div>
+              <div>
+                <span className="text-[11px] text-slate-500 block">累计引用次数</span>
+                <span className="text-xs font-bold text-indigo-400 mt-0.5 block font-mono">
+                  {detailImage.refCount || 0} 次
+                </span>
+              </div>
+              <div>
+                <span className="text-[11px] text-slate-500 block">启用状态</span>
+                <span className="text-xs font-semibold mt-0.5 block">
+                  {detailImage.status === '已启用' ? (
+                    <span className="text-emerald-400">已启用 (前台可见)</span>
+                  ) : (
+                    <span className="text-slate-500">已停用 (前台隐藏)</span>
+                  )}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-bold text-slate-300">镜像仓库地址</h4>
+              <div className="flex items-center gap-2 p-3 bg-slate-950 border border-slate-800 rounded-xl font-mono text-slate-300 text-xs">
+                <Terminal className="w-4 h-4 text-slate-500 shrink-0" />
+                <span className="truncate flex-1">{detailImage.registryUrl}</span>
+                <button
+                  onClick={(e) => handleCopyUrl(detailImage.registryUrl, e)}
+                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition text-[11px] flex items-center gap-1 shrink-0"
+                >
+                  {copiedUrl === detailImage.registryUrl ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                  <span>{copiedUrl === detailImage.registryUrl ? '已复制' : '复制'}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-bold text-slate-300">镜像简介与功能描述</h4>
+              <p className="text-slate-300 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 leading-relaxed">
+                {detailImage.description || '暂无详细描述'}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-bold text-slate-300">预装框架与环境说明 (Changelog)</h4>
+              <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800 text-slate-300 min-h-[100px]">
+                {detailImage.changelog ? (
+                  <div className="markdown-body">
+                    <Markdown>{detailImage.changelog}</Markdown>
+                  </div>
+                ) : (
+                  <span className="text-slate-500 italic">暂无环境变更说明</span>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-bold text-slate-300 flex items-center gap-2">
+                <Activity className="w-4 h-4 text-emerald-400" />
+                <span>使用该镜像运行中的实例 ({getReferencedInstances(detailImage).length})</span>
+              </h4>
+              {getReferencedInstances(detailImage).length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {getReferencedInstances(detailImage).map(inst => (
+                    <div key={inst.id} className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl flex items-center justify-between text-xs">
+                      <div>
+                        <div className="font-bold text-slate-200">{inst.instanceId || inst.id}</div>
+                        <div className="text-[11px] text-slate-500 font-mono mt-0.5">{inst.gpuSpec || inst.specName}</div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        运行中
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500 italic p-3 bg-slate-950/40 rounded-xl border border-slate-800">
+                  当前暂无正在运行的实例使用此镜像
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+            <span className="text-xs text-slate-500 font-mono">镜像 ID: {detailImage.id}</span>
+            <button
+              onClick={() => setDetailModalOpen(false)}
+              className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 rounded-xl transition cursor-pointer"
+            >
+              关闭
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -705,34 +1048,37 @@ export const ComputeImageAdminView: React.FC = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 三、新增/编辑镜像表单弹窗 (三部分清晰结构) */}
+      {/* 三、新增/编辑镜像二级页面 */}
       {/* ========================================================================= */}
       {editModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl my-8">
-            <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-lg">
-                  <Box className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-white">
-                    {isEditing ? '编辑镜像配置' : '新增镜像'}
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {isEditing ? `修改镜像【${currentImage?.name}】的基础信息与配置` : '配置并发布新的官方或应用市场 GPU 容器镜像'}
-                  </p>
-                </div>
-              </div>
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-6 text-slate-100">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setEditModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
               >
-                <X className="w-5 h-5" />
+                <ArrowLeft className="w-4 h-4" />
+                <span>返回镜像列表</span>
               </button>
+              <div>
+                <h3 className="text-base font-bold text-white">
+                  {isEditing ? `编辑镜像: ${currentImage?.name}` : '新增镜像'}
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {isEditing ? `修改镜像【${currentImage?.name}】的基础信息与配置` : '配置并发布新的官方或应用市场 GPU 容器镜像'}
+                </p>
+              </div>
             </div>
+            <button
+              onClick={handleSave}
+              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-600/30 transition cursor-pointer"
+            >
+              {isEditing ? '保存修改' : '确认新增'}
+            </button>
+          </div>
 
-            <form onSubmit={handleSave} className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+          <form onSubmit={handleSave} className="space-y-6">
               {/* 第一部分：基础信息 */}
               {/* 镜像精简配置字段 */}
               <div className="space-y-4">
@@ -944,45 +1290,50 @@ export const ComputeImageAdminView: React.FC = () => {
                 </button>
               </div>
             </form>
-          </div>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* 四、镜像详情页/抽屉弹窗 (点击镜像名称进入) */}
+      {/* 四、镜像详情二级页面 (点击镜像名称进入) */}
       {/* ========================================================================= */}
       {detailModalOpen && detailImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl my-8">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4 bg-slate-900">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-xl">
-                  <Box className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-white">
-                      {detailImage.name}
-                    </h3>
-                    <span className="text-xs font-mono text-slate-300 px-2 py-0.5 bg-slate-800 border border-slate-700 rounded">
-                      {detailImage.version || 'v1.0.0'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    镜像详细配置参数与实时被引用实例列表
-                  </p>
-                </div>
-              </div>
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-6 text-slate-100">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setDetailModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
               >
-                <X className="w-5 h-5" />
+                <ArrowLeft className="w-4 h-4" />
+                <span>返回镜像列表</span>
               </button>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-white">
+                    {detailImage.name}
+                  </h3>
+                  <span className="text-xs font-mono text-slate-300 px-2 py-0.5 bg-slate-800 border border-slate-700 rounded">
+                    {detailImage.version || 'v1.0.0'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  镜像详细配置参数与实时被引用实例列表
+                </p>
+              </div>
             </div>
+            <button
+              onClick={() => {
+                setDetailModalOpen(false);
+                handleOpenEdit(detailImage);
+              }}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl shadow-md transition cursor-pointer"
+            >
+              编辑镜像
+            </button>
+          </div>
 
-            <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+          <div className="space-y-6">
               {/* 基本信息 & 状态信息卡片 */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* 基本信息 */}
@@ -1196,7 +1547,7 @@ export const ComputeImageAdminView: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-end px-6 py-4 border-t border-slate-800 bg-slate-900">
+            <div className="flex items-center justify-end pt-4 border-t border-slate-800">
               <button
                 onClick={() => setDetailModalOpen(false)}
                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
@@ -1204,8 +1555,9 @@ export const ComputeImageAdminView: React.FC = () => {
                 关闭
               </button>
             </div>
-          </div>
         </div>
+      )}
+      </>
       )}
 
       {/* 删除二次确认弹窗 */}
@@ -1242,8 +1594,6 @@ export const ComputeImageAdminView: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
-        </>
       )}
     </div>
   );

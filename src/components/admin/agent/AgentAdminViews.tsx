@@ -745,6 +745,9 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editingAgent, setEditingAgent] = useState<Partial<AgentItem> | null>(null);
 
+  // Selected agent for secondary detail view
+  const [detailAgent, setDetailAgent] = useState<AgentItem | null>(null);
+
   // Search and filter inside Agent list
   const [searchQuery, setSearchQuery] = useState('');
   const [techFormFilter, setTechFormFilter] = useState('全部');
@@ -943,7 +946,97 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
 
   return (
     <div className="space-y-6">
-      {isEditing && editingAgent ? (
+      {detailAgent ? (
+        // SECONDARY PAGE: DETAIL VIEW
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-6 text-slate-100">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setDetailAgent(null)}
+                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>返回 Agent 列表</span>
+              </button>
+              <div>
+                <h3 className="text-base font-black text-white">{detailAgent.name} 详情档案</h3>
+                <p className="text-xs text-slate-400">Agent ID: {detailAgent.id}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                const ag = detailAgent;
+                setDetailAgent(null);
+                handleOpenEdit(ag);
+              }}
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <Edit2 className="w-3.5 h-3.5" />
+              <span>编辑此类目</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Left Card: Basic info */}
+            <div className="p-5 rounded-xl bg-slate-950 border border-slate-800 space-y-4">
+              <div className="flex items-center gap-3">
+                <img src={detailAgent.avatar} alt={detailAgent.name} className="w-14 h-14 rounded-2xl object-cover border border-slate-700 bg-slate-800" />
+                <div>
+                  <h4 className="text-base font-bold text-white">{detailAgent.name}</h4>
+                  <p className="text-xs text-slate-400 mt-0.5">{detailAgent.slogan}</p>
+                  <span className="inline-block mt-2 px-2 py-0.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-mono font-bold rounded border border-indigo-500/20">
+                    {detailAgent.linkedModel || '默认基座'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-800/80 space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">技术形态</span>
+                  <span className="text-slate-200 font-bold">{detailAgent.techForm || detailAgent.appType}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">上架状态</span>
+                  <span className="text-emerald-400 font-bold">{detailAgent.status}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">免费体验次数</span>
+                  <span className="text-amber-400 font-mono font-bold">{detailAgent.freeTrialCount !== undefined ? detailAgent.freeTrialCount : 3} 次</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">累计调用量</span>
+                  <span className="text-indigo-400 font-mono font-bold">{(detailAgent.usageCount || 0).toLocaleString()} 次</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">订阅用户数</span>
+                  <span className="text-teal-400 font-mono font-bold">{(detailAgent.subscribersCount || 0).toLocaleString()} 人</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Card: Descriptions & Guides */}
+            <div className="md:col-span-2 space-y-4">
+              <div className="p-5 rounded-xl bg-slate-950 border border-slate-800 space-y-3 text-xs">
+                <h5 className="font-bold text-slate-200 border-l-2 border-indigo-500 pl-2">功能介绍</h5>
+                <p className="text-slate-300 leading-relaxed whitespace-pre-line">{detailAgent.description || '暂无详细介绍'}</p>
+              </div>
+
+              <div className="p-5 rounded-xl bg-slate-950 border border-slate-800 space-y-3 text-xs">
+                <h5 className="font-bold text-slate-200 border-l-2 border-indigo-500 pl-2">API 接口地址</h5>
+                <p className="font-mono text-indigo-400 bg-slate-900 p-2.5 rounded-lg border border-slate-800 break-all">{detailAgent.apiAddress || 'https://api.qianji.ai/v1/agent/invoke'}</p>
+              </div>
+
+              {detailAgent.useGuide && (
+                <div className="p-5 rounded-xl bg-slate-950 border border-slate-800 space-y-3 text-xs">
+                  <h5 className="font-bold text-slate-200 border-l-2 border-indigo-500 pl-2">使用指南</h5>
+                  <p className="text-slate-300 leading-relaxed whitespace-pre-line">{detailAgent.useGuide}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : isEditing && editingAgent ? (
         // EDIT / CREATE FORM PANEL
         <form onSubmit={handleSaveAgent} className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-8 text-slate-100">
           <div className="flex items-center justify-between border-b border-slate-800 pb-4">
@@ -1438,14 +1531,18 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="bg-slate-950/60 text-slate-400 uppercase text-[10px] font-black border-b border-slate-800">
-                      <th className="py-3 px-4">智能体名称与基本展示</th>
+                      <th className="py-3 px-3">Logo</th>
+                      <th className="py-3 px-3">智能体名称</th>
+                      <th className="py-3 px-3">一句话简介</th>
+                      <th className="py-3 px-3">关联模型</th>
                       <th className="py-3 px-3">技术形态</th>
                       <th className="py-3 px-3">应用场景</th>
-                      <th className="py-3 px-3">套餐配置 / 免费试用</th>
+                      <th className="py-3 px-3">最低套餐价</th>
+                      <th className="py-3 px-3">免费试用</th>
                       <th className="py-3 px-3 text-right">调用量</th>
                       <th className="py-3 px-3 text-right">订阅用户</th>
                       <th className="py-3 px-3">上架状态</th>
-                      <th className="py-3 px-4 text-center min-w-[240px]">操作</th>
+                      <th className="py-3 px-4 text-center">操作</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/50 text-slate-300">
@@ -1453,26 +1550,34 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                       const minPrice = ag.weekCardPrice || ag.monthCardPrice || ag.quarterCardPrice || ag.yearCardPrice;
                       return (
                         <tr key={ag.id} className="hover:bg-slate-800/30 transition">
-                          {/* Title, Slogan, Avatar */}
-                          <td className="py-3.5 px-4">
-                            <div className="flex items-center gap-3">
-                              <img
-                                src={ag.avatar}
-                                alt={ag.name}
-                                className="w-9 h-9 rounded-xl object-cover border border-slate-700 bg-slate-800 shrink-0"
-                              />
-                              <div>
-                                <div className="font-extrabold text-white text-sm flex items-center gap-2">
-                                  {ag.name}
-                                  {ag.linkedModel && (
-                                    <span className="text-[9px] px-1 bg-indigo-500/10 text-indigo-400 rounded border border-indigo-500/20 font-mono">
-                                      {ag.linkedModel}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">{ag.slogan}</div>
-                              </div>
-                            </div>
+                          {/* Logo */}
+                          <td className="py-3.5 px-3">
+                            <img
+                              src={ag.avatar}
+                              alt={ag.name}
+                              className="w-9 h-9 rounded-xl object-cover border border-slate-700 bg-slate-800 shrink-0"
+                            />
+                          </td>
+
+                          {/* Agent Name */}
+                          <td className="py-3.5 px-3 font-extrabold text-white text-xs whitespace-nowrap">
+                            {ag.name}
+                          </td>
+
+                          {/* Slogan */}
+                          <td className="py-3.5 px-3 text-[11px] text-slate-400 max-w-[200px] truncate">
+                            {ag.slogan}
+                          </td>
+
+                          {/* Linked Model */}
+                          <td className="py-3.5 px-3">
+                            {ag.linkedModel ? (
+                              <span className="text-[10px] px-2 py-0.5 bg-indigo-500/10 text-indigo-400 rounded-md border border-indigo-500/20 font-mono font-bold whitespace-nowrap">
+                                {ag.linkedModel}
+                              </span>
+                            ) : (
+                              <span className="text-slate-600 text-[10px]">-</span>
+                            )}
                           </td>
 
                           {/* Tech Form Badge */}
@@ -1493,34 +1598,36 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                             </div>
                           </td>
 
-                          {/* Pricing & Free Trial */}
+                          {/* Min Price */}
                           <td className="py-3.5 px-3 whitespace-nowrap">
-                            <div className="space-y-1">
-                              {minPrice ? (
-                                <div className="text-amber-400 font-mono font-bold text-xs">
-                                  ¥{minPrice} 起
-                                </div>
-                              ) : (
-                                <div className="text-slate-500 text-xs">未配置套餐</div>
-                              )}
-                              <div className="text-[10px] text-slate-400">
-                                试用: <span className="text-emerald-400 font-bold">{ag.freeTrialCount !== undefined ? ag.freeTrialCount : 3}</span> 次
+                            {minPrice ? (
+                              <div className="text-amber-400 font-mono font-bold text-xs">
+                                ¥{minPrice} 起
                               </div>
-                            </div>
+                            ) : (
+                              <div className="text-slate-500 text-xs">未配置</div>
+                            )}
+                          </td>
+
+                          {/* Free Trial */}
+                          <td className="py-3.5 px-3 text-center whitespace-nowrap">
+                            <span className="text-emerald-400 font-bold font-mono text-xs">
+                              {ag.freeTrialCount !== undefined ? ag.freeTrialCount : 3}
+                            </span> <span className="text-slate-500 text-[10px]">次</span>
                           </td>
 
                           {/* Calls Count */}
-                          <td className="py-3.5 px-3 text-right font-mono font-bold text-slate-200">
+                          <td className="py-3.5 px-3 text-right font-mono font-bold text-slate-200 whitespace-nowrap">
                             {(ag.usageCount || 0).toLocaleString()} 次
                           </td>
 
                           {/* Subscribers Count */}
-                          <td className="py-3.5 px-3 text-right font-mono font-bold text-slate-200">
+                          <td className="py-3.5 px-3 text-right font-mono font-bold text-slate-200 whitespace-nowrap">
                             {(ag.subscribersCount || 0).toLocaleString()} 人
                           </td>
 
                           {/* Status */}
-                          <td className="py-3.5 px-3">
+                          <td className="py-3.5 px-3 whitespace-nowrap">
                             {ag.status === '已上架' ? (
                               <span className="flex items-center gap-1 text-emerald-400 text-[11px] font-bold">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
@@ -1545,11 +1652,11 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                           </td>
 
                           {/* Actions column */}
-                          <td className="py-3.5 px-4 text-center">
+                          <td className="py-3.5 px-4 text-center whitespace-nowrap">
                             <div className="flex items-center justify-center gap-2">
                               {/* View details */}
                               <button
-                                onClick={() => setDetailModalAgent(ag)}
+                                onClick={() => setDetailAgent(ag)}
                                 className="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-indigo-400 hover:text-indigo-300 border border-slate-700 transition"
                                 title="查看详情"
                               >
@@ -1852,132 +1959,119 @@ const AgentOrdersAdminView: React.FC<OrdersProps> = ({ orders, setOrders }) => {
         )}
       </div>
 
-      {/* DETAIL VIEW MODAL */}
-      {selectedOrder && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-100">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Receipt className="w-5 h-5 text-indigo-400" />
-                <h4 className="text-sm font-black text-white">Agent 账单流向详情页</h4>
-              </div>
+      {/* SECONDARY PAGE: ORDER DETAIL */}
+      {selectedOrder ? (
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-6 text-slate-100">
+          {/* Page Header */}
+          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="text-slate-400 hover:text-white text-sm"
+                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
               >
-                ✕
+                <ArrowLeft className="w-4 h-4" />
+                <span>返回订阅订单列表</span>
               </button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-              {/* Basic Info grid */}
-              <div className="space-y-3">
-                <h5 className="text-xs font-black text-slate-400 uppercase tracking-wider border-l-2 border-indigo-500 pl-2">
-                  1. 账期基础档案信息
-                </h5>
-                <div className="grid grid-cols-2 gap-4 bg-slate-950/40 p-4 rounded-xl border border-slate-800/80 text-xs">
-                  <div>
-                    <span className="text-slate-500 block">系统唯一订单号</span>
-                    <span className="font-mono text-slate-200 font-bold mt-0.5 block">{selectedOrder.id}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block">订购客户姓名</span>
-                    <span className="text-slate-200 font-bold mt-0.5 block">{selectedOrder.userName}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block">订购智能体 (Agent)</span>
-                    <span className="text-slate-200 font-bold mt-0.5 block">{selectedOrder.agentName}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block">订单付费套餐类别</span>
-                    <span className="text-slate-200 font-bold mt-0.5 block">{selectedOrder.orderType}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block">结算订单状态</span>
-                    <span className="mt-0.5 block">
-                      {selectedOrder.status === '已生效' ? (
-                        <span className="text-emerald-400 font-bold">● 已生效 (正常运行)</span>
-                      ) : selectedOrder.status === '已用完' ? (
-                        <span className="text-yellow-400 font-bold">● 已用完</span>
-                      ) : (
-                        <span className="text-red-400 font-bold">● 已过期</span>
-                      )}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block">账期创建时序</span>
-                    <span className="font-mono text-slate-300 mt-0.5 block">{selectedOrder.createdAt}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block">微信/支付宝支付时效</span>
-                    <span className="font-mono text-slate-300 mt-0.5 block">{selectedOrder.payTime}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block">起算生效期</span>
-                    <span className="font-mono text-slate-300 mt-0.5 block">{selectedOrder.startTime}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-slate-500 block">到期释放时间</span>
-                    <span className="font-mono text-slate-300 mt-0.5 block">{selectedOrder.expireTime}</span>
-                  </div>
-                </div>
+              <div>
+                <h4 className="text-sm font-black text-white">Agent 账单流向详情档案</h4>
+                <p className="text-xs text-slate-400">系统唯一订单号: {selectedOrder.id}</p>
               </div>
+            </div>
+            <span className="text-xs font-mono font-bold px-3 py-1 bg-slate-800 text-indigo-400 rounded-lg border border-slate-700">
+              {selectedOrder.status}
+            </span>
+          </div>
 
-              {/* Order Breakdown Grid */}
-              <div className="space-y-3">
-                <h5 className="text-xs font-black text-slate-400 uppercase tracking-wider border-l-2 border-indigo-500 pl-2">
-                  2. 资源配额与结算扣减明细
-                </h5>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {/* Order amount */}
-                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-center">
-                    <span className="text-[10px] text-slate-500 block">应付/实付金额</span>
-                    <span className="text-base font-black text-emerald-400 font-mono mt-1 block">
-                      ¥{selectedOrder.orderAmount.toFixed(2)}
-                    </span>
-                  </div>
-
-                  {/* Token quantity */}
-                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-center">
-                    <span className="text-[10px] text-slate-500 block">套餐包容量</span>
-                    <span className="text-base font-black text-indigo-400 font-mono mt-1 block">
-                      {selectedOrder.tokenAmount} 万
-                    </span>
-                  </div>
-
-                  {/* Used token */}
-                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-center">
-                    <span className="text-[10px] text-slate-500 block">已累计消耗量</span>
-                    <span className="text-base font-black text-slate-300 font-mono mt-1 block">
-                      {selectedOrder.usedTokens.toFixed(2)} 万
-                    </span>
-                  </div>
-
-                  {/* Remaining tokens */}
-                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-center">
-                    <span className="text-[10px] text-slate-500 block">可用剩余存量</span>
-                    <span className="text-base font-black text-teal-400 font-mono mt-1 block">
-                      {(selectedOrder.tokenAmount - selectedOrder.usedTokens).toFixed(2)} 万
-                    </span>
-                  </div>
+          {/* Details Grid */}
+          <div className="space-y-6">
+            {/* Basic Info grid */}
+            <div className="space-y-3">
+              <h5 className="text-xs font-black text-slate-400 uppercase tracking-wider border-l-2 border-indigo-500 pl-2">
+                1. 账期基础档案信息
+              </h5>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs">
+                <div>
+                  <span className="text-slate-500 block">系统唯一订单号</span>
+                  <span className="font-mono text-slate-200 font-bold mt-0.5 block">{selectedOrder.id}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">订购客户姓名</span>
+                  <span className="text-slate-200 font-bold mt-0.5 block">{selectedOrder.userName}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">订购智能体 (Agent)</span>
+                  <span className="text-slate-200 font-bold mt-0.5 block">{selectedOrder.agentName}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">订单付费套餐类别</span>
+                  <span className="text-slate-200 font-bold mt-0.5 block">{selectedOrder.orderType}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">结算订单状态</span>
+                  <span className="mt-0.5 block">
+                    {selectedOrder.status === '已生效' ? (
+                      <span className="text-emerald-400 font-bold">● 已生效 (正常运行)</span>
+                    ) : selectedOrder.status === '已用完' ? (
+                      <span className="text-yellow-400 font-bold">● 已用完</span>
+                    ) : (
+                      <span className="text-red-400 font-bold">● 已过期</span>
+                    )}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">账期创建时序</span>
+                  <span className="font-mono text-slate-300 mt-0.5 block">{selectedOrder.createdAt}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">支付时效</span>
+                  <span className="font-mono text-slate-300 mt-0.5 block">{selectedOrder.payTime}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">起算生效期</span>
+                  <span className="font-mono text-slate-300 mt-0.5 block">{selectedOrder.startTime}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">到期释放时间</span>
+                  <span className="font-mono text-slate-300 mt-0.5 block">{selectedOrder.expireTime}</span>
                 </div>
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="p-4 bg-slate-950/80 border-t border-slate-800/80 flex justify-end">
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition cursor-pointer"
-              >
-                确定，关闭
-              </button>
+            {/* Order Breakdown Grid */}
+            <div className="space-y-3">
+              <h5 className="text-xs font-black text-slate-400 uppercase tracking-wider border-l-2 border-indigo-500 pl-2">
+                2. 资源配额与结算扣减明细
+              </h5>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl text-center">
+                  <span className="text-[10px] text-slate-500 block">应付/实付金额</span>
+                  <span className="text-base font-black text-emerald-400 font-mono mt-1 block">
+                    ¥{selectedOrder.orderAmount.toFixed(2)}
+                  </span>
+                </div>
+                <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl text-center">
+                  <span className="text-[10px] text-slate-500 block">套餐包容量</span>
+                  <span className="text-base font-black text-indigo-400 font-mono mt-1 block">
+                    {selectedOrder.tokenAmount} 万
+                  </span>
+                </div>
+                <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl text-center">
+                  <span className="text-[10px] text-slate-500 block">已累计消耗量</span>
+                  <span className="text-base font-black text-slate-300 font-mono mt-1 block">
+                    {selectedOrder.usedTokens.toFixed(2)} 万
+                  </span>
+                </div>
+                <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl text-center">
+                  <span className="text-[10px] text-slate-500 block">可用剩余存量</span>
+                  <span className="text-base font-black text-teal-400 font-mono mt-1 block">
+                    {(selectedOrder.tokenAmount - selectedOrder.usedTokens).toFixed(2)} 万
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

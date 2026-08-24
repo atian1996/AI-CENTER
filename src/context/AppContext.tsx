@@ -7,6 +7,8 @@ import {
   AgentItem, 
   AgentSubscriptionItem,
   ModelItem, 
+  ModelCallRecord,
+  ModelUserConsumption,
   DatasetItem, 
   SkillPluginItem,
   TaskItem, 
@@ -44,6 +46,11 @@ import {
   mockPointRecords, 
   mockCompetitions 
 } from '../data/mockData';
+import { 
+  initialAdminModels, 
+  initialModelCallRecords, 
+  initialUserConsumptions 
+} from '../data/mockModelData';
 import { mockRichTasks } from '../data/mockTasksData';
 import {
   mockComputeSpecs,
@@ -99,9 +106,9 @@ interface AppContextType {
   agents: AgentItem[];
   setAgents: React.Dispatch<React.SetStateAction<AgentItem[]>>;
   userAgents: AgentItem[];
-  models: ModelItem[];
   datasets: DatasetItem[];
   skills: SkillPluginItem[];
+  setSkills: React.Dispatch<React.SetStateAction<SkillPluginItem[]>>;
   favorites: AgentItem[];
   toggleFavoriteAgent: (agentId: string) => void;
   tasks: TaskItem[];
@@ -138,6 +145,17 @@ interface AppContextType {
   selectedCompareModels: ModelItem[];
   toggleCompareModel: (model: ModelItem) => void;
   clearCompareModels: () => void;
+
+  // Model Management Admin Operations
+  models: ModelItem[];
+  setModels: React.Dispatch<React.SetStateAction<ModelItem[]>>;
+  addModel: (model: Partial<ModelItem>) => void;
+  updateModel: (id: string, updates: Partial<ModelItem>) => void;
+  deleteModel: (id: string) => boolean;
+  toggleModelStatus: (id: string, status?: '已上架' | '已下架' | '草稿') => void;
+  modelCallRecords: ModelCallRecord[];
+  addModelCallRecord: (record: Partial<ModelCallRecord>) => void;
+  modelUserConsumptions: ModelUserConsumption[];
 
   // Competitions
   competitions: CompetitionItem[];
@@ -205,6 +223,7 @@ interface AppContextType {
   deleteGpuInstance: (id: string) => void;
   createPost: (content: string, board: FeedPost['board'], images?: string[], title?: string, tags?: string[]) => void;
   likePost: (postId: string) => void;
+  setPosts: React.Dispatch<React.SetStateAction<FeedPost[]>>;
 
   // Toast System
   toast: string | null;
@@ -313,7 +332,156 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
     })
   );
-  const [models] = useState<ModelItem[]>(mockModels);
+  const [models, setModels] = useState<ModelItem[]>(initialAdminModels);
+  const [modelCallRecords, setModelCallRecords] = useState<ModelCallRecord[]>(initialModelCallRecords);
+  const [modelUserConsumptions, setModelUserConsumptions] = useState<ModelUserConsumption[]>(initialUserConsumptions);
+
+  const addModel = (modelData: Partial<ModelItem>) => {
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    const newId = modelData.id || modelData.modelCodeName || `model-${Date.now()}`;
+    const newModel: ModelItem = {
+      id: newId,
+      name: modelData.name || '新模型',
+      vendor: modelData.vendor || '深度求索',
+      author: modelData.author || modelData.vendor || 'DeepSeek',
+      logo: modelData.logo || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80',
+      brief: modelData.brief || modelData.description?.slice(0, 30) || '高可用多模态大模型',
+      downloadUrl: modelData.downloadUrl || '',
+      providerList: modelData.providerList || ['千机智算网关'],
+      modelCodeName: modelData.modelCodeName || newId,
+      versionName: modelData.versionName || `${modelData.name || 'Model'} 正式版`,
+      typeTag: (modelData.modalities?.[0] as any) || (modelData.typeTag as any) || '文本',
+      modalities: modelData.modalities || ['文本'],
+      inputModalities: modelData.inputModalities || ['文本'],
+      outputModalities: modelData.outputModalities || ['文本'],
+      contextLength: modelData.contextLength || (modelData.contextLengthValue ? `${modelData.contextLengthValue}${modelData.contextLengthUnit || 'K'}` : '128K'),
+      contextLengthValue: modelData.contextLengthValue || 128,
+      contextLengthUnit: modelData.contextLengthUnit || 'K',
+      maxOutputTokens: modelData.maxOutputTokens || 65536,
+      apiUrl: modelData.apiUrl || 'https://api.gateway.local/v1/chat/completions',
+      authType: modelData.authType || 'API Key',
+      authCredential: modelData.authCredential || '',
+      timeoutSeconds: modelData.timeoutSeconds || 30,
+      billingRules: modelData.billingRules || [
+        { id: `br_${Date.now()}_1`, modality: '文本', direction: '输入', unit: 'Token（按M tokens）', price: 1.0 },
+        { id: `br_${Date.now()}_2`, modality: '文本', direction: '输出', unit: 'Token（按M tokens）', price: 3.0 }
+      ],
+      billingRuleSummary: modelData.billingRuleSummary || '输入文本¥1.0/M tokens，输出文本¥3.0/M tokens',
+      protocols: modelData.protocols || ['Chat Completions'],
+      status: modelData.status || '已上架',
+      totalTokensUsed: '0 tokens',
+      totalCalls: 0,
+      totalRevenue: 0,
+      cachedPrice: '¥0.01 /M tokens',
+      throughputTps: 80,
+      availabilityPercent: 99.9,
+      priceInput: modelData.priceInput || '¥1.0/M tokens',
+      priceOutput: modelData.priceOutput || '¥3.0/M tokens',
+      tags: modelData.tags || ['新模型', '高性能'],
+      description: modelData.description || '这是新创建的模型实例。',
+      apiDocContent: modelData.apiDocContent || '### API 调用说明\n支持标准请求格式。',
+      codeCurl: modelData.codeCurl || '',
+      codePython: modelData.codePython || '',
+      codeNode: modelData.codeNode || '',
+      benchmarks: [{ name: 'MMLU', score: 88.0 }],
+      latencyMs: 250,
+      apiDocsUrl: 'https://docs.local',
+      createdAt: nowStr,
+      updatedAt: nowStr,
+      ...modelData
+    };
+
+    setModels(prev => [newModel, ...prev]);
+    showToast(`模型【${newModel.name}】已成功${newModel.status === '草稿' ? '保存为草稿' : '创建并上架'}！`);
+  };
+
+  const updateModel = (id: string, updates: Partial<ModelItem>) => {
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    setModels(prev => prev.map(m => {
+      if (m.id === id) {
+        return {
+          ...m,
+          ...updates,
+          updatedAt: nowStr
+        };
+      }
+      return m;
+    }));
+    showToast('模型配置已成功更新！');
+  };
+
+  const deleteModel = (id: string): boolean => {
+    const target = models.find(m => m.id === id);
+    if (!target) return false;
+    
+    setModels(prev => prev.filter(m => m.id !== id));
+    showToast(`已删除模型【${target.name}】`);
+    return true;
+  };
+
+  const toggleModelStatus = (id: string, nextStatus?: '已上架' | '已下架' | '草稿') => {
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    setModels(prev => prev.map(m => {
+      if (m.id === id) {
+        let determinedStatus = nextStatus;
+        if (!determinedStatus) {
+          determinedStatus = m.status === '已上架' ? '已下架' : '已上架';
+        }
+        return { ...m, status: determinedStatus, updatedAt: nowStr };
+      }
+      return m;
+    }));
+    showToast(`模型状态已变更为【${nextStatus || '已切换'}】`);
+  };
+
+  const addModelCallRecord = (record: Partial<ModelCallRecord>) => {
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    const newRecord: ModelCallRecord = {
+      id: `call_${Date.now()}_${Math.floor(Math.random() * 899 + 100)}`,
+      userId: user.id || 'U892301',
+      userName: user.name || '李明华',
+      userAvatar: user.avatar,
+      modelId: record.modelId || 'deepseek-v4-pro-0813',
+      modelName: record.modelName || 'DeepSeek V4 Pro',
+      callType: record.callType || '在线体验',
+      inputAmount: record.inputAmount || '800 tokens',
+      inputCount: record.inputCount || 800,
+      outputAmount: record.outputAmount || '420 tokens',
+      outputCount: record.outputCount || 420,
+      cost: record.cost || 0.0185,
+      callTime: nowStr,
+      status: record.status || '成功',
+      requestParamsSummary: record.requestParamsSummary || '{"messages":[{"role":"user","content":"用户提示词"}]}',
+      responseSummary: record.responseSummary || '模型响应结果...',
+      matchedBillingRule: record.matchedBillingRule || '标准Token计费',
+      latencyMs: record.latencyMs || 320,
+      apiKeyPrefix: record.apiKeyPrefix || 'Web-Console',
+      ...record
+    };
+
+    setModelCallRecords(prev => [newRecord, ...prev]);
+
+    // 更新模型调用次数和营收
+    setModels(prev => prev.map(m => {
+      if (m.id === newRecord.modelId || m.name === newRecord.modelName) {
+        return {
+          ...m,
+          totalCalls: (m.totalCalls || 0) + 1,
+          totalRevenue: Number(((m.totalRevenue || 0) + (newRecord.cost || 0)).toFixed(4))
+        };
+      }
+      return m;
+    }));
+
+    // 扣减用户账户余额
+    if (newRecord.cost > 0) {
+      setUser(prev => ({
+        ...prev,
+        balance: Math.max(0, Number((prev.balance - newRecord.cost).toFixed(4)))
+      }));
+    }
+  };
+
   const [datasets, setDatasets] = useState<DatasetItem[]>(() =>
     mockDatasets.map((ds, idx) => ({
       ...ds,
@@ -521,7 +689,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
     showToast('标签排序已更新');
   };
-  const [skills] = useState<SkillPluginItem[]>(mockSkills);
+  const [skills, setSkills] = useState<SkillPluginItem[]>(mockSkills);
   const [favoriteAgentIds, setFavoriteAgentIds] = useState<string[]>(['ag_01', 'ag_03']);
   const [tasks, setTasks] = useState<TaskItem[]>(mockRichTasks);
   const [courses] = useState<CourseItem[]>(mockCourses);
@@ -1429,7 +1597,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     marketplace: 0,
     tasks: 0,
     compute: 0,
-    learning: 0,
     creative: 0,
     community: 0,
     workspace: 0,
@@ -2268,6 +2435,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       models,
       datasets,
       skills,
+      setSkills,
       favorites,
       toggleFavoriteAgent,
       tasks,
@@ -2359,6 +2527,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       deleteGpuInstance,
       createPost,
       likePost,
+      setPosts,
       toast,
       showToast,
       // 算力工坊后台管理
@@ -2408,7 +2577,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addDatasetTag,
       updateDatasetTag,
       deleteDatasetTag,
-      reorderDatasetTags
+      reorderDatasetTags,
+      // 模型后台管理
+      setModels,
+      addModel,
+      updateModel,
+      deleteModel,
+      toggleModelStatus,
+      modelCallRecords,
+      addModelCallRecord,
+      modelUserConsumptions
     }}>
       {children}
     </AppContext.Provider>

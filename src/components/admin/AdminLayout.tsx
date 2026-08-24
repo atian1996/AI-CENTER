@@ -11,6 +11,13 @@ import { ComputeStatsAdminView } from './compute/ComputeStatsAdminView';
 import { ComputeSettlementAdminView } from './compute/ComputeSettlementAdminView';
 import { AgentAdminViews } from './agent/AgentAdminViews';
 import { DatasetAdminViews } from './dataset/DatasetAdminViews';
+import { SkillAdminView } from './skill/SkillAdminView';
+import { CommunityAdminViews } from './community/CommunityAdminViews';
+import {
+  ModelListAdminView,
+  ModelCallsAdminView,
+  ModelStatsAdminView
+} from './model/ModelAdminViews';
 import {
   LayoutDashboard,
   Store,
@@ -35,6 +42,8 @@ import {
   Eye,
   SlidersHorizontal,
   FileCheck,
+  FileText,
+  MessageSquare,
   ShieldAlert,
   Database,
   Tag,
@@ -47,7 +56,8 @@ import {
   Check,
   Coins,
   Receipt,
-  Bot
+  Bot,
+  Puzzle
 } from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {
@@ -73,6 +83,8 @@ export const AdminLayout: React.FC = () => {
   const [agentMenuExpanded, setAgentMenuExpanded] = useState<boolean>(true);
   // Dataset sub-menu collapse state
   const [datasetMenuExpanded, setDatasetMenuExpanded] = useState<boolean>(true);
+  // Model sub-menu collapse state
+  const [modelMenuExpanded, setModelMenuExpanded] = useState<boolean>(true);
 
   // Search keyword inside admin view
   const [adminSearch, setAdminSearch] = useState('');
@@ -86,6 +98,7 @@ export const AdminLayout: React.FC = () => {
   const isComputeSubMenu = activeAdminMenu.startsWith('compute_');
   const isAgentSubMenu = ['agent_list', 'agent_orders', 'agent_stats', 'agent_tags'].includes(activeAdminMenu);
   const isDatasetSubMenu = ['dataset_list', 'dataset_tags', 'dataset_stats'].includes(activeAdminMenu);
+  const isModelSubMenu = ['model_list', 'model_calls', 'model_stats'].includes(activeAdminMenu);
 
   // Navigation Items
   const mainNav = [
@@ -151,6 +164,42 @@ export const AdminLayout: React.FC = () => {
       ]
     },
     {
+      id: 'model_admin_group',
+      label: '模型管理',
+      icon: <Cpu className="w-4 h-4" />,
+      isGroup: true,
+      children: [
+        {
+          id: 'model_list' as AdminMenuKey,
+          label: '模型管理',
+          icon: <Cpu className="w-3.5 h-3.5" />
+        },
+        {
+          id: 'model_calls' as AdminMenuKey,
+          label: '模型调用记录',
+          icon: <Clock className="w-3.5 h-3.5" />
+        },
+        {
+          id: 'model_stats' as AdminMenuKey,
+          label: '模型使用统计',
+          icon: <TrendingUp className="w-3.5 h-3.5" />
+        }
+      ]
+    },
+    {
+      id: 'skill_admin_group',
+      label: 'Skill管理',
+      icon: <Puzzle className="w-4 h-4" />,
+      isGroup: true,
+      children: [
+        {
+          id: 'skill_list' as AdminMenuKey,
+          label: 'Skill管理',
+          icon: <Puzzle className="w-3.5 h-3.5" />
+        }
+      ]
+    },
+    {
       id: 'task_admin_group',
       label: '任务管理',
       icon: <Briefcase className="w-4 h-4" />,
@@ -165,6 +214,34 @@ export const AdminLayout: React.FC = () => {
           id: 'task_monitor' as AdminMenuKey,
           label: '任务监控',
           icon: <Activity className="w-3.5 h-3.5" />
+        }
+      ]
+    },
+    {
+      id: 'community_admin_group',
+      label: '社区管理',
+      icon: <Users className="w-4 h-4" />,
+      isGroup: true,
+      children: [
+        {
+          id: 'community_audit' as AdminMenuKey,
+          label: '发帖审核',
+          icon: <FileCheck className="w-3.5 h-3.5" />
+        },
+        {
+          id: 'community_post' as AdminMenuKey,
+          label: '帖子管理',
+          icon: <FileText className="w-3.5 h-3.5" />
+        },
+        {
+          id: 'community_comment' as AdminMenuKey,
+          label: '评论管理',
+          icon: <MessageSquare className="w-3.5 h-3.5" />
+        },
+        {
+          id: 'community_stats' as AdminMenuKey,
+          label: '数据统计',
+          icon: <TrendingUp className="w-3.5 h-3.5" />
         }
       ]
     },
@@ -289,6 +366,27 @@ export const AdminLayout: React.FC = () => {
           category: '数据集管理',
           crumb: ['后台管理', '数据集管理', '数据集使用统计']
         };
+      case 'model_list':
+        return {
+          title: '大模型配置与计费规则管理',
+          subtitle: '维护模型基本信息、接入网关URL、认证凭证、多模态规格及阶梯计费规则',
+          category: '模型管理',
+          crumb: ['后台管理', '模型管理', '模型管理']
+        };
+      case 'model_calls':
+        return {
+          title: '模型API调用明细日志',
+          subtitle: '全量记录各模型API调用审计日志、算力Token开销、成功率及实时扣费明细',
+          category: '模型管理',
+          crumb: ['后台管理', '模型管理', '模型调用记录']
+        };
+      case 'model_stats':
+        return {
+          title: '大模型用量与营收分析',
+          subtitle: '统计近30天全站大模型调用吞吐量、多模态占比、热门模型榜单与API服务营收',
+          category: '模型管理',
+          crumb: ['后台管理', '模型管理', '模型使用统计']
+        };
       case 'publish_audit':
         return {
           title: '任务发布审核',
@@ -373,6 +471,41 @@ export const AdminLayout: React.FC = () => {
           category: '系统支撑',
           crumb: ['后台管理', '系统管理']
         };
+      case 'skill_list':
+        return {
+          title: 'Skill 插件管理',
+          subtitle: '挂载与管理全平台 Agent 扩展 Skill 插件，支持文件导入与场景分类绑定',
+          category: 'Skill管理',
+          crumb: ['后台管理', 'Skill管理', 'Skill列表']
+        };
+      case 'community_audit':
+        return {
+          title: '社区发帖审核',
+          subtitle: '审核用户新发布的动态内容，确保合规展示，支持详情调阅、驳回原因填写与自动审核推送',
+          category: '社区管理',
+          crumb: ['后台管理', '社区管理', '发帖审核']
+        };
+      case 'community_post':
+        return {
+          title: '社区帖子管理',
+          subtitle: '管理全平台已发布的帖子，支持置顶、加精、锁定与彻底删除，并提供社区板块配置维系',
+          category: '社区管理',
+          crumb: ['后台管理', '社区管理', '帖子管理']
+        };
+      case 'community_comment':
+        return {
+          title: '社区评论管理',
+          subtitle: '全局调阅与管控用户动态评论列表，支持违规内容快速检索、关联帖子追溯与彻底删除',
+          category: '社区管理',
+          crumb: ['后台管理', '社区管理', '评论管理']
+        };
+      case 'community_stats':
+        return {
+          title: '社区数据统计与图表分析',
+          subtitle: '监控全社区发帖走势、用户互动活度、热门板块分布以及核心贡献用户排行榜',
+          category: '社区管理',
+          crumb: ['后台管理', '社区管理', '数据统计']
+        };
       default:
         return {
           title: '管理后台',
@@ -431,13 +564,15 @@ export const AdminLayout: React.FC = () => {
                   const isTask = item.id === 'task_admin_group';
                   const isAgent = item.id === 'agent_admin_group';
                   const isDataset = item.id === 'dataset_admin_group';
-                  const isGroupActive = isCompute ? isComputeSubMenu : isTask ? isTaskSubMenu : isAgent ? isAgentSubMenu : isDatasetSubMenu;
-                  const isExpanded = isCompute ? computeMenuExpanded : isTask ? taskMenuExpanded : isAgent ? agentMenuExpanded : datasetMenuExpanded;
+                  const isModel = item.id === 'model_admin_group';
+                  const isGroupActive = isCompute ? isComputeSubMenu : isTask ? isTaskSubMenu : isAgent ? isAgentSubMenu : isDataset ? isDatasetSubMenu : isModelSubMenu;
+                  const isExpanded = isCompute ? computeMenuExpanded : isTask ? taskMenuExpanded : isAgent ? agentMenuExpanded : isDataset ? datasetMenuExpanded : modelMenuExpanded;
                   const toggleExpanded = () => {
                     if (isCompute) setComputeMenuExpanded(!computeMenuExpanded);
                     if (isTask) setTaskMenuExpanded(!taskMenuExpanded);
                     if (isAgent) setAgentMenuExpanded(!agentMenuExpanded);
                     if (isDataset) setDatasetMenuExpanded(!datasetMenuExpanded);
+                    if (isModel) setModelMenuExpanded(!modelMenuExpanded);
                   };
 
                   return (
@@ -647,6 +782,19 @@ export const AdminLayout: React.FC = () => {
             {/* 数据集管理 3 大核心子视图 */}
             {['dataset_list', 'dataset_tags', 'dataset_stats'].includes(activeAdminMenu) && (
               <DatasetAdminViews activeSubMenu={activeAdminMenu} />
+            )}
+
+            {/* 模型管理 3 大核心模块 */}
+            {activeAdminMenu === 'model_list' && <ModelListAdminView />}
+            {activeAdminMenu === 'model_calls' && <ModelCallsAdminView />}
+            {activeAdminMenu === 'model_stats' && <ModelStatsAdminView />}
+
+            {/* Skill管理 */}
+            {activeAdminMenu === 'skill_list' && <SkillAdminView />}
+
+            {/* 社区管理 4 大核心子视图 */}
+            {['community_audit', 'community_post', 'community_comment', 'community_stats'].includes(activeAdminMenu) && (
+              <CommunityAdminViews activeSubMenu={activeAdminMenu as any} />
             )}
             
             {/* 算力管理 7 大核心模块 */}

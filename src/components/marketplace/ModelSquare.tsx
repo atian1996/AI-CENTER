@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ModelItem } from '../../types';
+import { ModelDetail } from './ModelDetail';
 import { 
-  Play, 
-  Scale, 
   ChevronDown, 
   ChevronUp, 
   Layers, 
@@ -20,18 +19,19 @@ import {
   Server,
   RotateCcw,
   SlidersHorizontal,
-  Cpu
+  Cpu,
+  ChevronRight,
+  ArrowRight
 } from 'lucide-react';
 
 export const ModelSquare: React.FC = () => {
   const { 
     models, 
-    setTryoutModel, 
-    openModelDetail, 
-    selectedCompareModels, 
-    toggleCompareModel, 
     showToast 
   } = useApp();
+
+  // Active detail model for subpage
+  const [activeDetailModel, setActiveDetailModel] = useState<ModelItem | null>(null);
 
   // Search query
   const [searchQuery, setSearchQuery] = useState('');
@@ -145,6 +145,16 @@ export const ModelSquare: React.FC = () => {
   const videoCount = models.filter(m => m.typeTag === '视频').length;
   const audioCount = models.filter(m => m.typeTag === '音频').length;
   const vectorCount = models.filter(m => m.typeTag === 'Embedding' || m.typeTag === '向量').length;
+
+  // 如果选中了具体模型，渲染二级详情页面
+  if (activeDetailModel) {
+    return (
+      <ModelDetail 
+        model={activeDetailModel} 
+        onBack={() => setActiveDetailModel(null)} 
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 select-none items-start">
@@ -421,12 +431,10 @@ export const ModelSquare: React.FC = () => {
         {/* Model Cards Grid Matrix (双列/三列精细卡片) */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4.5">
           {filteredModels.map(m => {
-            const isCompared = selectedCompareModels.some(cm => cm.id === m.id);
-
             return (
               <div
                 key={m.id}
-                onClick={() => openModelDetail(m)}
+                onClick={() => setActiveDetailModel(m)}
                 className="group rounded-2xl bg-white border border-slate-200/80 hover:border-indigo-300 p-5 shadow-2xs hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 flex flex-col justify-between cursor-pointer relative"
               >
                 <div>
@@ -503,33 +511,13 @@ export const ModelSquare: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Bottom Action Row */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleCompareModel(m);
-                    }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 cursor-pointer ${
-                      isCompared 
-                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700 font-extrabold' 
-                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <Scale className="w-3.5 h-3.5" />
-                    <span>{isCompared ? '已加入对比' : '加入对比'}</span>
-                  </button>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setTryoutModel(m);
-                    }}
-                    className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-xs transition flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Play className="w-3.5 h-3.5 fill-current" />
-                    <span>模型调试</span>
-                  </button>
+                {/* Bottom Action Row: 查看模型详情 */}
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-500 group-hover:text-indigo-600 transition">
+                  <span>了解模型能力与 API 接入</span>
+                  <div className="flex items-center gap-1 text-indigo-600 font-extrabold group-hover:translate-x-1 transition-transform">
+                    <span>查看详情</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </div>
                 </div>
 
               </div>

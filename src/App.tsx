@@ -4,7 +4,6 @@ import { Header } from './components/common/Header';
 import { HomeView } from './components/home/HomeView';
 import { MarketplaceView } from './components/marketplace/MarketplaceView';
 import { TasksView } from './components/tasks/TasksView';
-import { LearningView } from './components/learning/LearningView';
 import { ComputeView } from './components/compute/ComputeView';
 import { CreativeView } from './components/creative/CreativeView';
 import { CommunityView } from './components/community/CommunityView';
@@ -143,7 +142,6 @@ const AppContent: React.FC = () => {
         {activeTab === 'marketplace' && <MarketplaceView key={`marketplace-${tabResetKey.marketplace}`} />}
         {activeTab === 'tasks' && <TasksView key={`tasks-${tabResetKey.tasks}`} />}
         {activeTab === 'compute' && <ComputeView key={`compute-${tabResetKey.compute}`} />}
-        {activeTab === 'learning' && <LearningView key={`learning-${tabResetKey.learning}`} />}
         {activeTab === 'creative' && <CreativeView key={`creative-${tabResetKey.creative}`} />}
         {activeTab === 'community' && <CommunityView key={`community-${tabResetKey.community}`} />}
         {activeTab === 'workspace' && <WorkspaceView key={`workspace-${tabResetKey.workspace}`} />}

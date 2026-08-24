@@ -38,42 +38,31 @@ export const SkillMarket: React.FC = () => {
   const [sortTab, setSortTab] = useState<'all' | 'downloads' | 'latest'>('all');
 
   // Filters State
-  const [selectedSource, setSelectedSource] = useState<string>('所有来源');
   const [selectedCategory, setSelectedCategory] = useState<string>('所有场景分类');
-  const [apiKeyFilter, setApiKeyFilter] = useState<'all' | 'required' | 'not_required'>('all');
-  const [onlyOfficial, setOnlyOfficial] = useState<boolean>(false);
 
   // Search & View Mode
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Filter options
-  const sources = ['所有来源', 'SkillHub', '官方认证', '开源社区'];
   const categories = [
     '所有场景分类',
     '知识管理',
-    '办公效率',
-    '内容创作',
-    '设计多媒体',
+    '效率工具',
     '数据分析',
-    '开发编程',
-    '行业专业',
-    'AI Agent'
+    '内容创作',
+    '编程开发',
+    '图像影音',
+    '生活娱乐'
   ];
 
   const handleResetFilters = () => {
-    setSelectedSource('所有来源');
     setSelectedCategory('所有场景分类');
-    setApiKeyFilter('all');
-    setOnlyOfficial(false);
     setSearchQuery('');
   };
 
   const activeFiltersCount = 
-    (selectedSource !== '所有来源' ? 1 : 0) +
     (selectedCategory !== '所有场景分类' ? 1 : 0) +
-    (apiKeyFilter !== 'all' ? 1 : 0) +
-    (onlyOfficial ? 1 : 0) +
     (searchQuery.trim() ? 1 : 0);
 
   // Helper to format download count (e.g. 223000 -> 22.3 万)
@@ -174,24 +163,10 @@ export const SkillMarket: React.FC = () => {
       }
     }
 
-    // 2. Source Filter
-    if (selectedSource !== '所有来源') {
-      if (selectedSource === '官方认证' && !item.isOfficial) return false;
-      if (selectedSource === 'SkillHub' && item.source !== 'SkillHub') return false;
-      if (selectedSource === '开源社区' && item.source === 'SkillHub') return false;
-    }
-
-    // 3. Category Filter
+    // 2. Category Filter
     if (selectedCategory !== '所有场景分类' && item.category !== selectedCategory) {
       return false;
     }
-
-    // 4. API Key Filter
-    if (apiKeyFilter === 'required' && !item.needsApiKey) return false;
-    if (apiKeyFilter === 'not_required' && item.needsApiKey) return false;
-
-    // 5. Official only filter
-    if (onlyOfficial && !item.isOfficial) return false;
 
     return true;
   }).sort((a, b) => {
@@ -261,7 +236,7 @@ export const SkillMarket: React.FC = () => {
             )}
           </div>
 
-          <div className="space-y-1 text-slate-600 max-h-56 overflow-y-auto pr-1 scrollbar-thin">
+          <div className="space-y-1 text-slate-600">
             {categories.map(cat => {
               const isActive = selectedCategory === cat;
               const count = cat === '所有场景分类'
@@ -288,110 +263,6 @@ export const SkillMarket: React.FC = () => {
               );
             })}
           </div>
-        </div>
-
-        <div className="h-px bg-slate-100"></div>
-
-        {/* 2. 插件来源 Filter */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-slate-900 font-extrabold text-xs">
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-              <span>插件来源</span>
-            </div>
-            {selectedSource !== '所有来源' && (
-              <button 
-                onClick={() => setSelectedSource('所有来源')} 
-                className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold cursor-pointer"
-              >
-                重置
-              </button>
-            )}
-          </div>
-
-          <div className="space-y-1 text-slate-600">
-            {sources.map(src => {
-              const isActive = selectedSource === src;
-              return (
-                <button
-                  key={src}
-                  onClick={() => setSelectedSource(src)}
-                  className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer flex items-center justify-between text-xs ${
-                    isActive 
-                      ? 'bg-indigo-50/90 text-indigo-700 font-extrabold' 
-                      : 'hover:bg-slate-50 text-slate-700'
-                  }`}
-                >
-                  <span>{src}</span>
-                  {isActive && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="h-px bg-slate-100"></div>
-
-        {/* 3. API Key 要求 Filter */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-slate-900 font-extrabold text-xs">
-            <div className="flex items-center gap-1.5">
-              <KeyRound className="w-3.5 h-3.5 text-amber-500" />
-              <span>API Key 配置</span>
-            </div>
-            {apiKeyFilter !== 'all' && (
-              <button 
-                onClick={() => setApiKeyFilter('all')} 
-                className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold cursor-pointer"
-              >
-                重置
-              </button>
-            )}
-          </div>
-
-          <div className="space-y-1 text-slate-600">
-            {[
-              { id: 'all', label: '不限配置要求' },
-              { id: 'required', label: '需配置 API Key' },
-              { id: 'not_required', label: '无需 API Key (开箱即用)' }
-            ].map(item => {
-              const isActive = apiKeyFilter === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setApiKeyFilter(item.id as any)}
-                  className={`w-full text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer flex items-center justify-between text-xs ${
-                    isActive 
-                      ? 'bg-indigo-50/90 text-indigo-700 font-extrabold' 
-                      : 'hover:bg-slate-50 text-slate-700'
-                  }`}
-                >
-                  <span className="truncate">{item.label}</span>
-                  {isActive && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="h-px bg-slate-100"></div>
-
-        {/* 4. 官方认证 Checkbox */}
-        <div className="pt-1">
-          <button
-            onClick={() => setOnlyOfficial(!onlyOfficial)}
-            className={`w-full p-2 rounded-xl border transition flex items-center justify-between cursor-pointer ${
-              onlyOfficial
-                ? 'bg-blue-50/80 border-blue-200 text-blue-800 font-extrabold'
-                : 'bg-slate-50/80 border-slate-200 text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className={`w-4 h-4 ${onlyOfficial ? 'text-blue-600' : 'text-slate-400'}`} />
-              <span className="text-xs">仅看官方认证插件</span>
-            </div>
-            {onlyOfficial && <span className="w-2 h-2 rounded-full bg-blue-600"></span>}
-          </button>
         </div>
 
       </div>
@@ -524,7 +395,7 @@ export const SkillMarket: React.FC = () => {
                       {getSkillIcon(sk)}
                     </div>
 
-                    {/* Title and Category/API Key Badges */}
+                    {/* Title and Category Badges */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <h3 className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
@@ -540,12 +411,6 @@ export const SkillMarket: React.FC = () => {
                         <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold">
                           {sk.category}
                         </span>
-                        {sk.needsApiKey && (
-                          <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200/70 text-[10px] font-bold flex items-center gap-1">
-                            <KeyRound className="w-2.5 h-2.5" />
-                            需 API Key
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -556,21 +421,14 @@ export const SkillMarket: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Card Footer: Stars, Downloads, Source and ONLY Download Button */}
+                {/* Card Footer: Downloads and ONLY Download Button */}
                 <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 text-xs">
                   
-                  {/* Meta stats: Likes/Stars, Downloads, Source */}
+                  {/* Meta stats: Downloads */}
                   <div className="flex items-center gap-3 text-[11px] text-slate-400 font-medium">
-                    <span className="flex items-center gap-1 text-slate-500">
-                      <span className="text-slate-400 text-xs">☆</span>
-                      {sk.favoritesCount || sk.likesCount || 0}
-                    </span>
                     <span className="flex items-center gap-1 text-slate-500">
                       <Download className="w-3 h-3 text-slate-400" />
                       {formatCount(sk.downloadsCount || sk.installs)}
-                    </span>
-                    <span className="text-slate-400">
-                      {sk.source || 'SkillHub'}
                     </span>
                   </div>
 
@@ -614,12 +472,6 @@ export const SkillMarket: React.FC = () => {
                       <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold">
                         {sk.category}
                       </span>
-                      {sk.needsApiKey && (
-                        <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200/70 text-[10px] font-bold flex items-center gap-1">
-                          <KeyRound className="w-2.5 h-2.5" />
-                          需 API Key
-                        </span>
-                      )}
                     </div>
                     <p className="text-xs text-slate-500 truncate">
                       {sk.description}
@@ -631,14 +483,9 @@ export const SkillMarket: React.FC = () => {
                 <div className="flex items-center gap-4 shrink-0 self-end md:self-center">
                   <div className="flex items-center gap-3 text-[11px] text-slate-400 font-medium">
                     <span className="flex items-center gap-1 text-slate-500">
-                      <span className="text-slate-400 text-xs">☆</span>
-                      {sk.favoritesCount || sk.likesCount || 0}
-                    </span>
-                    <span className="flex items-center gap-1 text-slate-500">
                       <Download className="w-3 h-3 text-slate-400" />
                       {formatCount(sk.downloadsCount || sk.installs)}
                     </span>
-                    <span className="text-slate-400">{sk.source || 'SkillHub'}</span>
                   </div>
 
                   {/* Download Action Button on Card */}

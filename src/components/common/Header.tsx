@@ -15,7 +15,6 @@ import {
   Bot,
   Store,
   Briefcase,
-  GraduationCap,
   Cpu,
   Trophy,
   Users,
@@ -46,7 +45,6 @@ export const Header: React.FC = () => {
     { id: 'marketplace', label: 'AI集市', icon: <Store className="w-4 h-4" /> },
     { id: 'tasks', label: '任务大厅', icon: <Briefcase className="w-4 h-4" /> },
     { id: 'compute', label: '算力工坊', icon: <Cpu className="w-4 h-4" /> },
-    { id: 'learning', label: '人才学院', icon: <GraduationCap className="w-4 h-4" /> },
     { id: 'creative', label: '赛事中心', icon: <Trophy className="w-4 h-4" /> },
     { id: 'community', label: '社区', icon: <Users className="w-4 h-4" /> },
     { id: 'workspace', label: '工作台', icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -254,6 +252,9 @@ export const Header: React.FC = () => {
                         <span className="text-[11px] font-medium">账户积分</span>
                       </div>
                       <span className="font-extrabold text-amber-600 text-xs">{user.points.toLocaleString()} 分</span>
+                    </div>
+                    <div className="text-[10px] text-amber-700 bg-amber-50/80 p-1.5 rounded-md border border-amber-100 font-medium leading-tight">
+                      💡 当前可用于 Agent商店 订阅抵扣，更多场景陆续开放中
                     </div>
                     <button
                       onClick={() => {

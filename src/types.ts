@@ -7,7 +7,6 @@ export type MainTabType =
   | 'marketplace' 
   | 'tasks' 
   | 'compute' 
-  | 'learning' 
   | 'creative'
   | 'community' 
   | 'workspace';
@@ -217,24 +216,65 @@ export interface AgentSubscriptionItem {
   subscribedAt: string;
 }
 
+// 计费规则
+export interface ModelBillingRule {
+  id: string;
+  modality: '文本' | '图像' | '音频' | '视频' | string; // 适用模态（来自输入/输出模态并集）
+  direction: '输入' | '输出'; // 计费方向
+  unit: 'Token（按M tokens）' | '字符（按千字符）' | '张数' | '秒数' | string; // 计价单位
+  price?: number; // 价格（不填或0为免费，支持4位小数）
+}
+
 // 模型
 export interface ModelItem {
   id: string;
   name: string;
   vendor: string; // 如 'DeepSeek', 'Google', '阿里', '智谱'
   author?: string; // 作者品牌，如 'DeepSeek', 'MoonshotAI', 'ByteDance', 'Alibaba', 'Z.ai', 'Qwen', 'MiniMax'
+  logo?: string; // 模型LOGO (1:1比例图片)
+  brief?: string; // 模型简介（限30字，用于列表卡片展示）
+  downloadUrl?: string; // 模型下载地址（开源模型提供）
   providerList?: string[]; // 提供商列表，如 ['无问芯穹', '阿里云百炼', '百度千帆', '百度智能云', '腾讯云']
   modelCodeName?: string; // 如 'deepseek-v4-pro-0813'
   versionName?: string; // 如 'DeepSeek V4 Pro 0813 版本'
   totalTokensUsed?: string; // 如 '1.11B tokens', '10.31B tokens'
-  protocol?: string; // 如 'OpenAI Completions'
-  inputModalities?: string[]; // ['文本', '图像', '视频']
-  outputModalities?: string[]; // ['文本']
+  totalCalls?: number; // 累计调用次数
+  totalRevenue?: number; // 累计营收 (元)
+  protocol?: string; // 如 'Chat Completions'
+  protocols?: string[]; // 支持协议 多选: ['Chat Completions', 'Responses', 'Gemini', 'Anthropic']
+  modalities?: string[]; // 模型模态 多选: ['文本', '图像', '音频', '视频', '向量']
+  inputModalities?: string[]; // 输入模态 多选: ['文本', '图像', '音频', '视频']
+  outputModalities?: string[]; // 输出模态 多选: ['文本', '图像', '音频', '视频', '向量']
+  contextLength?: string; // 兼容字面量如 '128K', '1.0M'
+  contextLengthValue?: number; // 如 1000, 128, 1
+  contextLengthUnit?: 'K' | 'M'; // K / M
+  maxOutputTokens?: number; // 最大输出Tokens 如 131072
+  
+  // 接入配置
+  apiUrl?: string; // 模型的调用接口URL
+  authType?: '无认证' | 'API Key' | 'Bearer Token'; // 认证方式
+  authCredential?: string; // 认证凭证
+  timeoutSeconds?: number; // 超时时间（秒，默认30）
+
+  // 计费规则
+  billingRules?: ModelBillingRule[];
+  billingRuleSummary?: string; // 摘要，如“输入文本¥9/M tokens，输出文本¥27/M tokens”
+
+  // 状态与协议
+  status?: '已上架' | '已下架' | '草稿';
+  trialCountLimit?: number; // 每日在线体验次数限制（默认5次，设置为0时前台置灰）
+
+  // API文档与代码示例
+  apiDocContent?: string; // Markdown 文档
+  codeCurl?: string; // curl 代码示例
+  codePython?: string; // Python 代码示例
+  codeNode?: string; // Node.js 代码示例
+
+  // 价格与标签兼容
   cachedPrice?: string; // 如 '¥0.025 /M tokens'
   throughputTps?: number; // 如 76
   availabilityPercent?: number; // 如 99.9
   typeTag: ModelTypeTag;
-  contextLength?: string; // 如 '128K', '1M'
   priceInput: string; // ¥0.002 / 1k tokens
   priceOutput: string;
   tags: string[]; // ['热门', '国产', '免费额度']
@@ -242,6 +282,44 @@ export interface ModelItem {
   benchmarks: { name: string; score: number }[];
   latencyMs: number;
   apiDocsUrl: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// 模型调用记录
+export interface ModelCallRecord {
+  id: string; // 调用ID（系统生成，唯一标识）
+  userId: string; // UID，如 'U892301'
+  userName: string; // 用户名，如 '李明华'
+  userAvatar?: string;
+  userPhone?: string;
+  modelId: string; // 模型ID
+  modelName: string; // 模型名称
+  callType: 'API' | '在线体验'; // 调用方式
+  inputAmount: string; // 如 “1,234 tokens” 或 “5张” 或 “120秒”
+  inputCount: number;
+  outputAmount: string; // 如 “567 tokens” 或 “2张”
+  outputCount: number;
+  cost: number; // 本次调用费用，如 0.0009
+  callTime: string; // YYYY-MM-DD HH:mm:ss
+  status: '成功' | '失败';
+  failReason?: string; // 如失败则显示
+  requestParamsSummary?: string; // 本次调用的输入内容摘要
+  responseSummary?: string; // 本次调用的输出内容摘要
+  matchedBillingRule?: string; // 命中的计费规则（适用模态+计费方向+计价单位）
+  latencyMs?: number; // 耗时
+  apiKeyPrefix?: string; // 调用的API Key来源
+}
+
+// 用户模型消费汇总
+export interface ModelUserConsumption {
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  totalCalls: number;
+  totalCost: number;
+  favoriteModel: string;
+  lastCallTime: string;
 }
 
 // 数据集文件与结构
@@ -771,12 +849,41 @@ export interface FeedPost {
   commentsCount: number;
   sharesCount: number;
   viewsCount?: number;
+  favoritesCount?: number;
   time: string;
   isLiked?: boolean;
   isCollected?: boolean;
   isTop?: boolean;
+  isPinned?: boolean; // 是否置顶
+  isEssential?: boolean; // 是否精华
+  status?: '待审核' | '已通过' | '已驳回' | '已锁定' | '已发布';
+  rejectReason?: string; // 驳回原因
   tags?: string[];
   commentsList?: { id: string; author: string; avatar: string; content: string; time: string }[];
+}
+
+// 社区板块配置项
+export interface CommunityBoardItem {
+  id: string;
+  name: string;
+  description: string;
+  postCount: number;
+  sortWeight: number; // 数值越小越靠前
+  status: '已启用' | '已停用';
+}
+
+// 社区评论管理项
+export interface CommunityCommentItem {
+  id: string;
+  content: string;
+  author: string;
+  authorAvatar?: string;
+  authorTag?: string;
+  postId: string;
+  postTitle: string;
+  board: CommunityBoard | string;
+  likesCount: number;
+  time: string;
 }
 
 // API Key 管理
@@ -968,7 +1075,15 @@ export type AdminMenuKey =
   | 'agent_tags'          // Agent管理 - 分类标签管理
   | 'dataset_list'        // 数据集管理 - 数据集列表及配置
   | 'dataset_tags'        // 数据集管理 - 分类标签管理
-  | 'dataset_stats';      // 数据集管理 - 数据集使用统计
+  | 'dataset_stats'       // 数据集管理 - 数据集使用统计
+  | 'model_list'          // 模型管理 - 模型管理与计费配置
+  | 'model_calls'         // 模型管理 - 模型调用记录
+  | 'model_stats'         // 模型管理 - 模型使用统计
+  | 'skill_list'           // Skill管理 - 列表及配置
+  | 'community_audit'      // 社区管理 - 发帖审核
+  | 'community_post'       // 社区管理 - 帖子管理
+  | 'community_comment'    // 社区管理 - 评论管理
+  | 'community_stats';     // 社区管理 - 数据统计
 
 export interface AgentOrderItem {
   id: string; // 订单号 (系统生成)

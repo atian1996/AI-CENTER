@@ -28,10 +28,11 @@ import {
   TrendingUp,
   Cpu,
   Coins,
+  ArrowLeft,
+  ArrowRight,
   Building2,
   ExternalLink,
-  ShieldAlert,
-  ArrowRight
+  ShieldAlert
 } from 'lucide-react';
 
 export const ComputeSpecAdminView: React.FC = () => {
@@ -245,6 +246,50 @@ export const ComputeSpecAdminView: React.FC = () => {
     const start = (currentPage - 1) * pageSize;
     return filteredSpecs.slice(start, start + pageSize);
   }, [filteredSpecs, currentPage]);
+
+  // 切换允许的 GPU 挂载卡数
+  const toggleAllowedGpuCount = (count: number) => {
+    setFormData(prev => {
+      const exists = prev.allowedGpuCounts.includes(count);
+      let updated: number[];
+      if (exists) {
+        if (prev.allowedGpuCounts.length === 1) {
+          showToast('至少需要保留一个可选卡数');
+          return prev;
+        }
+        updated = prev.allowedGpuCounts.filter(c => c !== count);
+      } else {
+        updated = [...prev.allowedGpuCounts, count].sort((a, b) => a - b);
+      }
+      return {
+        ...prev,
+        allowedGpuCounts: updated,
+        maxGpuCount: Math.max(...updated)
+      };
+    });
+  };
+
+  // 变更 GPU 芯片型号时自动带出推荐显存
+  const handleGpuModelChange = (model: string) => {
+    let defaultVram = 24;
+    if (model.includes('A100') || model.includes('H100') || model.includes('H800')) {
+      defaultVram = 80;
+    } else if (model.includes('L40S') || model.includes('A6000') || model.includes('PRO 6000')) {
+      defaultVram = 48;
+    } else if (model.includes('3090') || model.includes('4090')) {
+      defaultVram = 24;
+    } else if (model.includes('3080')) {
+      defaultVram = 10;
+    } else if (model.includes('V100')) {
+      defaultVram = 32;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      gpuModel: model,
+      vramValue: defaultVram
+    }));
+  };
 
   // 打开新增规格弹窗
   const handleOpenAdd = () => {
@@ -477,6 +522,751 @@ export const ComputeSpecAdminView: React.FC = () => {
     });
   };
 
+  if (editModalOpen) {
+    return (
+      <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-6 text-slate-100 animate-fade-in">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setEditModalOpen(false)}
+              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>返回规格列表</span>
+            </button>
+            <div>
+              <h3 className="text-base font-bold text-slate-100">
+                {isEditing ? `编辑实例规格: ${formData.name}` : '新增实例规格'}
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                定义 GPU 模板的硬件参数、关联镜像生态、可部署运营商及多租期定价策略
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleSave}
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition cursor-pointer"
+          >
+            {isEditing ? '保存修改' : '确认创建'}
+          </button>
+        </div>
+
+        {/* 表单内容 */}
+        <form onSubmit={handleSave} className="space-y-6 text-xs">
+            {/* 第一部分：硬件配置 */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-xs font-bold text-blue-400 uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                第一部分：硬件配置
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 规格名称 */}
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-200 flex items-center justify-between">
+                    <span>规格名称 *</span>
+                    <span className="text-[11px] font-normal text-slate-400">例: RTX 4090 (24GB) 1/2/4卡通用</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="请输入规格标准名称"
+                    value={formData.name}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                {/* GPU 芯片型号选择 */}
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-200 flex items-center justify-between">
+                    <span>GPU 芯片型号 *</span>
+                    <span className="text-[11px] font-normal text-slate-400">来自已启用的资源池或支持的基础设施</span>
+                  </label>
+                  <select
+                    value={formData.gpuModel}
+                    onChange={e => handleGpuModelChange(e.target.value)}
+                    className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500 cursor-pointer font-mono"
+                  >
+                    {availableGpuModels.map(m => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* 多卡挂载策略 */}
+              <div className="p-4 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="font-semibold text-slate-200 flex items-center gap-2">
+                    <Cpu className="w-4 h-4 text-cyan-400" />
+                    <span>可选 GPU 挂载数量 *</span>
+                  </label>
+                  <span className="text-[11px] text-slate-400">勾选用户在租用时可选择的 GPU 卡数</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  {[1, 2, 4, 8].map(count => {
+                    const isChecked = formData.allowedGpuCounts.includes(count);
+                    return (
+                      <button
+                        key={count}
+                        type="button"
+                        onClick={() => toggleAllowedGpuCount(count)}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-semibold font-mono transition cursor-pointer flex items-center gap-2 border ${
+                          isChecked
+                            ? 'bg-blue-600/20 border-blue-500 text-blue-300 shadow-sm'
+                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                        }`}
+                      >
+                        <span className={`w-3.5 h-3.5 rounded flex items-center justify-center border text-[10px] ${
+                          isChecked ? 'bg-blue-500 border-blue-400 text-white font-bold' : 'border-slate-700 bg-slate-950'
+                        }`}>
+                          {isChecked ? '✓' : ''}
+                        </span>
+                        <span>{count} 卡 ({count * formData.vramValue} GB 显存)</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 显存、CPU、内存、硬盘 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                {/* 显存容量 */}
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-200">单卡显存容量 *</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      required
+                      min={1}
+                      value={formData.vramValue}
+                      onChange={e => setFormData({ ...formData, vramValue: Number(e.target.value) })}
+                      className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500 font-mono"
+                    />
+                    <select
+                      value={formData.vramUnit}
+                      onChange={e => setFormData({ ...formData, vramUnit: e.target.value as any })}
+                      className="bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-2.5 py-2.5 focus:outline-none focus:border-blue-500 cursor-pointer font-mono"
+                    >
+                      <option value="GB">GB</option>
+                      <option value="MB">MB</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* CPU 核心数 */}
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-200">单卡 CPU 核心数 (核) *</label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    value={formData.cpu}
+                    onChange={e => setFormData({ ...formData, cpu: Number(e.target.value) })}
+                    className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500 font-mono"
+                  />
+                </div>
+
+                {/* 系统内存 */}
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-200">单卡系统内存 *</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      required
+                      min={1}
+                      value={formData.ramValue}
+                      onChange={e => setFormData({ ...formData, ramValue: Number(e.target.value) })}
+                      className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500 font-mono"
+                    />
+                    <select
+                      value={formData.ramUnit}
+                      onChange={e => setFormData({ ...formData, ramUnit: e.target.value as any })}
+                      className="bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-2.5 py-2.5 focus:outline-none focus:border-blue-500 cursor-pointer font-mono"
+                    >
+                      <option value="GB">GB</option>
+                      <option value="TB">TB</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* 系统盘/数据盘 */}
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-200">单卡数据盘容量 *</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      required
+                      min={10}
+                      value={formData.diskValue}
+                      onChange={e => setFormData({ ...formData, diskValue: Number(e.target.value) })}
+                      className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500 font-mono"
+                    />
+                    <select
+                      value={formData.diskUnit}
+                      onChange={e => setFormData({ ...formData, diskUnit: e.target.value as any })}
+                      className="bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-2.5 py-2.5 focus:outline-none focus:border-blue-500 cursor-pointer font-mono"
+                    >
+                      <option value="GB">GB</option>
+                      <option value="TB">TB</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* CPU 具体处理器型号选填 */}
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-200 flex items-center justify-between">
+                  <span>CPU 处理器型号 (选填)</span>
+                  <span className="text-[11px] font-normal text-slate-500">例: AMD EPYC 9354 32-Core Processor</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="请输入详细 CPU 型号描述"
+                  value={formData.cpuModel}
+                  onChange={e => setFormData({ ...formData, cpuModel: e.target.value })}
+                  className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* 第二部分：关联镜像生态与推荐适配框架 */}
+            <div className="space-y-4 pt-4 border-t border-slate-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-indigo-400 uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                  第二部分：关联镜像生态与兼容生态
+                </div>
+                <span className="text-[11px] text-slate-400">已选 {formData.linkedImageIds.length} 个镜像模板</span>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-3">
+                <p className="text-slate-400">选择当前规格支持部署的公共及预置镜像 (默认关联全量可用镜像):</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-48 overflow-y-auto pr-1">
+                  {computeImages.map(img => {
+                    const isSelected = formData.linkedImageIds.includes(img.id);
+                    return (
+                      <div
+                        key={img.id}
+                        onClick={() => toggleImageSelect(img.id)}
+                        className={`p-2.5 rounded-xl border text-xs cursor-pointer transition flex items-center justify-between ${
+                          isSelected
+                            ? 'bg-indigo-600/15 border-indigo-500/50 text-slate-100'
+                            : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <Layers className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-indigo-400' : 'text-slate-500'}`} />
+                          <div className="truncate font-medium">{img.name}</div>
+                        </div>
+                        <span className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-bold border shrink-0 ${
+                          isSelected ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-slate-700 bg-slate-950'
+                        }`}>
+                          {isSelected ? '✓' : ''}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* 第三部分：部署运营商与可用资源池 */}
+            <div className="space-y-4 pt-4 border-t border-slate-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  第三部分：关联算力运营商与部署集群
+                </div>
+                <span className="text-[11px] text-slate-400">已勾选 {formData.linkedOperators.length} 个运营商</span>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-3">
+                <p className="text-slate-400">勾选允许上架投放该规格的算力基础设施提供商:</p>
+                <div className="flex flex-wrap items-center gap-3">
+                  {Array.from(new Set(computePools.map(p => p.operator))).map(op => {
+                    const isSelected = formData.linkedOperators.includes(op);
+                    return (
+                      <button
+                        key={op}
+                        type="button"
+                        onClick={() => toggleOperatorSelect(op)}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 border ${
+                          isSelected
+                            ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-300'
+                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                        }`}
+                      >
+                        <Building2 className="w-3.5 h-3.5" />
+                        <span>{op}</span>
+                        <span className={`w-3.5 h-3.5 rounded flex items-center justify-center text-[10px] border ${
+                          isSelected ? 'bg-emerald-500 border-emerald-400 text-slate-950 font-bold' : 'border-slate-700 bg-slate-950'
+                        }`}>
+                          {isSelected ? '✓' : ''}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* 第四部分：多租期定价策略与上架状态 */}
+            <div className="space-y-4 pt-4 border-t border-slate-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  第四部分：多租期定价策略与状态控制
+                </div>
+                <span className="text-[11px] text-slate-400">单位: 元 (¥) / 单卡</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                {/* 按量计费 */}
+                <div className="space-y-1.5 p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                  <label className="font-bold text-slate-200 flex items-center justify-between">
+                    <span>按量计费 (元/小时/卡) *</span>
+                    <span className="text-[10px] text-amber-400 font-mono">必填</span>
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    step="0.01"
+                    min="0.01"
+                    value={formData.hourlyPrice}
+                    onChange={e => setFormData({ ...formData, hourlyPrice: Number(e.target.value) })}
+                    className="w-full bg-slate-900 border border-slate-700 text-amber-400 font-bold text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500 font-mono"
+                  />
+                </div>
+
+                {/* 包日 */}
+                <div className="space-y-1.5 p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                  <label className="font-bold text-slate-200 flex items-center justify-between">
+                    <span>日租包天 (元/天/卡)</span>
+                    <span className="text-[10px] text-slate-500">留空为不支持</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="如: 42.00"
+                    value={formData.dayPrice}
+                    onChange={e => setFormData({ ...formData, dayPrice: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500 font-mono"
+                  />
+                </div>
+
+                {/* 包周 */}
+                <div className="space-y-1.5 p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                  <label className="font-bold text-slate-200 flex items-center justify-between">
+                    <span>周租包周 (元/周/卡)</span>
+                    <span className="text-[10px] text-slate-500">留空为不支持</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="如: 279.00"
+                    value={formData.weekPrice}
+                    onChange={e => setFormData({ ...formData, weekPrice: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500 font-mono"
+                  />
+                </div>
+
+                {/* 包月 */}
+                <div className="space-y-1.5 p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                  <label className="font-bold text-slate-200 flex items-center justify-between">
+                    <span>月租包月 (元/月/卡)</span>
+                    <span className="text-[10px] text-slate-500">留空为不支持</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="如: 1099.00"
+                    value={formData.monthPrice}
+                    onChange={e => setFormData({ ...formData, monthPrice: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* 上架与简要说明 */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="font-semibold text-slate-200">规格简要描述与推荐场景 (选填)</label>
+                  <input
+                    type="text"
+                    placeholder="例: 高性价比消费级卡，适配中小型 LLM 微调及 SDXL 图像生成"
+                    value={formData.description}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full bg-slate-950/60 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-200">初始投放状态 *</label>
+                  <div className="flex items-center gap-3 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, status: '上架' })}
+                      className={`flex-1 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border cursor-pointer ${
+                        formData.status === '上架'
+                          ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300'
+                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>上架开启</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, status: '下架' })}
+                      className={`flex-1 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border cursor-pointer ${
+                        formData.status === '下架'
+                          ? 'bg-rose-500/20 border-rose-500 text-rose-300'
+                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      <span>暂不下架</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 弹窗底部操作 */}
+            <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setEditModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition"
+              >
+                取消
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-500/20 transition"
+              >
+                {isEditing ? '保存修改' : '确认创建'}
+              </button>
+            </div>
+          </form>
+      </div>
+    );
+  }
+
+  if (detailModalOpen && detailSpec) {
+    return (
+      <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-6 text-slate-100 animate-fade-in">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setDetailModalOpen(false)}
+              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>返回规格列表</span>
+            </button>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h3 className="text-base font-bold text-slate-100">{detailSpec.name}</h3>
+                {detailSpec.status === '上架' ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    已上架
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                    已下架
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5 font-mono">{detailSpec.gpuModel}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setDetailModalOpen(false);
+              handleOpenEdit(detailSpec);
+            }}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-md transition cursor-pointer flex items-center gap-1.5"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>编辑规格</span>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="space-y-6 text-xs">
+          {/* 1. 基本信息区 */}
+            <div>
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <Server className="w-3.5 h-3.5 text-blue-400" />
+                基本信息区
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800">
+                <div>
+                  <span className="text-[11px] text-slate-500 block">GPU 规格</span>
+                  <span className="text-xs font-semibold text-slate-200 mt-0.5 block font-mono">
+                    {detailSpec.gpuModel}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[11px] text-slate-500 block">显存容量</span>
+                  <span className="text-xs font-semibold text-cyan-400 mt-0.5 block">
+                    {detailSpec.vram}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[11px] text-slate-500 block">CPU 处理器</span>
+                  <span className="text-xs font-semibold text-slate-200 mt-0.5 block">
+                    {detailSpec.cpu} 核 {detailSpec.cpuModel ? `(${detailSpec.cpuModel})` : ''}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[11px] text-slate-500 block">系统内存</span>
+                  <span className="text-xs font-semibold text-slate-200 mt-0.5 block">
+                    {detailSpec.ram} {detailSpec.ramUnit || 'GB'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[11px] text-slate-500 block">存储硬盘</span>
+                  <span className="text-xs font-semibold text-slate-200 mt-0.5 block">
+                    {detailSpec.disk} {detailSpec.diskUnit || 'GB'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[11px] text-slate-500 block">默认部署运营商</span>
+                  <span className="text-xs font-semibold text-slate-200 mt-0.5 block">
+                    {detailSpec.operator || '算力云官方'}
+                  </span>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-[11px] text-slate-500 block">说明描述</span>
+                  <span className="text-xs text-slate-300 mt-0.5 block">
+                    {detailSpec.description || '暂无描述信息'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. 多租期定价策略区 */}
+            <div>
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <Coins className="w-3.5 h-3.5 text-amber-400" />
+                多租期定价策略
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800">
+                  <span className="text-[11px] text-slate-500">按量计费单价</span>
+                  <div className="text-sm font-bold text-amber-400 mt-1 font-mono">
+                    ¥{detailSpec.hourlyPrice} <span className="text-xs text-slate-500 font-normal">/小时</span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800">
+                  <span className="text-[11px] text-slate-500">单卡日租价格</span>
+                  <div className="text-sm font-bold text-slate-200 mt-1 font-mono">
+                    {detailSpec.dayPrice ? (
+                      <>
+                        ¥{detailSpec.dayPrice}{' '}
+                        <span className="text-xs text-slate-500 font-normal">/天</span>
+                      </>
+                    ) : (
+                      <span className="text-xs text-slate-500 font-normal">未开放日租</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800">
+                  <span className="text-[11px] text-slate-500">单卡周租价格</span>
+                  <div className="text-sm font-bold text-slate-200 mt-1 font-mono">
+                    {detailSpec.weekPrice ? (
+                      <>
+                        ¥{detailSpec.weekPrice}{' '}
+                        <span className="text-xs text-slate-500 font-normal">/周</span>
+                      </>
+                    ) : (
+                      <span className="text-xs text-slate-500 font-normal">未开放周租</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800">
+                  <span className="text-[11px] text-slate-500">单卡月租价格</span>
+                  <div className="text-sm font-bold text-slate-200 mt-1 font-mono">
+                    {detailSpec.monthPrice ? (
+                      <>
+                        ¥{detailSpec.monthPrice}{' '}
+                        <span className="text-xs text-slate-500 font-normal">/月</span>
+                      </>
+                    ) : (
+                      <span className="text-xs text-slate-500 font-normal">未开放月租</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. 可选显卡数量与多卡等比资源分配对照表 */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                  <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+                  多卡等比分配与价格对照表
+                </h4>
+                <span className="text-[11px] text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-full font-mono">
+                  最大可选: {detailSpec.maxGpuCount || Math.max(...(detailSpec.allowedGpuCounts || [1, 2, 4]))} 卡
+                </span>
+              </div>
+
+              <div className="rounded-xl border border-slate-800 bg-slate-950/60 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-900/80 text-slate-400 border-b border-slate-800 text-[11px]">
+                      <tr>
+                        <th className="py-2.5 px-3.5">GPU 档位</th>
+                        <th className="py-2.5 px-3.5">总显存</th>
+                        <th className="py-2.5 px-3.5">等比 CPU</th>
+                        <th className="py-2.5 px-3.5">等比内存</th>
+                        <th className="py-2.5 px-3.5">等比硬盘</th>
+                        <th className="py-2.5 px-3.5 text-right">按量计费</th>
+                        <th className="py-2.5 px-3.5 text-right">日租总价</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/50 font-mono text-slate-300">
+                      {(detailSpec.allowedGpuCounts && detailSpec.allowedGpuCounts.length > 0 
+                        ? detailSpec.allowedGpuCounts 
+                        : [1, 2, 4]
+                      ).map(cnt => {
+                        const totalVram = cnt * detailSpec.vramValue;
+                        const totalCpu = cnt * detailSpec.cpu;
+                        const totalRam = cnt * detailSpec.ram;
+                        const totalDisk = cnt * detailSpec.disk;
+                        const totalHourly = (cnt * detailSpec.hourlyPrice).toFixed(2);
+                        const totalDay = detailSpec.dayPrice ? (cnt * detailSpec.dayPrice).toFixed(2) : '-';
+
+                        return (
+                          <tr key={cnt} className="hover:bg-slate-800/30">
+                            <td className="py-2.5 px-3.5 font-bold text-slate-100">{cnt} 卡</td>
+                            <td className="py-2.5 px-3.5 text-cyan-400">{totalVram} GB</td>
+                            <td className="py-2.5 px-3.5">{totalCpu} 核</td>
+                            <td className="py-2.5 px-3.5">{totalRam} GB</td>
+                            <td className="py-2.5 px-3.5">{totalDisk} GB</td>
+                            <td className="py-2.5 px-3.5 text-right text-amber-400 font-bold">¥{totalHourly} /h</td>
+                            <td className="py-2.5 px-3.5 text-right font-bold">{totalDay !== '-' ? `¥${totalDay}` : '—'}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. 关联镜像生态与资源池明细 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* 关联镜像生态 */}
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2.5">
+                <h5 className="text-xs font-bold text-slate-300 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-indigo-400" />
+                    关联可用镜像模板
+                  </span>
+                  <span className="text-[11px] font-mono text-slate-500">
+                    {(detailSpec.linkedImageIds || []).length} 个镜像
+                  </span>
+                </h5>
+                <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pt-1">
+                  {(detailSpec.linkedImageIds && detailSpec.linkedImageIds.length > 0) ? (
+                    detailSpec.linkedImageIds.map(imgId => {
+                      const imgObj = computeImages.find(i => i.id === imgId);
+                      return (
+                        <span key={imgId} className="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[11px] text-slate-300 font-mono">
+                          {imgObj ? imgObj.name : imgId}
+                        </span>
+                      );
+                    })
+                  ) : (
+                    <span className="text-slate-500 text-[11px]">全部默认公共镜像</span>
+                  )}
+                </div>
+              </div>
+
+              {/* 关联支持运营商 */}
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2.5">
+                <h5 className="text-xs font-bold text-slate-300 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-emerald-400" />
+                    投放的算力基础设施运营商
+                  </span>
+                  <span className="text-[11px] font-mono text-slate-500">
+                    {(detailSpec.linkedOperators || []).length} 个运营商
+                  </span>
+                </h5>
+                <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pt-1">
+                  {(detailSpec.linkedOperators && detailSpec.linkedOperators.length > 0) ? (
+                    detailSpec.linkedOperators.map(op => (
+                      <span key={op} className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-300 font-bold">
+                        {op}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-slate-500 text-[11px]">默认全域运营商</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 5. 实时使用统计与创建时间 */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/80">
+              <div>
+                <span className="text-[11px] text-slate-500 block">全站总占用创建实例数</span>
+                <span className="text-xs font-bold text-indigo-400 mt-0.5 block font-mono">
+                  {detailSpec.totalUsedCount || 0} 台次
+                </span>
+              </div>
+              <div>
+                <span className="text-[11px] text-slate-500 block">近7天新增激活数</span>
+                <span className="text-xs font-bold text-emerald-400 mt-0.5 block font-mono">
+                  +{detailSpec.recent7DaysCount || 0} 台
+                </span>
+              </div>
+              <div>
+                <span className="text-[11px] text-slate-500 block">规格建立时间</span>
+                <span className="text-xs text-slate-400 mt-0.5 block font-mono">
+                  {detailSpec.createTime || '2026-08-01'}
+                </span>
+              </div>
+              <div>
+                <span className="text-[11px] text-slate-500 block">最后更新记录</span>
+                <span className="text-xs text-slate-400 mt-0.5 block font-mono">
+                  {detailSpec.updateTime || '2026-08-18'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+            <div className="text-xs text-slate-500">规格 ID: {detailSpec.id}</div>
+            <button
+              onClick={() => setDetailModalOpen(false)}
+              className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition cursor-pointer"
+            >
+              关闭
+            </button>
+          </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* 搜索、筛选与操作工具栏 */}
@@ -571,8 +1361,11 @@ export const ComputeSpecAdminView: React.FC = () => {
               <tr>
                 <th className="py-3.5 px-4">规格名称</th>
                 <th className="py-3.5 px-4">GPU 型号</th>
-                <th className="py-3.5 px-4">硬件配置 (显存/CPU/内存/硬盘)</th>
-                <th className="py-3.5 px-4">计费方式及定价</th>
+                <th className="py-3.5 px-4">显存大小</th>
+                <th className="py-3.5 px-4">CPU 核数</th>
+                <th className="py-3.5 px-4">内存容量</th>
+                <th className="py-3.5 px-4">硬盘容量</th>
+                <th className="py-3.5 px-4">按量单价</th>
                 <th className="py-3.5 px-4">状态</th>
                 <th className="py-3.5 px-4 text-right">操作</th>
               </tr>
@@ -617,51 +1410,31 @@ export const ComputeSpecAdminView: React.FC = () => {
                         </span>
                       </td>
 
-                      {/* 硬件配置简写 */}
+                      {/* 显存大小 */}
                       <td className="py-3.5 px-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1.5 text-slate-300 font-medium">
-                            <span className="text-cyan-400 font-semibold">{spec.vram} 显存</span>
-                            <span className="text-slate-600">·</span>
-                            <span>{spec.cpu} 核 CPU</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
-                            <span>{spec.ram} {spec.ramUnit || 'GB'} 内存</span>
-                            <span className="text-slate-600">·</span>
-                            <span>{spec.disk} {spec.diskUnit || 'GB'} 硬盘</span>
-                          </div>
-                          {/* 可选卡数标签 */}
-                          <div className="flex items-center gap-1 mt-1">
-                            <span className="text-[10px] text-slate-500 font-medium">可选GPU数量:</span>
-                            <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-[10px] font-mono font-bold">
-                              {spec.maxGpuCount ?? 4} 卡可用
-                            </span>
-                          </div>
-                        </div>
+                        <span className="text-cyan-400 font-semibold">{spec.vram}</span>
                       </td>
 
-                      {/* 计费方式及价格 */}
+                      {/* CPU 核数 */}
                       <td className="py-3.5 px-4">
-                        <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                          <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold font-mono">
-                            按量 ¥{spec.hourlyPrice.toFixed(2)}/h
-                          </span>
-                          {spec.dayPrice !== undefined && spec.dayPrice > 0 && (
-                            <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">
-                              日租 ¥{spec.dayPrice}/d
-                            </span>
-                          )}
-                          {spec.weekPrice !== undefined && spec.weekPrice > 0 && (
-                            <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">
-                              周租 ¥{spec.weekPrice}/w
-                            </span>
-                          )}
-                          {spec.monthPrice !== undefined && spec.monthPrice > 0 && (
-                            <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">
-                              月租 ¥{spec.monthPrice}/m
-                            </span>
-                          )}
-                        </div>
+                        <span className="text-slate-200 font-medium">{spec.cpu} 核</span>
+                      </td>
+
+                      {/* 内存容量 */}
+                      <td className="py-3.5 px-4">
+                        <span className="text-slate-300">{spec.ram} {spec.ramUnit || 'GB'}</span>
+                      </td>
+
+                      {/* 硬盘容量 */}
+                      <td className="py-3.5 px-4">
+                        <span className="text-slate-300">{spec.disk} {spec.diskUnit || 'GB'}</span>
+                      </td>
+
+                      {/* 按量单价 */}
+                      <td className="py-3.5 px-4">
+                        <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold font-mono">
+                          ¥{spec.hourlyPrice.toFixed(2)}/h
+                        </span>
                       </td>
 
                       {/* 状态 */}
@@ -792,36 +1565,40 @@ export const ComputeSpecAdminView: React.FC = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 新增 / 编辑规格表单弹窗 (四大部分完整字段清单) */}
+      {/* 新增 / 编辑规格 二级页面 (四大部分完整字段清单) */}
       {/* ========================================================================= */}
       {editModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-3xl rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
-            {/* 弹窗头部 */}
-            <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
-                  <Cpu className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-100">
-                    {isEditing ? '编辑实例规格' : '新增实例规格'}
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    定义 GPU 模板的硬件参数、关联镜像生态、可部署运营商及多租期定价策略
-                  </p>
-                </div>
-              </div>
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-6 text-slate-100">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={() => setEditModalOpen(false)}
-                className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 flex items-center justify-center transition"
+                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
               >
-                <X className="w-4 h-4" />
+                <ArrowLeft className="w-4 h-4" />
+                <span>返回规格列表</span>
               </button>
+              <div>
+                <h3 className="text-base font-bold text-slate-100">
+                  {isEditing ? `编辑实例规格: ${formData.name}` : '新增实例规格'}
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  定义 GPU 模板的硬件参数、关联镜像生态、可部署运营商及多租期定价策略
+                </p>
+              </div>
             </div>
+            <button
+              onClick={handleSave}
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition cursor-pointer"
+            >
+              {isEditing ? '保存修改' : '确认创建'}
+            </button>
+          </div>
 
-            {/* 弹窗表单内容 */}
-            <form onSubmit={handleSave} className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+          {/* 表单内容 */}
+          <form onSubmit={handleSave} className="space-y-6 text-xs">
               {/* 第一部分：硬件配置 */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-xs font-bold text-blue-400 uppercase tracking-wider">
@@ -1245,61 +2022,56 @@ export const ComputeSpecAdminView: React.FC = () => {
                 </button>
               </div>
             </form>
-          </div>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* 规格详情弹窗 (五大信息区：基本信息、关联配置、定价信息、状态信息、使用统计) */}
+      {/* 规格详情 二级页面 (五大信息区：基本信息、关联配置、定价信息、状态信息、使用统计) */}
       {/* ========================================================================= */}
       {detailModalOpen && detailSpec && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-3xl rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
-            {/* 头部 */}
-            <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                  <Cpu className="w-5 h-5" />
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-6 text-slate-100">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setDetailModalOpen(false)}
+                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>返回规格列表</span>
+              </button>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h3 className="text-base font-bold text-slate-100">{detailSpec.name}</h3>
+                  {detailSpec.status === '上架' ? (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      已上架
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                      已下架
+                    </span>
+                  )}
                 </div>
-                <div>
-                  <div className="flex items-center gap-2.5">
-                    <h3 className="text-base font-bold text-slate-100">{detailSpec.name}</h3>
-                    {detailSpec.status === '上架' ? (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        已上架
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/20">
-                        已下架
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-400 mt-0.5 font-mono">{detailSpec.gpuModel}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    setDetailModalOpen(false);
-                    handleOpenEdit(detailSpec);
-                  }}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition flex items-center gap-1.5"
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                  编辑
-                </button>
-                <button
-                  onClick={() => setDetailModalOpen(false)}
-                  className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 flex items-center justify-center transition"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <p className="text-xs text-slate-400 mt-0.5 font-mono">{detailSpec.gpuModel}</p>
               </div>
             </div>
+            <button
+              onClick={() => {
+                setDetailModalOpen(false);
+                handleOpenEdit(detailSpec);
+              }}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-md transition cursor-pointer flex items-center gap-1.5"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>编辑规格</span>
+            </button>
+          </div>
 
-            {/* 详情主体 */}
-            <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
-              {/* 1. 基本信息区 */}
+          {/* Body */}
+          <div className="space-y-6 text-xs">
+            {/* 1. 基本信息区 */}
               <div>
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <Server className="w-3.5 h-3.5 text-blue-400" />
@@ -1502,17 +2274,16 @@ export const ComputeSpecAdminView: React.FC = () => {
               </div>
             </div>
 
-            {/* 弹窗底部 */}
-            <div className="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-between">
+            {/* 底部 */}
+            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
               <div className="text-xs text-slate-500">规格 ID: {detailSpec.id}</div>
               <button
                 onClick={() => setDetailModalOpen(false)}
-                className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition"
+                className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition cursor-pointer"
               >
                 关闭
               </button>
             </div>
-          </div>
         </div>
       )}
 
