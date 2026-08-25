@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
+import Markdown from 'react-markdown';
 import { useApp } from '../../context/AppContext';
 import { AgentItem, AppType, DatasetApplication, DatasetItem, SkillPluginItem } from '../../types';
 import { mockDatasetApplications } from '../../data/mockData';
 import { AppOrchestrationView } from '../orchestration/AppOrchestrationView';
 import { DatasetDetail } from '../marketplace/DatasetDetail';
 import { SkillDetail } from '../marketplace/SkillDetail';
+import { UserDatasetUploadForm } from '../marketplace/UserDatasetUploadForm';
+import { UserSkillCreateForm } from '../marketplace/UserSkillCreateForm';
 import { 
   Bot, 
   Database, 
@@ -40,8 +43,314 @@ import {
   Copy,
   Check,
   Layers,
-  FolderOpen
+  FolderOpen,
+  X,
+  FileSpreadsheet
 } from 'lucide-react';
+
+// 只读 Skill 详情弹窗组件
+const SkillReadOnlyModal: React.FC<{
+  skill: SkillPluginItem;
+  onClose: () => void;
+  onDownload: (sk: SkillPluginItem) => void;
+}> = ({ skill, onClose, onDownload }) => {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden text-slate-800">
+        
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 font-bold shrink-0">
+              <Wrench className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-purple-100 text-purple-700">Skill 详情 (只读)</span>
+                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md ${
+                  skill.status === '已上架'
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : skill.status === '待审核'
+                    ? 'bg-amber-100 text-amber-800'
+                    : skill.status === '已驳回'
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-slate-100 text-slate-700'
+                }`}>
+                  {skill.status || '未上架'}
+                </span>
+              </div>
+              <h3 className="text-base font-black text-slate-900 mt-0.5">{skill.name}</h3>
+            </div>
+          </div>
+          <button 
+            onClick={onClose} 
+            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-6 overflow-y-auto space-y-4 text-xs">
+          <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+            <div>
+              <span className="text-slate-400 font-bold block mb-1">Slug 唯一标识</span>
+              <span className="font-mono font-bold text-slate-800">{skill.repoPath || skill.id}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 font-bold block mb-1">场景分类</span>
+              <span className="font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">
+                {skill.category || '效率工具'}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-400 font-bold block mb-1">创建时间</span>
+              <span className="text-slate-700 font-medium">{skill.updatedAt || '刚刚'}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 font-bold block mb-1">资源包大小</span>
+              <span className="font-mono text-slate-700">{skill.packageSize || '1.8 MB'}</span>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-black text-slate-900 mb-1.5">插件功能描述</h4>
+            <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 text-slate-700 leading-relaxed">
+              {skill.description || '暂无详细描述'}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/80 flex items-center justify-between">
+          <span className="text-slate-400 text-[11px]">只读展示模式，无法直接编辑修改</span>
+          <div className="flex items-center gap-3">
+            <button onClick={onClose} className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer transition">
+              关闭
+            </button>
+            <button 
+              onClick={() => {
+                onDownload(skill);
+                onClose();
+              }} 
+              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer transition"
+            >
+              <Download className="w-4 h-4" />
+              <span>下载源码包</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+// 只读 Dataset 详情弹窗组件
+const DatasetReadOnlyModal: React.FC<{
+  dataset: DatasetItem;
+  onClose: () => void;
+  onDownload?: (ds: DatasetItem) => void;
+}> = ({ dataset, onClose }) => {
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+      <div className="bg-white rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-y-auto p-6 relative shadow-2xl">
+        <DatasetDetail dataset={dataset} onBack={onClose} />
+      </div>
+    </div>
+  );
+};
+
+// Skill 修改弹窗 (已驳回状态下编辑并重新提交)
+const SkillEditModal: React.FC<{
+  skill: SkillPluginItem;
+  onClose: () => void;
+  onSave: (updates: Partial<SkillPluginItem>) => void;
+}> = ({ skill, onClose, onSave }) => {
+  const [name, setName] = useState(skill.name);
+  const [slug, setSlug] = useState(skill.repoPath ? skill.repoPath.split('/')[1] || skill.id : skill.id);
+  const [category, setCategory] = useState(skill.category || '效率工具');
+  const [description, setDescription] = useState(skill.description || '');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave({
+      name: name.trim(),
+      id: slug.trim(),
+      repoPath: `@user/${slug.trim()}`,
+      category,
+      description: description.trim(),
+    });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 text-slate-800">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+            <Edit3 className="w-4 h-4 text-purple-600" />
+            <span>修改 Skill 插件 (重新提交审核)</span>
+          </h3>
+          <button onClick={onClose} className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {skill.auditReason && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-xs">
+            <div className="font-bold mb-0.5">上次驳回原因:</div>
+            <div>{skill.auditReason}</div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Skill 名称 *</label>
+            <input 
+              type="text" 
+              value={name} 
+              onChange={e => setName(e.target.value)} 
+              required
+              className="w-full px-3.5 py-2 rounded-xl border border-slate-200 font-bold focus:border-purple-500 outline-hidden" 
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Slug *</label>
+            <input 
+              type="text" 
+              value={slug} 
+              onChange={e => setSlug(e.target.value)} 
+              required
+              className="w-full px-3.5 py-2 rounded-xl border border-slate-200 font-mono focus:border-purple-500 outline-hidden" 
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">场景分类</label>
+            <select 
+              value={category} 
+              onChange={e => setCategory(e.target.value)}
+              className="w-full px-3.5 py-2 rounded-xl border border-slate-200 font-bold focus:border-purple-500 outline-hidden"
+            >
+              {['知识管理', '效率工具', '数据分析', '内容创作', '编程开发', '图像影音', '生活娱乐'].map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">描述</label>
+            <textarea 
+              rows={3} 
+              value={description} 
+              onChange={e => setDescription(e.target.value)}
+              className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:border-purple-500 outline-hidden resize-none"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
+              取消
+            </button>
+            <button type="submit" className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-extrabold shadow-xs cursor-pointer">
+              保存并再次提交
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// 数据集修改弹窗 (已驳回状态下编辑并重新提交)
+const DatasetEditModal: React.FC<{
+  dataset: DatasetItem;
+  onClose: () => void;
+  onSave: (updates: Partial<DatasetItem>) => void;
+}> = ({ dataset, onClose, onSave }) => {
+  const [name, setName] = useState(dataset.name);
+  const [brief, setBrief] = useState(dataset.brief || dataset.description?.slice(0, 50) || '');
+  const [description, setDescription] = useState(dataset.description || '');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave({
+      name: name.trim(),
+      brief: brief.trim(),
+      description: description.trim(),
+      status: '待审核',
+      auditReason: undefined
+    });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 text-slate-800">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+            <Edit3 className="w-4 h-4 text-blue-600" />
+            <span>修改数据集信息 (重新提交审核)</span>
+          </h3>
+          <button onClick={onClose} className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {dataset.auditReason && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-xs">
+            <div className="font-bold mb-0.5">上次驳回原因:</div>
+            <div>{dataset.auditReason}</div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">数据集名称 *</label>
+            <input 
+              type="text" 
+              value={name} 
+              onChange={e => setName(e.target.value)} 
+              required
+              className="w-full px-3.5 py-2 rounded-xl border border-slate-200 font-bold focus:border-blue-500 outline-hidden" 
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">一句话简介</label>
+            <input 
+              type="text" 
+              value={brief} 
+              onChange={e => setBrief(e.target.value)} 
+              className="w-full px-3.5 py-2 rounded-xl border border-slate-200 font-medium focus:border-blue-500 outline-hidden" 
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">详细描述</label>
+            <textarea 
+              rows={4} 
+              value={description} 
+              onChange={e => setDescription(e.target.value)}
+              className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-hidden resize-none"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
+              取消
+            </button>
+            <button type="submit" className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold shadow-xs cursor-pointer">
+              保存并再次提交
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 export const WorkspaceAssets: React.FC = () => {
   const { 
@@ -49,6 +358,16 @@ export const WorkspaceAssets: React.FC = () => {
     datasets, 
     skills, 
     favorites, 
+    datasetDownloads,
+    skillDownloads,
+    downloadDataset,
+    downloadSkill,
+    toggleDatasetStatus,
+    updateDataset,
+    deleteDataset,
+    toggleSkillStatus,
+    updateSkill,
+    deleteSkill,
     setWorkspaceSubTab, 
     showToast, 
     openModal,
@@ -63,10 +382,22 @@ export const WorkspaceAssets: React.FC = () => {
   // Agent Sub-tab: 我创建的 vs 我订阅的
   const [agentScopeTab, setAgentScopeTab] = useState<'created' | 'subscribed'>('created');
 
-  // Dataset Sub-tab: 我创建的 vs 我挂载/订阅的
-  const [datasetScopeTab, setDatasetScopeTab] = useState<'created' | 'mounted'>('created');
+  // Dataset Sub-tab: 我上传的 vs 已下载的
+  const [datasetScopeTab, setDatasetScopeTab] = useState<'created' | 'downloaded'>('created');
+  
+  // Skill Sub-tab: 我创建的 vs 已下载的
+  const [skillScopeTab, setSkillScopeTab] = useState<'created' | 'downloaded'>('created');
+
   const [activeDatasetDetail, setActiveDatasetDetail] = useState<DatasetItem | null>(null);
   const [activeSkillDetail, setActiveSkillDetail] = useState<SkillPluginItem | null>(null);
+
+  // Forms and Modals
+  const [isUploadingDataset, setIsUploadingDataset] = useState(false);
+  const [isCreatingSkill, setIsCreatingSkill] = useState(false);
+  const [readOnlyDatasetModal, setReadOnlyDatasetModal] = useState<DatasetItem | null>(null);
+  const [readOnlySkillModal, setReadOnlySkillModal] = useState<SkillPluginItem | null>(null);
+  const [editingDataset, setEditingDataset] = useState<DatasetItem | null>(null);
+  const [editingSkill, setEditingSkill] = useState<SkillPluginItem | null>(null);
 
   // Filters for Application List
   const [searchQuery, setSearchQuery] = useState('');
@@ -81,12 +412,20 @@ export const WorkspaceAssets: React.FC = () => {
 
   // Dataset applications state
   const [applications, setApplications] = useState<DatasetApplication[]>(mockDatasetApplications);
-  const [showApplyModal, setShowApplyModal] = useState(false);
 
-  const handleApprove = (id: string, pass: boolean) => {
-    setApplications(prev => prev.map(a => a.id === id ? { ...a, status: pass ? '已通过' : '已驳回' } : a));
-    showToast(pass ? '已通过数据集使用申请！' : '已驳回该申请');
-  };
+  // If in dataset upload subpage, render UserDatasetUploadForm
+  if (isUploadingDataset) {
+    return (
+      <UserDatasetUploadForm onBack={() => setIsUploadingDataset(false)} />
+    );
+  }
+
+  // If in skill create subpage, render UserSkillCreateForm
+  if (isCreatingSkill) {
+    return (
+      <UserSkillCreateForm onBack={() => setIsCreatingSkill(false)} />
+    );
+  }
 
   // If in orchestration studio, render full screen orchestration view
   if (orchestratingAgent) {
@@ -122,7 +461,7 @@ export const WorkspaceAssets: React.FC = () => {
   const createdAgents = userAgents.filter(ag => !ag.isPurchased || ag.isDeveloped || ag.id.startsWith('app_') || ag.id.startsWith('ag_custom'));
   const subscribedAgents = userAgents.filter(ag => ag.isPurchased);
 
-  // Filtered lists for 数据集: 我创建的 vs 我挂载的
+  // Filtered lists for 数据集: 我创建的 (我上传的)
   const createdDatasets = datasets.filter(d => d.isCreatedByMe || d.author === 'zj' || d.id === 'ds_powerbi_retail');
   const mountedDatasets = datasets.filter(d => d.isMounted || d.isFavorite || !d.isCreatedByMe);
   const currentDisplayDatasets = datasetScopeTab === 'created' ? createdDatasets : mountedDatasets;
@@ -217,7 +556,7 @@ export const WorkspaceAssets: React.FC = () => {
 
           {activeAssetTab === 'datasets' && (
             <button
-              onClick={() => showToast('上传数据集功能已拉起，选择 CSV/Parquet/JSONL 文件')}
+              onClick={() => setIsUploadingDataset(true)}
               className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black transition shadow-xs flex items-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
@@ -227,11 +566,11 @@ export const WorkspaceAssets: React.FC = () => {
 
           {activeAssetTab === 'skills' && (
             <button
-              onClick={() => showToast('上传 Skill 插件功能已拉起')}
+              onClick={() => setIsCreatingSkill(true)}
               className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black transition shadow-xs flex items-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>上传 Skill</span>
+              <span>创建 Skill</span>
             </button>
           )}
         </div>
@@ -564,7 +903,7 @@ export const WorkspaceAssets: React.FC = () => {
       {activeAssetTab === 'datasets' && (
         <div className="space-y-6">
           
-          {/* Sub-level Tabs: 我创建的 / 我挂载的 */}
+          {/* Sub-level Tabs: 我上传的 / 已下载的数据集 */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-2">
             <div className="flex items-center gap-2 bg-slate-100/80 p-1 rounded-xl">
               <button
@@ -576,7 +915,7 @@ export const WorkspaceAssets: React.FC = () => {
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <span>我创建的</span>
+                <span>我上传的</span>
                 <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
                   datasetScopeTab === 'created' ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-600'
                 }`}>
@@ -586,209 +925,478 @@ export const WorkspaceAssets: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => setDatasetScopeTab('mounted')}
+                onClick={() => setDatasetScopeTab('downloaded')}
                 className={`px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
-                  datasetScopeTab === 'mounted'
+                  datasetScopeTab === 'downloaded'
                     ? 'bg-white text-blue-600 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <span>已订阅/授权的</span>
+                <span>已下载的数据集</span>
                 <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                  datasetScopeTab === 'mounted' ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-600'
+                  datasetScopeTab === 'downloaded' ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-600'
                 }`}>
-                  {mountedDatasets.length}
+                  {datasetDownloads.length}
                 </span>
               </button>
             </div>
 
             <div className="text-xs text-slate-400 font-medium">
-              共管理 <span className="font-bold text-slate-700">{currentDisplayDatasets.length}</span> 个数据集资产
+              共管理 <span className="font-bold text-slate-700">{createdDatasets.length}</span> 个数据集资产
             </div>
           </div>
 
-          {/* Dataset Application Approval Banner */}
-          <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold">
-                <UserCheck className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-xs font-black text-amber-900">数据集使用申请待处理</h4>
-                <p className="text-[11px] text-amber-800/80 font-medium">有 1 位开发者申请授权使用您的私有企业级数据集</p>
-              </div>
+          {datasetScopeTab === 'downloaded' ? (
+            /* 已下载的数据集 Table */
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs overflow-hidden">
+              {datasetDownloads.length === 0 ? (
+                <div className="p-12 text-center text-slate-400 text-xs">
+                  暂无数据集下载记录。您可以在数据集广场浏览并一键极速下载数据包。
+                </div>
+              ) : (
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
+                    <tr>
+                      <th className="p-4">数据集名称</th>
+                      <th className="p-4">模态</th>
+                      <th className="p-4">数据集大小</th>
+                      <th className="p-4">创建者</th>
+                      <th className="p-4">下载时间</th>
+                      <th className="p-4 text-right">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium">
+                    {datasetDownloads.map(rec => {
+                      const targetDs = datasets.find(d => d.id === rec.datasetId);
+                      return (
+                        <tr key={rec.id} className="hover:bg-blue-50/30 transition">
+                          <td className="p-4 font-bold text-slate-900">{rec.datasetName}</td>
+                          <td className="p-4">
+                            <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold">
+                              {rec.modality || '表格数据'}
+                            </span>
+                          </td>
+                          <td className="p-4 font-mono font-bold text-slate-700">{rec.fileSize || '267.5 MB'}</td>
+                          <td className="p-4 text-slate-600 font-medium">{rec.uploaderName || '平台提供'}</td>
+                          <td className="p-4 text-slate-400 font-mono">{rec.downloadTime || rec.downloadedAt}</td>
+                          <td className="p-4 text-right space-x-2">
+                            <button
+                              onClick={() => {
+                                if (targetDs) setReadOnlyDatasetModal(targetDs);
+                                else showToast(`查看【${rec.datasetName}】详情`);
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold text-xs cursor-pointer transition"
+                            >
+                              详情
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (targetDs) downloadDataset(targetDs);
+                                showToast(`已重新下载数据集【${rec.datasetName}】`);
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer shadow-2xs transition"
+                            >
+                              再次下载
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
-            <button
-              onClick={() => setShowApplyModal(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-extrabold transition cursor-pointer shadow-2xs"
-            >
-              查看审批 ({applications.filter(a => a.status === '待审批').length})
-            </button>
-          </div>
-
-          {/* Dataset Table Card */}
-          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs overflow-hidden">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead className="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
-                <tr>
-                  <th className="p-4">数据集名称与仓库</th>
-                  <th className="p-4">模态 / 任务类型</th>
-                  <th className="p-4">数据规模 / 格式</th>
-                  <th className="p-4">领域与标签</th>
-                  <th className="p-4">开源协议</th>
-                  <th className="p-4">状态</th>
-                  <th className="p-4 text-right">操作</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-medium">
-                {currentDisplayDatasets.map((ds) => (
-                  <tr 
-                    key={ds.id} 
-                    onClick={() => setActiveDatasetDetail(ds)}
-                    className="hover:bg-blue-50/40 transition cursor-pointer"
-                  >
-                    <td className="p-4">
-                      <div className="font-extrabold text-slate-900 hover:text-blue-600 transition flex items-center gap-2">
-                        <span>{ds.name}</span>
-                        {ds.isCreatedByMe && (
-                          <span className="px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 text-[10px] font-bold">
-                            我创建
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[10px] font-mono text-slate-400 mt-0.5">
-                        {ds.repoPath || `${ds.author}/${ds.id}`} • 更新于 {ds.updatedAt}
-                      </div>
-                    </td>
-
-                    <td className="p-4">
-                      <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold">
-                        {ds.modalityCategory || '表格'}
-                      </span>
-                      <div className="text-[10px] text-slate-400 mt-0.5">
-                        {ds.taskType || '表格回归'}
-                      </div>
-                    </td>
-
-                    <td className="p-4">
-                      <div className="font-mono font-bold text-slate-800">
-                        {ds.fileSize || ds.scale || '267.5 MB'}
-                      </div>
-                      <div className="text-[10px] text-slate-400 font-medium">
-                        {ds.fileFormats || ds.format || 'CSV'} • {ds.filesCount || (ds.files?.length ?? 1)} 个文件
-                      </div>
-                    </td>
-
-                    <td className="p-4">
-                      <div className="flex flex-wrap items-center gap-1 max-w-[220px]">
-                        {(ds.domainTags && ds.domainTags.length > 0 ? ds.domainTags : ['数据科学', '分析']).slice(0, 2).map((t: string) => (
-                          <span key={t} className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold">
-                            #{t}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-
-                    <td className="p-4 text-slate-500 font-medium">
-                      {ds.license || 'CC-BY-4.0'}
-                    </td>
-
-                    <td className="p-4">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-700">
-                        已就绪
-                      </span>
-                    </td>
-
-                    <td className="p-4 text-right space-x-2">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveDatasetDetail(ds);
-                        }}
-                        className="text-blue-600 hover:text-blue-700 font-extrabold cursor-pointer"
-                      >
-                        详情/预览
-                      </button>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const snippet = `import pandas as pd\ndf = pd.read_csv("./${ds.files?.[0]?.name || 'data.csv'}")\nprint(df.head())`;
-                          navigator.clipboard.writeText(snippet);
-                          showToast('已复制 Python Pandas 读取代码！');
-                        }}
-                        className="text-slate-600 hover:text-slate-900 font-bold cursor-pointer"
-                      >
-                        读取代码
-                      </button>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          showToast(`已下载 ${ds.name} 压缩包`);
-                        }}
-                        className="text-emerald-600 hover:text-emerald-700 font-extrabold cursor-pointer"
-                      >
-                        下载
-                      </button>
-                    </td>
+          ) : (
+            /* 我上传的数据集 Table */
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs overflow-hidden">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
+                  <tr>
+                    <th className="p-4">数据集名称</th>
+                    <th className="p-4">模态</th>
+                    <th className="p-4">数据集大小</th>
+                    <th className="p-4">上传时间</th>
+                    <th className="p-4">状态</th>
+                    <th className="p-4 text-right">操作</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {createdDatasets.map((ds) => {
+                    const isPending = ds.status === '待审核';
+                    const isRejected = ds.status === '已驳回';
+                    const isListed = ds.status === '已上架';
+                    const isUnlisted = !isPending && !isRejected && !isListed; // 未上架/已下架
+
+                    return (
+                      <tr key={ds.id} className="hover:bg-blue-50/30 transition">
+                        <td className="p-4">
+                          <div className="font-extrabold text-slate-900">{ds.name}</div>
+                          <div className="text-[10px] text-slate-400 mt-0.5 max-w-xs truncate">
+                            {ds.brief || ds.description?.slice(0, 35) || '暂无描述'}
+                          </div>
+                        </td>
+
+                        <td className="p-4">
+                          <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold">
+                            {ds.modalityCategory || '表格数据'}
+                          </span>
+                        </td>
+
+                        <td className="p-4 font-mono font-bold text-slate-800">
+                          {ds.fileSize || ds.scale || '18.4 MB'}
+                        </td>
+
+                        <td className="p-4 text-slate-400 font-mono">
+                          {ds.updatedAt || '2025-05-20'}
+                        </td>
+
+                        <td className="p-4">
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                            isListed
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                              : isPending
+                              ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                              : isRejected
+                              ? 'bg-red-100 text-red-700 border border-red-300'
+                              : 'bg-slate-100 text-slate-700 border border-slate-300'
+                          }`}>
+                            {isListed ? '已上架' : isPending ? '待审核' : isRejected ? '已驳回' : '未上架'}
+                          </span>
+                          {isRejected && ds.auditReason && (
+                            <div className="text-[10px] text-red-500 mt-0.5 max-w-xs" title={ds.auditReason}>
+                              驳回: {ds.auditReason}
+                            </div>
+                          )}
+                        </td>
+
+                        <td className="p-4 text-right space-x-2">
+                          {/* 1. 待审核: 支持【详情】 */}
+                          {isPending && (
+                            <button
+                              onClick={() => setReadOnlyDatasetModal(ds)}
+                              className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold transition cursor-pointer"
+                            >
+                              详情
+                            </button>
+                          )}
+
+                          {/* 2. 已驳回: 支持【修改】和【删除】 */}
+                          {isRejected && (
+                            <>
+                              <button
+                                onClick={() => setEditingDataset(ds)}
+                                className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold transition cursor-pointer"
+                              >
+                                修改
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm(`确定要删除驳回的数据集【${ds.name}】吗？`)) {
+                                    deleteDataset(ds.id);
+                                    showToast(`数据集【${ds.name}】已成功删除`);
+                                  }
+                                }}
+                                className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition cursor-pointer"
+                              >
+                                删除
+                              </button>
+                            </>
+                          )}
+
+                          {/* 3. 未上架 / 已上架: 支持【详情】和 【上架/下架】 */}
+                          {!isPending && !isRejected && (
+                            <>
+                              <button
+                                onClick={() => setReadOnlyDatasetModal(ds)}
+                                className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold transition cursor-pointer"
+                              >
+                                详情
+                              </button>
+
+                              {isListed ? (
+                                <button
+                                  onClick={() => {
+                                    toggleDatasetStatus(ds.id, '已下架');
+                                    showToast(`数据集【${ds.name}】已下架`);
+                                  }}
+                                  className="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs font-bold transition cursor-pointer"
+                                >
+                                  下架
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    toggleDatasetStatus(ds.id, '已上架');
+                                    showToast(`数据集【${ds.name}】已成功上架`);
+                                  }}
+                                  className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-2xs transition cursor-pointer"
+                                >
+                                  上架
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
 
         </div>
       )}
 
       {/* 3. SubTab: 我的 Skill */}
       {activeAssetTab === 'skills' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {skills.map((sk) => (
-            <div 
-              key={sk.id} 
-              onClick={() => setActiveSkillDetail(sk)}
-              className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs hover:shadow-md transition space-y-3 flex flex-col justify-between cursor-pointer group hover:border-purple-300"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center font-bold text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition">
-                    <Wrench className="w-5 h-5" />
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700">
-                    已上架
-                  </span>
-                </div>
-                <h3 className="text-xs font-black text-slate-900 group-hover:text-purple-600 transition">{sk.name}</h3>
-                <p className="text-[11px] text-slate-500 font-medium line-clamp-2 mt-1">{sk.description}</p>
-              </div>
+        <div className="space-y-6">
+          {/* Sub-level Tabs: 我创建的 / 已下载的 */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-2">
+            <div className="flex items-center gap-2 bg-slate-100/80 p-1 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setSkillScopeTab('created')}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                  skillScopeTab === 'created'
+                    ? 'bg-white text-purple-600 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <span>我创建的 Skill</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                  skillScopeTab === 'created' ? 'bg-purple-100 text-purple-700' : 'bg-slate-200 text-slate-600'
+                }`}>
+                  {skills.filter(s => s.isCreatedByMe || s.uploaderType === 'user').length}
+                </span>
+              </button>
 
-              <div className="pt-3 border-t border-slate-100 space-y-2">
-                <div className="text-[11px] text-slate-400 font-medium">兼容: {sk.compatibleAgents}</div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500 font-medium">安装量: <strong className="text-purple-600">{sk.installs.toLocaleString()}</strong></span>
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        showToast(`已开始下载【${sk.name}】源码包`);
-                      }}
-                      className="text-purple-600 hover:text-purple-700 font-extrabold cursor-pointer"
-                    >
-                      下载
-                    </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveSkillDetail(sk);
-                      }}
-                      className="text-slate-700 hover:text-purple-600 font-extrabold cursor-pointer"
-                    >
-                      查看详情
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={() => setSkillScopeTab('downloaded')}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                  skillScopeTab === 'downloaded'
+                    ? 'bg-white text-purple-600 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <span>已下载的 Skill</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                  skillScopeTab === 'downloaded' ? 'bg-purple-100 text-purple-700' : 'bg-slate-200 text-slate-600'
+                }`}>
+                  {skillDownloads.length}
+                </span>
+              </button>
             </div>
-          ))}
+
+            <div className="text-xs text-slate-400 font-medium">
+              管理与调试 Agent 扩展插件工具箱
+            </div>
+          </div>
+
+          {skillScopeTab === 'downloaded' ? (
+            /* 已下载的 Skill Table */
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs overflow-hidden">
+              {skillDownloads.length === 0 ? (
+                <div className="p-12 text-center text-slate-400 text-xs">
+                  暂无下载记录。您可以在 Skill 插件集市中浏览并极速下载需要的工具插件。
+                </div>
+              ) : (
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
+                    <tr>
+                      <th className="p-4">Skill 名称</th>
+                      <th className="p-4">slug</th>
+                      <th className="p-4">场景分类</th>
+                      <th className="p-4">上传者</th>
+                      <th className="p-4">下载时间</th>
+                      <th className="p-4 text-right">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium">
+                    {skillDownloads.map(rec => {
+                      const targetSk = skills.find(s => s.id === rec.skillId);
+                      return (
+                        <tr key={rec.id} className="hover:bg-purple-50/30 transition">
+                          <td className="p-4 font-bold text-slate-900">{rec.skillName}</td>
+                          <td className="p-4 font-mono font-bold text-slate-600">
+                            {targetSk?.repoPath || rec.skillId}
+                          </td>
+                          <td className="p-4">
+                            <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 font-bold border border-purple-100">
+                              {rec.category || targetSk?.category || '效率工具'}
+                            </span>
+                          </td>
+                          <td className="p-4 text-slate-600 font-medium">
+                            {rec.uploaderName || rec.developer || targetSk?.developer || '极客社区'}
+                          </td>
+                          <td className="p-4 text-slate-400 font-mono">
+                            {rec.downloadTime || rec.downloadedAt}
+                          </td>
+                          <td className="p-4 text-right space-x-2">
+                            <button
+                              onClick={() => {
+                                if (targetSk) setReadOnlySkillModal(targetSk);
+                                else showToast(`查看【${rec.skillName}】详情`);
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs cursor-pointer transition"
+                            >
+                              详情
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (targetSk) downloadSkill(targetSk);
+                                showToast(`已重新下载 Skill【${rec.skillName}】`);
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs cursor-pointer shadow-2xs transition"
+                            >
+                              再次下载
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          ) : (
+            /* 我创建的 Skill Table */
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs overflow-hidden">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
+                  <tr>
+                    <th className="p-4">skill名称</th>
+                    <th className="p-4">slug</th>
+                    <th className="p-4">场景分类</th>
+                    <th className="p-4">创建时间</th>
+                    <th className="p-4">状态</th>
+                    <th className="p-4 text-right">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {skills.map((sk) => {
+                    const isPending = sk.status === '待审核';
+                    const isRejected = sk.status === '已驳回';
+                    const isListed = sk.status === '已上架';
+                    const isUnlisted = !isPending && !isRejected && !isListed; // 未上架/已下架
+
+                    const slugVal = sk.repoPath ? sk.repoPath.split('/')[1] || sk.id : sk.id;
+
+                    return (
+                      <tr key={sk.id} className="hover:bg-purple-50/30 transition">
+                        <td className="p-4 font-extrabold text-slate-900">
+                          {sk.name}
+                        </td>
+
+                        <td className="p-4 font-mono font-bold text-slate-700">
+                          {slugVal}
+                        </td>
+
+                        <td className="p-4">
+                          <span className="px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 text-[10px] font-bold border border-purple-100">
+                            {sk.category || '效率工具'}
+                          </span>
+                        </td>
+
+                        <td className="p-4 text-slate-400 font-mono">
+                          {sk.updatedAt || '2025-05-20'}
+                        </td>
+
+                        <td className="p-4">
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                            isListed
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                              : isPending
+                              ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                              : isRejected
+                              ? 'bg-red-100 text-red-700 border border-red-300'
+                              : 'bg-slate-100 text-slate-700 border border-slate-300'
+                          }`}>
+                            {isListed ? '已上架' : isPending ? '待审核' : isRejected ? '已驳回' : '未上架'}
+                          </span>
+                          {isRejected && sk.auditReason && (
+                            <div className="text-[10px] text-red-500 mt-0.5 max-w-xs" title={sk.auditReason}>
+                              驳回: {sk.auditReason}
+                            </div>
+                          )}
+                        </td>
+
+                        <td className="p-4 text-right space-x-2">
+                          {/* 1. 待审核: 支持【详情】 */}
+                          {isPending && (
+                            <button
+                              onClick={() => setReadOnlySkillModal(sk)}
+                              className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold transition cursor-pointer"
+                            >
+                              详情
+                            </button>
+                          )}
+
+                          {/* 2. 已驳回: 支持【修改】和【删除】，修改后再次提交 */}
+                          {isRejected && (
+                            <>
+                              <button
+                                onClick={() => setEditingSkill(sk)}
+                                className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold transition cursor-pointer"
+                              >
+                                修改
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm(`确定要删除驳回的 Skill 插件【${sk.name}】吗？`)) {
+                                    deleteSkill(sk.id);
+                                    showToast(`Skill 插件【${sk.name}】已成功删除`);
+                                  }
+                                }}
+                                className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition cursor-pointer"
+                              >
+                                删除
+                              </button>
+                            </>
+                          )}
+
+                          {/* 3. 未上架 / 已上架: 支持【详情】和 【上架/下架】 */}
+                          {!isPending && !isRejected && (
+                            <>
+                              <button
+                                onClick={() => setReadOnlySkillModal(sk)}
+                                className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold transition cursor-pointer"
+                              >
+                                详情
+                              </button>
+
+                              {isListed ? (
+                                <button
+                                  onClick={() => {
+                                    toggleSkillStatus(sk.id, '已下架');
+                                    showToast(`Skill【${sk.name}】已成功下架`);
+                                  }}
+                                  className="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs font-bold transition cursor-pointer"
+                                >
+                                  下架
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    toggleSkillStatus(sk.id, '已上架');
+                                    showToast(`Skill【${sk.name}】已成功上架`);
+                                  }}
+                                  className="px-2.5 py-1 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-2xs transition cursor-pointer"
+                                >
+                                  上架
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -832,66 +1440,54 @@ export const WorkspaceAssets: React.FC = () => {
         </div>
       )}
 
-      {/* Dataset Approval Modal */}
-      {showApplyModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-xl rounded-3xl p-6 shadow-2xl border border-slate-200 space-y-4 animate-scale-up">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-amber-600" />
-                <span>数据集使用申请审批</span>
-              </h3>
-              <button 
-                onClick={() => setShowApplyModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer"
-              >
-                关闭
-              </button>
-            </div>
 
-            <div className="space-y-3">
-              {applications.map((app) => (
-                <div key={app.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <img src={app.applicantAvatar} alt={app.applicantName} className="w-6 h-6 rounded-full object-cover" />
-                      <span className="text-xs font-extrabold text-slate-900">{app.applicantName}</span>
-                    </div>
-                    <span className="text-[10px] text-slate-400 font-medium">{app.applyTime}</span>
-                  </div>
 
-                  <div className="text-xs text-slate-700 font-medium bg-white p-2.5 rounded-xl border border-slate-100">
-                    <strong className="text-slate-900">用途说明:</strong> {app.purpose}
-                  </div>
+      {/* 只读数据集详情弹窗 */}
+      {readOnlyDatasetModal && (
+        <DatasetReadOnlyModal
+          dataset={readOnlyDatasetModal}
+          onClose={() => setReadOnlyDatasetModal(null)}
+          onDownload={(ds) => downloadDataset(ds)}
+        />
+      )}
 
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-[10px] text-indigo-600 font-bold">{app.datasetName}</span>
-                    {app.status === '待审批' ? (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleApprove(app.id, true)}
-                          className="px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition cursor-pointer"
-                        >
-                          批准授权
-                        </button>
-                        <button
-                          onClick={() => handleApprove(app.id, false)}
-                          className="px-3 py-1 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold transition cursor-pointer"
-                        >
-                          驳回
-                        </button>
-                      </div>
-                    ) : (
-                      <span className={`text-xs font-bold ${app.status === '已通过' ? 'text-emerald-600' : 'text-red-600'}`}>
-                        {app.status}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+      {/* 只读 Skill 详情弹窗 */}
+      {readOnlySkillModal && (
+        <SkillReadOnlyModal
+          skill={readOnlySkillModal}
+          onClose={() => setReadOnlySkillModal(null)}
+          onDownload={(sk) => downloadSkill(sk)}
+        />
+      )}
+
+      {/* 编辑 Skill (驳回状态下编辑并重新提交) */}
+      {editingSkill && (
+        <SkillEditModal
+          skill={editingSkill}
+          onClose={() => setEditingSkill(null)}
+          onSave={(updates) => {
+            updateSkill(editingSkill.id, {
+              ...updates,
+              status: '待审核',
+              auditReason: undefined
+            });
+            showToast(`Skill 插件【${updates.name || editingSkill.name}】已修改并重新提交`);
+            setEditingSkill(null);
+          }}
+        />
+      )}
+
+      {/* 编辑数据集 (驳回状态下编辑并重新提交) */}
+      {editingDataset && (
+        <DatasetEditModal
+          dataset={editingDataset}
+          onClose={() => setEditingDataset(null)}
+          onSave={(updates) => {
+            updateDataset(editingDataset.id, updates);
+            showToast(`数据集【${updates.name || editingDataset.name}】已修改并重新提交`);
+            setEditingDataset(null);
+          }}
+        />
       )}
 
     </div>

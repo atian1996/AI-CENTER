@@ -981,71 +981,111 @@ export const HomeView: React.FC = () => {
           </div>
         )}
 
-        {/* Tab 4: 🏆 赛事中心（4个官方赛道前沿卡片展示） */}
+        {/* Tab 4: 🏆 赛事中心（官方赛事维度精选展示） */}
         {contentTab === 'creative' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {competitionTrackCards.map((c) => {
-              const Icon = c.icon;
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {competitions.map((comp) => {
+              const isOngoing = comp.status === 'ongoing';
+              const isUnstarted = comp.status === 'unstarted';
+              const statusText = isOngoing ? '火热进行中' : isUnstarted ? '火热报名中' : '历届已完赛';
+              const statusBadgeClass = isOngoing 
+                ? 'bg-purple-500/90 text-white shadow-xs' 
+                : isUnstarted 
+                ? 'bg-blue-500/90 text-white shadow-xs' 
+                : 'bg-slate-700/90 text-slate-200';
+              
+              const totalPrize = comp.introduction.awards[0]?.reward?.split(' ')[0] || '丰厚奖金池';
+              const totalParticipants = comp.tracks.reduce((acc, t) => acc + (t.participantsCount || 0), 0);
+
               return (
                 <div
-                  key={c.id}
-                  onClick={() => {
-                    if (c.url) {
-                      showToast(`正在前往【${c.title}】外部平台...`);
-                      window.open(c.url, '_blank', 'noopener,noreferrer');
-                    } else {
-                      const comp = competitions[0];
-                      if (comp) {
-                        openCompetitionDetail(comp.id);
-                      } else {
-                        setActiveTab('creative');
-                      }
-                    }
-                  }}
-                  className={`rounded-2xl border ${c.bgClass} hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between overflow-hidden cursor-pointer group bg-white`}
+                  key={comp.id}
+                  onClick={() => openCompetitionDetail(comp.id)}
+                  className="rounded-3xl border border-slate-200/80 bg-white hover:border-purple-300 hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between overflow-hidden cursor-pointer group shadow-2xs"
                 >
-                  {/* 卡片头部科技图景 */}
-                  <div className="relative h-28 w-full overflow-hidden">
+                  {/* 赛事封面图景 */}
+                  <div className="relative h-36 w-full overflow-hidden bg-slate-900">
                     <img 
-                      src={c.image} 
-                      alt={c.title} 
+                      src={comp.coverImage} 
+                      alt={comp.title} 
                       className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500" 
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-900/30 to-transparent" />
                     
-                    <div className={`absolute top-2.5 left-2.5 w-8 h-8 rounded-xl ${c.iconBg} shadow-sm flex items-center justify-center`}>
-                      <Icon className="w-4 h-4" />
+                    {/* 状态角标 */}
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                      <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full backdrop-blur-xs flex items-center gap-1 ${statusBadgeClass}`}>
+                        {isOngoing && <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />}
+                        {statusText}
+                      </span>
                     </div>
 
-                    <span className="absolute top-2.5 right-2.5 text-[9px] font-black px-2 py-0.5 rounded-full bg-slate-900/70 backdrop-blur-xs text-white border border-white/20">
-                      {c.tag}
-                    </span>
+                    {/* 主办方认证标签 */}
+                    {comp.organizerBadge && (
+                      <span className="absolute top-3 right-3 text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-xs text-purple-900 shadow-xs border border-white/50">
+                        {comp.organizerBadge}
+                      </span>
+                    )}
 
-                    <div className="absolute bottom-2 left-2.5 right-2.5">
-                      <div className="text-xs font-black text-white truncate">
-                        {c.title}
+                    <div className="absolute bottom-2.5 left-3 right-3">
+                      <div className="text-sm font-black text-white leading-tight drop-shadow-sm">
+                        {comp.title}
+                      </div>
+                      <div className="text-[11px] text-purple-200 mt-0.5 flex items-center gap-1">
+                        <Building2 className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{comp.organizer}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="text-[11px] font-bold text-indigo-600 mb-1">
-                        {c.slogan}
-                      </div>
-                      <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                        {c.desc}
-                      </p>
+                  <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
+                    {/* 赛事类型标签 */}
+                    <div className="flex flex-wrap gap-1">
+                      {comp.typeTags.slice(0, 2).map((tag, idx) => (
+                        <span key={idx} className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-100">
+                          {tag}
+                        </span>
+                      ))}
+                      {comp.tracks.length > 0 && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                          含 {comp.tracks.length} 个赛道
+                        </span>
+                      )}
                     </div>
 
-                    <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
-                      <span className="text-[10px] text-amber-600 font-bold">
-                        {c.prize}
-                      </span>
-                      <span className="text-xs font-bold text-indigo-600 flex items-center gap-0.5 group-hover:translate-x-1 transition-transform">
-                        进入赛道 <ArrowRight className="w-3.5 h-3.5" />
-                      </span>
+                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                      {comp.introduction.summary}
+                    </p>
+
+                    {/* 奖池与报名数据 */}
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                      <div>
+                        <div className="text-[10px] text-slate-400 font-medium">特等/最高奖励</div>
+                        <div className="text-xs font-black text-amber-600 font-mono">
+                          {totalPrize}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[10px] text-slate-400 font-medium">累计参赛者</div>
+                        <div className="text-xs font-bold text-slate-700 font-mono">
+                          {totalParticipants > 0 ? `${totalParticipants.toLocaleString()} 人` : '火热招募中'}
+                        </div>
+                      </div>
                     </div>
+
+                    {/* 底部按钮 */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openCompetitionDetail(comp.id);
+                      }}
+                      className="w-full py-2 rounded-xl bg-purple-50 hover:bg-purple-600 text-purple-700 hover:text-white font-bold text-xs transition flex items-center justify-center gap-1.5 group-hover:bg-purple-600 group-hover:text-white cursor-pointer"
+                    >
+                      <Trophy className="w-3.5 h-3.5" />
+                      <span>查看赛事详情</span>
+                      <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
+                    </button>
                   </div>
                 </div>
               );
@@ -1138,7 +1178,7 @@ export const HomeView: React.FC = () => {
       </div>
 
       {/* =========================================================================
-          区域五：赛事中心 · 官方赛道专区（独立展示）
+          区域五：赛事中心 · 官方赛事专区（独立展示）
       ========================================================================= */}
       <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xs">
         
@@ -1150,14 +1190,14 @@ export const HomeView: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-black text-slate-900 tracking-tight">
-                  🏆 2026 AI 创新巅峰赛 · 官方赛道
+                  🏆 赛事中心 · 官方精品赛事推荐
                 </h2>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                  4 大官方赛道火热开放
+                  国家级与高水平赛事开放中
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                中国人工智能学会主办，国家级综合赛事，争夺 ¥200,000+ 奖池与算力直通绿卡
+                汇聚顶尖学会与产业联盟主办的高规格 AI 挑战赛，争夺丰厚现金大奖与算力直通绿卡
               </p>
             </div>
           </div>
@@ -1171,70 +1211,110 @@ export const HomeView: React.FC = () => {
           </button>
         </div>
 
-        {/* 4 个官方赛道卡片横向网格 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {competitionTrackCards.map((card) => {
-            const Icon = card.icon;
+        {/* 官方赛事卡片横向网格 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {competitions.map((comp) => {
+            const isOngoing = comp.status === 'ongoing';
+            const isUnstarted = comp.status === 'unstarted';
+            const statusText = isOngoing ? '火热进行中' : isUnstarted ? '火热报名中' : '历届已完赛';
+            const statusBadgeClass = isOngoing 
+              ? 'bg-purple-500/90 text-white shadow-xs' 
+              : isUnstarted 
+              ? 'bg-blue-500/90 text-white shadow-xs' 
+              : 'bg-slate-700/90 text-slate-200';
+            
+            const totalPrize = comp.introduction.awards[0]?.reward?.split(' ')[0] || '丰厚奖金池';
+            const totalParticipants = comp.tracks.reduce((acc, t) => acc + (t.participantsCount || 0), 0);
+
             return (
               <div
-                key={card.id}
-                onClick={() => {
-                  if (card.url) {
-                    showToast(`正在前往【${card.title}】外部平台...`);
-                    window.open(card.url, '_blank', 'noopener,noreferrer');
-                  } else {
-                    const comp = competitions[0];
-                    if (comp) {
-                      openCompetitionDetail(comp.id);
-                    } else {
-                      setActiveTab('creative');
-                    }
-                  }
-                }}
-                className={`rounded-2xl border ${card.bgClass} hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between overflow-hidden cursor-pointer group bg-white`}
+                key={comp.id}
+                onClick={() => openCompetitionDetail(comp.id)}
+                className="rounded-3xl border border-slate-200/80 bg-white hover:border-purple-300 hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between overflow-hidden cursor-pointer group shadow-2xs"
               >
-                {/* 卡片头部科技图景 */}
-                <div className="relative h-28 w-full overflow-hidden">
+                {/* 赛事封面图景 */}
+                <div className="relative h-36 w-full overflow-hidden bg-slate-900">
                   <img 
-                    src={card.image} 
-                    alt={card.title} 
+                    src={comp.coverImage} 
+                    alt={comp.title} 
                     className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500" 
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/20 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-900/30 to-transparent" />
                   
-                  <div className={`absolute top-2.5 left-2.5 w-8 h-8 rounded-xl ${card.iconBg} shadow-sm flex items-center justify-center`}>
-                    <Icon className="w-4 h-4" />
+                  {/* 状态角标 */}
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                    <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full backdrop-blur-xs flex items-center gap-1 ${statusBadgeClass}`}>
+                      {isOngoing && <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />}
+                      {statusText}
+                    </span>
                   </div>
 
-                  <span className="absolute top-2.5 right-2.5 text-[9px] font-black px-2 py-0.5 rounded-full bg-slate-900/70 backdrop-blur-xs text-white border border-white/20">
-                    {card.tag}
-                  </span>
+                  {/* 主办方认证标签 */}
+                  {comp.organizerBadge && (
+                    <span className="absolute top-3 right-3 text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-xs text-purple-900 shadow-xs border border-white/50">
+                      {comp.organizerBadge}
+                    </span>
+                  )}
 
-                  <div className="absolute bottom-2 left-2.5 right-2.5">
-                    <div className="text-xs font-black text-white truncate">
-                      {card.title}
+                  <div className="absolute bottom-2.5 left-3 right-3">
+                    <div className="text-sm font-black text-white leading-tight drop-shadow-sm">
+                      {comp.title}
+                    </div>
+                    <div className="text-[11px] text-purple-200 mt-0.5 flex items-center gap-1">
+                      <Building2 className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{comp.organizer}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
-                  <div>
-                    <div className="text-[11px] font-bold text-indigo-600 mb-1">
-                      {card.slogan}
-                    </div>
-                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                      {card.desc}
-                    </p>
+                <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
+                  {/* 赛事类型标签 */}
+                  <div className="flex flex-wrap gap-1">
+                    {comp.typeTags.slice(0, 2).map((tag, idx) => (
+                      <span key={idx} className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-100">
+                        {tag}
+                      </span>
+                    ))}
+                    {comp.tracks.length > 0 && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                        含 {comp.tracks.length} 个赛道
+                      </span>
+                    )}
                   </div>
 
-                  <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
-                    <span className="text-[10px] text-amber-600 font-bold">
-                      {card.prize}
-                    </span>
-                    <span className="text-xs font-bold text-indigo-600 flex items-center gap-0.5 group-hover:translate-x-1 transition-transform">
-                      进入赛道 <ArrowRight className="w-3.5 h-3.5" />
-                    </span>
+                  <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                    {comp.introduction.summary}
+                  </p>
+
+                  {/* 奖池与报名数据 */}
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-medium">特等/最高奖励</div>
+                      <div className="text-xs font-black text-amber-600 font-mono">
+                        {totalPrize}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[10px] text-slate-400 font-medium">累计参赛者</div>
+                      <div className="text-xs font-bold text-slate-700 font-mono">
+                        {totalParticipants > 0 ? `${totalParticipants.toLocaleString()} 人` : '火热招募中'}
+                      </div>
+                    </div>
                   </div>
+
+                  {/* 底部按钮 */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openCompetitionDetail(comp.id);
+                    }}
+                    className="w-full py-2 rounded-xl bg-purple-50 hover:bg-purple-600 text-purple-700 hover:text-white font-bold text-xs transition flex items-center justify-center gap-1.5 group-hover:bg-purple-600 group-hover:text-white cursor-pointer"
+                  >
+                    <Trophy className="w-3.5 h-3.5" />
+                    <span>查看赛事详情</span>
+                    <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
+                  </button>
                 </div>
               </div>
             );

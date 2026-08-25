@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { DatasetItem } from '../../types';
 import { DatasetDetail } from './DatasetDetail';
+import { UserDatasetUploadForm } from './UserDatasetUploadForm';
 import { 
   Database, 
   Download, 
@@ -17,7 +18,11 @@ import {
   FileSpreadsheet,
   Building2,
   Tag,
-  Clock
+  Clock,
+  Plus,
+  User,
+  ShieldCheck,
+  Sparkles
 } from 'lucide-react';
 
 export const DatasetSquare: React.FC = () => {
@@ -25,6 +30,7 @@ export const DatasetSquare: React.FC = () => {
 
   // Selected dataset for viewing details
   const [activeDetailDataset, setActiveDetailDataset] = useState<DatasetItem | null>(null);
+  const [isUploadingDataset, setIsUploadingDataset] = useState<boolean>(false);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -124,6 +130,13 @@ export const DatasetSquare: React.FC = () => {
     return 0;
   });
 
+  // If Upload Subpage is active, render UserDatasetUploadForm
+  if (isUploadingDataset) {
+    return (
+      <UserDatasetUploadForm onBack={() => setIsUploadingDataset(false)} />
+    );
+  }
+
   // If Detail View is active, render Detail Component directly
   if (activeDetailDataset) {
     return (
@@ -135,7 +148,8 @@ export const DatasetSquare: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 select-none items-start">
+    <div className="space-y-4 select-none">
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
       
       {/* 1. 左侧统一多维筛选侧边栏 (Standardized Left Filter Sidebar) */}
       <div className="w-full lg:w-64 bg-white rounded-2xl border border-slate-200/80 p-4.5 shrink-0 space-y-5 text-xs shadow-2xs font-medium">
@@ -421,6 +435,15 @@ export const DatasetSquare: React.FC = () => {
               </button>
             </div>
 
+            {/* 上传数据集按钮 */}
+            <button
+              onClick={() => setIsUploadingDataset(true)}
+              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black shadow-xs hover:shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>上传数据集</span>
+            </button>
+
             <div className="h-4 w-px bg-slate-200 hidden sm:block"></div>
 
             <div className="text-xs text-slate-500 font-medium whitespace-nowrap px-1">
@@ -439,6 +462,8 @@ export const DatasetSquare: React.FC = () => {
               const primaryFormat = ds.formats?.[0] || ds.fileFormats || ds.format || 'CSV';
               const displayBrief = ds.brief || ds.description;
               const domainTagsList = ds.domains || ds.domainTags || [];
+              const isPlatformUploader = ds.uploaderType === 'platform' || !ds.uploaderType || ds.uploaderName === '平台管理';
+              const uploaderDisplay = isPlatformUploader ? '平台管理' : (ds.uploaderName || ds.author || '用户上传');
 
               return (
                 <div
@@ -448,7 +473,7 @@ export const DatasetSquare: React.FC = () => {
                 >
                   <div className="space-y-3">
                     
-                    {/* Header: Modality & Task Type Badges (Both from backend configured dimensions) */}
+                    {/* Header: Modality & Task Type Badges + Uploader Tag */}
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shrink-0">
@@ -458,8 +483,15 @@ export const DatasetSquare: React.FC = () => {
                           {primaryTask}
                         </span>
                       </div>
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 shrink-0">
-                        {primaryFormat}
+                      
+                      {/* Uploader Field */}
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold shrink-0 ${
+                        isPlatformUploader 
+                          ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                          : 'bg-amber-50 text-amber-700 border border-amber-200'
+                      }`}>
+                        {isPlatformUploader ? <ShieldCheck className="w-3 h-3 text-blue-600" /> : <User className="w-3 h-3 text-amber-600" />}
+                        <span>上传者: {uploaderDisplay}</span>
                       </span>
                     </div>
 
@@ -473,9 +505,9 @@ export const DatasetSquare: React.FC = () => {
                       {displayBrief}
                     </p>
 
-                    {/* Domain Tags */}
-                    {domainTagsList.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                    {/* Domain Tags & Format */}
+                    <div className="flex items-center justify-between gap-2 pt-0.5">
+                      <div className="flex flex-wrap items-center gap-1">
                         {domainTagsList.slice(0, 3).map(tag => (
                           <span
                             key={tag}
@@ -490,7 +522,10 @@ export const DatasetSquare: React.FC = () => {
                           </span>
                         )}
                       </div>
-                    )}
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 shrink-0">
+                        {primaryFormat}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Card Footer: Metrics & Direct Action (Size, Downloads, Views, Date) */}
@@ -529,6 +564,7 @@ export const DatasetSquare: React.FC = () => {
               <thead className="bg-slate-50 text-slate-600 font-black border-b border-slate-200">
                 <tr>
                   <th className="p-4">数据集名称与简介</th>
+                  <th className="p-4">上传者</th>
                   <th className="p-4">模态 / 任务类型</th>
                   <th className="p-4">行业领域</th>
                   <th className="p-4">文件格式 / 大小</th>
@@ -538,64 +574,79 @@ export const DatasetSquare: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
-                {filteredDatasets.map(ds => (
-                  <tr
-                    key={ds.id}
-                    onClick={() => setActiveDetailDataset(ds)}
-                    className="hover:bg-indigo-50/40 transition cursor-pointer"
-                  >
-                    <td className="p-4 max-w-xs">
-                      <div className="font-extrabold text-slate-900 hover:text-indigo-600 transition truncate">
-                        {ds.name}
-                      </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">
-                        {ds.brief || ds.description?.slice(0, 45) || '高质量公开数据集'}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold">
-                        {ds.modalities?.[0] || ds.modalityCategory || '表格数据'}
-                      </span>
-                      <div className="text-[10px] text-slate-400 mt-0.5">
-                        {ds.taskTypes?.[0] || ds.taskType || '分类任务'}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex flex-wrap gap-1">
-                        {(ds.domains || ds.domainTags || ['通用']).slice(0, 2).map(tag => (
-                          <span key={tag} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px]">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="font-mono font-bold text-slate-700">
-                        {ds.fileSize || ds.scale || '0 B'}
-                      </div>
-                      <div className="text-[10px] text-slate-400">
-                        {ds.formats?.[0] || ds.fileFormats || 'CSV'}
-                      </div>
-                    </td>
-                    <td className="p-4 text-slate-500 font-mono">
-                      {ds.viewsCount ?? 0} 浏览 · {ds.downloadCount ?? 0} 下载
-                    </td>
-                    <td className="p-4 text-slate-400">
-                      {ds.updatedAt}
-                    </td>
-                    <td className="p-4 text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveDetailDataset(ds);
-                        }}
-                        className="px-3 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-600 font-bold text-xs transition cursor-pointer"
-                      >
-                        查看详情
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredDatasets.map(ds => {
+                  const isPlatformUploader = ds.uploaderType === 'platform' || !ds.uploaderType || ds.uploaderName === '平台管理';
+                  const uploaderDisplay = isPlatformUploader ? '平台管理' : (ds.uploaderName || ds.author || '用户上传');
+
+                  return (
+                    <tr
+                      key={ds.id}
+                      onClick={() => setActiveDetailDataset(ds)}
+                      className="hover:bg-indigo-50/40 transition cursor-pointer"
+                    >
+                      <td className="p-4 max-w-xs">
+                        <div className="font-extrabold text-slate-900 hover:text-indigo-600 transition truncate">
+                          {ds.name}
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">
+                          {ds.brief || ds.description?.slice(0, 45) || '高质量公开数据集'}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold ${
+                          isPlatformUploader 
+                            ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                            : 'bg-amber-50 text-amber-700 border border-amber-200'
+                        }`}>
+                          {isPlatformUploader ? <ShieldCheck className="w-3 h-3 text-blue-600" /> : <User className="w-3 h-3 text-amber-600" />}
+                          <span>{uploaderDisplay}</span>
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold">
+                          {ds.modalities?.[0] || ds.modalityCategory || '表格数据'}
+                        </span>
+                        <div className="text-[10px] text-slate-400 mt-0.5">
+                          {ds.taskTypes?.[0] || ds.taskType || '分类任务'}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-wrap gap-1">
+                          {(ds.domains || ds.domainTags || ['通用']).slice(0, 2).map(tag => (
+                            <span key={tag} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px]">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="font-mono font-bold text-slate-700">
+                          {ds.fileSize || ds.scale || '0 B'}
+                        </div>
+                        <div className="text-[10px] text-slate-400">
+                          {ds.formats?.[0] || ds.fileFormats || 'CSV'}
+                        </div>
+                      </td>
+                      <td className="p-4 text-slate-500 font-mono">
+                        {ds.viewsCount ?? 0} 浏览 · {ds.downloadCount ?? 0} 下载
+                      </td>
+                      <td className="p-4 text-slate-400">
+                        {ds.updatedAt}
+                      </td>
+                      <td className="p-4 text-right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveDetailDataset(ds);
+                          }}
+                          className="px-3 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-600 font-bold text-xs transition cursor-pointer"
+                        >
+                          查看详情
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -618,6 +669,7 @@ export const DatasetSquare: React.FC = () => {
       </div>
 
     </div>
-  );
+  </div>
+);
 };
 

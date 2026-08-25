@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
-import { SkillPluginItem } from '../../../types';
+import { SkillPluginItem, AdminMenuKey } from '../../../types';
 import {
   Puzzle,
   Plus,
@@ -25,10 +25,23 @@ import {
   Check,
   Eye,
   X,
-  FileCode
+  FileCode,
+  ShieldCheck,
+  Clock,
+  XCircle,
+  ChevronRight,
+  FolderTree
 } from 'lucide-react';
 
-export const SkillAdminView: React.FC = () => {
+interface SkillAdminViewProps {
+  activeSubMenu?: AdminMenuKey;
+}
+
+export const SkillAdminView: React.FC<SkillAdminViewProps> = ({ activeSubMenu }) => {
+  if (activeSubMenu === 'skill_audit') {
+    return <SkillAuditAdminView />;
+  }
+
   const { skills, setSkills, showToast } = useApp();
 
   // Mode: 'list' | 'create' | 'edit'
@@ -524,6 +537,7 @@ export const SkillAdminView: React.FC = () => {
             <thead className="bg-slate-950 border-b border-slate-800 text-slate-400 font-bold">
               <tr>
                 <th className="py-3.5 px-4">Skill 标识 / 名称</th>
+                <th className="py-3.5 px-4">创建者</th>
                 <th className="py-3.5 px-4">场景分类</th>
                 <th className="py-3.5 px-4">版本 / 大小</th>
                 <th className="py-3.5 px-4">简介描述</th>
@@ -548,6 +562,16 @@ export const SkillAdminView: React.FC = () => {
                           {sk.id}
                         </div>
                       </div>
+                    </div>
+                  </td>
+
+                  {/* Creator */}
+                  <td className="py-3.5 px-4 text-slate-300">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-mono font-bold text-indigo-400 shrink-0">
+                        {(sk.uploaderName || sk.developer || '管')[0].toUpperCase()}
+                      </div>
+                      <span className="truncate max-w-[90px]">{sk.uploaderName || sk.developer || '系统管理员'}</span>
                     </div>
                   </td>
 
@@ -609,7 +633,7 @@ export const SkillAdminView: React.FC = () => {
 
               {filteredList.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-500 text-xs">
+                  <td colSpan={7} className="py-12 text-center text-slate-500 text-xs">
                     未检索到符合条件的 Skill 插件
                   </td>
                 </tr>
@@ -642,6 +666,7 @@ export const SkillAdminView: React.FC = () => {
               <div className="text-emerald-400"># SKILL.md Manifest Specification</div>
               <div>name: {previewModalSkill.name}</div>
               <div>slug: {previewModalSkill.id}</div>
+              <div>creator: {previewModalSkill.uploaderName || previewModalSkill.developer || '平台管理员'}</div>
               <div>category: {previewModalSkill.category}</div>
               <div>version: {previewModalSkill.version}</div>
               <div>description: {previewModalSkill.description}</div>
@@ -653,6 +678,517 @@ export const SkillAdminView: React.FC = () => {
                 className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold cursor-pointer transition border border-slate-700"
               >
                 关闭预览
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================================================
+// Skill 审核视图 (SkillAuditAdminView)
+// ============================================================================
+
+export const SkillAuditAdminView: React.FC = () => {
+  const { skills, setSkills, showToast } = useApp();
+
+  const [statusFilter, setStatusFilter] = useState<'全部' | '待审核' | '已通过' | '已驳回'>('待审核');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Modals & Active Skill State
+  const [detailSkill, setDetailSkill] = useState<SkillPluginItem | null>(null);
+  const [rejectModalSkill, setRejectModalSkill] = useState<SkillPluginItem | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+
+  // Active File Tab in Detail Modal File Structure Preview
+  const [activeFileKey, setActiveFileKey] = useState<'SKILL.md' | 'scripts/main.py' | 'package.json' | 'requirements.txt'>('SKILL.md');
+
+  // Filter skills list
+  const filteredAuditList = React.useMemo(() => {
+    return skills.filter(sk => {
+      const status = sk.status || '已上架';
+      if (statusFilter !== '全部') {
+        if (statusFilter === '待审核' && status !== '待审核') return false;
+        if (statusFilter === '已通过' && status !== '已通过' && status !== '已上架' && status !== '已下架') return false;
+        if (statusFilter === '已驳回' && status !== '已驳回') return false;
+      }
+
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchName = sk.name.toLowerCase().includes(q);
+        const matchSlug = sk.id.toLowerCase().includes(q);
+        const matchCreator = (sk.uploaderName || sk.developer || '').toLowerCase().includes(q);
+        if (!matchName && !matchSlug && !matchCreator) return false;
+      }
+      return true;
+    });
+  }, [skills, statusFilter, searchQuery]);
+
+  const handleApprove = (sk: SkillPluginItem) => {
+    setSkills(prev => prev.map(item => {
+      if (item.id === sk.id) {
+        return {
+          ...item,
+          status: '未上架' as any, // 刚通过审核的 skill 默认为下架/未上架状态，由用户在前台自行上架
+          auditReason: ''
+        };
+      }
+      return item;
+    }));
+    showToast(`Skill 插件【${sk.name}】审核通过！默认初始为下架状态，用户可随时在上架操作。`);
+    if (detailSkill?.id === sk.id) {
+      setDetailSkill(null);
+    }
+  };
+
+  const handleOpenRejectModal = (sk: SkillPluginItem) => {
+    setRejectModalSkill(sk);
+    setRejectReason(sk.auditReason || '');
+  };
+
+  const handleConfirmReject = () => {
+    if (!rejectModalSkill) return;
+    if (!rejectReason.trim()) {
+      showToast('请输入驳回原因！');
+      return;
+    }
+    setSkills(prev => prev.map(item => {
+      if (item.id === rejectModalSkill.id) {
+        return {
+          ...item,
+          status: '已驳回' as any,
+          auditReason: rejectReason.trim()
+        };
+      }
+      return item;
+    }));
+    showToast(`已驳回 Skill 插件【${rejectModalSkill.name}】审核申请`);
+    if (detailSkill?.id === rejectModalSkill.id) {
+      setDetailSkill(null);
+    }
+    setRejectModalSkill(null);
+    setRejectReason('');
+  };
+
+  // Mock File Content map for tree preview
+  const getFileContent = (file: string, sk: SkillPluginItem) => {
+    switch (file) {
+      case 'SKILL.md':
+        return `---
+name: "${sk.name}"
+description: "${sk.description}"
+version: "${sk.version}"
+author: "${sk.uploaderName || sk.developer || '平台管理员'}"
+category: "${sk.category}"
+---
+
+# ${sk.name}
+
+## 概述
+${sk.description}
+
+## 安装与依赖
+- Python >= 3.10
+- pydantic >= 2.0.0
+- requests >= 2.28.0
+
+## 调用指南
+\`\`\`python
+from skill_runner import run_skill
+
+result = run_skill("${sk.id}", input_data={"query": "hello world"})
+print(result)
+\`\`\`
+`;
+      case 'scripts/main.py':
+        return `# -*- coding: utf-8 -*-
+"""
+Main Entry point for Skill: ${sk.name} (${sk.id})
+Author: ${sk.uploaderName || sk.developer || 'Developer'}
+"""
+
+import sys
+import json
+
+def execute_skill(params: dict) -> dict:
+    # Core execution logic for ${sk.name}
+    query = params.get("query", "")
+    return {
+        "status": "success",
+        "output": f"Processed: {query}",
+        "skill_id": "${sk.id}"
+    }
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        args = json.loads(sys.argv[1])
+        print(json.dumps(execute_skill(args)))
+`;
+      case 'package.json':
+        return `{
+  "name": "${sk.id}",
+  "version": "${sk.version}",
+  "description": "${sk.description}",
+  "main": "scripts/main.py",
+  "author": "${sk.uploaderName || sk.developer || 'Developer'}",
+  "license": "MIT"
+}`;
+      case 'requirements.txt':
+        return `pydantic>=2.0.0\nrequests>=2.28.0\ntyping-extensions>=4.5.0`;
+      default:
+        return '';
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Top Filter Bar */}
+      <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          {/* Status Filter */}
+          <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+            {(['待审核', '已通过', '已驳回', '全部'] as const).map((st) => (
+              <button
+                key={st}
+                onClick={() => setStatusFilter(st)}
+                className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
+                  statusFilter === st
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {st}
+              </button>
+            ))}
+          </div>
+
+          {/* Search Box */}
+          <div className="relative flex-1 md:w-64">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="搜索 Skill 名称 / slug / 上传者..."
+              className="w-full bg-slate-950 border border-slate-800 text-white placeholder:text-slate-500 rounded-xl pl-8 pr-3 py-1.5 text-xs focus:border-indigo-500 outline-none transition"
+            />
+          </div>
+        </div>
+
+        <div className="text-xs text-slate-400 font-mono">
+          共找到 <span className="text-indigo-400 font-bold">{filteredAuditList.length}</span> 项 Skill 审核队列
+        </div>
+      </div>
+
+      {/* Audit List Table */}
+      <div className="rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead className="bg-slate-950/80 text-slate-400 font-bold border-b border-slate-800 select-none">
+              <tr>
+                <th className="p-4 min-w-[220px]">Skill 名称 / slug</th>
+                <th className="p-4 min-w-[120px]">上传者</th>
+                <th className="p-4 min-w-[100px]">版本</th>
+                <th className="p-4 min-w-[100px]">文件大小</th>
+                <th className="p-4 min-w-[140px]">上传时间</th>
+                <th className="p-4 min-w-[100px]">状态</th>
+                <th className="p-4 min-w-[180px] text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60 font-medium">
+              {filteredAuditList.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-16 text-center text-slate-500">
+                    <CheckCircle2 className="w-10 h-10 mx-auto text-slate-600 mb-3" />
+                    <div className="text-sm font-bold text-slate-400">暂无符合条件的 Skill 审核申请</div>
+                  </td>
+                </tr>
+              ) : (
+                filteredAuditList.map(sk => {
+                  const status = sk.status || '已上架';
+                  const isPending = status === '待审核';
+                  const isApproved = status === '已通过' || status === '已上架' || status === '已下架';
+                  const isRejected = status === '已驳回';
+
+                  return (
+                    <tr key={sk.id} className="hover:bg-slate-800/40 transition">
+                      {/* Name & Slug */}
+                      <td className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5 text-indigo-400">
+                            <Zap className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0 space-y-0.5">
+                            <div className="font-bold text-white truncate max-w-xs">{sk.name}</div>
+                            <div className="text-[11px] font-mono text-slate-500 truncate">{sk.id}</div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Uploader / Creator */}
+                      <td className="p-4 text-slate-300">
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-mono font-bold text-indigo-400 shrink-0">
+                            {(sk.uploaderName || sk.developer || '管')[0].toUpperCase()}
+                          </div>
+                          <span className="truncate max-w-[100px]">{sk.uploaderName || sk.developer || '平台管理员'}</span>
+                        </div>
+                      </td>
+
+                      {/* Version */}
+                      <td className="p-4 font-mono font-bold text-slate-200">
+                        {sk.version}
+                      </td>
+
+                      {/* Size */}
+                      <td className="p-4 font-mono text-slate-300">
+                        {sk.packageSize || '1.8 MB'}
+                      </td>
+
+                      {/* Time */}
+                      <td className="p-4 font-mono text-slate-400 text-[11px]">
+                        {sk.updatedAt || '2026-08-22 16:20'}
+                      </td>
+
+                      {/* Status */}
+                      <td className="p-4">
+                        {isPending && (
+                          <span className="px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400 font-bold text-[11px] flex items-center gap-1 w-fit">
+                            <Clock className="w-3 h-3" />
+                            <span>待审核</span>
+                          </span>
+                        )}
+                        {isApproved && (
+                          <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold text-[11px] flex items-center gap-1 w-fit">
+                            <CheckCircle2 className="w-3 h-3" />
+                            <span>已通过</span>
+                          </span>
+                        )}
+                        {isRejected && (
+                          <span className="px-2.5 py-1 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-400 font-bold text-[11px] flex items-center gap-1 w-fit">
+                            <XCircle className="w-3 h-3" />
+                            <span>已驳回</span>
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => setDetailSkill(sk)}
+                            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>查看详情</span>
+                          </button>
+                          {isPending && (
+                            <>
+                              <button
+                                onClick={() => handleApprove(sk)}
+                                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-sm"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>通过</span>
+                              </button>
+                              <button
+                                onClick={() => handleOpenRejectModal(sk)}
+                                className="px-3 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/40 border border-rose-500/30 text-rose-300 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>驳回</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Audit Detail Modal */}
+      {detailSkill && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-4xl w-full p-6 space-y-6 shadow-2xl animate-fade-in my-8 max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">{detailSkill.name} ({detailSkill.id})</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">Skill 代码包结构预览与安全离线审计</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setDetailSkill(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Basic Info */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">一、基本参数</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                  <span className="text-[10px] text-slate-500">上传者/创建人</span>
+                  <div className="font-bold text-slate-200 truncate">{detailSkill.uploaderName || detailSkill.developer || '平台管理员'}</div>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                  <span className="text-[10px] text-slate-500">场景分类</span>
+                  <div className="font-bold text-slate-200 truncate">{detailSkill.category}</div>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                  <span className="text-[10px] text-slate-500">版本</span>
+                  <div className="font-bold text-slate-200 font-mono">{detailSkill.version}</div>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                  <span className="text-[10px] text-slate-500">文件包大小</span>
+                  <div className="font-bold text-slate-200 font-mono">{detailSkill.packageSize || '1.8 MB'}</div>
+                </div>
+              </div>
+              <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-1">
+                <span className="text-[10px] text-slate-500 font-bold">Skill 描述说明</span>
+                <p className="text-slate-300 leading-relaxed">{detailSkill.description}</p>
+              </div>
+            </div>
+
+            {/* File Tree & Code Preview */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">二、代码文件结构预览 (Tree Preview)</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 border border-slate-800 rounded-2xl bg-slate-950 overflow-hidden text-xs">
+                {/* File Tree Left Sidebar */}
+                <div className="p-3 border-r border-slate-800 space-y-1.5 bg-slate-950/60">
+                  <div className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1 pb-2 border-b border-slate-800/80">
+                    <FolderTree className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Package Root</span>
+                  </div>
+                  {(['SKILL.md', 'scripts/main.py', 'package.json', 'requirements.txt'] as const).map(file => (
+                    <button
+                      key={file}
+                      onClick={() => setActiveFileKey(file)}
+                      className={`w-full text-left px-2.5 py-1.5 rounded-lg flex items-center justify-between font-mono text-xs transition cursor-pointer ${
+                        activeFileKey === file
+                          ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 font-bold'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                      }`}
+                    >
+                      <span className="truncate">{file}</span>
+                      <ChevronRight className="w-3 h-3 text-slate-600" />
+                    </button>
+                  ))}
+                </div>
+
+                {/* Code Preview Box */}
+                <div className="md:col-span-2 p-3 font-mono text-[11px] text-slate-300 max-h-64 overflow-y-auto bg-slate-900/90 leading-relaxed whitespace-pre-wrap selection:bg-indigo-500/30">
+                  <div className="text-indigo-400/80 font-bold pb-2 mb-2 border-b border-slate-800 flex items-center justify-between">
+                    <span>// File: {activeFileKey}</span>
+                    <span className="text-[10px] text-slate-500 font-normal">Read-only code preview</span>
+                  </div>
+                  {getFileContent(activeFileKey, detailSkill)}
+                </div>
+              </div>
+            </div>
+
+            {/* Security Scan */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">三、自动安全与代码静态审查结果</h4>
+              <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/30 flex items-start gap-3 text-xs">
+                <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <div className="font-bold text-emerald-300">代码静态审计通过</div>
+                  <div className="text-emerald-400/80 leading-relaxed">
+                    经由 SonarQube & Bandit 代码审核扫描引擎检测：Skill 文件包内未发现恶意反弹 Shell、无提权命令、无未授权外部黑名单 IP 链接及敏感凭据硬编码风险。
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Reject Reason Display */}
+            {detailSkill.status === '已驳回' && detailSkill.auditReason && (
+              <div className="p-4 rounded-xl bg-rose-950/20 border border-rose-500/30 space-y-1 text-xs">
+                <div className="font-bold text-rose-400">驳回原因</div>
+                <p className="text-rose-200">{detailSkill.auditReason}</p>
+              </div>
+            )}
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3 border-t border-slate-800 pt-4">
+              <button
+                onClick={() => setDetailSkill(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition cursor-pointer"
+              >
+                关闭
+              </button>
+              {(detailSkill.status || '已上架') === '待审核' && (
+                <>
+                  <button
+                    onClick={() => handleOpenRejectModal(detailSkill)}
+                    className="px-4 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600/40 border border-rose-500/30 text-rose-300 text-xs font-bold transition cursor-pointer"
+                  >
+                    驳回申请
+                  </button>
+                  <button
+                    onClick={() => handleApprove(detailSkill)}
+                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition cursor-pointer shadow-md"
+                  >
+                    通过审核
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Dialog */}
+      {rejectModalSkill && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-fade-in">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-white">驳回 Skill 审核</h3>
+              <button
+                onClick={() => setRejectModalSkill(null)}
+                className="text-slate-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-400">
+              请填写驳回 Skill【{rejectModalSkill.name}】的具体原因：
+            </p>
+
+            <textarea
+              rows={4}
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="请输入明确的驳回原因，如：代码存在未知死循环、缺少必要的 SKILL.md 定义描述等..."
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder:text-slate-600 focus:border-indigo-500 outline-none transition resize-none"
+            />
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setRejectModalSkill(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition cursor-pointer"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleConfirmReject}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition cursor-pointer shadow-md"
+              >
+                确认驳回
               </button>
             </div>
           </div>

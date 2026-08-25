@@ -12,6 +12,7 @@ import {
   Edit2,
   Power,
   CheckCircle,
+  CheckCircle2,
   XCircle,
   Eye,
   ArrowLeft,
@@ -76,8 +77,424 @@ export const DatasetAdminViews: React.FC<DatasetAdminViewsProps> = ({ activeSubM
   return (
     <div className="space-y-6">
       {activeSubMenu === 'dataset_list' && <DatasetListAdminView />}
+      {activeSubMenu === 'dataset_audit' && <DatasetAuditAdminView />}
       {activeSubMenu === 'dataset_tags' && <DatasetTagsAdminView />}
       {activeSubMenu === 'dataset_stats' && <DatasetStatsAdminView />}
+    </div>
+  );
+};
+
+// ============================================================================
+// 4. 数据集审核视图 (DatasetAuditAdminView)
+// ============================================================================
+
+const DatasetAuditAdminView: React.FC = () => {
+  const { datasets, updateDataset, showToast } = useApp();
+
+  const [statusFilter, setStatusFilter] = useState<'全部' | '待审核' | '已通过' | '已驳回'>('待审核');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Modal / Detail State
+  const [detailDataset, setDetailDataset] = useState<DatasetItem | null>(null);
+  const [rejectModalDataset, setRejectModalDataset] = useState<DatasetItem | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+
+  // Filter list
+  const filteredAuditList = useMemo(() => {
+    return datasets.filter(ds => {
+      const status = ds.status || '已上架';
+      if (statusFilter !== '全部') {
+        if (statusFilter === '待审核' && status !== '待审核') return false;
+        if (statusFilter === '已通过' && status !== '已通过' && status !== '已上架' && status !== '已下架') return false;
+        if (statusFilter === '已驳回' && status !== '已驳回') return false;
+      }
+
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchName = ds.name.toLowerCase().includes(q);
+        const matchUploader = (ds.uploaderName || ds.author || '').toLowerCase().includes(q);
+        if (!matchName && !matchUploader) return false;
+      }
+      return true;
+    });
+  }, [datasets, statusFilter, searchQuery]);
+
+  const handleApprove = (ds: DatasetItem) => {
+    updateDataset(ds.id, {
+      status: '已通过' as any,
+      auditReason: ''
+    });
+    showToast(`数据集【${ds.name}】已审核通过！用户现在可在【我的数据集】中进行上架。`);
+    if (detailDataset?.id === ds.id) {
+      setDetailDataset(null);
+    }
+  };
+
+  const handleOpenRejectModal = (ds: DatasetItem) => {
+    setRejectModalDataset(ds);
+    setRejectReason(ds.auditReason || '');
+  };
+
+  const handleConfirmReject = () => {
+    if (!rejectModalDataset) return;
+    if (!rejectReason.trim()) {
+      showToast('请输入驳回原因！');
+      return;
+    }
+    updateDataset(rejectModalDataset.id, {
+      status: '已驳回' as any,
+      auditReason: rejectReason.trim()
+    });
+    showToast(`已驳回数据集【${rejectModalDataset.name}】的审核申请`);
+    if (detailDataset?.id === rejectModalDataset.id) {
+      setDetailDataset(null);
+    }
+    setRejectModalDataset(null);
+    setRejectReason('');
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Search & Filter Bar */}
+      <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          {/* Status Tabs */}
+          <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+            {(['待审核', '已通过', '已驳回', '全部'] as const).map((st) => (
+              <button
+                key={st}
+                onClick={() => setStatusFilter(st)}
+                className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
+                  statusFilter === st
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {st}
+              </button>
+            ))}
+          </div>
+
+          {/* Search Box */}
+          <div className="relative flex-1 md:w-64">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="搜索数据集名称 / 上传者..."
+              className="w-full bg-slate-950 border border-slate-800 text-white placeholder:text-slate-500 rounded-xl pl-8 pr-3 py-1.5 text-xs focus:border-indigo-500 outline-none transition"
+            />
+          </div>
+        </div>
+
+        <div className="text-xs text-slate-400 font-mono">
+          共找到 <span className="text-indigo-400 font-bold">{filteredAuditList.length}</span> 项数据集审核记录
+        </div>
+      </div>
+
+      {/* Audit Table */}
+      <div className="rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead className="bg-slate-950/80 text-slate-400 font-bold border-b border-slate-800 select-none">
+              <tr>
+                <th className="p-4 min-w-[220px]">数据集名称</th>
+                <th className="p-4 min-w-[120px]">上传者</th>
+                <th className="p-4 min-w-[120px]">模态</th>
+                <th className="p-4 min-w-[100px]">文件大小</th>
+                <th className="p-4 min-w-[140px]">上传时间</th>
+                <th className="p-4 min-w-[100px]">状态</th>
+                <th className="p-4 min-w-[180px] text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60 font-medium">
+              {filteredAuditList.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-16 text-center text-slate-500">
+                    <CheckCircle2 className="w-10 h-10 mx-auto text-slate-600 mb-3" />
+                    <div className="text-sm font-bold text-slate-400">暂无符合条件的审核记录</div>
+                  </td>
+                </tr>
+              ) : (
+                filteredAuditList.map(ds => {
+                  const status = ds.status || '已上架';
+                  const isPending = status === '待审核';
+                  const isApproved = status === '已通过' || status === '已上架' || status === '已下架';
+                  const isRejected = status === '已驳回';
+
+                  return (
+                    <tr key={ds.id} className="hover:bg-slate-800/40 transition">
+                      {/* Name */}
+                      <td className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5 text-indigo-400">
+                            <Database className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0 space-y-0.5">
+                            <div className="font-bold text-white truncate max-w-xs">{ds.name}</div>
+                            <div className="text-[11px] text-slate-400 line-clamp-1">{ds.brief || ds.description?.slice(0, 30)}</div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Uploader */}
+                      <td className="p-4 text-slate-300">
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-mono font-bold text-indigo-400 shrink-0">
+                            {(ds.uploaderName || ds.author || '管')[0].toUpperCase()}
+                          </div>
+                          <span className="truncate max-w-[100px]">{ds.uploaderName || ds.author || '平台管理员'}</span>
+                        </div>
+                      </td>
+
+                      {/* Modality */}
+                      <td className="p-4">
+                        <span className="px-2.5 py-1 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 font-bold text-[11px]">
+                          {ds.modalities?.[0] || ds.modalityCategory || '表格数据'}
+                        </span>
+                      </td>
+
+                      {/* Size */}
+                      <td className="p-4 font-mono font-bold text-slate-200">
+                        {ds.fileSize || ds.scale || '267.5 MB'}
+                      </td>
+
+                      {/* Time */}
+                      <td className="p-4 font-mono text-slate-400 text-[11px]">
+                        {ds.updatedAt || '2026-08-20 14:30'}
+                      </td>
+
+                      {/* Status */}
+                      <td className="p-4">
+                        {isPending && (
+                          <span className="px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400 font-bold text-[11px] flex items-center gap-1 w-fit">
+                            <Clock className="w-3 h-3" />
+                            <span>待审核</span>
+                          </span>
+                        )}
+                        {isApproved && (
+                          <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold text-[11px] flex items-center gap-1 w-fit">
+                            <CheckCircle2 className="w-3 h-3" />
+                            <span>已通过</span>
+                          </span>
+                        )}
+                        {isRejected && (
+                          <span className="px-2.5 py-1 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-400 font-bold text-[11px] flex items-center gap-1 w-fit">
+                            <XCircle className="w-3 h-3" />
+                            <span>已驳回</span>
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => setDetailDataset(ds)}
+                            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>查看详情</span>
+                          </button>
+                          {isPending && (
+                            <>
+                              <button
+                                onClick={() => handleApprove(ds)}
+                                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-sm"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>通过</span>
+                              </button>
+                              <button
+                                onClick={() => handleOpenRejectModal(ds)}
+                                className="px-3 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/40 border border-rose-500/30 text-rose-300 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>驳回</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Audit Detail Modal */}
+      {detailDataset && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full p-6 space-y-6 shadow-2xl animate-fade-in my-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                  <Database className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">{detailDataset.name}</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">审核详情与文件内容安全扫描控制台</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setDetailDataset(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* 基本信息 */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">一、基本信息</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                  <span className="text-[10px] text-slate-500">上传者</span>
+                  <div className="font-bold text-slate-200 truncate">{detailDataset.uploaderName || detailDataset.author || '平台管理员'}</div>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                  <span className="text-[10px] text-slate-500">模态</span>
+                  <div className="font-bold text-slate-200 truncate">{detailDataset.modalities?.join(', ') || detailDataset.modalityCategory || '表格数据'}</div>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                  <span className="text-[10px] text-slate-500">文件大小</span>
+                  <div className="font-bold text-slate-200 font-mono">{detailDataset.fileSize || detailDataset.scale || '267.5 MB'}</div>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                  <span className="text-[10px] text-slate-500">上传时间</span>
+                  <div className="font-bold text-slate-200 font-mono">{detailDataset.updatedAt || '2026-08-20 14:30'}</div>
+                </div>
+              </div>
+              <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-1">
+                <span className="text-[10px] text-slate-500 font-bold">描述与简介</span>
+                <p className="text-slate-300 leading-relaxed">{detailDataset.brief || detailDataset.description || '暂无详细描述信息'}</p>
+              </div>
+            </div>
+
+            {/* 文件预览 */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">二、文件预览与结构</h4>
+              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3 text-xs">
+                <div className="flex items-center justify-between text-slate-400">
+                  <span className="font-bold text-slate-200 flex items-center gap-1.5">
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                    <span>包含文件清单 (样例预览)</span>
+                  </span>
+                  <span className="font-mono text-[11px]">Format: {detailDataset.formats?.join('/') || 'CSV'}</span>
+                </div>
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 font-mono text-[11px] text-slate-300 space-y-1.5 overflow-x-auto">
+                  <div className="text-emerald-400 font-bold">✓ dataset_data_sample.csv (2,500 rows, 18 columns)</div>
+                  <div className="text-slate-500 border-t border-slate-800 pt-1.5">
+                    Header: [id, timestamp, feature_a, feature_b, category_label, score_weight...]
+                  </div>
+                  <div className="text-slate-400">
+                    Row 1: 10001, 2026-08-20T10:00:00Z, 0.8421, "Normal", 1, 0.95
+                  </div>
+                  <div className="text-slate-400">
+                    Row 2: 10002, 2026-08-20T10:01:00Z, 0.1205, "Standard", 0, 0.88
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 安全扫描结果 */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">三、自动安全扫描结果</h4>
+              <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/30 flex items-start gap-3 text-xs">
+                <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <div className="font-bold text-emerald-300">安全扫描已通过</div>
+                  <div className="text-emerald-400/80 leading-relaxed">
+                    经过 ClamAV 杀毒引擎与 VirusTotal 自动化离线分析，未在数据包中检测出恶意可执行脚本、挂马程序、加密木马或高危敏感信息泄露风险。
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 审核结果/驳回原因展示 */}
+            {detailDataset.status === '已驳回' && detailDataset.auditReason && (
+              <div className="p-4 rounded-xl bg-rose-950/20 border border-rose-500/30 space-y-1 text-xs">
+                <div className="font-bold text-rose-400">驳回原因</div>
+                <p className="text-rose-200">{detailDataset.auditReason}</p>
+              </div>
+            )}
+
+            {/* Footer 操作按钮 */}
+            <div className="flex items-center justify-end gap-3 border-t border-slate-800 pt-4">
+              <button
+                onClick={() => setDetailDataset(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition cursor-pointer"
+              >
+                关闭
+              </button>
+              {(detailDataset.status || '已上架') === '待审核' && (
+                <>
+                  <button
+                    onClick={() => handleOpenRejectModal(detailDataset)}
+                    className="px-4 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600/40 border border-rose-500/30 text-rose-300 text-xs font-bold transition cursor-pointer"
+                  >
+                    驳回申请
+                  </button>
+                  <button
+                    onClick={() => handleApprove(detailDataset)}
+                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition cursor-pointer shadow-md"
+                  >
+                    通过审核
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Reason Modal */}
+      {rejectModalDataset && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-fade-in">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-white">驳回数据集审核</h3>
+              <button
+                onClick={() => setRejectModalDataset(null)}
+                className="text-slate-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-400">
+              请填写驳回【{rejectModalDataset.name}】的具体原因，该通知将同步反馈给上传用户：
+            </p>
+
+            <textarea
+              rows={4}
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="请输入清晰具体的驳回原因，如：缺少字段字典、文件格式无法读取、包含敏感隐秘信息等..."
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder:text-slate-600 focus:border-indigo-500 outline-none transition resize-none"
+            />
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setRejectModalDataset(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition cursor-pointer"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleConfirmReject}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition cursor-pointer shadow-md"
+              >
+                确认驳回
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -412,6 +829,7 @@ const DatasetListAdminView: React.FC = () => {
                   </button>
                 </th>
                 <th className="p-4 min-w-[240px]">数据集名称</th>
+                <th className="p-4 min-w-[120px]">上传者</th>
                 <th className="p-4 min-w-[120px]">模态</th>
                 <th className="p-4 min-w-[130px]">任务类型</th>
                 <th className="p-4 min-w-[130px]">行业领域</th>
@@ -426,7 +844,7 @@ const DatasetListAdminView: React.FC = () => {
             <tbody className="divide-y divide-slate-800/60 font-medium">
               {filteredDatasets.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-16 text-center text-slate-500">
+                  <td colSpan={11} className="py-16 text-center text-slate-500">
                     <Database className="w-10 h-10 mx-auto text-slate-600 mb-3" />
                     <div className="text-sm font-bold text-slate-400">未找到符合条件的数据集</div>
                     <div className="text-xs text-slate-500 mt-1">请尝试调整搜索条件或点击上方按钮创建数据集</div>
@@ -470,6 +888,18 @@ const DatasetListAdminView: React.FC = () => {
                               {ds.brief || ds.description?.slice(0, 40) || '暂无一句话简介'}
                             </div>
                           </div>
+                        </div>
+                      </td>
+
+                      {/* Uploader */}
+                      <td className="p-4 text-slate-300 font-medium">
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-mono font-bold text-indigo-400 shrink-0">
+                            {(ds.uploaderName || ds.author || '管')[0].toUpperCase()}
+                          </div>
+                          <span className="truncate max-w-[100px] text-xs" title={ds.uploaderName || ds.author || '平台管理员'}>
+                            {ds.uploaderName || ds.author || '平台管理员'}
+                          </span>
                         </div>
                       </td>
 
@@ -764,7 +1194,7 @@ const DatasetFormModal: React.FC<DatasetFormModalProps> = ({
   const [fileName, setFileName] = useState(dataset?.files?.[0]?.name || (dataset?.name ? `${dataset.name}.zip` : 'retail_dataset_master.zip'));
   const [fileSize, setFileSize] = useState(dataset?.fileSize || dataset?.scale || '10.5 GB');
   const [isUploaded, setIsUploaded] = useState(true);
-  const [status, setStatus] = useState<'已上架' | '已下架' | '草稿'>(dataset?.status || '已上架');
+  const [status, setStatus] = useState<'已上架' | '已下架' | '待审核' | '已通过' | '已驳回' | '草稿'>(dataset?.status || '已上架');
 
   // Markdown Editor Tab (edit / preview / split)
   const [editorMode, setEditorMode] = useState<'edit' | 'preview'>('edit');
@@ -1335,7 +1765,16 @@ const DatasetPreviewModal: React.FC<{
           </div>
 
           {/* Tags Matrix */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+              <span className="text-[10px] text-slate-500">上传者</span>
+              <div className="font-bold text-slate-200 truncate flex items-center gap-1.5">
+                <span className="w-4 h-4 rounded-full bg-indigo-500/20 text-indigo-400 text-[10px] flex items-center justify-center font-bold">
+                  {(dataset.uploaderName || dataset.author || '管')[0].toUpperCase()}
+                </span>
+                <span>{dataset.uploaderName || dataset.author || '平台管理员'}</span>
+              </div>
+            </div>
             <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
               <span className="text-[10px] text-slate-500">模态</span>
               <div className="font-bold text-slate-200 truncate">

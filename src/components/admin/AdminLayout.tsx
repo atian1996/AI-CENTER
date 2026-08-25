@@ -85,6 +85,8 @@ export const AdminLayout: React.FC = () => {
   const [datasetMenuExpanded, setDatasetMenuExpanded] = useState<boolean>(true);
   // Model sub-menu collapse state
   const [modelMenuExpanded, setModelMenuExpanded] = useState<boolean>(true);
+  // Skill sub-menu collapse state
+  const [skillMenuExpanded, setSkillMenuExpanded] = useState<boolean>(true);
 
   // Search keyword inside admin view
   const [adminSearch, setAdminSearch] = useState('');
@@ -97,8 +99,9 @@ export const AdminLayout: React.FC = () => {
   const isTaskSubMenu = activeAdminMenu === 'publish_audit' || activeAdminMenu === 'task_monitor';
   const isComputeSubMenu = activeAdminMenu.startsWith('compute_');
   const isAgentSubMenu = ['agent_list', 'agent_orders', 'agent_stats', 'agent_tags'].includes(activeAdminMenu);
-  const isDatasetSubMenu = ['dataset_list', 'dataset_tags', 'dataset_stats'].includes(activeAdminMenu);
+  const isDatasetSubMenu = ['dataset_list', 'dataset_audit', 'dataset_tags', 'dataset_stats'].includes(activeAdminMenu);
   const isModelSubMenu = ['model_list', 'model_calls', 'model_stats'].includes(activeAdminMenu);
+  const isSkillSubMenu = ['skill_list', 'skill_audit'].includes(activeAdminMenu);
 
   // Navigation Items
   const mainNav = [
@@ -152,6 +155,11 @@ export const AdminLayout: React.FC = () => {
           icon: <Database className="w-3.5 h-3.5" />
         },
         {
+          id: 'dataset_audit' as AdminMenuKey,
+          label: '数据集审核',
+          icon: <FileCheck className="w-3.5 h-3.5" />
+        },
+        {
           id: 'dataset_tags' as AdminMenuKey,
           label: '分类标签管理',
           icon: <Tag className="w-3.5 h-3.5" />
@@ -196,6 +204,11 @@ export const AdminLayout: React.FC = () => {
           id: 'skill_list' as AdminMenuKey,
           label: 'Skill管理',
           icon: <Puzzle className="w-3.5 h-3.5" />
+        },
+        {
+          id: 'skill_audit' as AdminMenuKey,
+          label: 'Skill审核',
+          icon: <FileCheck className="w-3.5 h-3.5" />
         }
       ]
     },
@@ -352,6 +365,13 @@ export const AdminLayout: React.FC = () => {
           category: '数据集管理',
           crumb: ['后台管理', '数据集管理', '数据集管理']
         };
+      case 'dataset_audit':
+        return {
+          title: '数据集审核',
+          subtitle: '处理用户在前台上传提交的数据集审核队列，审核通过后用户可进行自主上架并在数据集广场展示',
+          category: '数据集管理',
+          crumb: ['后台管理', '数据集管理', '数据集审核']
+        };
       case 'dataset_tags':
         return {
           title: '分类标签管理',
@@ -478,6 +498,13 @@ export const AdminLayout: React.FC = () => {
           category: 'Skill管理',
           crumb: ['后台管理', 'Skill管理', 'Skill列表']
         };
+      case 'skill_audit':
+        return {
+          title: 'Skill 插件审核',
+          subtitle: '审核用户在前台提交创建的 Skill 扩展包，全面审查代码安全性与包文件结构',
+          category: 'Skill管理',
+          crumb: ['后台管理', 'Skill管理', 'Skill审核']
+        };
       case 'community_audit':
         return {
           title: '社区发帖审核',
@@ -565,14 +592,16 @@ export const AdminLayout: React.FC = () => {
                   const isAgent = item.id === 'agent_admin_group';
                   const isDataset = item.id === 'dataset_admin_group';
                   const isModel = item.id === 'model_admin_group';
-                  const isGroupActive = isCompute ? isComputeSubMenu : isTask ? isTaskSubMenu : isAgent ? isAgentSubMenu : isDataset ? isDatasetSubMenu : isModelSubMenu;
-                  const isExpanded = isCompute ? computeMenuExpanded : isTask ? taskMenuExpanded : isAgent ? agentMenuExpanded : isDataset ? datasetMenuExpanded : modelMenuExpanded;
+                  const isSkill = item.id === 'skill_admin_group';
+                  const isGroupActive = isCompute ? isComputeSubMenu : isTask ? isTaskSubMenu : isAgent ? isAgentSubMenu : isDataset ? isDatasetSubMenu : isModel ? isModelSubMenu : isSkillSubMenu;
+                  const isExpanded = isCompute ? computeMenuExpanded : isTask ? taskMenuExpanded : isAgent ? agentMenuExpanded : isDataset ? datasetMenuExpanded : isModel ? modelMenuExpanded : skillMenuExpanded;
                   const toggleExpanded = () => {
                     if (isCompute) setComputeMenuExpanded(!computeMenuExpanded);
                     if (isTask) setTaskMenuExpanded(!taskMenuExpanded);
                     if (isAgent) setAgentMenuExpanded(!agentMenuExpanded);
                     if (isDataset) setDatasetMenuExpanded(!datasetMenuExpanded);
                     if (isModel) setModelMenuExpanded(!modelMenuExpanded);
+                    if (isSkill) setSkillMenuExpanded(!skillMenuExpanded);
                   };
 
                   return (
@@ -779,8 +808,8 @@ export const AdminLayout: React.FC = () => {
               <AgentAdminViews activeSubMenu={activeAdminMenu} />
             )}
 
-            {/* 数据集管理 3 大核心子视图 */}
-            {['dataset_list', 'dataset_tags', 'dataset_stats'].includes(activeAdminMenu) && (
+            {/* 数据集管理 4 大核心子视图 */}
+            {['dataset_list', 'dataset_audit', 'dataset_tags', 'dataset_stats'].includes(activeAdminMenu) && (
               <DatasetAdminViews activeSubMenu={activeAdminMenu} />
             )}
 
@@ -789,8 +818,10 @@ export const AdminLayout: React.FC = () => {
             {activeAdminMenu === 'model_calls' && <ModelCallsAdminView />}
             {activeAdminMenu === 'model_stats' && <ModelStatsAdminView />}
 
-            {/* Skill管理 */}
-            {activeAdminMenu === 'skill_list' && <SkillAdminView />}
+            {/* Skill管理 2 大核心子视图 */}
+            {['skill_list', 'skill_audit'].includes(activeAdminMenu) && (
+              <SkillAdminView activeSubMenu={activeAdminMenu} />
+            )}
 
             {/* 社区管理 4 大核心子视图 */}
             {['community_audit', 'community_post', 'community_comment', 'community_stats'].includes(activeAdminMenu) && (

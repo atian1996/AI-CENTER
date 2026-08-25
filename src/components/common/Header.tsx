@@ -291,32 +291,10 @@ export const Header: React.FC = () => {
                       setWorkspaceSubTab('overview');
                       setUserMenuOpen(false);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 hover:text-indigo-600 hover:bg-slate-50 text-left transition font-medium"
-                  >
-                    <User className="w-3.5 h-3.5 text-indigo-600" />
-                    个人主页
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveTab('workspace');
-                      setWorkspaceSubTab('overview');
-                      setUserMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 hover:text-indigo-600 hover:bg-slate-50 text-left transition font-medium"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 hover:text-indigo-600 hover:bg-slate-50 text-left transition font-medium cursor-pointer"
                   >
                     <LayoutDashboard className="w-3.5 h-3.5 text-indigo-600" />
                     开发者工作台
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveTab('workspace');
-                      setWorkspaceSubTab('settings');
-                      setUserMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 hover:text-indigo-600 hover:bg-slate-50 text-left transition font-medium"
-                  >
-                    <Settings className="w-3.5 h-3.5 text-indigo-600" />
-                    账户与偏好设置
                   </button>
                 </div>
 

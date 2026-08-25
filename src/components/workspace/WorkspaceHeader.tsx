@@ -1,19 +1,12 @@
 import React from 'react';
-import { useApp } from '../../context/AppContext';
 import { 
   LayoutDashboard,
-  Plus,
-  Sparkles,
-  Zap
+  Cpu,
+  Activity,
+  Layers
 } from 'lucide-react';
 
 export const WorkspaceHeader: React.FC = () => {
-  const { 
-    setCreateAgentModalOpen, 
-    setPublishTaskModalOpen, 
-    setCreateComputeModalOpen 
-  } = useApp();
-
   return (
     <div className="bg-white border-b border-slate-200/80 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs">
       
@@ -39,33 +32,6 @@ export const WorkspaceHeader: React.FC = () => {
             全站 AI 资产控制、任务协同、算力调度与云端数据统一管理平台
           </p>
         </div>
-      </div>
-
-      {/* Quick Action Buttons for Workspace */}
-      <div className="flex items-center gap-2.5 shrink-0">
-        <button
-          onClick={() => setCreateAgentModalOpen(true)}
-          className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm transition-all transform active:scale-95 flex items-center gap-1.5 cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>创建新 Agent</span>
-        </button>
-
-        <button
-          onClick={() => setPublishTaskModalOpen(true)}
-          className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold transition flex items-center gap-1.5 cursor-pointer"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>发布需求任务</span>
-        </button>
-
-        <button
-          onClick={() => setCreateComputeModalOpen(true)}
-          className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 text-xs font-extrabold transition flex items-center gap-1.5 cursor-pointer"
-        >
-          <Zap className="w-3.5 h-3.5 text-indigo-600" />
-          <span>租用算力</span>
-        </button>
       </div>
 
     </div>

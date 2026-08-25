@@ -22,7 +22,9 @@ import {
   FolderOpen,
   Tag,
   Building2,
-  HardDrive
+  HardDrive,
+  User,
+  ShieldCheck
 } from 'lucide-react';
 
 interface DatasetDetailProps {
@@ -31,7 +33,7 @@ interface DatasetDetailProps {
 }
 
 export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack }) => {
-  const { showToast } = useApp();
+  const { showToast, downloadDataset } = useApp();
 
   // Active Tab: overview | files | comments
   const [activeTab, setActiveTab] = useState<'overview' | 'files' | 'comments'>('overview');
@@ -138,6 +140,8 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack })
   const taskTypesText = dataset.taskTypes?.join('、') || dataset.taskType || '分类任务';
   const domainsList = dataset.domains || dataset.domainTags || [];
   const formatsText = dataset.formats?.join(' / ') || dataset.fileFormats || dataset.format || 'CSV';
+  const isPlatformUploader = dataset.uploaderType === 'platform' || !dataset.uploaderType || dataset.uploaderName === '平台管理';
+  const uploaderDisplay = isPlatformUploader ? '平台管理' : (dataset.uploaderName || dataset.author || '用户上传');
 
   return (
     <div className="space-y-6 select-none animate-fade-in max-w-7xl mx-auto pb-16">
@@ -165,7 +169,7 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack })
           
           {/* Left info */}
           <div className="space-y-3 flex-1 min-w-0">
-            {/* Badges: Modality, Task Type, Format */}
+            {/* Badges: Modality, Task Type, Format, Uploader */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-3 py-1 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200/80 text-xs font-bold flex items-center gap-1.5">
                 <Layers className="w-3.5 h-3.5" />
@@ -179,6 +183,15 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack })
 
               <span className="px-3 py-1 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 text-xs font-mono font-bold">
                 {formatsText}
+              </span>
+
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold ${
+                isPlatformUploader 
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+              }`}>
+                {isPlatformUploader ? <ShieldCheck className="w-3.5 h-3.5 text-blue-600" /> : <User className="w-3.5 h-3.5 text-amber-600" />}
+                <span>上传者: {uploaderDisplay}</span>
               </span>
             </div>
 
@@ -245,7 +258,7 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack })
 
             {/* Download Package */}
             <button
-              onClick={() => showToast(`已启动数据集文件包下载【${dataset.name}】(${dataset.fileSize || dataset.scale || '完整包'})`)}
+              onClick={() => downloadDataset(dataset)}
               className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-sm shadow-indigo-500/20 transition flex items-center gap-2 cursor-pointer"
             >
               <Download className="w-4 h-4" />

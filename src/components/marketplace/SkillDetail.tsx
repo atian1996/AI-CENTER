@@ -45,7 +45,7 @@ interface SkillDetailProps {
 }
 
 export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initialTab = 'overview' }) => {
-  const { showToast } = useApp();
+  const { showToast, downloadSkill } = useApp();
 
   // Active Tab: overview | files | comments
   const [activeTab, setActiveTab] = useState<'overview' | 'files' | 'comments'>(initialTab);
@@ -135,7 +135,7 @@ export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initial
   };
 
   const handleDownload = () => {
-    showToast(`已开始下载【${skill.name}】全量源码包 (${skill.packageSize || '2.8 MB'})`);
+    downloadSkill(skill);
   };
 
   const handleCopyText = (text: string, identifier: string) => {

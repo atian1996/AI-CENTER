@@ -28,7 +28,9 @@ import {
   ComputeOrderItem,
   ComputeRunningInstanceItem,
   ComputeSettlementItem,
-  MyCustomImage
+  MyCustomImage,
+  DatasetDownloadRecord,
+  SkillDownloadRecord
 } from '../types';
 import { 
   initialUserProfile, 
@@ -273,7 +275,7 @@ interface AppContextType {
   markComputeSettlementPaid: (id: string, invoiceNo?: string, paymentVoucher?: string, paymentMethod?: string, remark?: string) => void;
   generateComputeSettlement: (operator: string, period: string) => void;
 
-  // 数据集后台管理
+  // 数据集管理与集市交互
   addDataset: (dataset: Partial<DatasetItem>) => void;
   updateDataset: (id: string, updates: Partial<DatasetItem>) => void;
   deleteDataset: (id: string) => boolean;
@@ -283,6 +285,23 @@ interface AppContextType {
   updateDatasetTag: (dimension: 'modality' | 'taskType' | 'domain' | 'format', oldTag: string, newTag: string) => boolean;
   deleteDatasetTag: (dimension: 'modality' | 'taskType' | 'domain' | 'format', tag: string) => boolean;
   reorderDatasetTags: (dimension: 'modality' | 'taskType' | 'domain' | 'format', startIndex: number, endIndex: number) => void;
+  
+  // 数据集与Skill下载记录及前台提交审核工作流
+  datasetDownloads: DatasetDownloadRecord[];
+  setDatasetDownloads: React.Dispatch<React.SetStateAction<DatasetDownloadRecord[]>>;
+  skillDownloads: SkillDownloadRecord[];
+  setSkillDownloads: React.Dispatch<React.SetStateAction<SkillDownloadRecord[]>>;
+  downloadDataset: (dataset: DatasetItem) => void;
+  downloadSkill: (skill: SkillPluginItem) => void;
+  submitDatasetForApproval: (dataset: Partial<DatasetItem>) => void;
+  submitSkillForApproval: (skill: Partial<SkillPluginItem>) => void;
+  auditDataset: (id: string, action: 'pass' | 'reject', reason?: string) => void;
+  publishDataset: (id: string) => void;
+  auditSkill: (id: string, action: 'pass' | 'reject', reason?: string) => void;
+  publishSkill: (id: string) => void;
+  deleteSkill: (id: string) => void;
+  updateSkill: (id: string, updates: Partial<SkillPluginItem>) => void;
+  toggleSkillStatus: (id: string, nextStatus?: '已上架' | '已下架' | '待审核' | '已通过' | '已驳回' | '草稿') => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -483,24 +502,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const [datasets, setDatasets] = useState<DatasetItem[]>(() =>
-    mockDatasets.map((ds, idx) => ({
-      ...ds,
-      status: (ds.status || (idx === 3 ? '草稿' : idx === 4 ? '已下架' : '已上架')) as any,
-      brief: ds.brief || ds.description?.slice(0, 50) || '精选高质量开放数据集，适用于多场景深度学习与数据挖掘',
-      modalities: ds.modalities && ds.modalities.length > 0 
-        ? ds.modalities 
-        : [ds.modalityCategory === '表格' ? '表格数据' : (ds.modalityCategory || '表格数据')],
-      taskTypes: ds.taskTypes && ds.taskTypes.length > 0 
-        ? ds.taskTypes 
-        : [ds.taskType || '分类任务'],
-      domains: ds.domains && ds.domains.length > 0 
-        ? ds.domains 
-        : (ds.domainTags && ds.domainTags.length > 0 ? ds.domainTags : [ds.theme || '商业/管理']),
-      formats: ds.formats && ds.formats.length > 0 
-        ? ds.formats 
-        : [ds.fileFormats?.toLowerCase().includes('csv') ? 'CSV/XLSX' : ds.fileFormats?.toLowerCase().includes('json') ? 'JSON/JSONL' : 'Parquet'],
-      lastDownloadTime: ds.lastDownloadTime || (idx === 0 ? '2026-08-19 15:42:10' : idx === 1 ? '2026-08-19 11:20:05' : '2026-08-18 09:15:33'),
-    }))
+    mockDatasets.map((ds, idx) => {
+      const isPlatform = ds.uploaderType === 'platform' || idx % 2 === 0 || ds.id === 'ds_powerbi_retail';
+      return {
+        ...ds,
+        uploaderType: isPlatform ? 'platform' : 'user',
+        uploaderName: isPlatform ? '平台管理' : (ds.author || 'AI开发者_908'),
+        status: (ds.status || (idx === 3 ? '草稿' : idx === 4 ? '已下架' : '已上架')) as any,
+        brief: ds.brief || ds.description?.slice(0, 50) || '精选高质量开放数据集，适用于多场景深度学习与数据挖掘',
+        modalities: ds.modalities && ds.modalities.length > 0 
+          ? ds.modalities 
+          : [ds.modalityCategory === '表格' ? '表格数据' : (ds.modalityCategory || '表格数据')],
+        taskTypes: ds.taskTypes && ds.taskTypes.length > 0 
+          ? ds.taskTypes 
+          : [ds.taskType || '分类任务'],
+        domains: ds.domains && ds.domains.length > 0 
+          ? ds.domains 
+          : (ds.domainTags && ds.domainTags.length > 0 ? ds.domainTags : [ds.theme || '商业/管理']),
+        formats: ds.formats && ds.formats.length > 0 
+          ? ds.formats 
+          : [ds.fileFormats?.toLowerCase().includes('csv') ? 'CSV/XLSX' : ds.fileFormats?.toLowerCase().includes('json') ? 'JSON/JSONL' : 'Parquet'],
+        lastDownloadTime: ds.lastDownloadTime || (idx === 0 ? '2026-08-19 15:42:10' : idx === 1 ? '2026-08-19 11:20:05' : '2026-08-18 09:15:33'),
+      };
+    })
   );
 
   // 数据集分类标签字典维度
@@ -689,7 +713,353 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
     showToast('标签排序已更新');
   };
-  const [skills, setSkills] = useState<SkillPluginItem[]>(mockSkills);
+  const [skills, setSkills] = useState<SkillPluginItem[]>(() =>
+    mockSkills.map((sk, idx) => {
+      const isPlatform = sk.uploaderType === 'platform' || sk.isOfficial || idx % 2 === 0;
+      return {
+        ...sk,
+        uploaderType: isPlatform ? 'platform' : 'user',
+        uploaderName: isPlatform ? '平台管理' : (sk.developer || '插件极客_Alex'),
+        status: sk.status || '已上架',
+      };
+    })
+  );
+
+  // 数据集下载记录状态
+  const [datasetDownloads, setDatasetDownloads] = useState<DatasetDownloadRecord[]>([
+    {
+      id: 'rec_ds_01',
+      datasetId: 'ds_weather_python',
+      datasetName: '云上气象Python',
+      uploaderType: 'user',
+      uploaderName: '气科气科',
+      downloadTime: '2026-08-20 14:32:10',
+      fileFormat: 'CSV',
+      fileSize: '763.9 KB',
+      downloadCount: 3,
+      mountPath: '/home/mw/input/weather_python_lab',
+      modalityCategory: '表格',
+      coverImage: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=400&auto=format&fit=crop&q=80'
+    },
+    {
+      id: 'rec_ds_02',
+      datasetId: 'ds_powerbi_retail',
+      datasetName: 'PowerBI_零售与商超商品销售',
+      uploaderType: 'platform',
+      uploaderName: '平台管理',
+      downloadTime: '2026-08-19 11:15:40',
+      fileFormat: 'CSV/XLSX',
+      fileSize: '267.5 MB',
+      downloadCount: 1,
+      mountPath: '/datasets/shared/retail_master',
+      modalityCategory: '表格',
+      coverImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&auto=format&fit=crop&q=80'
+    },
+    {
+      id: 'rec_ds_03',
+      datasetId: 'ds_gpr_china_temp',
+      datasetName: 'GPRChinaTemp1km',
+      uploaderType: 'user',
+      uploaderName: 'lqy',
+      downloadTime: '2026-08-18 09:20:00',
+      fileFormat: 'GeoTIFF / CSV',
+      fileSize: '30.8 GB',
+      downloadCount: 2,
+      mountPath: '/home/mw/input/GPRChinaTemp1km',
+      modalityCategory: '多模态',
+      coverImage: 'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=400&auto=format&fit=crop&q=80'
+    }
+  ]);
+
+  // Skill 插件下载记录状态
+  const [skillDownloads, setSkillDownloads] = useState<SkillDownloadRecord[]>([
+    {
+      id: 'rec_sk_01',
+      skillId: 'sk_web_search',
+      skillName: '实时全网深度搜索',
+      uploaderType: 'platform',
+      uploaderName: '平台管理',
+      category: '效率工具',
+      version: 'v2.4.0',
+      packageSize: '1.2 MB',
+      downloadTime: '2026-08-20 16:10:05',
+      downloadCount: 2,
+      developerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
+    },
+    {
+      id: 'rec_sk_02',
+      skillId: 'sk_python_code_runner',
+      skillName: 'Python 沙箱代码执行器',
+      uploaderType: 'platform',
+      uploaderName: '平台管理',
+      category: '编程开发',
+      version: 'v3.1.2',
+      packageSize: '4.8 MB',
+      downloadTime: '2026-08-19 18:40:22',
+      downloadCount: 1,
+      developerAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'
+    },
+    {
+      id: 'rec_sk_03',
+      skillId: 'sk_financial_valuation',
+      skillName: 'DCF 财务估值建模引擎',
+      uploaderType: 'user',
+      uploaderName: 'Franski',
+      category: '数据分析',
+      version: 'v1.0.4',
+      packageSize: '2.6 MB',
+      downloadTime: '2026-08-18 10:25:12',
+      downloadCount: 1,
+      developerAvatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&auto=format&fit=crop&q=80'
+    }
+  ]);
+
+  // 前台用户上传数据集 (待审核)
+  const submitDatasetForApproval = (datasetData: Partial<DatasetItem>) => {
+    const newId = `ds_user_${Date.now()}`;
+    const newDs: DatasetItem = {
+      id: newId,
+      name: datasetData.name || '用户提交数据集',
+      repoPath: `${user.name || 'user'}/${datasetData.name || 'dataset'}`,
+      author: user.name || '当前用户',
+      authorAvatar: user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      authorOrg: '开发者个人',
+      updatedAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      relativeTime: '刚刚',
+      viewsCount: 0,
+      downloadCount: 0,
+      likesCount: 0,
+      favoritesCount: 0,
+      isLiked: false,
+      isFavorite: false,
+      isCreatedByMe: true,
+      isMounted: false,
+      uploaderType: 'user',
+      uploaderName: user.name || '当前用户',
+      status: '待审核',
+      auditTime: '等待管理员审核',
+      modalityCategory: (datasetData.modalities?.[0] === '表格数据' ? '表格' : datasetData.modalities?.[0] as any) || '表格',
+      taskType: datasetData.taskTypes?.[0] || '分类任务',
+      domainTags: datasetData.domains || ['商业/管理'],
+      license: datasetData.license || 'CC-BY-4.0',
+      language: '中文',
+      description: datasetData.description || '用户上传数据集详细描述',
+      backgroundDesc: datasetData.description?.slice(0, 100) || '',
+      dataDesc: datasetData.description || '',
+      sourceDesc: '用户原创上传',
+      problemDesc: '可用于算法训练与数据科学建模',
+      mountPath: `/home/user/datasets/${newId}`,
+      fileFormats: datasetData.formats?.join(', ') || '.csv',
+      fileSize: datasetData.fileSize || '15.2 MB',
+      filesCount: 1,
+      theme: datasetData.domains?.[0] || '商业/管理',
+      techDomain: datasetData.taskTypes?.[0] || '数据分析',
+      files: [
+        {
+          id: `f_${newId}`,
+          name: datasetData.files?.[0]?.name || `${datasetData.name || 'data'}.csv`,
+          size: datasetData.fileSize || '15.2 MB',
+          format: 'csv',
+          rowsCount: 10000,
+          colsCount: 12,
+          encoding: 'UTF-8',
+          headers: ['ID', 'Feature_A', 'Feature_B', 'Label'],
+          sampleRows: []
+        }
+      ],
+      comments: [],
+      brief: datasetData.brief || datasetData.description?.slice(0, 50) || '用户上传数据集',
+      modalities: datasetData.modalities || ['表格数据'],
+      taskTypes: datasetData.taskTypes || ['分类任务'],
+      domains: datasetData.domains || ['商业/管理'],
+      formats: datasetData.formats || ['CSV/XLSX'],
+      lastDownloadTime: '暂无下载记录',
+      ...datasetData
+    };
+    setDatasets(prev => [newDs, ...prev]);
+    showToast(`数据集【${newDs.name}】已提交审核！待后台审核通过并点击上架后在广场可见。`);
+  };
+
+  // 前台用户创建 Skill (待审核)
+  const submitSkillForApproval = (skillData: Partial<SkillPluginItem>) => {
+    const newId = skillData.id || `sk_user_${Date.now()}`;
+    const newSkill: SkillPluginItem = {
+      id: newId,
+      name: skillData.name || '用户提交Skill插件',
+      repoPath: `@${user.name || 'user'}/${skillData.id || 'custom-skill'}`,
+      category: skillData.category || '效率工具',
+      developer: user.name || '当前用户',
+      developerAvatar: user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      uploaderType: 'user',
+      uploaderName: user.name || '当前用户',
+      isCreatedByMe: true,
+      status: '待审核',
+      auditTime: '等待管理员审核',
+      version: skillData.version || 'v1.0.0',
+      updatedAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      relativeTime: '刚刚',
+      installs: 0,
+      downloadsCount: 0,
+      viewsCount: 0,
+      likesCount: 0,
+      favoritesCount: 0,
+      isLiked: false,
+      isFavorite: false,
+      description: skillData.description || '用户创建的 Skill 插件功能描述',
+      compatibleAgents: skillData.compatibleAgents || '全量 Agent 兼容',
+      packageFormat: 'ZIP / Skill 包',
+      packageSize: skillData.packageSize || '2.4 MB',
+      requiredPermissions: skillData.requiredPermissions || ['网络访问', '本地沙盒'],
+      ...skillData
+    };
+    setSkills(prev => [newSkill, ...prev]);
+    showToast(`Skill 插件【${newSkill.name}】已提交审核！待后台审核通过并点击上架后在市场可见。`);
+  };
+
+  // 后台审核数据集 (通过/驳回)
+  const auditDataset = (id: string, action: 'pass' | 'reject', reason?: string) => {
+    setDatasets(prev => prev.map(ds => {
+      if (ds.id === id) {
+        return {
+          ...ds,
+          status: action === 'pass' ? '已下架' : '已驳回', // 刚通过审核的数据集默认为下架状态
+          auditReason: reason || (action === 'pass' ? '符合平台数据集规范，审核通过' : '数据集元数据或样本文件不符合规范，请修改后重新提交'),
+          auditTime: new Date().toISOString().replace('T', ' ').substring(0, 16)
+        };
+      }
+      return ds;
+    }));
+    showToast(`数据集审核已完成：【${action === 'pass' ? '审核通过（默认下架）' : '已驳回'}】`);
+  };
+
+  // 后台将已通过的数据集上架
+  const publishDataset = (id: string) => {
+    setDatasets(prev => prev.map(ds => {
+      if (ds.id === id) {
+        return { ...ds, status: '已上架' };
+      }
+      return ds;
+    }));
+    showToast('数据集已成功上架！现已在数据集广场全员可见');
+  };
+
+  // 后台审核 Skill 插件 (通过/驳回)
+  const auditSkill = (id: string, action: 'pass' | 'reject', reason?: string) => {
+    setSkills(prev => prev.map(sk => {
+      if (sk.id === id) {
+        return {
+          ...sk,
+          status: action === 'pass' ? '已下架' : '已驳回', // 刚通过审核的 Skill 默认为下架状态
+          auditReason: reason || (action === 'pass' ? '代码与安全规范检查通过，准予通过' : '插件代码或权限配置不合规，请检查后重新提交'),
+          auditTime: new Date().toISOString().replace('T', ' ').substring(0, 16)
+        };
+      }
+      return sk;
+    }));
+    showToast(`Skill 插件审核已完成：【${action === 'pass' ? '审核通过（默认下架）' : '已驳回'}】`);
+  };
+
+  // 后台将已通过的 Skill 上架
+  const publishSkill = (id: string) => {
+    setSkills(prev => prev.map(sk => {
+      if (sk.id === id) {
+        return { ...sk, status: '已上架' };
+      }
+      return sk;
+    }));
+    showToast('Skill 插件已成功上架！现已在 Skill 插件市场全员可见');
+  };
+
+  // Skill 删除、更新、状态切换
+  const deleteSkill = (id: string) => {
+    setSkills(prev => prev.filter(sk => sk.id !== id));
+    showToast('已成功删除 Skill 插件');
+  };
+
+  const updateSkill = (id: string, updates: Partial<SkillPluginItem>) => {
+    setSkills(prev => prev.map(sk => {
+      if (sk.id === id) {
+        return {
+          ...sk,
+          ...updates,
+          status: '待审核',
+          auditReason: undefined,
+          updatedAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
+        };
+      }
+      return sk;
+    }));
+    showToast('Skill 插件配置已修改并重新提交审核！');
+  };
+
+  const toggleSkillStatus = (id: string, nextStatus?: '已上架' | '已下架' | '待审核' | '已通过' | '已驳回' | '草稿') => {
+    setSkills(prev => prev.map(sk => {
+      if (sk.id === id) {
+        const determinedStatus = nextStatus || (sk.status === '已上架' ? '已下架' : '已上架');
+        showToast(`Skill 插件【${sk.name}】状态已变更为: ${determinedStatus}`);
+        return {
+          ...sk,
+          status: determinedStatus
+        };
+      }
+      return sk;
+    }));
+  };
+
+  // 下载数据集记录
+  const downloadDataset = (dataset: DatasetItem) => {
+    const isPlat = dataset.uploaderType === 'platform' || !dataset.uploaderType;
+    const newRec: DatasetDownloadRecord = {
+      id: `rec_ds_${Date.now()}`,
+      datasetId: dataset.id,
+      datasetName: dataset.name,
+      uploaderType: isPlat ? 'platform' : 'user',
+      uploaderName: isPlat ? '平台管理' : (dataset.uploaderName || dataset.author || '平台管理员'),
+      downloadTime: new Date().toISOString().replace('T', ' ').substring(0, 19),
+      fileFormat: dataset.fileFormats || dataset.format || 'CSV/XLSX',
+      fileSize: dataset.fileSize || dataset.scale || '10.5 MB',
+      downloadCount: 1,
+      mountPath: dataset.mountPath,
+      modalityCategory: dataset.modalityCategory || '表格',
+      coverImage: dataset.coverImage
+    };
+    setDatasetDownloads(prev => {
+      const existing = prev.find(r => r.datasetId === dataset.id);
+      if (existing) {
+        return prev.map(r => r.datasetId === dataset.id ? { ...r, downloadCount: r.downloadCount + 1, downloadTime: newRec.downloadTime } : r);
+      }
+      return [newRec, ...prev];
+    });
+    setDatasets(prev => prev.map(d => d.id === dataset.id ? { ...d, downloadCount: (d.downloadCount || 0) + 1 } : d));
+    showToast(`正在下载【${dataset.name}】数据包...`);
+  };
+
+  // 下载 Skill 插件记录
+  const downloadSkill = (skill: SkillPluginItem) => {
+    const isPlat = skill.uploaderType === 'platform' || skill.isOfficial;
+    const newRec: SkillDownloadRecord = {
+      id: `rec_sk_${Date.now()}`,
+      skillId: skill.id,
+      skillName: skill.name,
+      uploaderType: isPlat ? 'platform' : 'user',
+      uploaderName: isPlat ? '平台管理' : (skill.uploaderName || skill.developer || '插件开发者'),
+      category: skill.category || '效率工具',
+      version: skill.version || 'v1.0.0',
+      packageSize: skill.packageSize || '1.8 MB',
+      downloadTime: new Date().toISOString().replace('T', ' ').substring(0, 19),
+      downloadCount: 1,
+      developerAvatar: skill.developerAvatar
+    };
+    setSkillDownloads(prev => {
+      const existing = prev.find(r => r.skillId === skill.id);
+      if (existing) {
+        return prev.map(r => r.skillId === skill.id ? { ...r, downloadCount: r.downloadCount + 1, downloadTime: newRec.downloadTime } : r);
+      }
+      return [newRec, ...prev];
+    });
+    setSkills(prev => prev.map(s => s.id === skill.id ? { ...s, downloadsCount: (s.downloadsCount || 0) + 1, installs: (s.installs || 0) + 1 } : s));
+    showToast(`正在下载【${skill.name}】插件源码包...`);
+  };
   const [favoriteAgentIds, setFavoriteAgentIds] = useState<string[]>(['ag_01', 'ag_03']);
   const [tasks, setTasks] = useState<TaskItem[]>(mockRichTasks);
   const [courses] = useState<CourseItem[]>(mockCourses);
@@ -2578,6 +2948,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateDatasetTag,
       deleteDatasetTag,
       reorderDatasetTags,
+      // 数据集与Skill下载记录及前台审核工作流
+      datasetDownloads,
+      setDatasetDownloads,
+      skillDownloads,
+      setSkillDownloads,
+      downloadDataset,
+      downloadSkill,
+      submitDatasetForApproval,
+      submitSkillForApproval,
+      auditDataset,
+      publishDataset,
+      auditSkill,
+      publishSkill,
+      deleteSkill,
+      updateSkill,
+      toggleSkillStatus,
       // 模型后台管理
       setModels,
       addModel,

@@ -238,16 +238,16 @@ export const WorkspaceOverview: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setWorkspaceSubTab('orders')}
+            onClick={() => setWorkspaceSubTab('points')}
             className="p-4 rounded-2xl bg-purple-50/60 hover:bg-purple-50 border border-purple-200/60 text-left transition cursor-pointer group"
           >
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-extrabold text-purple-900">待评价订单</span>
+              <span className="text-xs font-extrabold text-purple-900">账户流水 & 消费</span>
               <span className="w-5 h-5 rounded-full bg-purple-600 text-white font-extrabold text-[10px] flex items-center justify-center">
                 {pendingOrderCount}
               </span>
             </div>
-            <p className="text-[11px] text-purple-800/80 font-medium truncate">GPU 算力充值包 (100卡时)</p>
+            <p className="text-[11px] text-purple-800/80 font-medium truncate">智能客服订阅 · 算力租赁明细</p>
           </button>
 
           <button

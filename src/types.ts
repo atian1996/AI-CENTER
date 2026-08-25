@@ -15,12 +15,14 @@ export type MarketplaceSubTab = 'agent' | 'model' | 'dataset' | 'skill';
 
 export type WorkspaceSubTab = 
   | 'overview' 
+  | 'points'
   | 'assets' 
   | 'my-tasks' 
-  | 'orders'
+  | 'compute'
+  | 'competitions'
+  | 'community'
   | 'calls' 
   | 'apikeys' 
-  | 'points' 
   | 'notifications' 
   | 'settings';
 
@@ -49,27 +51,44 @@ export interface UserProfile {
   points: number; // 可用积分
   frozenPoints?: number; // 冻结积分
   todayEarnedPoints: number;
+  continuousCheckInDays?: number; // 连续签到天数
   githubUrl?: string;
   websiteUrl?: string;
   bio: string;
   mfaEnabled: boolean;
 }
 
+export type TransactionType = '充值' | '消费' | '积分获取' | '积分消耗';
 export type TransactionCategory = 'recharge' | 'expense' | 'points_earn' | 'points_spend';
+export type TransactionStatus = '成功' | '处理中' | '失败';
 
 export interface AccountTransaction {
   id: string;
-  time: string;
-  title: string; // 交易项目或类型 (如: 充值, 算力租赁, 每日签到, 购买Agent)
-  category: TransactionCategory;
-  currencyType: 'rmb' | 'points' | 'both';
-  rmbAmount?: number; // 人民币金额 (正数为增加，负数为支出)
-  pointsAmount?: number; // 积分变动 (正数为增加，负数为消耗)
-  rmbBalanceAfter?: number; // 变动后余额
-  pointsBalanceAfter?: number; // 变动后积分
-  paymentMethod?: string; // 支付方式 (如 微信支付, 支付宝)
-  status?: 'success' | 'failed' | 'pending';
-  deductionInfo?: string; // 抵扣说明 (如 "积分抵扣 -200分")
+  time: string; // 如 "08-24 14:30"
+  type: TransactionType; // '充值' | '消费' | '积分获取' | '积分消耗'
+  category: TransactionCategory; // 'recharge' | 'expense' | 'points_earn' | 'points_spend'
+  detail: string; // 详情，如 "Agent订阅-智能客服月卡", "Agent订阅抵扣", "微信支付", "算力租赁-RTX4090按量3.5h", "每日签到", "支付宝"
+  amountText: string; // 金额显示，如 "+¥100.00", "-¥29.90", "+5分", "-300分"
+  balanceChangeText: string; // 余额/积分变化，如 "¥200→¥170.10", "1,500→1,200分", "¥100→¥200", "¥106.55→¥100", "1,495→1,500分", "¥50→¥100"
+  status: TransactionStatus; // '成功' | '处理中' | '失败'
+  
+  // 结构化字段供各Tab专属视图使用：
+  paymentMethod?: string; // 支付方式 (如 '微信支付', '支付宝') - 用于【充值记录】
+  scene?: string; // 场景 (如 'Agent订阅', '算力租赁') - 用于【消费记录】
+  productName?: string; // 商品 (如 '智能客服-月卡', 'RTX4090-按量3.5h') - 用于【消费记录】
+  source?: string; // 来源 (如 '每日签到') - 用于【积分获取】
+  pointsAmountNum?: number; // 积分数值 (如 5, 300)
+  purpose?: string; // 用途 (如 'Agent订阅抵扣') - 用于【积分消耗】
+  remark?: string; // 说明 (如 '连续签到第3天', '抵扣¥3.00')
+  
+  // 历史兼容字段
+  title?: string;
+  currencyType?: 'rmb' | 'points' | 'both';
+  rmbAmount?: number;
+  pointsAmount?: number;
+  rmbBalanceAfter?: number;
+  pointsBalanceAfter?: number;
+  deductionInfo?: string;
 }
 
 export interface PointRecord {
@@ -412,7 +431,11 @@ export interface DatasetItem {
   fields?: { name: string; type: string; desc: string }[];
   lineage?: string[];
   isPrivate?: boolean;
-  status?: '已上架' | '已下架' | '草稿';
+  uploaderType?: 'platform' | 'user'; // 上传者类型
+  uploaderName?: string; // 上传者名称
+  status?: '已上架' | '已下架' | '待审核' | '已通过' | '已驳回' | '草稿';
+  auditReason?: string; // 审核意见
+  auditTime?: string; // 审核时间
   brief?: string; // 一句话简介 (限50字)
   modalities?: string[]; // 多选模态
   taskTypes?: string[]; // 多选任务类型
@@ -487,6 +510,12 @@ export interface SkillPluginItem {
   developerAvatar?: string;
   developerOrg?: string;
   authorSignature?: string; // 如 "弗兰克斯基 (Franski)"
+  uploaderType?: 'platform' | 'user'; // 上传者类型
+  uploaderName?: string; // 上传者名称
+  isCreatedByMe?: boolean; // 是否当前用户上传/创建
+  status?: '已上架' | '已下架' | '待审核' | '已通过' | '已驳回' | '草稿';
+  auditReason?: string; // 审核意见
+  auditTime?: string; // 审核时间
   version: string;
   updatedAt?: string;
   relativeTime?: string;
@@ -536,6 +565,41 @@ export interface SkillPluginItem {
   
   // 详情页 - 评论
   comments?: SkillCommentItem[];
+}
+
+// 数据集下载记录
+export interface DatasetDownloadRecord {
+  id: string;
+  datasetId: string;
+  datasetName: string;
+  uploaderType: 'platform' | 'user';
+  uploaderName: string;
+  downloadTime: string;
+  downloadedAt?: string;
+  fileFormat: string;
+  fileSize: string;
+  downloadCount: number;
+  mountPath?: string;
+  modalityCategory?: string;
+  modality?: string;
+  coverImage?: string;
+}
+
+// Skill 插件下载记录
+export interface SkillDownloadRecord {
+  id: string;
+  skillId: string;
+  skillName: string;
+  uploaderType: 'platform' | 'user';
+  uploaderName: string;
+  developer?: string;
+  category: string;
+  version: string;
+  packageSize: string;
+  downloadTime: string;
+  downloadedAt?: string;
+  downloadCount: number;
+  developerAvatar?: string;
 }
 
 // 任务大厅规范类型
@@ -1074,12 +1138,14 @@ export type AdminMenuKey =
   | 'agent_stats'         // Agent管理 - 用量统计
   | 'agent_tags'          // Agent管理 - 分类标签管理
   | 'dataset_list'        // 数据集管理 - 数据集列表及配置
+  | 'dataset_audit'       // 数据集管理 - 数据集审核
   | 'dataset_tags'        // 数据集管理 - 分类标签管理
   | 'dataset_stats'       // 数据集管理 - 数据集使用统计
   | 'model_list'          // 模型管理 - 模型管理与计费配置
   | 'model_calls'         // 模型管理 - 模型调用记录
   | 'model_stats'         // 模型管理 - 模型使用统计
-  | 'skill_list'           // Skill管理 - 列表及配置
+  | 'skill_list'          // Skill管理 - 列表及配置
+  | 'skill_audit'          // Skill管理 - Skill审核
   | 'community_audit'      // 社区管理 - 发帖审核
   | 'community_post'       // 社区管理 - 帖子管理
   | 'community_comment'    // 社区管理 - 评论管理
