@@ -2165,7 +2165,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return;
     }
     setHasCheckedInToday(true);
-    const earnedPoints = 50;
+    const earnedPoints = 5;
     setUser(prev => ({
       ...prev,
       points: prev.points + earnedPoints,
@@ -2184,7 +2184,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Update onboarding task
     setOnboardingTasks(prev => prev.map(t => t.actionKey === 'checkin' ? { ...t, completed: true } : t));
 
-    showToast(`签到成功！获得 +${earnedPoints} 积分`);
+    showToast(`🎉 签到成功！已获取 +${earnedPoints} 积分`);
   };
 
   const completeOnboardingTask = (taskId: string) => {

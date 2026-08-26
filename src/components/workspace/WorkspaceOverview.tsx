@@ -306,7 +306,7 @@ export const WorkspaceOverview: React.FC = () => {
               <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center mb-2 font-bold shadow-xs group-hover:scale-105 transition">
                 <Cpu className="w-4 h-4" />
               </div>
-              <div className="text-xs font-extrabold text-slate-800 group-hover:text-indigo-600 transition">启动算力工坊</div>
+              <div className="text-xs font-extrabold text-slate-800 group-hover:text-indigo-600 transition">启用算力工坊</div>
               <div className="text-[10px] text-slate-400 font-medium">开箱即用 GPU 容器</div>
             </button>
 
@@ -320,7 +320,7 @@ export const WorkspaceOverview: React.FC = () => {
                 <CalendarCheck className="w-4 h-4" />
               </div>
               <div className="text-xs font-extrabold text-slate-800 group-hover:text-amber-600 transition">每日签到领奖</div>
-              <div className="text-[10px] text-slate-400 font-medium">+50 积分奖励</div>
+              <div className="text-[10px] text-slate-400 font-medium">+5 积分奖励</div>
             </button>
           </div>
         </div>

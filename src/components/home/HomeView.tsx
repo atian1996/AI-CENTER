@@ -44,7 +44,9 @@ import {
   Search,
   Code2,
   Gift,
-  X
+  X,
+  Database,
+  Download
 } from 'lucide-react';
 
 // 赛事中心 4 大官方赛道卡片数据（融合高质感科技插画背景与前沿赛题）
@@ -137,11 +139,16 @@ export const HomeView: React.FC = () => {
     setCreateComputeModalOpen,
     posts,
     agents,
+    models,
+    datasets,
+    computeSpecs,
+    subscriptions,
     tasks,
     skills,
     competitions,
     openCompetitionDetail,
     openAgentDetail,
+    openModelDetail,
     setSandboxAgent,
     showToast
   } = useApp();
@@ -149,11 +156,95 @@ export const HomeView: React.FC = () => {
   // Banner 状态与自动轮播
   const [currentBanner, setCurrentBanner] = useState(0);
 
-  // 每日签到弹窗控制
-  const [showCheckInModal, setShowCheckInModal] = useState(false);
+  // 动态构建算力卡片列表
+  const availableRentalCards = React.useMemo(() => {
+    const onlineSpecs = (computeSpecs || []).filter(s => s.status === '上架');
+    if (onlineSpecs.length > 0) {
+      return onlineSpecs.map((s, idx) => {
+        const borderColors = [
+          'border-t-amber-500',
+          'border-t-emerald-600',
+          'border-t-purple-600',
+          'border-t-indigo-600',
+          'border-t-cyan-600',
+          'border-t-blue-600'
+        ];
+        return {
+          id: s.id,
+          title: s.name,
+          availableCards: s.stock ?? Math.floor(Math.random() * 8 + 2),
+          hourlyPrice: s.hourlyPrice,
+          topBorderColor: borderColors[idx % borderColors.length],
+          gpuModel: s.gpuModel,
+          vram: `${s.vram} 显存`,
+          cpu: `${s.cpu} 核`,
+          ram: `${s.ram} ${s.ramUnit || 'GB'}`,
+          disk: `${s.disk} ${s.diskUnit || 'GB'}`
+        };
+      });
+    }
+    return [
+      {
+        id: 'pro_6000_96g',
+        title: 'PRO 6000 96GB',
+        availableCards: 7,
+        hourlyPrice: 6.19,
+        topBorderColor: 'border-t-amber-500',
+        gpuModel: 'RTX PRO 6000',
+        vram: '96GB 显存',
+        cpu: '24 核',
+        ram: '128GB',
+        disk: '1000GB NVMe'
+      },
+      {
+        id: 'rtx_5090_32g',
+        title: 'RTX 5090 32GB',
+        availableCards: 12,
+        hourlyPrice: 4.88,
+        topBorderColor: 'border-t-emerald-600',
+        gpuModel: 'NVIDIA RTX 5090',
+        vram: '32GB 显存',
+        cpu: '16 核',
+        ram: '64GB',
+        disk: '500GB NVMe'
+      },
+      {
+        id: 'a100_80g',
+        title: 'A100 SXM4 80GB',
+        availableCards: 5,
+        hourlyPrice: 12.50,
+        topBorderColor: 'border-t-purple-600',
+        gpuModel: 'NVIDIA A100',
+        vram: '80GB 显存',
+        cpu: '32 核',
+        ram: '256GB',
+        disk: '2000GB NVMe'
+      },
+      {
+        id: 'rtx_4090_24g',
+        title: 'RTX 4090 24GB',
+        availableCards: 18,
+        hourlyPrice: 2.99,
+        topBorderColor: 'border-t-indigo-600',
+        gpuModel: 'NVIDIA RTX 4090',
+        vram: '24GB 显存',
+        cpu: '12 核',
+        ram: '32GB',
+        disk: '300GB NVMe'
+      }
+    ];
+  }, [computeSpecs]);
 
-  // 区域四 Tab 切换
-  const [contentTab, setContentTab] = useState<'hot' | 'latest_agents' | 'latest_tasks' | 'creative' | 'hot_posts'>('hot');
+  const getSkillIcon = (sk: any) => {
+    if (sk.icon && sk.icon.startsWith('http')) {
+      return <img src={sk.icon} alt={sk.name} className="w-8 h-8 rounded-lg object-cover shrink-0" />;
+    }
+    return (
+      <div className="w-8 h-8 rounded-lg bg-cyan-50 border border-cyan-100 flex items-center justify-center text-cyan-600 font-bold text-base shrink-0 shadow-2xs">
+        {sk.icon || '⚡'}
+      </div>
+    );
+  };
 
   // Banner 轮播定时器
   useEffect(() => {
@@ -579,7 +670,7 @@ export const HomeView: React.FC = () => {
             </div>
           </button>
 
-          {/* 3. 启动算力 */}
+          {/* 3. 启用算力 */}
           <button
             onClick={() => {
               setActiveTab('compute');
@@ -600,7 +691,7 @@ export const HomeView: React.FC = () => {
             </div>
             <div className="mt-2.5 relative z-10">
               <div className="text-xs font-black text-slate-900 group-hover:text-cyan-600 flex items-center gap-1">
-                ⚡ 启动算力
+                ⚡ 启用算力
               </div>
               <div className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 truncate">
                 算力工坊 · 秒级启动
@@ -665,7 +756,9 @@ export const HomeView: React.FC = () => {
 
           {/* 6. 每日签到 */}
           <button
-            onClick={() => setShowCheckInModal(true)}
+            onClick={() => {
+              checkInToday();
+            }}
             className={`p-3.5 sm:p-4 rounded-2xl bg-white border ${
               hasCheckedInToday ? 'border-emerald-300 bg-emerald-50/20' : 'border-slate-200/80 hover:border-emerald-400'
             } hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5 transition-all shadow-2xs flex flex-col justify-between text-left cursor-pointer group relative overflow-hidden`}
@@ -688,7 +781,7 @@ export const HomeView: React.FC = () => {
                 ✅ 每日签到
               </div>
               <div className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 truncate">
-                {hasCheckedInToday ? '今日已签到 (点击看明细)' : '签到弹窗 · 领取积分'}
+                {hasCheckedInToday ? '今日已签到 (+5积分)' : '点击一键签到 (+5积分)'}
               </div>
             </div>
           </button>
@@ -744,396 +837,578 @@ export const HomeView: React.FC = () => {
             ))}
           </div>
         </div>
-
-        <button 
-          onClick={() => setActiveTab('community')}
-          className="text-xs text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1 shrink-0 ml-2 cursor-pointer"
-        >
-          <span>查看动态</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
       </div>
 
       {/* =========================================================================
-          区域四：内容推荐区（Tab切换 + 卡片网格 2行×4列）
+          区域四：精选内容推荐（平铺 8 大主题栏目）
       ========================================================================= */}
-      <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-2xs space-y-6">
+      <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-2xs space-y-10">
         
-        {/* Tab 切换栏（5个Tab） */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-2xs">
-              <Compass className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-black text-slate-900 tracking-tight">
-                精选内容推荐
-              </h2>
-              <p className="text-xs text-slate-500 font-medium">
-                多维综合算法推荐 · 全域资产一键直达
-              </p>
-            </div>
+        {/* 标题栏 */}
+        <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+          <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-2xs">
+            <Compass className="w-5 h-5" />
           </div>
-
-          {/* 5 个 Tab 切换按钮 */}
-          <div className="flex items-center gap-1 bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/70 overflow-x-auto">
-            <button
-              onClick={() => setContentTab('hot')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
-                contentTab === 'hot'
-                  ? 'bg-white text-indigo-600 shadow-xs border border-slate-200/50'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Flame className="w-3.5 h-3.5 text-amber-500" />
-              <span>🔥 热门推荐</span>
-            </button>
-
-            <button
-              onClick={() => setContentTab('latest_agents')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
-                contentTab === 'latest_agents'
-                  ? 'bg-white text-indigo-600 shadow-xs border border-slate-200/50'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Bot className="w-3.5 h-3.5 text-indigo-500" />
-              <span>📦 最新Agent</span>
-            </button>
-
-            <button
-              onClick={() => setContentTab('latest_tasks')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
-                contentTab === 'latest_tasks'
-                  ? 'bg-white text-indigo-600 shadow-xs border border-slate-200/50'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Briefcase className="w-3.5 h-3.5 text-amber-500" />
-              <span>📋 最新任务</span>
-            </button>
-
-            <button
-              onClick={() => setContentTab('creative')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
-                contentTab === 'creative'
-                  ? 'bg-white text-indigo-600 shadow-xs border border-slate-200/50'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Trophy className="w-3.5 h-3.5 text-purple-500" />
-              <span>🏆 赛事中心</span>
-            </button>
-
-            <button
-              onClick={() => setContentTab('hot_posts')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
-                contentTab === 'hot_posts'
-                  ? 'bg-white text-indigo-600 shadow-xs border border-slate-200/50'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
-              <span>📝 社区热帖</span>
-            </button>
+          <div>
+            <h2 className="text-xl font-black text-slate-900 tracking-tight">
+              精选内容推荐
+            </h2>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              全域资产平铺推荐 · 点击卡片直达详情与试用
+            </p>
           </div>
         </div>
 
-        {/* Tab 1: 🔥 热门（Agent + 任务 + 帖子 + Skill 混合卡片网格 2行×4列 = 8个） */}
-        {contentTab === 'hot' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {hotMixedList.map((item, idx) => (
-              <div
-                key={idx}
-                onClick={item.onClick}
-                className="p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-3 cursor-pointer group"
-              >
-                <div className="space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl">{item.icon}</span>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border ${item.typeBadgeColor}`}>
-                      {item.typeLabel}
-                    </span>
-                  </div>
-
-                  <h3 className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
-                    {item.title}
-                  </h3>
-
-                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal">
-                    {item.desc}
-                  </p>
-                </div>
-
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1 text-amber-500 font-bold">
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                    <span>{item.rating}</span>
-                    <span className="text-[10px] text-slate-400 font-normal ml-1">· {item.hotMetric}</span>
-                  </div>
-
-                  <span className="font-mono font-black text-indigo-600 text-xs">
-                    {item.price}
-                  </span>
-                </div>
+        {/* 1. 最新 Agent (两行，8个卡片) */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+                <Bot className="w-4 h-4" />
               </div>
-            ))}
+              <h3 className="text-base font-black text-slate-900 tracking-tight">最新 Agent</h3>
+              <span className="text-xs text-slate-400 font-medium ml-1">高智能体应用 · 即开即用</span>
+            </div>
+            <button
+              onClick={() => {
+                setActiveTab('marketplace');
+                setMarketplaceTab('agent');
+              }}
+              className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+            >
+              <span>前往 Agent 商店</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
-        )}
 
-        {/* Tab 2: 📦 最新Agent（8个精选 Agent 卡片） */}
-        {contentTab === 'latest_agents' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {agents.slice(0, 8).map((ag) => (
-              <div
-                key={ag.id}
-                onClick={() => openAgentDetail(ag)}
-                className="p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-3 cursor-pointer group"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-2xl group-hover:scale-105 transition-transform shadow-2xs">
-                      {ag.avatar || '🤖'}
-                    </div>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
-                      {ag.appType || '智能体'}
-                    </span>
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
-                      {ag.name}
-                    </h3>
-                    <p className="text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed font-normal">
-                      {ag.description || '高效大模型赋能的智能体应用，即开即用。'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5">
-                    <div className="flex items-center text-amber-500 font-bold">
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span className="ml-1">{ag.rating || 5.0}</span>
-                    </div>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      ({ag.usageCount || 100}+)
-                    </span>
-                  </div>
-
-                  <span className={`font-bold text-xs ${
-                    ag.priceType === 'free' ? 'text-amber-700 font-semibold' : 'text-indigo-600'
-                  }`}>
-                    {ag.priceText || (ag.priceType === 'free' ? '体验版 (可抵扣)' : ag.priceType === 'points' ? `${ag.priceValue} 积分/次` : `¥${ag.priceValue || 0.01}/次`)}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Tab 3: 📋 最新任务（8个任务卡片） */}
-        {contentTab === 'latest_tasks' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {tasks.concat(tasks).slice(0, 8).map((task, idx) => (
-              <div
-                key={`${task.id}_${idx}`}
-                onClick={() => setActiveTab('tasks')}
-                className="p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-amber-300 hover:shadow-lg hover:shadow-amber-500/5 hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-3 cursor-pointer group"
-              >
-                <div className="space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                      task.type === '悬赏任务' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                      task.type === '招标任务' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                      'bg-purple-50 text-purple-700 border-purple-200'
-                    }`}>
-                      {task.type}
-                    </span>
-                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                      {task.status}
-                    </span>
-                  </div>
-
-                  <h3 className="text-sm font-bold text-slate-900 group-hover:text-amber-600 transition-colors line-clamp-1">
-                    {task.title}
-                  </h3>
-
-                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal">
-                    {task.description}
-                  </p>
-                </div>
-
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <div>
-                    <span className="text-xs font-mono font-black text-rose-600">
-                      {task.bountyUnit}{task.bounty?.toLocaleString()}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                    <span>{task.bidCount || 10} 人接单</span>
-                    <span>· 剩 {idx % 2 === 0 ? '3天' : '15天'}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Tab 4: 🏆 赛事中心（官方赛事维度精选展示） */}
-        {contentTab === 'creative' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {competitions.map((comp) => {
-              const isOngoing = comp.status === 'ongoing';
-              const isUnstarted = comp.status === 'unstarted';
-              const statusText = isOngoing ? '火热进行中' : isUnstarted ? '火热报名中' : '历届已完赛';
-              const statusBadgeClass = isOngoing 
-                ? 'bg-purple-500/90 text-white shadow-xs' 
-                : isUnstarted 
-                ? 'bg-blue-500/90 text-white shadow-xs' 
-                : 'bg-slate-700/90 text-slate-200';
-              
-              const totalPrize = comp.introduction.awards[0]?.reward?.split(' ')[0] || '丰厚奖金池';
-              const totalParticipants = comp.tracks.reduce((acc, t) => acc + (t.participantsCount || 0), 0);
-
+            {agents.slice(0, 8).map((ag) => {
+              const isSubscribed = !!subscriptions[ag.id];
               return (
                 <div
-                  key={comp.id}
-                  onClick={() => openCompetitionDetail(comp.id)}
-                  className="rounded-3xl border border-slate-200/80 bg-white hover:border-purple-300 hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between overflow-hidden cursor-pointer group shadow-2xs"
+                  key={ag.id}
+                  onClick={() => openAgentDetail(ag)}
+                  className="p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-3 cursor-pointer group"
                 >
-                  {/* 赛事封面图景 */}
-                  <div className="relative h-36 w-full overflow-hidden bg-slate-900">
-                    <img 
-                      src={comp.coverImage} 
-                      alt={comp.title} 
-                      className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500" 
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-900/30 to-transparent" />
-                    
-                    {/* 状态角标 */}
-                    <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                      <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full backdrop-blur-xs flex items-center gap-1 ${statusBadgeClass}`}>
-                        {isOngoing && <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />}
-                        {statusText}
-                      </span>
-                    </div>
-
-                    {/* 主办方认证标签 */}
-                    {comp.organizerBadge && (
-                      <span className="absolute top-3 right-3 text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-xs text-purple-900 shadow-xs border border-white/50">
-                        {comp.organizerBadge}
-                      </span>
-                    )}
-
-                    <div className="absolute bottom-2.5 left-3 right-3">
-                      <div className="text-sm font-black text-white leading-tight drop-shadow-sm">
-                        {comp.title}
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xl shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-2xs">
+                          {ag.avatar && ag.avatar.startsWith('http') ? (
+                            <img src={ag.avatar} alt={ag.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span>{ag.avatar || '🤖'}</span>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="text-sm font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
+                            {ag.name}
+                          </h4>
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            {ag.techForm || ag.appType || '智能体'}
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-[11px] text-purple-200 mt-0.5 flex items-center gap-1">
-                        <Building2 className="w-3 h-3 shrink-0" />
-                        <span className="truncate">{comp.organizer}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
-                    {/* 赛事类型标签 */}
-                    <div className="flex flex-wrap gap-1">
-                      {comp.typeTags.slice(0, 2).map((tag, idx) => (
-                        <span key={idx} className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-100">
-                          {tag}
-                        </span>
-                      ))}
-                      {comp.tracks.length > 0 && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
-                          含 {comp.tracks.length} 个赛道
+                      {isSubscribed && (
+                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-1.5 py-0.5 rounded-md shrink-0">
+                          已订阅
                         </span>
                       )}
                     </div>
 
-                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                      {comp.introduction.summary}
+                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal min-h-[32px]">
+                      {ag.description || '高效大模型赋能的智能体应用，即开即用。'}
                     </p>
+                  </div>
 
-                    {/* 奖池与报名数据 */}
-                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                      <div>
-                        <div className="text-[10px] text-slate-400 font-medium">特等/最高奖励</div>
-                        <div className="text-xs font-black text-amber-600 font-mono">
-                          {totalPrize}
-                        </div>
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex items-center text-amber-500 font-bold">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        <span className="ml-1 text-xs">{(ag.rating ?? 5.0).toFixed(1)}</span>
                       </div>
-                      <div className="text-right">
-                        <div className="text-[10px] text-slate-400 font-medium">累计参赛者</div>
-                        <div className="text-xs font-bold text-slate-700 font-mono">
-                          {totalParticipants > 0 ? `${totalParticipants.toLocaleString()} 人` : '火热招募中'}
-                        </div>
-                      </div>
+                      <span className="text-[10px] text-indigo-600 font-bold">
+                        {(ag.subscribersCount ?? ag.usageCount ?? 128).toLocaleString()}人使用
+                      </span>
                     </div>
 
-                    {/* 底部按钮 */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openCompetitionDetail(comp.id);
-                      }}
-                      className="w-full py-2 rounded-xl bg-purple-50 hover:bg-purple-600 text-purple-700 hover:text-white font-bold text-xs transition flex items-center justify-center gap-1.5 group-hover:bg-purple-600 group-hover:text-white cursor-pointer"
-                    >
-                      <Trophy className="w-3.5 h-3.5" />
-                      <span>查看赛事详情</span>
-                      <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
-                    </button>
+                    <span className="font-bold text-xs text-indigo-600">
+                      {ag.priceText || (ag.priceType === 'free' ? '免费体验' : ag.priceType === 'points' ? `${ag.priceValue}积分/次` : `¥${ag.priceValue || 0.01}/次`)}
+                    </span>
                   </div>
                 </div>
               );
             })}
           </div>
-        )}
+        </div>
 
-        {/* Tab 5: 📝 社区热帖（8篇热帖卡片） */}
-        {contentTab === 'hot_posts' && (
+        {/* 2. 最热模型 (两行，8个卡片) */}
+        <div className="space-y-4 pt-4 border-t border-slate-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                <Search className="w-4 h-4" />
+              </div>
+              <h3 className="text-base font-black text-slate-900 tracking-tight">最热模型</h3>
+              <span className="text-xs text-slate-400 font-medium ml-1">高精度与大上下文模型矩阵</span>
+            </div>
+            <button
+              onClick={() => {
+                setActiveTab('marketplace');
+                setMarketplaceTab('model');
+              }}
+              className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
+            >
+              <span>前往 模型广场</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {models.slice(0, 8).map((m) => (
+              <div
+                key={m.id}
+                onClick={() => {
+                  setActiveTab('marketplace');
+                  setMarketplaceTab('model');
+                  openModelDetail(m);
+                }}
+                className="p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-3 cursor-pointer group"
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 truncate">
+                      <div className="w-7 h-7 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+                        {m.vendor?.slice(0, 1) || 'M'}
+                      </div>
+                      <h4 className="text-xs font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
+                        {m.vendor}: {m.name}
+                      </h4>
+                    </div>
+                    <span className="text-[10px] font-mono bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-medium shrink-0">
+                      {m.typeTag || 'LLM'}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal min-h-[32px]">
+                    {m.description || '支持长上下文推理与多模态能力的顶级通用大语言模型。'}
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <div className="text-[10px] font-mono text-slate-500 font-bold">
+                    {m.contextLength ? `${m.contextLength} ctx` : (m.totalTokensUsed || '1.1B tokens')}
+                  </div>
+                  <div className="text-xs font-bold text-emerald-600">
+                    {m.priceOutput || m.priceInput || '免费调用'}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 3. 最热数据集 (两行，8个卡片) */}
+        <div className="space-y-4 pt-4 border-t border-slate-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+                <Database className="w-4 h-4" />
+              </div>
+              <h3 className="text-base font-black text-slate-900 tracking-tight">最热数据集</h3>
+              <span className="text-xs text-slate-400 font-medium ml-1">高质感脱敏训练与评测语料</span>
+            </div>
+            <button
+              onClick={() => {
+                setActiveTab('marketplace');
+                setMarketplaceTab('dataset');
+              }}
+              className="text-xs font-bold text-emerald-600 hover:text-emerald-800 flex items-center gap-1 cursor-pointer"
+            >
+              <span>前往 数据集广场</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {datasets.slice(0, 8).map((ds) => {
+              const primaryModality = ds.modalities?.[0] || ds.modalityCategory || '表格数据';
+              const primaryTask = ds.taskTypes?.[0] || ds.taskType || '通用';
+              const isPlatform = ds.uploaderType === 'platform' || ds.uploaderName === '平台管理';
+              return (
+                <div
+                  key={ds.id}
+                  onClick={() => {
+                    setActiveTab('marketplace');
+                    setMarketplaceTab('dataset');
+                  }}
+                  className="p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-emerald-400 hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-3 cursor-pointer group"
+                >
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between gap-1.5">
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80">
+                        {primaryModality}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                        isPlatform ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}>
+                        {isPlatform ? '平台管理' : (ds.uploaderName || '用户上传')}
+                      </span>
+                    </div>
+
+                    <h4 className="text-xs font-black text-slate-900 group-hover:text-emerald-600 transition-colors line-clamp-1">
+                      {ds.name}
+                    </h4>
+
+                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal min-h-[32px]">
+                      {ds.brief || ds.description || '高标准行业脱敏数据集，支持一键加载与微调训练。'}
+                    </p>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
+                      {primaryTask}
+                    </span>
+                    <span className="text-[10px] font-mono font-bold text-slate-500">
+                      {ds.formats?.[0] || ds.format || 'CSV'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 4. 最热 Skill (两行，8个卡片) */}
+        <div className="space-y-4 pt-4 border-t border-slate-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center font-bold">
+                <Zap className="w-4 h-4" />
+              </div>
+              <h3 className="text-base font-black text-slate-900 tracking-tight">最热 Skill</h3>
+              <span className="text-xs text-slate-400 font-medium ml-1">标准 Tool/Function 插件体系</span>
+            </div>
+            <button
+              onClick={() => {
+                setActiveTab('marketplace');
+                setMarketplaceTab('skill');
+              }}
+              className="text-xs font-bold text-cyan-600 hover:text-cyan-800 flex items-center gap-1 cursor-pointer"
+            >
+              <span>前往 Skill 插件广场</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {skills.slice(0, 8).map((sk) => (
+              <div
+                key={sk.id}
+                onClick={() => {
+                  setActiveTab('marketplace');
+                  setMarketplaceTab('skill');
+                }}
+                className="p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-cyan-400 hover:shadow-xl hover:shadow-cyan-500/5 hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-3 cursor-pointer group"
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {getSkillIcon(sk)}
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-extrabold text-slate-900 group-hover:text-cyan-600 transition-colors truncate flex items-center gap-1">
+                          <span>{sk.name}</span>
+                          {sk.isOfficial && <CheckCircle2 className="w-3 h-3 text-blue-500 shrink-0" />}
+                        </h4>
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          {sk.category || '功能插件'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal min-h-[32px]">
+                    {sk.description || '赋能智能体一键调用的标准 Function/Tool 插件。'}
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                    <Download className="w-3 h-3" />
+                    <span>{(sk.downloadsCount || sk.installs || 1200).toLocaleString()} 次调用</span>
+                  </span>
+                  <span className="text-xs font-bold text-cyan-600">
+                    开源免费
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 5. 最新任务 (两行，8个卡片) */}
+        <div className="space-y-4 pt-4 border-t border-slate-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center font-bold">
+                <Briefcase className="w-4 h-4" />
+              </div>
+              <h3 className="text-base font-black text-slate-900 tracking-tight">最新任务</h3>
+              <span className="text-xs text-slate-400 font-medium ml-1">高额悬赏与企业定制需求外包</span>
+            </div>
+            <button
+              onClick={() => setActiveTab('tasks')}
+              className="text-xs font-bold text-amber-600 hover:text-amber-800 flex items-center gap-1 cursor-pointer"
+            >
+              <span>前往 任务大厅</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {tasks.concat(tasks).slice(0, 8).map((task, idx) => (
+              <div
+                key={`${task.id}_${idx}`}
+                onClick={() => setActiveTab('tasks')}
+                className="p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-amber-400 hover:shadow-xl hover:shadow-amber-500/5 hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-3 cursor-pointer group"
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                      task.taskType === '抢单' || task.type === '悬赏任务' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                      'bg-indigo-50 text-indigo-700 border-indigo-200'
+                    }`}>
+                      {task.taskType === '抢单' ? '⚡ 抢单' : task.taskType === '比稿' ? '🎨 比稿' : (task.type || '悬赏任务')}
+                    </span>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                      {task.status || '进行中'}
+                    </span>
+                  </div>
+
+                  <h4 className="text-xs font-black text-slate-900 group-hover:text-amber-600 transition-colors line-clamp-1">
+                    {task.title}
+                  </h4>
+
+                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal min-h-[32px]">
+                    {task.description}
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <span className="text-xs font-mono font-black text-rose-600">
+                    {task.bountyUnit || '¥'}{(task.bounty ?? 5000).toLocaleString()} 赏金
+                  </span>
+                  <span className="text-[10px] text-slate-400">
+                    {((task.takers || []).length || task.bidCount || 10)} 人接单
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 6. 最热算力 (1行，4个卡片) */}
+        <div className="space-y-4 pt-4 border-t border-slate-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center font-bold">
+                <Cpu className="w-4 h-4" />
+              </div>
+              <h3 className="text-base font-black text-slate-900 tracking-tight">最热算力</h3>
+              <span className="text-xs text-slate-400 font-medium ml-1">高性能 GPU 容器实例 · 秒级拉起</span>
+            </div>
+            <button
+              onClick={() => setActiveTab('compute')}
+              className="text-xs font-bold text-cyan-600 hover:text-cyan-800 flex items-center gap-1 cursor-pointer"
+            >
+              <span>前往 算力工坊</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {availableRentalCards.slice(0, 4).map((card) => (
+              <div
+                key={card.id}
+                className={`p-5 rounded-2xl border border-slate-200/80 bg-white ${card.topBorderColor} border-t-4 hover:border-cyan-400 hover:shadow-xl hover:shadow-cyan-500/5 hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-3 group`}
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-black text-slate-900">
+                      {card.title}
+                    </h4>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-200">
+                      {card.availableCards}卡可用
+                    </span>
+                  </div>
+
+                  <div className="text-xs text-slate-600 font-medium pb-1.5 border-b border-slate-100">
+                    <span>按量计费: </span>
+                    <span className="text-rose-600 font-black text-sm font-mono">¥{card.hourlyPrice.toFixed(2)}</span>
+                    <span className="text-slate-400 text-[10px]"> / 小时</span>
+                  </div>
+
+                  <div className="space-y-1 text-[11px] text-slate-600">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-slate-400">GPU:</span>
+                      <span className="font-bold text-slate-800 truncate">{card.gpuModel} ({card.vram})</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-slate-400">配置:</span>
+                      <span className="font-medium text-slate-700">{card.cpu} · {card.ram} · {card.disk}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setActiveTab('compute');
+                    setCreateComputeModalOpen(true);
+                  }}
+                  className="w-full py-2 rounded-xl bg-cyan-50 hover:bg-cyan-600 text-cyan-700 hover:text-white font-bold text-xs transition border border-cyan-200 cursor-pointer"
+                >
+                  启用算力
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 7. 最新赛事 (1行，4个卡片) */}
+        <div className="space-y-4 pt-4 border-t border-slate-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center font-bold">
+                <Trophy className="w-4 h-4" />
+              </div>
+              <h3 className="text-base font-black text-slate-900 tracking-tight">最新赛事</h3>
+              <span className="text-xs text-slate-400 font-medium ml-1">高规格国家级与产业 AI 竞技</span>
+            </div>
+            <button
+              onClick={() => setActiveTab('creative')}
+              className="text-xs font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 cursor-pointer"
+            >
+              <span>进入 赛事中心</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {competitions.slice(0, 4).map((comp) => {
+              const isOngoing = comp.status === 'ongoing';
+              const isUnstarted = comp.status === 'unstarted';
+              const statusText = isOngoing ? '火热进行中' : isUnstarted ? '火热报名中' : '历届已完赛';
+              const statusBadgeClass = isOngoing 
+                ? 'bg-purple-500/90 text-white' 
+                : isUnstarted 
+                ? 'bg-blue-500/90 text-white' 
+                : 'bg-slate-700/90 text-slate-200';
+              
+              const totalPrize = comp.introduction?.awards?.[0]?.reward?.split(' ')?.[0] || '丰厚奖池';
+
+              return (
+                <div
+                  key={comp.id}
+                  onClick={() => openCompetitionDetail(comp.id)}
+                  className="rounded-2xl border border-slate-200/80 bg-white hover:border-purple-400 hover:shadow-xl hover:-translate-y-0.5 transition-all flex flex-col justify-between overflow-hidden cursor-pointer group shadow-2xs"
+                >
+                  <div className="relative h-28 w-full overflow-hidden bg-slate-900">
+                    <img 
+                      src={comp.coverImage} 
+                      alt={comp.title} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+                    <div className="absolute top-2.5 left-2.5">
+                      <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${statusBadgeClass}`}>
+                        {statusText}
+                      </span>
+                    </div>
+                    <div className="absolute bottom-2 left-2.5 right-2.5">
+                      <div className="text-xs font-black text-white truncate drop-shadow-sm">
+                        {comp.title}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
+                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal">
+                      {comp.introduction?.summary || '聚焦生成式 AI、大模型攻防与数据科学的尖端挑战赛。'}
+                    </p>
+
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                      <span className="text-[10px] text-slate-400">奖金池</span>
+                      <span className="text-xs font-black text-amber-600 font-mono">
+                        {totalPrize}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 8. 社区热贴 (两行卡片形式，8个卡片) */}
+        <div className="space-y-4 pt-4 border-t border-slate-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+                <MessageSquare className="w-4 h-4" />
+              </div>
+              <h3 className="text-base font-black text-slate-900 tracking-tight">社区热帖</h3>
+              <span className="text-xs text-slate-400 font-medium ml-1">开发者实战沉淀与踩坑干货</span>
+            </div>
+            <button
+              onClick={() => setActiveTab('community')}
+              className="text-xs font-bold text-emerald-600 hover:text-emerald-800 flex items-center gap-1 cursor-pointer"
+            >
+              <span>进入 社区广场</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {posts.slice(0, 8).map((post) => (
               <div
                 key={post.id}
                 onClick={() => setActiveTab('community')}
-                className="p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-emerald-300 hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-3 cursor-pointer group"
+                className="p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-emerald-400 hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-3 cursor-pointer group"
               >
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      {post.board}
+                      {post.board || '技术交流'}
                     </span>
                     <span className="text-[10px] text-slate-400 font-mono">
                       {post.time}
                     </span>
                   </div>
 
-                  <h3 className="text-sm font-bold text-slate-900 group-hover:text-emerald-600 transition-colors line-clamp-2">
+                  <h4 className="text-xs font-black text-slate-900 group-hover:text-emerald-600 transition-colors line-clamp-1">
                     {post.title || post.content}
-                  </h3>
+                  </h4>
 
-                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal">
+                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal min-h-[32px]">
                     {post.content}
                   </p>
                 </div>
 
                 <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <img 
-                      src={post.authorAvatar} 
-                      alt={post.author} 
-                      className="w-5 h-5 rounded-full object-cover ring-1 ring-slate-200" 
-                    />
-                    <span className="text-xs text-slate-700 font-medium truncate max-w-[80px]">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    {post.authorAvatar && (
+                      <img 
+                        src={post.authorAvatar} 
+                        alt={post.author} 
+                        className="w-4 h-4 rounded-full object-cover shrink-0" 
+                      />
+                    )}
+                    <span className="text-[11px] text-slate-700 font-medium truncate">
                       {post.author}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                  <div className="flex items-center gap-2 text-[10px] text-slate-400 shrink-0">
                     <span className="flex items-center gap-0.5">
                       <Heart className="w-3 h-3 text-rose-400" /> {post.likesCount || 12}
                     </span>
@@ -1145,346 +1420,15 @@ export const HomeView: React.FC = () => {
               </div>
             ))}
           </div>
-        )}
-
-        {/* 底部【查看全部 →】跳转对应模块 */}
-        <div className="text-center pt-2">
-          <button
-            onClick={() => {
-              if (contentTab === 'hot' || contentTab === 'latest_agents') {
-                setActiveTab('marketplace');
-                setMarketplaceTab('agent');
-              } else if (contentTab === 'latest_tasks') {
-                setActiveTab('tasks');
-              } else if (contentTab === 'creative') {
-                setActiveTab('creative');
-              } else if (contentTab === 'hot_posts') {
-                setActiveTab('community');
-              }
-            }}
-            className="px-6 py-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 hover:border-indigo-300 text-indigo-600 font-bold text-xs transition shadow-2xs inline-flex items-center gap-2 group cursor-pointer"
-          >
-            <span>
-              {contentTab === 'hot' ? '查看更多热门资产' :
-               contentTab === 'latest_agents' ? '前往 Agent 商店浏览全部' :
-               contentTab === 'latest_tasks' ? '前往 任务大厅 查看更多悬赏' :
-               contentTab === 'creative' ? '进入 赛事中心 查看完整赛程' :
-               '进入 社区广场 查看更多讨论'}
-            </span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </button>
         </div>
+
+
+
+
 
       </div>
 
-      {/* =========================================================================
-          区域五：赛事中心 · 官方赛事专区（独立展示）
-      ========================================================================= */}
-      <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xs">
-        
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-purple-50 border border-purple-100 text-purple-600 flex items-center justify-center shadow-2xs">
-              <Trophy className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-black text-slate-900 tracking-tight">
-                  🏆 赛事中心 · 官方精品赛事推荐
-                </h2>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                  国家级与高水平赛事开放中
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                汇聚顶尖学会与产业联盟主办的高规格 AI 挑战赛，争夺丰厚现金大奖与算力直通绿卡
-              </p>
-            </div>
-          </div>
 
-          <button
-            onClick={() => setActiveTab('creative')}
-            className="px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 hover:bg-purple-50 hover:border-purple-300 text-purple-600 font-bold text-xs transition shadow-2xs flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
-          >
-            <span>进入赛事中心主页</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* 官方赛事卡片横向网格 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {competitions.map((comp) => {
-            const isOngoing = comp.status === 'ongoing';
-            const isUnstarted = comp.status === 'unstarted';
-            const statusText = isOngoing ? '火热进行中' : isUnstarted ? '火热报名中' : '历届已完赛';
-            const statusBadgeClass = isOngoing 
-              ? 'bg-purple-500/90 text-white shadow-xs' 
-              : isUnstarted 
-              ? 'bg-blue-500/90 text-white shadow-xs' 
-              : 'bg-slate-700/90 text-slate-200';
-            
-            const totalPrize = comp.introduction.awards[0]?.reward?.split(' ')[0] || '丰厚奖金池';
-            const totalParticipants = comp.tracks.reduce((acc, t) => acc + (t.participantsCount || 0), 0);
-
-            return (
-              <div
-                key={comp.id}
-                onClick={() => openCompetitionDetail(comp.id)}
-                className="rounded-3xl border border-slate-200/80 bg-white hover:border-purple-300 hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between overflow-hidden cursor-pointer group shadow-2xs"
-              >
-                {/* 赛事封面图景 */}
-                <div className="relative h-36 w-full overflow-hidden bg-slate-900">
-                  <img 
-                    src={comp.coverImage} 
-                    alt={comp.title} 
-                    className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-900/30 to-transparent" />
-                  
-                  {/* 状态角标 */}
-                  <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                    <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full backdrop-blur-xs flex items-center gap-1 ${statusBadgeClass}`}>
-                      {isOngoing && <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />}
-                      {statusText}
-                    </span>
-                  </div>
-
-                  {/* 主办方认证标签 */}
-                  {comp.organizerBadge && (
-                    <span className="absolute top-3 right-3 text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-xs text-purple-900 shadow-xs border border-white/50">
-                      {comp.organizerBadge}
-                    </span>
-                  )}
-
-                  <div className="absolute bottom-2.5 left-3 right-3">
-                    <div className="text-sm font-black text-white leading-tight drop-shadow-sm">
-                      {comp.title}
-                    </div>
-                    <div className="text-[11px] text-purple-200 mt-0.5 flex items-center gap-1">
-                      <Building2 className="w-3 h-3 shrink-0" />
-                      <span className="truncate">{comp.organizer}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
-                  {/* 赛事类型标签 */}
-                  <div className="flex flex-wrap gap-1">
-                    {comp.typeTags.slice(0, 2).map((tag, idx) => (
-                      <span key={idx} className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-100">
-                        {tag}
-                      </span>
-                    ))}
-                    {comp.tracks.length > 0 && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
-                        含 {comp.tracks.length} 个赛道
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                    {comp.introduction.summary}
-                  </p>
-
-                  {/* 奖池与报名数据 */}
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                    <div>
-                      <div className="text-[10px] text-slate-400 font-medium">特等/最高奖励</div>
-                      <div className="text-xs font-black text-amber-600 font-mono">
-                        {totalPrize}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[10px] text-slate-400 font-medium">累计参赛者</div>
-                      <div className="text-xs font-bold text-slate-700 font-mono">
-                        {totalParticipants > 0 ? `${totalParticipants.toLocaleString()} 人` : '火热招募中'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 底部按钮 */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openCompetitionDetail(comp.id);
-                    }}
-                    className="w-full py-2 rounded-xl bg-purple-50 hover:bg-purple-600 text-purple-700 hover:text-white font-bold text-xs transition flex items-center justify-center gap-1.5 group-hover:bg-purple-600 group-hover:text-white cursor-pointer"
-                  >
-                    <Trophy className="w-3.5 h-3.5" />
-                    <span>查看赛事详情</span>
-                    <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-      </div>
-
-      {/* =========================================================================
-          区域六：社区热帖 + 动态信息流（左右两栏 60% : 40%）
-      ========================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-        
-        {/* 左侧：📝 社区热帖精选（占 7 列，约 60% 宽度） */}
-        <div className="lg:col-span-7 bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-7 shadow-2xs space-y-5 flex flex-col justify-between">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-                  <MessageSquare className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900 tracking-tight">
-                    📝 社区热帖
-                  </h3>
-                  <p className="text-xs text-slate-500 font-medium">
-                    开发者实战经验、踩坑指南与前沿评测
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setActiveTab('community')}
-                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
-              >
-                <span>更多热帖</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* 帖子列表（6条精选） */}
-            <div className="space-y-2.5">
-              {posts.slice(0, 6).map((post, idx) => (
-                <div
-                  key={post.id}
-                  onClick={() => setActiveTab('community')}
-                  className="p-3.5 rounded-2xl bg-slate-50/70 hover:bg-indigo-50/40 border border-slate-200/60 hover:border-indigo-200 transition-all flex items-center justify-between gap-3 cursor-pointer group"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black shrink-0 ${
-                      idx === 0 ? 'bg-amber-100 text-amber-800 font-black' :
-                      idx === 1 ? 'bg-slate-200 text-slate-700' :
-                      idx === 2 ? 'bg-orange-100 text-orange-800' :
-                      'bg-slate-100 text-slate-400'
-                    }`}>
-                      {idx + 1}
-                    </span>
-
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-slate-600 border border-slate-200 shrink-0">
-                      {post.board}
-                    </span>
-
-                    <div className="text-xs font-bold text-slate-800 group-hover:text-indigo-600 transition-colors truncate">
-                      {post.title || post.content}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 text-xs text-slate-400 shrink-0">
-                    <span className="flex items-center gap-1">
-                      <Heart className="w-3 h-3 text-rose-400" />
-                      <span>{post.likesCount || 8}</span>
-                    </span>
-                    <span className="text-[10px] text-slate-400">{post.time}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="pt-2">
-            <button
-              onClick={() => setActiveTab('community')}
-              className="w-full py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs transition border border-slate-200/80 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <span>进入社区广场参与讨论</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-
-        {/* 右侧：🔔 实时动态流（占 5 列，约 40% 宽度） */}
-        <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-7 shadow-2xs space-y-5 flex flex-col justify-between">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
-                  <Activity className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900 tracking-tight">
-                    🔔 最新动态
-                  </h3>
-                  <p className="text-xs text-slate-500 font-medium">
-                    开发者动态、上新提醒与任务竞标
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setActiveTab('workspace')}
-                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
-              >
-                <span>全部动态</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* 动态列表 */}
-            <div className="space-y-3">
-              {followFeeds.map((feed) => (
-                <div
-                  key={feed.id}
-                  className="p-3 rounded-2xl bg-slate-50/50 hover:bg-indigo-50/30 border border-slate-200/60 hover:border-indigo-200 transition-all flex items-start gap-3"
-                >
-                  <img
-                    src={feed.avatar}
-                    alt={feed.author}
-                    className="w-9 h-9 rounded-full object-cover ring-2 ring-indigo-50 shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs font-bold text-slate-800 truncate">
-                        {feed.author}
-                      </div>
-                      <span className="text-[10px] text-slate-400">{feed.time}</span>
-                    </div>
-
-                    <div className="text-[11px] text-slate-500 mt-0.5">
-                      <span>{feed.action} </span>
-                      <strong className="text-indigo-600 font-medium">{feed.targetName}</strong>
-                    </div>
-
-                    <div className="text-[11px] text-slate-400 truncate mt-1">
-                      {feed.preview}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={feed.onAction}
-                    className="self-center px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-indigo-300 text-[10px] font-bold text-indigo-600 shadow-2xs hover:bg-indigo-50 transition shrink-0 cursor-pointer"
-                  >
-                    {feed.actionBtn}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="pt-2">
-            <button
-              onClick={() => setActiveTab('workspace')}
-              className="w-full py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs transition border border-slate-200/80 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <span>在工作台关注更多开发者</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-
-      </div>
 
       {/* =========================================================================
           区域七：平台数据 + 合作伙伴
@@ -1605,148 +1549,6 @@ export const HomeView: React.FC = () => {
         </div>
 
       </div>
-
-      {/* =========================================================================
-          每日签到弹窗（面向所有用户赚积分）
-      ========================================================================= */}
-      {showCheckInModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
-            {/* 弹窗头部 */}
-            <div className="p-6 bg-gradient-to-br from-emerald-600 via-teal-600 to-indigo-700 text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-              
-              <div className="flex items-center justify-between relative z-10">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white shadow-inner">
-                    <Gift className="w-5 h-5 text-amber-300 animate-bounce" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-black tracking-tight flex items-center gap-1.5">
-                      <span>每日签到领积分</span>
-                    </h3>
-                    <p className="text-xs text-emerald-100 font-medium">
-                      连续签到赢好礼 · 积分消费享抵扣
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setShowCheckInModal(false)}
-                  className="w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center text-white/80 hover:text-white transition cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* 签到核心数据 */}
-              <div className="mt-5 p-4 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-between">
-                <div>
-                  <div className="text-[11px] text-emerald-100 font-medium">
-                    连续签到天数
-                  </div>
-                  <div className="text-2xl font-black font-mono mt-0.5 flex items-baseline gap-1">
-                    <span>3</span>
-                    <span className="text-xs font-normal">天</span>
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <div className="text-[11px] text-emerald-100 font-medium">
-                    我的积分总额
-                  </div>
-                  <div className="text-2xl font-black font-mono text-amber-300 mt-0.5">
-                    {user?.points?.toLocaleString() || 1250} <span className="text-xs text-white font-normal">分</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 弹窗主体 */}
-            <div className="p-6 space-y-5">
-              
-              {/* 今日签到奖励卡片 */}
-              <div className={`p-4 rounded-2xl border flex items-center justify-between ${
-                hasCheckedInToday 
-                  ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900' 
-                  : 'bg-amber-50/70 border-amber-200 text-amber-900'
-              }`}>
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black ${
-                    hasCheckedInToday ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
-                  }`}>
-                    {hasCheckedInToday ? <CheckCircle2 className="w-6 h-6" /> : <Coins className="w-6 h-6" />}
-                  </div>
-                  <div>
-                    <div className="text-xs font-black">
-                      {hasCheckedInToday ? '今日已成功签到' : '今日签到可得'}
-                    </div>
-                    <div className="text-[11px] opacity-80 mt-0.5">
-                      {hasCheckedInToday ? '奖励已发放至积分账户' : '每日 00:00 刷新签到机会'}
-                    </div>
-                  </div>
-                </div>
-
-                <span className="font-mono font-black text-sm px-2.5 py-1 rounded-lg bg-white/90 shadow-2xs">
-                  +50 积分
-                </span>
-              </div>
-
-              {/* 积分规则与使用场景 */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5 text-xs text-slate-600">
-                <div className="font-bold text-slate-800 flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
-                  <span>积分价值与抵扣说明</span>
-                </div>
-                <div className="text-[11px] leading-relaxed space-y-1 text-slate-600">
-                  <p className="font-semibold text-amber-700 bg-amber-50/80 p-2 rounded-lg border border-amber-100/90">
-                    💡 提示：当前可用于 <strong>Agent商店</strong> 订阅抵扣，更多场景陆续开放中。
-                  </p>
-                  <p>• <strong>兑换比例：</strong> 1 积分 = ¥0.01 元人民币，用于消费抵扣。</p>
-                  <p>• <strong>抵扣比例：</strong> 每笔支持抵扣的订单，最多可用积分抵扣订单金额的 <strong>30%</strong>。</p>
-                  <p>• <strong>长期有效：</strong> 每日签到积分长期有效，不设过期时间。</p>
-                </div>
-              </div>
-
-              {/* 操作按钮 */}
-              <div className="space-y-2.5 pt-1">
-                {hasCheckedInToday ? (
-                  <button
-                    disabled
-                    className="w-full py-3.5 rounded-2xl bg-slate-100 text-slate-400 font-black text-sm flex items-center justify-center gap-2 cursor-not-allowed border border-slate-200"
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span>今日已签到（明日再来）</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      checkInToday();
-                    }}
-                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
-                  >
-                    <Gift className="w-4 h-4 text-amber-300" />
-                    <span>一键签到 领取 50 积分</span>
-                  </button>
-                )}
-
-                <button
-                  onClick={() => {
-                    setShowCheckInModal(false);
-                    setActiveTab('workspace');
-                    setWorkspaceSubTab('points');
-                  }}
-                  className="w-full py-2.5 text-xs text-indigo-600 hover:text-indigo-800 font-bold flex items-center justify-center gap-1 cursor-pointer transition"
-                >
-                  <span>前往我的账户查看积分收支明细</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );

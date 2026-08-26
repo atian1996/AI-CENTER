@@ -860,34 +860,94 @@ export const WorkspacePoints: React.FC = () => {
       {/* ============================================================ */}
       {showRulesModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-200 space-y-4 animate-scale-up">
+          <div className="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-slate-200 space-y-4 animate-scale-up">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <HelpCircle className="w-4 h-4 text-indigo-600" />
+              <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                <HelpCircle className="w-5 h-5 text-indigo-600" />
                 <span>积分获取与抵扣规则</span>
               </h3>
-              <button onClick={() => setShowRulesModal(false)} className="text-slate-400 hover:text-slate-700">
-                <X className="w-4 h-4" />
+              <button onClick={() => setShowRulesModal(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer">
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="text-xs space-y-3 text-slate-600 leading-relaxed font-medium">
-              <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-100 text-amber-900 font-bold space-y-1">
-                <div>💡 1 积分 = ¥0.01 元人民币，用于消费抵扣。</div>
-                <div className="text-[11px] text-amber-800 font-medium">提示：当前仅限 Agent商店 订阅使用，更多场景陆续开放中。</div>
+            <div className="text-xs space-y-4 text-slate-600 leading-relaxed font-medium">
+              <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 font-bold space-y-1">
+                <div className="flex items-center gap-1.5 text-xs text-amber-900 font-black">
+                  <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>1 积分 = ¥0.01 元人民币，用于消费抵扣</span>
+                </div>
+                <div className="text-[11px] text-amber-800 font-medium leading-relaxed pl-5">
+                  提示：当前可用于 Agent商店 订阅抵扣，更多场景陆续开放中。每笔支持抵扣的订单最高可抵扣 30%。
+                </div>
               </div>
-              <ul className="space-y-2 list-disc pl-4 text-slate-700">
-                <li><strong>适用场景：</strong> 当前仅限 <strong className="text-amber-800">Agent商店</strong> 订阅使用，更多场景陆续开放中。</li>
-                <li><strong>抵扣比例：</strong> 每笔订单最高抵扣 <strong>30%</strong>。</li>
-                <li><strong>每日签到：</strong> 点击签到获 5 积分，连续签到 7 天额外 +20 积分。</li>
-                <li><strong>发布 Agent：</strong> 成功上架 Agent 可额外奖励 100 积分。</li>
-                <li><strong>积分有效期：</strong> 积分长期有效，不设过期时间。</li>
-              </ul>
+
+              {/* 积分获取规则表格 */}
+              <div className="space-y-2">
+                <div className="font-extrabold text-slate-900 text-xs flex items-center gap-1.5">
+                  <Coins className="w-4 h-4 text-amber-500" />
+                  <span>积分获取规则表</span>
+                </div>
+                <div className="overflow-hidden rounded-2xl border border-slate-200/90 shadow-2xs">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-100/90 text-slate-700 font-extrabold border-b border-slate-200">
+                      <tr>
+                        <th className="p-2.5 pl-3">行为</th>
+                        <th className="p-2.5">奖励</th>
+                        <th className="p-2.5">频率限制</th>
+                        <th className="p-2.5 pr-3">说明</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      <tr className="hover:bg-amber-50/40 transition">
+                        <td className="p-2.5 pl-3 font-bold text-slate-900">每日签到</td>
+                        <td className="p-2.5 font-mono font-black text-amber-600">+5</td>
+                        <td className="p-2.5 text-slate-600 font-medium">每日1次</td>
+                        <td className="p-2.5 pr-3 text-slate-500 text-[11px]">连续签到7天额外+20</td>
+                      </tr>
+                      <tr className="hover:bg-amber-50/40 transition">
+                        <td className="p-2.5 pl-3 font-bold text-slate-900">上传数据集</td>
+                        <td className="p-2.5 font-mono font-black text-amber-600">+50</td>
+                        <td className="p-2.5 text-slate-600 font-medium">每月上限3个</td>
+                        <td className="p-2.5 pr-3 text-slate-500 text-[11px]">审核通过后发放</td>
+                      </tr>
+                      <tr className="hover:bg-amber-50/40 transition">
+                        <td className="p-2.5 pl-3 font-bold text-slate-900">上传Skill</td>
+                        <td className="p-2.5 font-mono font-black text-amber-600">+50</td>
+                        <td className="p-2.5 text-slate-600 font-medium">每月上限3个</td>
+                        <td className="p-2.5 pr-3 text-slate-500 text-[11px]">审核通过后发放</td>
+                      </tr>
+                      <tr className="hover:bg-amber-50/40 transition">
+                        <td className="p-2.5 pl-3 font-bold text-slate-900">发布帖子</td>
+                        <td className="p-2.5 font-mono font-black text-amber-600">+5</td>
+                        <td className="p-2.5 text-slate-600 font-medium">每日上限3次</td>
+                        <td className="p-2.5 pr-3 text-slate-500 text-[11px]">社区发帖</td>
+                      </tr>
+                      <tr className="hover:bg-amber-50/40 transition">
+                        <td className="p-2.5 pl-3 font-bold text-slate-900">完成一次任务</td>
+                        <td className="p-2.5 font-mono font-black text-amber-600">+30</td>
+                        <td className="p-2.5 text-slate-600 font-medium">不限</td>
+                        <td className="p-2.5 pr-3 text-slate-500 text-[11px]">任务验收通过后自动发放</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* 抵扣与通用说明 */}
+              <div className="space-y-1.5 pt-1 text-slate-600">
+                <div className="font-extrabold text-slate-900 text-xs">使用与抵扣机制说明</div>
+                <ul className="space-y-1.5 list-disc pl-4 text-[11px] text-slate-600">
+                  <li><strong>适用场景：</strong>当前仅限 <strong className="text-amber-800">Agent商店</strong> 订阅使用，更多场景陆续开放中。</li>
+                  <li><strong>抵扣比例：</strong>每笔订单最高抵扣 <strong>30%</strong>。</li>
+                  <li><strong>积分有效期：</strong>平台赠送及赚取的积分长期有效，不设过期时间。</li>
+                </ul>
+              </div>
             </div>
 
             <button
               onClick={() => setShowRulesModal(false)}
-              className="w-full py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs cursor-pointer"
+              className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs cursor-pointer transition shadow-sm"
             >
               我知道了
             </button>

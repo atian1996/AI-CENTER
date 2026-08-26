@@ -47,7 +47,6 @@ export const Header: React.FC = () => {
     { id: 'compute', label: '算力工坊', icon: <Cpu className="w-4 h-4" /> },
     { id: 'creative', label: '赛事中心', icon: <Trophy className="w-4 h-4" /> },
     { id: 'community', label: '社区', icon: <Users className="w-4 h-4" /> },
-    { id: 'workspace', label: '工作台', icon: <LayoutDashboard className="w-4 h-4" /> },
   ];
 
   return (
@@ -201,6 +200,23 @@ export const Header: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* 显眼的工作台按钮 */}
+          <button
+            onClick={() => setActiveTab('workspace')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-sm ${
+              activeTab === 'workspace'
+                ? 'bg-gradient-to-r from-indigo-600 via-indigo-600 to-indigo-700 text-white ring-2 ring-indigo-400/60 shadow-indigo-200/80 scale-[1.02]'
+                : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/90 hover:border-indigo-300 hover:shadow-indigo-100/50'
+            }`}
+            title="进入个人与团队工作台"
+          >
+            <LayoutDashboard className={`w-4 h-4 ${activeTab === 'workspace' ? 'text-white' : 'text-indigo-600'}`} />
+            <span>工作台</span>
+            {activeTab !== 'workspace' && (
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+            )}
+          </button>
 
           {/* User Profile Dropdown */}
           <div className="relative">

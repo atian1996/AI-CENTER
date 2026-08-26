@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { AgentCategory } from '../../types';
+import { AgentCategory, AppSceneType, IndustryDomainType } from '../../types';
 import { X, Bot, Sparkles, Plus, Wrench, Shield, Check } from 'lucide-react';
 
 export const CreateAgentModal: React.FC = () => {
@@ -8,6 +8,8 @@ export const CreateAgentModal: React.FC = () => {
 
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState('🤖');
+  const [scene, setScene] = useState<AppSceneType>('内容创作');
+  const [industry, setIndustry] = useState<IndustryDomainType>('通用');
   const [category, setCategory] = useState<AgentCategory>('dialogue');
   const [priceType, setPriceType] = useState<'free' | 'points' | 'cash'>('free');
   const [priceValue, setPriceValue] = useState(0);
@@ -29,6 +31,8 @@ export const CreateAgentModal: React.FC = () => {
       avatar: avatar || '🤖',
       description: prompt.slice(0, 80) || '高效精准的智能助手，支持多维推理与工具调用。',
       category,
+      scene,
+      industry,
       priceType,
       priceValue: Number(priceValue) || 0,
       tags: tags.split(',').map(t => t.trim()),
@@ -77,6 +81,34 @@ export const CreateAgentModal: React.FC = () => {
                 placeholder="例如：极客 Python 智能重构与 Debug 专家"
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 outline-none focus:bg-white focus:border-indigo-500"
               />
+            </div>
+          </div>
+
+          {/* 应用场景与行业领域下拉选择 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-slate-800 font-bold mb-1 block">应用场景 *</label>
+              <select
+                value={scene}
+                onChange={(e) => setScene(e.target.value as AppSceneType)}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 outline-none focus:bg-white focus:border-indigo-500"
+              >
+                {['内容创作', '数据分析', '智能客服', '办公助理', '编程开发', '营销推广', '教育培训', '行业垂直'].map((sc) => (
+                  <option key={sc} value={sc}>{sc}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-slate-800 font-bold mb-1 block">行业领域 *</label>
+              <select
+                value={industry}
+                onChange={(e) => setIndustry(e.target.value as IndustryDomainType)}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 outline-none focus:bg-white focus:border-indigo-500"
+              >
+                {['通用', '政务', '制造', '零售', '金融', '医疗', '教育', '文旅', '物流'].map((ind) => (
+                  <option key={ind} value={ind}>{ind}</option>
+                ))}
+              </select>
             </div>
           </div>
 

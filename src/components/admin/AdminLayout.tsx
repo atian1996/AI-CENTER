@@ -702,27 +702,6 @@ export const AdminLayout: React.FC = () => {
 
             {/* 右侧操作区 */}
             <div className="flex items-center gap-3">
-              {/* 搜索框 */}
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={adminSearch}
-                  onChange={(e) => setAdminSearch(e.target.value)}
-                  placeholder="搜索管理配置、用户、记录..."
-                  className="w-56 bg-slate-900/90 border border-slate-700/80 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
-                />
-              </div>
-
-              {/* 刷新 */}
-              <button
-                onClick={() => showToast('已同步最新后台数据')}
-                className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition cursor-pointer"
-                title="刷新数据"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-              </button>
-
               {/* 返回前台大按钮 */}
               <button
                 onClick={exitAdminMode}

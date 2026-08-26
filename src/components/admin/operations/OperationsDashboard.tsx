@@ -120,44 +120,7 @@ export const OperationsDashboard: React.FC = () => {
   return (
     <div className="space-y-6 animate-fade-in pb-12">
 
-      {/* ========================================== */}
-      {/* 顶部 Header: 赛宁·千机 · 运营大屏           */}
-      {/* ========================================== */}
-      <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20 shrink-0">
-            <LayoutDashboard className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-xl font-black text-white tracking-tight">赛宁·千机 · 运营大屏</h1>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-950 text-indigo-300 border border-indigo-800 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping"></span>
-                实时指挥中心
-              </span>
-            </div>
-            <p className="text-xs text-slate-400 font-medium mt-0.5">
-              全局监控平台 Core KPI、四大业务模块运行指标、营收趋势与异常预警
-            </p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-3 text-xs font-semibold">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-400">
-            <Clock className="w-3.5 h-3.5 text-slate-500" />
-            <span>最后更新：<strong className="text-slate-200 font-mono">{lastUpdateTime}</strong></span>
-          </div>
-
-          <button
-            onClick={handleManualRefresh}
-            disabled={isRefreshing}
-            className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span>刷新数据</span>
-          </button>
-        </div>
-      </div>
 
       {/* ========================================== */}
       {/* 三、顶部 KPI 卡片 (6个)                      */}
