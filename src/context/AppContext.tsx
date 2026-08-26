@@ -2055,11 +2055,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const setSelectedMainTab = (tab: MainTabType) => setActiveTab(tab);
 
-  const userAgents = agents.filter(a => a.author === user.name || a.id.startsWith('ag_custom') || a.id.startsWith('app_') || a.isDeveloped || a.isPurchased);
+  const userAgents = agents.filter(a => 
+    a.author === user.name || 
+    a.author === 'zj' || 
+    a.id.startsWith('ag_custom') || 
+    a.id.startsWith('app_') || 
+    a.isDeveloped || 
+    a.isPurchased || 
+    !!subscriptions[a.id] || 
+    !!payPerTokenAgents[a.id]
+  );
   const favorites = agents.filter(a => favoriteAgentIds.includes(a.id));
 
   const purchaseAgent = (agentId: string) => {
     setAgents(prev => prev.map(a => a.id === agentId ? { ...a, isPurchased: true } : a));
+    setSubscriptions(prev => {
+      if (prev[agentId]) return prev;
+      const targetAgent = agents.find(a => a.id === agentId);
+      return {
+        ...prev,
+        [agentId]: {
+          agentId,
+          agentName: targetAgent?.name || '未知Agent',
+          tier: 'month',
+          tierName: '月度订阅',
+          price: 0,
+          tokenAmountVal: 100,
+          tokensLeftVal: 100,
+          expireDate: new Date(Date.now() + 30 * 86400000).toLocaleDateString('zh-CN'),
+          subscribedAt: new Date().toLocaleDateString('zh-CN')
+        }
+      };
+    });
     showToast('已成功添加使用权限，可在工作台/我的Agent中随时管理！');
   };
 

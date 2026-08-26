@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { AppType } from '../../types';
+import { AppType, AppSceneType, IndustryDomainType } from '../../types';
 import { 
   X, 
   GitFork, 
@@ -109,6 +109,8 @@ export const CreateBlankAppModal: React.FC = () => {
 
   const [selectedType, setSelectedType] = useState<AppType>('工作流');
   const [appName, setAppName] = useState('');
+  const [selectedScene, setSelectedScene] = useState<AppSceneType>('办公助理');
+  const [selectedIndustry, setSelectedIndustry] = useState<IndustryDomainType>('通用');
   const [appDesc, setAppDesc] = useState('');
   const [selectedEmoji, setSelectedEmoji] = useState('🤖');
   const [selectedColor, setSelectedColor] = useState(COLOR_OPTIONS[0]);
@@ -126,7 +128,7 @@ export const CreateBlankAppModal: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [createAgentModalOpen, appName, selectedType, appDesc, selectedEmoji, selectedColor]);
+  }, [createAgentModalOpen, appName, selectedType, selectedScene, selectedIndustry, appDesc, selectedEmoji, selectedColor]);
 
   if (!createAgentModalOpen) return null;
 
@@ -153,7 +155,11 @@ export const CreateBlankAppModal: React.FC = () => {
       priceModel: '免费',
       appType: selectedType,
       techForm: selectedType,
-      tags: [],
+      scene: selectedScene,
+      categoryTags: [selectedScene],
+      industry: selectedIndustry,
+      industryTags: [selectedIndustry],
+      tags: [selectedScene, selectedIndustry],
       author: '极客小千',
       authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
       baseModel: 'DeepSeek-V3 671B',
@@ -389,6 +395,34 @@ export const CreateBlankAppModal: React.FC = () => {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+
+            {/* 应用场景与行业领域 下拉选择 */}
+            <div className="grid grid-cols-2 gap-3 pt-0.5">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">应用场景</label>
+                <select
+                  value={selectedScene}
+                  onChange={(e) => setSelectedScene(e.target.value as AppSceneType)}
+                  className="w-full px-3 py-2 bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-slate-200/80 focus:border-blue-500 rounded-xl text-xs font-semibold text-slate-800 outline-none transition cursor-pointer"
+                >
+                  {['内容创作', '数据分析', '智能客服', '办公助理', '编程开发', '营销推广', '教育培训', '行业垂直'].map(sc => (
+                    <option key={sc} value={sc}>{sc}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">行业领域</label>
+                <select
+                  value={selectedIndustry}
+                  onChange={(e) => setSelectedIndustry(e.target.value as IndustryDomainType)}
+                  className="w-full px-3 py-2 bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-slate-200/80 focus:border-blue-500 rounded-xl text-xs font-semibold text-slate-800 outline-none transition cursor-pointer"
+                >
+                  {['通用', '政务', '制造', '零售', '金融', '医疗', '教育', '文旅', '物流'].map(ind => (
+                    <option key={ind} value={ind}>{ind}</option>
+                  ))}
+                </select>
               </div>
             </div>
 

@@ -38,6 +38,8 @@ import {
   Sparkles,
   FileText,
   UploadCloud,
+  LayoutGrid,
+  Building2,
   FileCode,
   HardDrive,
   Copy,
@@ -354,7 +356,11 @@ const DatasetEditModal: React.FC<{
 
 export const WorkspaceAssets: React.FC = () => {
   const { 
+    agents,
     userAgents, 
+    user,
+    subscriptions,
+    payPerTokenAgents,
     datasets, 
     skills, 
     favorites, 
@@ -402,12 +408,14 @@ export const WorkspaceAssets: React.FC = () => {
   // Filters for Application List
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>('all');
-  const [selectedTagFilter, setSelectedTagFilter] = useState<string>('all');
+  const [selectedSceneFilter, setSelectedSceneFilter] = useState<string>('all');
+  const [selectedIndustryFilter, setSelectedIndustryFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recent_modified');
 
   // Filter dropdown toggles
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
-  const [showTagDropdown, setShowTagDropdown] = useState(false);
+  const [showSceneDropdown, setShowSceneDropdown] = useState(false);
+  const [showIndustryDropdown, setShowIndustryDropdown] = useState(false);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
 
   // Dataset applications state
@@ -458,8 +466,8 @@ export const WorkspaceAssets: React.FC = () => {
   }
 
   // Filtered lists for 我创建的 vs 我订阅的
-  const createdAgents = userAgents.filter(ag => !ag.isPurchased || ag.isDeveloped || ag.id.startsWith('app_') || ag.id.startsWith('ag_custom'));
-  const subscribedAgents = userAgents.filter(ag => ag.isPurchased);
+  const subscribedAgents = agents.filter(ag => ag.isPurchased || !!subscriptions[ag.id] || !!payPerTokenAgents[ag.id]);
+  const createdAgents = agents.filter(ag => (ag.author === user.name || ag.author === 'zj' || ag.isDeveloped || ag.id.startsWith('app_') || ag.id.startsWith('ag_custom')) && !subscribedAgents.some(s => s.id === ag.id));
 
   // Filtered lists for 数据集: 我创建的 (我上传的)
   const createdDatasets = datasets.filter(d => d.isCreatedByMe || d.author === 'zj' || d.id === 'ds_powerbi_retail');
@@ -467,7 +475,7 @@ export const WorkspaceAssets: React.FC = () => {
   const currentDisplayDatasets = datasetScopeTab === 'created' ? createdDatasets : mountedDatasets;
 
   const currentDisplayAgents = (agentScopeTab === 'created' ? createdAgents : subscribedAgents).filter(ag => {
-    // Type filter
+    // 1. Type filter
     if (selectedTypeFilter !== 'all') {
       const form = ag.appType || ag.techForm || '';
       if (selectedTypeFilter === '工作流' && !form.includes('工作流') && !form.includes('Workflow')) return false;
@@ -476,13 +484,34 @@ export const WorkspaceAssets: React.FC = () => {
       if (selectedTypeFilter === 'Agent' && !form.includes('Agent')) return false;
       if (selectedTypeFilter === '文本生成应用' && !form.includes('文本生成')) return false;
     }
-    // Search query
+
+    // 2. Application Scene Filter
+    if (selectedSceneFilter !== 'all') {
+      const sceneVal = ag.scene || (ag.categoryTags && ag.categoryTags[0]);
+      const hasScene = sceneVal === selectedSceneFilter;
+      const hasCategoryTag = ag.categoryTags && ag.categoryTags.includes(selectedSceneFilter);
+      const hasTag = ag.tags && ag.tags.includes(selectedSceneFilter);
+      if (!hasScene && !hasCategoryTag && !hasTag) return false;
+    }
+
+    // 3. Industry Domain Filter
+    if (selectedIndustryFilter !== 'all') {
+      const industryVal = ag.industry || (ag.industryTags && ag.industryTags[0]);
+      const hasIndustry = industryVal === selectedIndustryFilter;
+      const hasIndustryTag = ag.industryTags && ag.industryTags.includes(selectedIndustryFilter);
+      const hasTag = ag.tags && ag.tags.includes(selectedIndustryFilter);
+      if (!hasIndustry && !hasIndustryTag && !hasTag) return false;
+    }
+
+    // 4. Search query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const matchName = ag.name.toLowerCase().includes(q);
       const matchDesc = ag.description?.toLowerCase().includes(q);
       const matchType = (ag.appType || ag.techForm || '').toLowerCase().includes(q);
-      if (!matchName && !matchDesc && !matchType) return false;
+      const matchScene = (ag.scene || (ag.categoryTags && ag.categoryTags[0]) || '').toLowerCase().includes(q);
+      const matchIndustry = (ag.industry || (ag.industryTags && ag.industryTags[0]) || '').toLowerCase().includes(q);
+      if (!matchName && !matchDesc && !matchType && !matchScene && !matchIndustry) return false;
     }
     return true;
   });
@@ -670,7 +699,7 @@ export const WorkspaceAssets: React.FC = () => {
               <div className="relative">
                 <button
                   type="button"
-                  onClick={() => { setShowTypeDropdown(!showTypeDropdown); setShowTagDropdown(false); setShowSortDropdown(false); }}
+                  onClick={() => { setShowTypeDropdown(!showTypeDropdown); setShowSceneDropdown(false); setShowIndustryDropdown(false); setShowSortDropdown(false); }}
                   className={`px-3 py-1.5 rounded-xl border bg-white flex items-center gap-1.5 transition cursor-pointer ${
                     selectedTypeFilter !== 'all' ? 'border-blue-500 text-blue-600 bg-blue-50/40 font-bold' : 'border-slate-200 hover:border-slate-300 text-slate-700'
                   }`}
@@ -703,39 +732,73 @@ export const WorkspaceAssets: React.FC = () => {
                 )}
               </div>
 
-              {/* Filter 2: 标签 ∨ */}
+              {/* Filter 2: 应用场景 ∨ */}
               <div className="relative">
                 <button
                   type="button"
-                  onClick={() => { setShowTagDropdown(!showTagDropdown); setShowTypeDropdown(false); setShowSortDropdown(false); }}
+                  onClick={() => { setShowSceneDropdown(!showSceneDropdown); setShowTypeDropdown(false); setShowIndustryDropdown(false); setShowSortDropdown(false); }}
                   className={`px-3 py-1.5 rounded-xl border bg-white flex items-center gap-1.5 transition cursor-pointer ${
-                    selectedTagFilter !== 'all' ? 'border-blue-500 text-blue-600 bg-blue-50/40 font-bold' : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                    selectedSceneFilter !== 'all' ? 'border-indigo-500 text-indigo-600 bg-indigo-50/40 font-bold' : 'border-slate-200 hover:border-slate-300 text-slate-700'
                   }`}
                 >
-                  <span>{selectedTagFilter === 'all' ? '标签' : selectedTagFilter}</span>
+                  <LayoutGrid className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>{selectedSceneFilter === 'all' ? '应用场景' : selectedSceneFilter}</span>
                   <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                 </button>
 
-                {showTagDropdown && (
-                  <div className="absolute left-0 top-10 z-40 w-32 bg-white border border-slate-200 rounded-xl shadow-lg py-1 text-xs animate-fade-in">
-                    {['全部标签', '生产就绪', '内部测试', 'Demo'].map((tag) => (
+                {showSceneDropdown && (
+                  <div className="absolute left-0 top-10 z-40 w-36 bg-white border border-slate-200 rounded-xl shadow-lg py-1 text-xs animate-fade-in max-h-56 overflow-y-auto scrollbar-thin">
+                    {['全部场景', '内容创作', '数据分析', '智能客服', '办公助理', '编程开发', '营销推广', '教育培训', '行业垂直'].map((scene) => (
                       <button
-                        key={tag}
-                        onClick={() => { setSelectedTagFilter(tag === '全部标签' ? 'all' : tag); setShowTagDropdown(false); }}
-                        className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 cursor-pointer"
+                        key={scene}
+                        onClick={() => { setSelectedSceneFilter(scene === '全部场景' ? 'all' : scene); setShowSceneDropdown(false); }}
+                        className={`w-full text-left px-3 py-1.5 hover:bg-slate-50 transition cursor-pointer ${
+                          (selectedSceneFilter === 'all' && scene === '全部场景') || selectedSceneFilter === scene ? 'text-indigo-600 font-bold bg-indigo-50/50' : 'text-slate-700'
+                        }`}
                       >
-                        {tag}
+                        {scene}
                       </button>
                     ))}
                   </div>
                 )}
               </div>
 
-              {/* Filter 3: 排序方式 最近修改 ∨ */}
+              {/* Filter 3: 行业领域 ∨ */}
               <div className="relative">
                 <button
                   type="button"
-                  onClick={() => { setShowSortDropdown(!showSortDropdown); setShowTypeDropdown(false); setShowTagDropdown(false); }}
+                  onClick={() => { setShowIndustryDropdown(!showIndustryDropdown); setShowTypeDropdown(false); setShowSceneDropdown(false); setShowSortDropdown(false); }}
+                  className={`px-3 py-1.5 rounded-xl border bg-white flex items-center gap-1.5 transition cursor-pointer ${
+                    selectedIndustryFilter !== 'all' ? 'border-teal-500 text-teal-600 bg-teal-50/40 font-bold' : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5 text-teal-500" />
+                  <span>{selectedIndustryFilter === 'all' ? '行业领域' : selectedIndustryFilter}</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                </button>
+
+                {showIndustryDropdown && (
+                  <div className="absolute left-0 top-10 z-40 w-36 bg-white border border-slate-200 rounded-xl shadow-lg py-1 text-xs animate-fade-in max-h-56 overflow-y-auto scrollbar-thin">
+                    {['全部领域', '通用', '政务', '制造', '零售', '金融', '医疗', '教育', '文旅', '物流'].map((ind) => (
+                      <button
+                        key={ind}
+                        onClick={() => { setSelectedIndustryFilter(ind === '全部领域' ? 'all' : ind); setShowIndustryDropdown(false); }}
+                        className={`w-full text-left px-3 py-1.5 hover:bg-slate-50 transition cursor-pointer ${
+                          (selectedIndustryFilter === 'all' && ind === '全部领域') || selectedIndustryFilter === ind ? 'text-teal-600 font-bold bg-teal-50/50' : 'text-slate-700'
+                        }`}
+                      >
+                        {ind}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Filter 4: 排序方式 最近修改 ∨ */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => { setShowSortDropdown(!showSortDropdown); setShowTypeDropdown(false); setShowSceneDropdown(false); setShowIndustryDropdown(false); }}
                   className="px-3 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white flex items-center gap-1.5 transition cursor-pointer text-slate-700"
                 >
                   <span>排序方式 <strong className="text-slate-900">{sortBy === 'recent_modified' ? '最近修改' : sortBy === 'recent_created' ? '最近创建' : '名称'}</strong></span>
@@ -799,100 +862,122 @@ export const WorkspaceAssets: React.FC = () => {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {currentDisplayAgents.map((ag) => (
-                <div
-                  key={ag.id}
-                  onClick={() => {
-                    if (agentScopeTab === 'created') {
-                      setOrchestratingAgent(ag);
-                    } else {
-                      openAgentDetail(ag);
-                    }
-                  }}
-                  className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all cursor-pointer flex flex-col justify-between group min-h-[145px]"
-                  title={agentScopeTab === 'created' ? '点击进入应用编排界面' : '点击打开智能体对话'}
-                >
-                  
-                  <div>
-                    {/* Top: Icon + App Name & App Type */}
-                    <div className="flex items-start gap-3">
-                      
-                      {/* App Icon with Sub-Badge */}
-                      <div className={`w-10 h-10 rounded-xl border flex items-center justify-center text-lg shrink-0 relative ${ag.iconBgColor || 'bg-rose-100 border-rose-200 text-rose-600'}`}>
-                        {ag.avatar || '🤖'}
-                        {renderAppTypeIconBadge(ag)}
-                      </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {currentDisplayAgents.map((ag) => {
+                const sceneTag = ag.scene || (ag.categoryTags && ag.categoryTags[0]) || (ag.category === 'coding' ? '编程开发' : ag.category === 'data' ? '数据分析' : ag.category === 'image' ? '内容创作' : '办公助理');
+                const industryTag = ag.industry || (ag.industryTags && ag.industryTags[0]) || '通用';
+                const sub = subscriptions[ag.id];
+                const expireDateText = sub?.expireDate || (payPerTokenAgents[ag.id] ? '按量计费 (永久有效)' : '2026/09/24');
 
-                      {/* App Name & App Type text */}
-                      <div className="min-w-0 flex-1">
-                        <h4 className="text-xs font-extrabold text-slate-900 group-hover:text-blue-600 transition truncate">
-                          {ag.name}
-                        </h4>
-                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">
-                          {ag.appType || ag.techForm || '工作流'}
-                        </div>
-                      </div>
-
-                    </div>
-
-                    {/* Middle: Description (if any) */}
-                    {ag.description && (
-                      <p className="text-[11px] text-slate-500 font-medium line-clamp-1 mt-2">
-                        {ag.description}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Bottom section */}
-                  <div className="space-y-2 pt-2 mt-2 border-t border-slate-50">
+                return (
+                  <div
+                    key={ag.id}
+                    onClick={() => {
+                      if (agentScopeTab === 'created') {
+                        setOrchestratingAgent(ag);
+                      } else {
+                        const trialUrl = `${window.location.origin}${window.location.pathname}?trial=${ag.id}`;
+                        window.open(trialUrl, '_blank');
+                      }
+                    }}
+                    className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all cursor-pointer flex flex-col justify-between group min-h-[190px]"
+                    title={agentScopeTab === 'created' ? '点击进入应用编排界面' : '点击在独立标签页立即使用该 Agent'}
+                  >
                     
-                    {/* Tag: + 添加标签 / 订阅计费模式 */}
-                    <div className="flex items-center justify-between">
-                      {agentScopeTab === 'created' ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            showToast(`为【${ag.name}】添加标签`);
-                          }}
-                          className="text-[10px] text-slate-400 hover:text-slate-700 px-2 py-0.5 border border-dashed border-slate-200 hover:border-slate-300 rounded-md transition flex items-center gap-1 cursor-pointer"
-                        >
-                          <Tag className="w-2.5 h-2.5 text-slate-400" />
-                          <span>添加标签</span>
-                        </button>
-                      ) : (
-                        <span className="text-[10px] font-bold px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md">
-                          {ag.priceModel || '已订阅授权'}
-                        </span>
-                      )}
+                    <div className="space-y-2.5">
+                      {/* Top: Icon + App Name & App Type */}
+                      <div className="flex items-start gap-3">
+                        
+                        {/* App Icon with Sub-Badge */}
+                        <div className={`w-11 h-11 rounded-xl border flex items-center justify-center text-xl shrink-0 relative shadow-2xs ${ag.iconBgColor || 'bg-rose-100 border-rose-200 text-rose-600'}`}>
+                          {ag.avatar || '🤖'}
+                          {renderAppTypeIconBadge(ag)}
+                        </div>
 
-                      {agentScopeTab === 'subscribed' && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openAgentDetail(ag);
-                          }}
-                          className="text-[10px] font-bold px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md transition"
-                        >
-                          立即对话
-                        </button>
+                        {/* App Name & App Type text */}
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-xs font-extrabold text-slate-900 group-hover:text-blue-600 transition truncate leading-snug">
+                            {ag.name}
+                          </h4>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.2 rounded uppercase tracking-tight">
+                              {ag.appType || ag.techForm || '工作流'}
+                            </span>
+                            {ag.baseModel && (
+                              <span className="text-[10px] text-slate-400 font-medium truncate hidden sm:inline">
+                                · {ag.baseModel}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                      </div>
+
+                      {/* Scene & Industry Tags */}
+                      <div className="flex items-center flex-wrap gap-1.5 pt-0.5">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100/70">
+                          <LayoutGrid className="w-2.5 h-2.5 text-indigo-500" />
+                          <span>{sceneTag}</span>
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 border border-teal-100/70">
+                          <Building2 className="w-2.5 h-2.5 text-teal-500" />
+                          <span>{industryTag}</span>
+                        </span>
+                      </div>
+
+                      {/* Description */}
+                      {ag.description && (
+                        <p className="text-[11px] text-slate-500 font-medium line-clamp-2 leading-relaxed">
+                          {ag.description}
+                        </p>
                       )}
                     </div>
 
-                    {/* Footer: Creator · Edited Date + Globe Icon */}
-                    <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium">
-                      <span className="truncate">
-                        {ag.author || '极客小千'} · {ag.updatedAt ? `编辑于 ${ag.updatedAt}` : '已就绪'}
-                      </span>
-                      <Globe className="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 shrink-0 ml-1" />
+                    {/* Bottom section */}
+                    <div className="pt-2.5 mt-2.5 border-t border-slate-100 space-y-2">
+                      
+                      {agentScopeTab === 'subscribed' ? (
+                        <div className="flex items-center justify-between text-[10px] bg-amber-50/80 border border-amber-200/60 rounded-lg p-1.5">
+                          <div className="flex items-center gap-1 text-amber-800 font-bold truncate">
+                            <Clock className="w-3 h-3 text-amber-600 shrink-0" />
+                            <span className="shrink-0">到期时间:</span>
+                            <span className="font-extrabold text-amber-900 truncate">{expireDateText}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const trialUrl = `${window.location.origin}${window.location.pathname}?trial=${ag.id}`;
+                              window.open(trialUrl, '_blank');
+                            }}
+                            className="text-[10px] font-bold px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md transition cursor-pointer shrink-0 ml-1 shadow-2xs"
+                          >
+                            立即使用
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium">
+                          <span className="truncate">
+                            {ag.author || '极客小千'} · {ag.updatedAt ? `编辑于 ${ag.updatedAt}` : '已就绪'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOrchestratingAgent(ag);
+                            }}
+                            className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md transition cursor-pointer shrink-0 ml-1"
+                          >
+                            进入编排
+                          </button>
+                        </div>
+                      )}
+
                     </div>
 
                   </div>
-
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 

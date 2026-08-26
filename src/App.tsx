@@ -33,6 +33,7 @@ const AppContent: React.FC = () => {
     tabResetKey,
     isAdminMode,
     agents,
+    setAgents,
     detailModalAgent, 
     setDetailModalAgent, 
     subscribeModalAgent, 
@@ -77,6 +78,7 @@ const AppContent: React.FC = () => {
               currentTrialLeft={trialCountLeft}
               onSuccess={(newSub) => {
                 setSubscriptions(prev => ({ ...prev, [newSub.agentId]: newSub }));
+                setAgents(prev => prev.map(a => a.id === newSub.agentId ? { ...a, isPurchased: true } : a));
               }}
             />
           )}
@@ -203,6 +205,7 @@ const AppContent: React.FC = () => {
           currentTrialLeft={trialCountLeft}
           onSuccess={(newSub) => {
             setSubscriptions(prev => ({ ...prev, [newSub.agentId]: newSub }));
+            setAgents(prev => prev.map(a => a.id === newSub.agentId ? { ...a, isPurchased: true } : a));
           }}
         />
       )}

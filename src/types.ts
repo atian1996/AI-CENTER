@@ -1136,10 +1136,8 @@ export type AdminMenuKey =
   | 'agent_list'          // Agent管理 - 列表及配置
   | 'agent_orders'        // Agent管理 - 订单管理
   | 'agent_stats'         // Agent管理 - 用量统计
-  | 'agent_tags'          // Agent管理 - 分类标签管理
   | 'dataset_list'        // 数据集管理 - 数据集列表及配置
   | 'dataset_audit'       // 数据集管理 - 数据集审核
-  | 'dataset_tags'        // 数据集管理 - 分类标签管理
   | 'dataset_stats'       // 数据集管理 - 数据集使用统计
   | 'model_list'          // 模型管理 - 模型管理与计费配置
   | 'model_calls'         // 模型管理 - 模型调用记录

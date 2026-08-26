@@ -127,18 +127,32 @@ export const AgentDetailSubPage: React.FC<AgentDetailSubPageProps> = ({
           </button>
           <button
             onClick={handleLaunchTrial}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition cursor-pointer shadow-xs"
+            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer shadow-xs ${
+              userSubscription
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-800'
+            }`}
           >
-            <Play className="w-4 h-4 fill-current text-indigo-600" />
-            <span>免费试用 (新窗口)</span>
+            <Play className={`w-4 h-4 fill-current ${userSubscription ? 'text-emerald-600' : 'text-indigo-600'}`} />
+            <span>{userSubscription ? '立即使用 (新窗口)' : '免费试用 (新窗口)'}</span>
           </button>
-          <button
-            onClick={handleSubscribe}
-            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-xs transition-all cursor-pointer hover:scale-[1.02] active:scale-95"
-          >
-            <Zap className="w-4 h-4 text-white fill-current animate-pulse" />
-            <span>立即订阅套餐</span>
-          </button>
+          {userSubscription ? (
+            <button
+              onClick={handleSubscribe}
+              className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow-xs transition-all cursor-pointer"
+            >
+              <ShieldCheck className="w-4 h-4 text-white" />
+              <span>已订阅 (管理套餐)</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleSubscribe}
+              className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-xs transition-all cursor-pointer hover:scale-[1.02] active:scale-95"
+            >
+              <Zap className="w-4 h-4 text-white fill-current animate-pulse" />
+              <span>立即订阅套餐</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -155,6 +169,12 @@ export const AgentDetailSubPage: React.FC<AgentDetailSubPageProps> = ({
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-3">
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{agent.name}</h2>
+              {userSubscription && (
+                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-xs font-bold px-2.5 py-0.5 rounded-lg flex items-center gap-1 shrink-0">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>已订阅</span>
+                </span>
+              )}
               <div className="flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-lg">
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                 <span>{(agent.rating ?? 5.0).toFixed(1)}</span>

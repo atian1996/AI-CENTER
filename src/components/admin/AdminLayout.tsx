@@ -13,6 +13,7 @@ import { AgentAdminViews } from './agent/AgentAdminViews';
 import { DatasetAdminViews } from './dataset/DatasetAdminViews';
 import { SkillAdminView } from './skill/SkillAdminView';
 import { CommunityAdminViews } from './community/CommunityAdminViews';
+import { OperationsDashboard } from './operations/OperationsDashboard';
 import {
   ModelListAdminView,
   ModelCallsAdminView,
@@ -98,8 +99,8 @@ export const AdminLayout: React.FC = () => {
 
   const isTaskSubMenu = activeAdminMenu === 'publish_audit' || activeAdminMenu === 'task_monitor';
   const isComputeSubMenu = activeAdminMenu.startsWith('compute_');
-  const isAgentSubMenu = ['agent_list', 'agent_orders', 'agent_stats', 'agent_tags'].includes(activeAdminMenu);
-  const isDatasetSubMenu = ['dataset_list', 'dataset_audit', 'dataset_tags', 'dataset_stats'].includes(activeAdminMenu);
+  const isAgentSubMenu = ['agent_list', 'agent_orders', 'agent_stats'].includes(activeAdminMenu);
+  const isDatasetSubMenu = ['dataset_list', 'dataset_audit', 'dataset_stats'].includes(activeAdminMenu);
   const isModelSubMenu = ['model_list', 'model_calls', 'model_stats'].includes(activeAdminMenu);
   const isSkillSubMenu = ['skill_list', 'skill_audit'].includes(activeAdminMenu);
 
@@ -109,11 +110,6 @@ export const AdminLayout: React.FC = () => {
       id: 'operations' as AdminMenuKey,
       label: '运营中心',
       icon: <LayoutDashboard className="w-4 h-4" />
-    },
-    {
-      id: 'marketplace_admin' as AdminMenuKey,
-      label: 'AI集市管理',
-      icon: <Store className="w-4 h-4" />
     },
     {
       id: 'agent_admin_group',
@@ -135,11 +131,6 @@ export const AdminLayout: React.FC = () => {
           id: 'agent_stats' as AdminMenuKey,
           label: '用量统计',
           icon: <Activity className="w-3.5 h-3.5" />
-        },
-        {
-          id: 'agent_tags' as AdminMenuKey,
-          label: '分类标签管理',
-          icon: <Layers className="w-3.5 h-3.5" />
         }
       ]
     },
@@ -158,11 +149,6 @@ export const AdminLayout: React.FC = () => {
           id: 'dataset_audit' as AdminMenuKey,
           label: '数据集审核',
           icon: <FileCheck className="w-3.5 h-3.5" />
-        },
-        {
-          id: 'dataset_tags' as AdminMenuKey,
-          label: '分类标签管理',
-          icon: <Tag className="w-3.5 h-3.5" />
         },
         {
           id: 'dataset_stats' as AdminMenuKey,
@@ -318,17 +304,10 @@ export const AdminLayout: React.FC = () => {
     switch (activeAdminMenu) {
       case 'operations':
         return {
-          title: '运营中心大盘',
-          subtitle: '平台全域业务运营指标、用户活跃流水、核心服务调用与生态增长监控',
+          title: '运营中心大屏',
+          subtitle: '平台核心运营数据全景指挥看板与全局健康度监控',
           category: '全局概览',
           crumb: ['后台管理', '运营中心']
-        };
-      case 'marketplace_admin':
-        return {
-          title: 'AI集市管理',
-          subtitle: '管理平台智能体 (Agent)、大模型、精选数据集与开发者扩展技能插件',
-          category: '资产管理',
-          crumb: ['后台管理', 'AI集市管理']
         };
       case 'agent_list':
         return {
@@ -351,13 +330,6 @@ export const AdminLayout: React.FC = () => {
           category: '用量与统计',
           crumb: ['后台管理', 'Agent管理', '用量统计']
         };
-      case 'agent_tags':
-        return {
-          title: '分类标签管理',
-          subtitle: '动态维护技术形态、应用场景和行业垂直领域的动态元数据选项字典',
-          category: '元数据字典',
-          crumb: ['后台管理', 'Agent管理', '分类标签管理']
-        };
       case 'dataset_list':
         return {
           title: '数据集管理',
@@ -371,13 +343,6 @@ export const AdminLayout: React.FC = () => {
           subtitle: '处理用户在前台上传提交的数据集审核队列，审核通过后用户可进行自主上架并在数据集广场展示',
           category: '数据集管理',
           crumb: ['后台管理', '数据集管理', '数据集审核']
-        };
-      case 'dataset_tags':
-        return {
-          title: '分类标签管理',
-          subtitle: '模态、任务类型、行业领域、文件格式等 4 大基础维度的元数据字典与关联引用管理',
-          category: '数据集管理',
-          crumb: ['后台管理', '数据集管理', '分类标签管理']
         };
       case 'dataset_stats':
         return {
@@ -798,18 +763,17 @@ export const AdminLayout: React.FC = () => {
             </div>
 
             {/* 页面具体内容区（按当前选中的菜单渲染） */}
-            {activeAdminMenu === 'operations' && <OperationsAdminView />}
-            {activeAdminMenu === 'marketplace_admin' && <MarketplaceAdminView />}
+            {activeAdminMenu === 'operations' && <OperationsDashboard />}
             {activeAdminMenu === 'publish_audit' && <PublishAuditAdminView />}
             {activeAdminMenu === 'task_monitor' && <TaskMonitorAdminView />}
             
-            {/* Agent管理 4 大核心子视图 */}
-            {['agent_list', 'agent_orders', 'agent_stats', 'agent_tags'].includes(activeAdminMenu) && (
+            {/* Agent管理 3 大核心子视图 */}
+            {['agent_list', 'agent_orders', 'agent_stats'].includes(activeAdminMenu) && (
               <AgentAdminViews activeSubMenu={activeAdminMenu} />
             )}
 
-            {/* 数据集管理 4 大核心子视图 */}
-            {['dataset_list', 'dataset_audit', 'dataset_tags', 'dataset_stats'].includes(activeAdminMenu) && (
+            {/* 数据集管理 3 大核心子视图 */}
+            {['dataset_list', 'dataset_audit', 'dataset_stats'].includes(activeAdminMenu) && (
               <DatasetAdminViews activeSubMenu={activeAdminMenu} />
             )}
 
@@ -850,107 +814,7 @@ export const AdminLayout: React.FC = () => {
 };
 
 // ==========================================
-// 1. 运营中心子视图
-// ==========================================
-const OperationsAdminView: React.FC = () => {
-  const stats = [
-    { label: '平台注册总用户', value: '42,890', change: '+12.4%', up: true, desc: '较上周新增 4,720 人' },
-    { label: '今日 AI 调用频次', value: '1,842,900', change: '+28.1%', up: true, desc: 'Token 消耗 84.2 亿' },
-    { label: '累计托管任务金额', value: '¥3,480,200', change: '+8.6%', up: true, desc: '待结算 ¥420,000' },
-    { label: '活跃 GPU 算力集群', value: '98.4%', change: '健康', up: true, desc: '已挂载 128 节点' }
-  ];
-
-  return (
-    <div className="space-y-6">
-      {/* 核心指标统计卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s, idx) => (
-          <div key={idx} className="rounded-2xl bg-slate-900/80 border border-slate-800 p-5 space-y-3 shadow-xs">
-            <div className="text-xs text-slate-400 font-medium">{s.label}</div>
-            <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-black text-white font-mono tracking-tight">{s.value}</span>
-              <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                {s.change}
-              </span>
-            </div>
-            <div className="text-[11px] text-slate-500 border-t border-slate-800/80 pt-2">{s.desc}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* 概览大盘骨架与占位图景 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 rounded-2xl bg-slate-900/80 border border-slate-800 p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-black text-white">平台调用流量与并发大盘</h3>
-              <p className="text-xs text-slate-400 mt-0.5">全站各子系统 API 网关与 Agent 吞吐时序监控</p>
-            </div>
-            <div className="flex items-center gap-2 text-xs font-mono">
-              <span className="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-bold">实时</span>
-              <span className="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400">近 24 小时</span>
-              <span className="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400">近 7 天</span>
-            </div>
-          </div>
-          <div className="h-64 rounded-xl bg-slate-950/60 border border-slate-800/80 flex flex-col items-center justify-center text-slate-500 gap-2">
-            <Activity className="w-8 h-8 text-indigo-400 animate-pulse" />
-            <span className="text-xs font-mono">流量监控热力图与实时折线图待接入中...</span>
-          </div>
-        </div>
-
-        <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-6 space-y-4">
-          <h3 className="text-sm font-black text-white">运营快捷操作</h3>
-          <div className="space-y-2.5">
-            <button className="w-full py-2.5 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-left text-xs font-bold text-slate-200 flex items-center justify-between transition">
-              <span>全员系统公告推送</span>
-              <span className="text-[10px] text-slate-400">配置 →</span>
-            </button>
-            <button className="w-full py-2.5 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-left text-xs font-bold text-slate-200 flex items-center justify-between transition">
-              <span>新注册极客激励发放</span>
-              <span className="text-[10px] text-slate-400">配置 →</span>
-            </button>
-            <button className="w-full py-2.5 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-left text-xs font-bold text-slate-200 flex items-center justify-between transition">
-              <span>违规账号与调用熔断</span>
-              <span className="text-[10px] text-slate-400">管理 →</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ==========================================
-// 2. AI 集市管理子视图
-// ==========================================
-const MarketplaceAdminView: React.FC = () => {
-  return (
-    <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-8 space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-5">
-        <div>
-          <h3 className="text-base font-black text-white">智能体与模型集市管控</h3>
-          <p className="text-xs text-slate-400 mt-1">审核第三方开发者上架申请、调优定价分成机制、管控提示词模板与技能插件库</p>
-        </div>
-        <button className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition">
-          + 接入新官方模型
-        </button>
-      </div>
-
-      <div className="py-16 flex flex-col items-center justify-center text-center space-y-3 text-slate-400">
-        <div className="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-indigo-400">
-          <Store className="w-7 h-7" />
-        </div>
-        <h4 className="text-sm font-bold text-slate-200">AI 集市管理控制台已就绪</h4>
-        <p className="text-xs max-w-md text-slate-500">
-          包含【Agent 审核流】、【大模型 API 计费配置】、【数据集上架】及【插件安全扫描】模块，页面内容持续扩展中。
-        </p>
-      </div>
-    </div>
-  );
-};
-
-// ==========================================
-// 3. 发布审核（任务管理子菜单 1）
+// 1. 发布审核（任务管理子菜单 1）
 // ==========================================
 const PublishAuditAdminView: React.FC = () => {
   const { tasks, auditTask, showToast } = useApp();
