@@ -309,7 +309,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeTab, setActiveTab] = useState<MainTabType>('home');
   const [marketplaceTab, setMarketplaceTab] = useState<MarketplaceSubTab>('agent');
-  const [workspaceSubTab, setWorkspaceSubTab] = useState<WorkspaceSubTab>('overview');
+  const [workspaceSubTab, setWorkspaceSubTab] = useState<WorkspaceSubTab>('points');
 
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -2006,7 +2006,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Reset all sub-page states across modules to their clean initial default
     setSelectedCompetitionId(null);
     setMarketplaceTab('agent');
-    setWorkspaceSubTab('overview');
+    setWorkspaceSubTab('points');
     setSelectedCompareModels([]);
     setDetailModalAgent(null);
     setSubscribeModalAgent(null);

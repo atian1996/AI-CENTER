@@ -116,33 +116,32 @@ export const TasksView: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in pb-16">
-      {/* 1. 统一顶部 Header 结构 (与其他菜单风格完全保持一致) */}
-      <div className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/90 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black shadow-md shadow-indigo-600/20 shrink-0 mt-0.5">
+      {/* Standard Unified Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-2xs shrink-0">
             <Briefcase className="w-6 h-6" />
           </div>
 
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">任务大厅</h1>
-              <span className="px-3 py-0.5 rounded-full text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200/80 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-                <span>找AI人才 · 接AI需求</span>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+              任务大厅
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                找AI人才 · 接AI需求
               </span>
-            </div>
+            </h1>
 
-            <p className="text-xs text-slate-500 font-medium leading-relaxed max-w-2xl">
-              提供「⚡ 抢单速配」与「🎨 方案比稿」双重任务模式，实时连接开发者与优质产品需求。
+            <p className="text-xs text-slate-500 font-medium mt-1">
+              提供「⚡ 抢单速配」与「🎨 方案比稿」双重任务模式，实时连接开发者与优质产品需求
             </p>
           </div>
         </div>
 
         <button
           onClick={() => setPublishTaskModalOpen(true)}
-          className="px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-extrabold text-xs shadow-md shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
+          className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-200 flex items-center gap-2 cursor-pointer transition-all hover:scale-[1.02] shrink-0"
         >
-          <Plus className="w-4 h-4 stroke-[2.5]" />
+          <Plus className="w-4 h-4" />
           <span>发布新需求任务</span>
         </button>
       </div>

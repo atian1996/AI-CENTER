@@ -2,7 +2,6 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { WorkspaceSubTab } from '../../types';
 import { 
-  LayoutDashboard, 
   FolderGit2, 
   CheckSquare, 
   PhoneCall, 
@@ -16,7 +15,6 @@ import {
 } from 'lucide-react';
 
 import { WorkspaceHeader } from './WorkspaceHeader';
-import { WorkspaceOverview } from './WorkspaceOverview';
 import { WorkspacePoints } from './WorkspacePoints';
 import { WorkspaceAssets } from './WorkspaceAssets';
 import { WorkspaceTasks } from './WorkspaceTasks';
@@ -32,7 +30,6 @@ export const WorkspaceView: React.FC = () => {
   const { workspaceSubTab, setWorkspaceSubTab, unreadCount } = useApp();
 
   const sidebarItems: { id: WorkspaceSubTab; label: string; icon: React.ReactNode; badge?: number }[] = [
-    { id: 'overview', label: '概览', icon: <LayoutDashboard className="w-4 h-4" /> },
     { id: 'points', label: '我的账户', icon: <Wallet className="w-4 h-4" /> },
     { id: 'assets', label: '我的资产', icon: <FolderGit2 className="w-4 h-4" /> },
     { id: 'my-tasks', label: '我的任务', icon: <CheckSquare className="w-4 h-4" /> },
@@ -42,7 +39,7 @@ export const WorkspaceView: React.FC = () => {
     { id: 'calls', label: '我的调用', icon: <PhoneCall className="w-4 h-4" /> },
     { id: 'apikeys', label: 'API Key管理', icon: <Key className="w-4 h-4" /> },
     { id: 'notifications', label: '通知中心', icon: <Bell className="w-4 h-4" />, badge: unreadCount },
-    { id: 'settings', label: '我的账号', icon: <User className="w-4 h-4" /> },
+    { id: 'settings', label: '我的资料', icon: <User className="w-4 h-4" /> },
   ];
 
   return (
@@ -95,7 +92,6 @@ export const WorkspaceView: React.FC = () => {
 
         {/* Main Subpage Content */}
         <main className="flex-1 min-w-0">
-          {workspaceSubTab === 'overview' && <WorkspaceOverview />}
           {workspaceSubTab === 'points' && <WorkspacePoints />}
           {workspaceSubTab === 'assets' && <WorkspaceAssets />}
           {workspaceSubTab === 'my-tasks' && <WorkspaceTasks />}

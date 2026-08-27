@@ -14,7 +14,6 @@ export type MainTabType =
 export type MarketplaceSubTab = 'agent' | 'model' | 'dataset' | 'skill';
 
 export type WorkspaceSubTab = 
-  | 'overview' 
   | 'points'
   | 'assets' 
   | 'my-tasks' 

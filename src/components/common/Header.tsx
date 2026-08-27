@@ -272,16 +272,6 @@ export const Header: React.FC = () => {
                     <div className="text-[10px] text-amber-700 bg-amber-50/80 p-1.5 rounded-md border border-amber-100 font-medium leading-tight">
                       💡 当前可用于 Agent商店 订阅抵扣，更多场景陆续开放中
                     </div>
-                    <button
-                      onClick={() => {
-                        setActiveTab('workspace');
-                        setWorkspaceSubTab('points');
-                        setUserMenuOpen(false);
-                      }}
-                      className="w-full mt-1 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[10px] transition text-center flex items-center justify-center gap-1 cursor-pointer"
-                    >
-                      账户账单与积分记录 →
-                    </button>
                   </div>
                 </div>
 
@@ -300,17 +290,6 @@ export const Header: React.FC = () => {
                       <span className="text-xs">后台管理</span>
                     </div>
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold">ADMIN</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveTab('workspace');
-                      setWorkspaceSubTab('overview');
-                      setUserMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 hover:text-indigo-600 hover:bg-slate-50 text-left transition font-medium cursor-pointer"
-                  >
-                    <LayoutDashboard className="w-3.5 h-3.5 text-indigo-600" />
-                    开发者工作台
                   </button>
                 </div>
 
