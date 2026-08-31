@@ -124,11 +124,11 @@ export const ModelTryoutModal: React.FC = () => {
   return (
     <div 
       onClick={() => setTryoutModel(null)}
-      className="fixed inset-0 z-[95] flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in cursor-pointer select-none"
+      className="fixed inset-0 z-[95] overflow-y-auto flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in cursor-pointer select-none"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-6xl bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[88vh] cursor-default relative"
+        className="w-full max-w-6xl bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[88vh] my-auto cursor-default relative"
       >
         
         {/* Top Header Bar */}

@@ -13,7 +13,6 @@ import { AdminLayout } from './components/admin/AdminLayout';
 import { GlobalSearchModal } from './components/common/GlobalSearchModal';
 import { CreateBlankAppModal } from './components/modals/CreateBlankAppModal';
 import { CreateComputeModal } from './components/modals/CreateComputeModal';
-import { PublishTaskModal } from './components/modals/PublishTaskModal';
 import { RechargeModal } from './components/modals/RechargeModal';
 import { InstanceDetailModal } from './components/compute/InstanceDetailModal';
 import { ComputeHistoryModal } from './components/compute/ComputeHistoryModal';
@@ -99,10 +98,6 @@ const AppContent: React.FC = () => {
         <CreateBlankAppModal />
         <CreateComputeModal />
         <RechargeModal />
-        <PublishTaskModal
-          isOpen={publishTaskModalOpen}
-          onClose={() => setPublishTaskModalOpen(false)}
-        />
         <InstanceDetailModal />
         <ComputeHistoryModal />
         
@@ -156,10 +151,6 @@ const AppContent: React.FC = () => {
             © 2026 <span className="font-bold text-indigo-600">AI运营中心</span> (AI Operations Center) - 全场景一站式 AI 应用 + 社区 + 算力 综合平台
           </div>
           <div className="flex items-center gap-4 text-[11px] text-slate-500">
-            <span className="flex items-center gap-1 font-semibold text-emerald-600">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              集群状态: 100% 正常运行
-            </span>
             <span>· 开发者 API</span>
             <span>· 隐私政策</span>
             <span>· 社区规范</span>
@@ -172,10 +163,6 @@ const AppContent: React.FC = () => {
       <CreateBlankAppModal />
       <CreateComputeModal />
       <RechargeModal />
-      <PublishTaskModal
-        isOpen={publishTaskModalOpen}
-        onClose={() => setPublishTaskModalOpen(false)}
-      />
       <InstanceDetailModal />
       <ComputeHistoryModal />
       

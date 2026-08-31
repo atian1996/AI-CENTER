@@ -555,7 +555,7 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
                     <span className="text-xs font-black">官方赛事专属算力支持</span>
                   </div>
                   <p className="text-[11px] text-slate-300 leading-relaxed">
-                    参赛选手拉起【千机算力工坊】GPU 容器可直接挂载官方评测镜像，免去配环境困扰。
+                    参赛选手拉起【算力工坊】GPU 容器可直接挂载官方评测镜像，免去配环境困扰。
                   </p>
                   <button
                     onClick={() => handleEnterMatch(activeTrack)}
@@ -652,8 +652,8 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
 
       {/* 作品详情大图预览弹窗 */}
       {previewWork && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-fade-in">
-          <div className="bg-white rounded-3xl overflow-hidden max-w-2xl w-full border border-slate-200 shadow-2xl space-y-4 p-6">
+        <div className="fixed inset-0 z-[100] overflow-y-auto flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-fade-in">
+          <div className="bg-white rounded-3xl overflow-hidden max-w-2xl w-full border border-slate-200 shadow-2xl space-y-4 p-6 my-auto">
             <div className="flex items-center justify-between">
               <h3 className="font-black text-slate-900 text-base">{previewWork.title}</h3>
               <button 

@@ -180,10 +180,10 @@ export const CreateBlankAppModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 md:p-6 bg-slate-900/40 backdrop-blur-xs animate-fade-in select-none">
+    <div className="fixed inset-0 z-[95] overflow-y-auto flex items-center justify-center p-4 md:p-6 bg-slate-900/40 backdrop-blur-xs animate-fade-in select-none">
       <div 
         id="create-blank-app-modal"
-        className="w-full max-w-5xl bg-white border border-slate-200/90 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[92vh] text-slate-800"
+        className="w-full max-w-5xl bg-white border border-slate-200/90 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[92vh] text-slate-800 my-auto"
       >
         
         {/* Left Column: Form Details (55%) */}

@@ -728,7 +728,7 @@ interface ListProps {
 }
 
 const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, industries }) => {
-  const { agents, setAgents, showToast } = useApp();
+  const { agents, setAgents, models, showToast } = useApp();
 
   // Selected agent for edit, or true for creating new agent
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -890,7 +890,7 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
       usageCount: editingAgent.usageCount || 1250,
       subscribersCount: editingAgent.subscribersCount || 88,
       createdAt: editingAgent.createdAt || nowStr,
-      author: editingAgent.author || '千机官方研发中心',
+      author: editingAgent.author || 'AI运营中心官方研发',
       useGuide: editingAgent.useGuide || '',
       techDocs: editingAgent.techDocs || ''
     };
@@ -1116,14 +1116,30 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
 
               {/* 关联底座模型 */}
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">关联模型 (展示用)</label>
-                <input
-                  type="text"
-                  placeholder="展示该智能体使用的模型底座，如: DeepSeek-R1, Qwen-Max"
-                  value={editingAgent.linkedModel || ''}
-                  onChange={e => setEditingAgent({ ...editingAgent, linkedModel: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:border-indigo-500 outline-none transition"
-                />
+                <label className="text-xs font-bold text-slate-300 block mb-1">
+                  关联基座模型 <span className="text-slate-500 font-normal">(选择平台已有模型)</span>
+                </label>
+                <select
+                  value={editingAgent.baseModelId || (models.find(m => m.name === editingAgent.linkedModel || m.name === editingAgent.baseModel)?.id || '')}
+                  onChange={e => {
+                    const selectedId = e.target.value;
+                    const matchedModel = models.find(m => m.id === selectedId);
+                    setEditingAgent({
+                      ...editingAgent,
+                      baseModelId: selectedId,
+                      baseModel: matchedModel ? matchedModel.name : (editingAgent.baseModel || matchedModel?.name),
+                      linkedModel: matchedModel ? matchedModel.name : editingAgent.linkedModel
+                    });
+                  }}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:border-indigo-500 outline-none transition font-bold cursor-pointer"
+                >
+                  <option value="">-- 请选择平台已有模型 --</option>
+                  {models.map(m => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} ({m.vendor || 'AI底座'})
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 

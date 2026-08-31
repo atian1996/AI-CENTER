@@ -429,7 +429,7 @@ export const HomeView: React.FC = () => {
       title: '【招标】微调 70B 医疗多模态大模型',
       desc: '要求 CT/X光片图像与电子病历联合推理，BLEU-4>0.42。',
       rating: 4.9,
-      hotMetric: '8家团队竞标',
+      hotMetric: '8人已接单',
       date: '剩余28天',
       price: '¥35,000 赏金',
       icon: '🩺',

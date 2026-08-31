@@ -19,7 +19,8 @@ import {
   Layers,
   Cpu,
   Building2,
-  Share2
+  Share2,
+  ChevronRight
 } from 'lucide-react';
 
 interface AgentDetailSubPageProps {
@@ -37,8 +38,15 @@ export const AgentDetailSubPage: React.FC<AgentDetailSubPageProps> = ({
   isPayPerTokenMode,
   trialCountLeft
 }) => {
-  const { openAgentSubscribe, showToast, user } = useApp();
+  const { openAgentSubscribe, showToast, user, models, openModelDetail } = useApp();
   const [activeTab, setActiveTab] = useState<'intro' | 'docs' | 'guide' | 'reviews'>('intro');
+
+  // 判断是否为平台已有模型
+  const modelName = agent.baseModel || agent.linkedModel || '';
+  const matchedModel = models.find(m => 
+    (agent.baseModelId && m.id === agent.baseModelId) || 
+    (modelName && (m.name.toLowerCase().includes(modelName.toLowerCase()) || modelName.toLowerCase().includes(m.name.toLowerCase())))
+  );
 
   // Review comment form state
   const [comments, setComments] = useState<AgentComment[]>(() => 
@@ -458,7 +466,26 @@ export const AgentDetailSubPage: React.FC<AgentDetailSubPageProps> = ({
             <div className="space-y-3 text-xs text-slate-600 font-medium">
               <div className="flex items-center justify-between py-2 border-b border-slate-100">
                 <span className="text-slate-400">底座模型</span>
-                <span className="text-slate-800 font-extrabold">{agent.baseModel || 'DeepSeek V4 / Gemini'}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-800 font-extrabold">{agent.baseModel || agent.linkedModel || 'DeepSeek V3'}</span>
+                  {matchedModel ? (
+                    <button
+                      onClick={() => openModelDetail(matchedModel)}
+                      className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-[11px] font-bold transition cursor-pointer flex items-center gap-1 shrink-0"
+                    >
+                      <span>申购同款模型</span>
+                      <ChevronRight className="w-3 h-3 text-purple-600" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => openModelDetail(models[0])}
+                      className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-[11px] font-bold transition cursor-pointer flex items-center gap-1 shrink-0"
+                    >
+                      <span>申购同款模型</span>
+                      <ChevronRight className="w-3 h-3 text-purple-600" />
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="flex items-center justify-between py-2 border-b border-slate-100">
                 <span className="text-slate-400">技术形态</span>

@@ -30,8 +30,8 @@ export const ChangeRentalDurationModal: React.FC<ChangeRentalDurationModalProps>
   const monthlyPrice = Math.round(singleHourly * 22 * 30 * gpuCount);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border border-slate-100 animate-scale-up">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border border-slate-100 animate-scale-up my-auto">
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-base font-extrabold text-slate-900">变更为长期租用</h3>
@@ -176,8 +176,8 @@ export const UpdateInstanceRemarkModal: React.FC<UpdateInstanceRemarkModalProps>
   if (!isOpen || !instance) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-100 animate-scale-up">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-100 animate-scale-up my-auto">
         <div className="p-6 space-y-4 text-center">
           {/* Top Blue Bell Icon */}
           <div className="w-12 h-12 mx-auto rounded-full bg-blue-50 text-blue-500 flex items-center justify-center">
@@ -238,8 +238,8 @@ export const CreateImageFromInstanceModal: React.FC<CreateImageFromInstanceModal
   if (!isOpen || !instance) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border border-slate-100 animate-scale-up">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border border-slate-100 animate-scale-up my-auto">
         <div className="p-6 space-y-4">
           {/* Icon + Title */}
           <div className="flex items-start gap-4">

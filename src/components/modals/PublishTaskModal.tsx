@@ -121,7 +121,7 @@ export const PublishTaskModal: React.FC<PublishTaskModalProps> = ({ isOpen, onCl
       updateTask({
         ...initialTask,
         title: title.trim(),
-        taskType: '比稿',
+        taskType: '标准任务',
         domain,
         difficulty,
         description,
@@ -136,7 +136,7 @@ export const PublishTaskModal: React.FC<PublishTaskModalProps> = ({ isOpen, onCl
     } else {
       addTask({
         title: title.trim(),
-        taskType: '比稿',
+        taskType: '标准任务',
         domain,
         difficulty,
         description,

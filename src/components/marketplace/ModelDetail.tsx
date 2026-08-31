@@ -24,7 +24,9 @@ import {
   Layers,
   FileText,
   CreditCard,
-  MessageSquare
+  MessageSquare,
+  Bot,
+  ArrowRight
 } from 'lucide-react';
 
 interface ModelDetailProps {
@@ -33,7 +35,16 @@ interface ModelDetailProps {
 }
 
 export const ModelDetail: React.FC<ModelDetailProps> = ({ model, onBack }) => {
-  const { showToast } = useApp();
+  const { showToast, agents, openAgentDetail } = useApp();
+
+  // 匹配使用该模型的 Agent 列表
+  const matchedAgents = agents.filter(ag => 
+    (ag.baseModelId && ag.baseModelId === model.id) ||
+    (ag.linkedModel && (ag.linkedModel.toLowerCase().includes(model.name.toLowerCase()) || model.name.toLowerCase().includes(ag.linkedModel.toLowerCase()))) ||
+    (ag.baseModel && (ag.baseModel.toLowerCase().includes(model.name.toLowerCase()) || model.name.toLowerCase().includes(ag.baseModel.toLowerCase())))
+  );
+  
+  const displayAgents = matchedAgents.length > 0 ? matchedAgents : agents.slice(0, 3);
 
   // Active Tab: 'overview' | 'capabilities' | 'pricing' | 'apiDocs'
   const [activeTab, setActiveTab] = useState<'overview' | 'capabilities' | 'pricing' | 'apiDocs'>('overview');
@@ -365,6 +376,56 @@ for chunk in response:
                 </a>
               </div>
             )}
+
+            {/* 推荐Agent：使用该模型的Agent */}
+            <div className="mt-8 pt-6 border-t border-slate-100 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Bot className="w-5 h-5 text-indigo-600" />
+                  <h3 className="text-sm font-black text-slate-900">推荐 Agent（使用该模型的 Agent）</h3>
+                </div>
+                <span className="text-[11px] text-slate-400 font-medium">
+                  共 {displayAgents.length} 个基座关联智能体
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {displayAgents.map(ag => (
+                  <div
+                    key={ag.id}
+                    onClick={() => openAgentDetail(ag)}
+                    className="p-4 rounded-2xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200/80 hover:border-indigo-200 transition-all cursor-pointer group space-y-3 shadow-2xs"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-xl shadow-2xs shrink-0 group-hover:scale-105 transition">
+                        {ag.avatar && ag.avatar.startsWith('http') ? (
+                          <img src={ag.avatar} alt={ag.name} className="w-full h-full object-cover rounded-xl" />
+                        ) : (
+                          <span>{ag.avatar || '🤖'}</span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-xs font-black text-slate-900 truncate group-hover:text-indigo-600 transition">
+                          {ag.name}
+                        </h4>
+                        <span className="text-[11px] text-slate-500 font-medium truncate block">
+                          {ag.category || ag.techForm || '智能助手'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed font-normal">
+                      {ag.slogan || ag.description || '基于该底座模型能力深度微调构建的高效智能体。'}
+                    </p>
+
+                    <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-indigo-600 font-bold">
+                      <span>体验此 Agent</span>
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 

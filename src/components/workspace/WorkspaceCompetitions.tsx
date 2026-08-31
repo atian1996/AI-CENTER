@@ -67,8 +67,8 @@ const initialRegisteredCompetitions: UserRegisteredCompetition[] = [
       workTitle: '基于多Agent协同的医疗影像智能辅助初筛系统',
       submittedAt: '2026-08-22 18:45',
       reviewStatus: '评审中',
-      summary: '采用千机智算中心平台提供的多Agent协同框架，构建针对CT/MRI切片多模态特征的自动化质控、标注、报告初稿生成工作流，F1-Score提升14.2%。',
-      repoUrl: 'https://github.com/qianji-developer/medical-agent-flow',
+      summary: '采用平台提供的多Agent协同框架，构建针对CT/MRI切片多模态特征的自动化质控、标注、报告初稿生成工作流，F1-Score提升14.2%。',
+      repoUrl: 'https://github.com/developer/medical-agent-flow',
       fileUrl: 'medical_agent_v1.0_submission.zip'
     }
   },
@@ -716,7 +716,7 @@ export const WorkspaceCompetitions: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="例如：基于千机智算的多Agent协同医疗诊断助手"
+                  placeholder="例如：基于多Agent协同的医疗诊断助手"
                   value={submitForm.workTitle}
                   onChange={(e) => setSubmitForm({ ...submitForm, workTitle: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-purple-500 text-slate-900 font-medium"

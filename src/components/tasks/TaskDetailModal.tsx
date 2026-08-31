@@ -60,7 +60,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-hidden">
+      <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -72,7 +72,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
         <motion.div
           initial={{ opacity: 0, scale: 0.96, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 15 }}
+          exit={{ opacity: 0, scale: 1, y: 0 }}
           className="relative w-full max-w-4xl max-h-[88vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden z-10 my-auto text-slate-800"
         >
           {/* 顶部信息区 */}

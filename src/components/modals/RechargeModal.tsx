@@ -87,8 +87,8 @@ export const RechargeModal: React.FC<RechargeModalProps> = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in select-none">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200/90 animate-scale-up">
+    <div className="fixed inset-0 z-[120] overflow-y-auto flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in select-none">
+      <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200/90 animate-scale-up my-auto">
         
         {/* Top Header */}
         <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 flex items-center justify-between relative overflow-hidden">

@@ -366,7 +366,7 @@ res = requests.post("https://visual.volcengineapi.com/v1/image_generation", json
     tags: ['流式合成', '音色细腻', '拟真情感'],
     description: `MiniMax 高品质拟真语音合成模型，支持数十种情感腔调与方言切换，首包延迟低于 150ms。`,
     apiDocContent: `MiniMax T2A v2 接口。`,
-    codeCurl: `curl -X POST https://api.minimax.chat/v1/t2a_v2 -d '{"text": "欢迎来到千机智算中心"}'`,
+    codeCurl: `curl -X POST https://api.minimax.chat/v1/t2a_v2 -d '{"text": "欢迎来到AI运营中心"}'`,
     codePython: `import requests`,
     codeNode: `import axios from 'axios';`,
     benchmarks: [{ name: 'Voice Naturalness MOS', score: 4.85 }],

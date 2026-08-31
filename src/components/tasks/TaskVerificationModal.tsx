@@ -78,7 +78,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({ ta
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-hidden">
+      <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

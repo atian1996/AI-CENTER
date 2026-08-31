@@ -21,14 +21,14 @@ import {
   Palette,
   Edit3
 } from 'lucide-react';
-import { TaskDetailModal } from '../tasks/TaskDetailModal';
+import { TaskDetailSubPage } from '../tasks/TaskDetailSubPage';
 import { TaskVerificationModal } from '../tasks/TaskVerificationModal';
 import { SubmitResultModal } from '../tasks/SubmitResultModal';
 import { MySubmissionModal } from '../tasks/MySubmissionModal';
-import { PublishTaskModal } from '../modals/PublishTaskModal';
+import { UserTaskPublishForm } from '../tasks/UserTaskPublishForm';
 
 export const WorkspaceTasks: React.FC = () => {
-  const { tasks, user, setPublishTaskModalOpen, withdrawTask, deleteTask, showToast } = useApp();
+  const { tasks, user, withdrawTask, deleteTask, showToast } = useApp();
 
   // 主切换: 我发布的任务 | 我接单的任务
   const [activeTab, setActiveTab] = useState<'published' | 'undertaken'>('published');
@@ -39,8 +39,9 @@ export const WorkspaceTasks: React.FC = () => {
   // 我接单的任务 状态过滤: 进行中 | 已结束 (只有两个状态)
   const [undertakenFilter, setUndertakenFilter] = useState<string>('进行中');
 
-  // 弹窗控制
+  // 二级页面与弹窗控制
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
+  const [isCreatingTask, setIsCreatingTask] = useState<boolean>(false);
   const [verifyTask, setVerifyTask] = useState<TaskItem | null>(null);
   const [submitTask, setSubmitTask] = useState<TaskItem | null>(null);
   const [mySubmissionTask, setMySubmissionTask] = useState<TaskItem | null>(null);
@@ -96,6 +97,29 @@ export const WorkspaceTasks: React.FC = () => {
   const publishedFilterList = ['全部', '审核中', '进行中', '已驳回', '已结束'];
   const undertakenFilterList = ['进行中', '已结束'];
 
+  // If publishing or editing task, render UserTaskPublishForm
+  if (isCreatingTask || editingTask) {
+    return (
+      <UserTaskPublishForm
+        initialTask={editingTask}
+        onBack={() => {
+          setIsCreatingTask(false);
+          setEditingTask(null);
+        }}
+      />
+    );
+  }
+
+  // If Task Detail Subpage is active, render TaskDetailSubPage
+  if (detailTaskId) {
+    return (
+      <TaskDetailSubPage
+        taskId={detailTaskId}
+        onBack={() => setDetailTaskId(null)}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fade-in pb-12">
       {/* 顶部主选项卡切换 + 发布任务入口 */}
@@ -124,7 +148,7 @@ export const WorkspaceTasks: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setPublishTaskModalOpen(true)}
+          onClick={() => setIsCreatingTask(true)}
           className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs shadow-sm shadow-indigo-600/20 transition flex items-center gap-1.5 cursor-pointer"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
@@ -158,7 +182,7 @@ export const WorkspaceTasks: React.FC = () => {
               <FileText className="w-12 h-12 text-slate-300 mx-auto mb-2" />
               <p className="text-sm font-bold text-slate-700">暂无符合条件的发布任务</p>
               <button
-                onClick={() => setPublishTaskModalOpen(true)}
+                onClick={() => setIsCreatingTask(true)}
                 className="mt-4 px-5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-500 cursor-pointer"
               >
                 立即发布任务
@@ -481,12 +505,6 @@ export const WorkspaceTasks: React.FC = () => {
       )}
 
       {/* 各类弹窗挂载 */}
-      <TaskDetailModal
-        taskId={detailTaskId}
-        isOpen={!!detailTaskId}
-        onClose={() => setDetailTaskId(null)}
-      />
-
       <TaskVerificationModal
         task={verifyTask}
         isOpen={!!verifyTask}
@@ -515,12 +533,6 @@ export const WorkspaceTasks: React.FC = () => {
             setSubmitTask(targetTask);
           }
         }}
-      />
-
-      <PublishTaskModal
-        isOpen={!!editingTask}
-        initialTask={editingTask}
-        onClose={() => setEditingTask(null)}
       />
     </div>
   );

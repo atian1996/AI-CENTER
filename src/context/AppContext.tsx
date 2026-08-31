@@ -366,7 +366,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       logo: modelData.logo || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80',
       brief: modelData.brief || modelData.description?.slice(0, 30) || '高可用多模态大模型',
       downloadUrl: modelData.downloadUrl || '',
-      providerList: modelData.providerList || ['千机智算网关'],
+      providerList: modelData.providerList || ['智算网关'],
       modelCodeName: modelData.modelCodeName || newId,
       versionName: modelData.versionName || `${modelData.name || 'Model'} 正式版`,
       typeTag: (modelData.modalities?.[0] as any) || (modelData.typeTag as any) || '文本',
@@ -559,7 +559,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       repoPath: `${user.name || 'admin'}/${datasetData.name || 'dataset'}`,
       author: user.name || '平台运营管理员',
       authorAvatar: user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-      authorOrg: '千机智算中心',
+      authorOrg: 'AI运营中心',
       updatedAt: '2026/08/20 10:00',
       relativeTime: '刚刚',
       viewsCount: 1,
@@ -2255,7 +2255,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newTask: TaskItem = {
       id: `tsk_${Date.now()}`,
       title: newTaskData.title?.trim() || '未命名任务',
-      taskType: '比稿',
+      taskType: '标准任务',
       brief: newTaskData.brief || newTaskData.description?.replace(/<[^>]+>/g, '').slice(0, 50) || '任务简述',
       domain: newTaskData.domain || '技术开发',
       difficulty: newTaskData.difficulty || '简单',
@@ -2579,7 +2579,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const submitTaskBid = (taskId: string, proposal: string, quoteAmount: number, estimatedDays: number, attachments?: string[]) => {
-    showToast('投标方案已递交！');
+    showToast('交付方案已提交！');
   };
 
   const submitTaskDeliverable = (taskId: string, fileName: string, fileSize: string, summary: string, demoUrl?: string) => {

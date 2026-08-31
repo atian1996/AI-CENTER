@@ -318,7 +318,7 @@ export const mockComputeImages: ComputeImageAdminItem[] = [
     type: 'App市场',
     baseOs: 'Ubuntu 22.04 LTS',
     preinstalled: 'ComfyUI Latest, ControlNet, Manager, InstantID, Flux.1 依赖, xFormers',
-    maintainer: '千机 AIGC 实验室',
+    maintainer: 'AIGC 实验室',
     downloads: 6520,
     cudaVersion: 'CUDA 12.2',
     defaultPort: 8188
@@ -339,7 +339,7 @@ export const mockComputeImages: ComputeImageAdminItem[] = [
     type: 'App市场',
     baseOs: 'Ubuntu 22.04 LTS',
     preinstalled: 'vLLM 0.6.4, SGLang, Unsloth, FlashAttention-2, DeepSeek 官方适配版, OpenAI API 网关',
-    maintainer: '千机智算中心',
+    maintainer: 'AI运营中心',
     downloads: 5190,
     cudaVersion: 'CUDA 12.4',
     defaultPort: 8000
@@ -1557,7 +1557,7 @@ export const mockComputeStats = {
     { rank: 2, userId: 'u_10045', userName: '智算AI小组', name: '智算AI小组', company: '深睿医疗影像研发部', phone: '139****1122', cardHours: 980, totalHours: 980, totalSpent: 8330.00, totalCost: 8330.00, orderCount: 31, instanceCount: 31, runningInstanceCount: 3, lastUsedTime: '25分钟前' },
     { rank: 3, userId: 'u_10018', userName: '张三 (极客先锋)', name: '张三 (极客先锋)', company: '极客AI创研中心', phone: '137****5678', cardHours: 760, totalHours: 760, totalSpent: 5820.00, totalCost: 5820.00, orderCount: 28, instanceCount: 28, runningInstanceCount: 2, lastUsedTime: '1小时前' },
     { rank: 4, userId: 'u_10088', userName: '多模态视频工作室', name: '多模态视频工作室', company: '影眸科技AIGC特效组', phone: '186****3421', cardHours: 620, totalHours: 620, totalSpent: 4960.00, totalCost: 4960.00, orderCount: 19, instanceCount: 19, runningInstanceCount: 2, lastUsedTime: '2小时前' },
-    { rank: 5, userId: 'u_10001', userName: '极客小千 (你)', name: '极客小千 (你)', company: '千机签约架构师', phone: '138****0001', cardHours: 540, totalHours: 540, totalSpent: 4120.00, totalCost: 4120.00, orderCount: 16, instanceCount: 16, runningInstanceCount: 1, lastUsedTime: '刚刚' },
+    { rank: 5, userId: 'u_10001', userName: '极客小千 (你)', name: '极客小千 (你)', company: 'AI运营中心签约架构师', phone: '138****0001', cardHours: 540, totalHours: 540, totalSpent: 4120.00, totalCost: 4120.00, orderCount: 16, instanceCount: 16, runningInstanceCount: 1, lastUsedTime: '刚刚' },
     { rank: 6, userId: 'u_10112', userName: '王五_视觉感知', name: '王五_视觉感知', company: '商汤自动驾驶算法组', phone: '150****8890', cardHours: 480, totalHours: 480, totalSpent: 3680.00, totalCost: 3680.00, orderCount: 14, instanceCount: 14, runningInstanceCount: 1, lastUsedTime: '3小时前' },
     { rank: 7, userId: 'u_10066', userName: '陈博士_Robotics', name: '陈博士_Robotics', company: '浙江大学控制学院', phone: '135****4432', cardHours: 410, totalHours: 410, totalSpent: 3240.00, totalCost: 3240.00, orderCount: 12, instanceCount: 12, runningInstanceCount: 1, lastUsedTime: '5小时前' },
     { rank: 8, userId: 'u_10156', userName: '信创算力先锋', name: '信创算力先锋', company: '航天宏图AI工程部', phone: '188****7712', cardHours: 360, totalHours: 360, totalSpent: 2820.00, totalCost: 2820.00, orderCount: 9, instanceCount: 9, runningInstanceCount: 0, lastUsedTime: '昨天' },
@@ -1569,7 +1569,7 @@ export const mockComputeStats = {
     { userId: 'u_10045', userName: '智算AI小组', userAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=60', phone: '139****1122', organization: '深睿医疗影像研发部', company: '深睿医疗影像研发部', totalCost: 8330.00, totalSpent: 8330.00, totalHours: 980, instanceCount: 31, orderCount: 31, runningCount: 3, runningInstanceCount: 3, primarySpec: 'RTX 4090 (24G)', lastActiveAt: '25分钟前', lastUsedTime: '25分钟前' },
     { userId: 'u_10018', userName: '张三 (极客先锋)', userAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=60', phone: '137****5678', organization: '极客AI创研中心', company: '极客AI创研中心', totalCost: 5820.00, totalSpent: 5820.00, totalHours: 760, instanceCount: 28, orderCount: 28, runningCount: 2, runningInstanceCount: 2, primarySpec: 'RTX 4090 (24G)', lastActiveAt: '1小时前', lastUsedTime: '1小时前' },
     { userId: 'u_10088', userName: '多模态视频工作室', userAvatar: 'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=100&auto=format&fit=crop&q=60', phone: '186****3421', organization: '影眸科技AIGC特效组', company: '影眸科技AIGC特效组', totalCost: 4960.00, totalSpent: 4960.00, totalHours: 620, instanceCount: 19, orderCount: 19, runningCount: 2, runningInstanceCount: 2, primarySpec: 'H800 80GB PCIe', lastActiveAt: '2小时前', lastUsedTime: '2小时前' },
-    { userId: 'u_10001', userName: '极客小千 (你)', userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60', phone: '138****0001', organization: '千机签约架构师', company: '千机签约架构师', totalCost: 4120.00, totalSpent: 4120.00, totalHours: 540, instanceCount: 16, orderCount: 16, runningCount: 1, runningInstanceCount: 1, primarySpec: 'RTX 4090 (24G)', lastActiveAt: '刚刚', lastUsedTime: '刚刚' }
+    { userId: 'u_10001', userName: '极客小千 (你)', userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60', phone: '138****0001', organization: 'AI运营中心签约架构师', company: 'AI运营中心签约架构师', totalCost: 4120.00, totalSpent: 4120.00, totalHours: 540, instanceCount: 16, orderCount: 16, runningCount: 1, runningInstanceCount: 1, primarySpec: 'RTX 4090 (24G)', lastActiveAt: '刚刚', lastUsedTime: '刚刚' }
   ],
   operatorContribution: [
     { name: '中国电信天翼云 (上海/贵安)', share: 36, cards: 170, totalCapacity: 200, totalCards: 200, usedCards: 142, allocatedCards: 142, utilization: 71.0, rate: 71.0, revenueShare: 38.2 },

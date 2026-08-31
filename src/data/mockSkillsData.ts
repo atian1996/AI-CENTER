@@ -562,7 +562,7 @@ tags:
         userRole: '私募研究员',
         rating: 5,
         time: '1周前',
-        content: '在千机 Agent 平台直接挂载这个 Skill 之后，帮我每天自动扫描港股高股息板块的财务健康度和护城河评级，效率提升极大！',
+        content: '在 Agent 平台直接挂载这个 Skill 之后，帮我每天自动扫描港股高股息板块的财务健康度和护城河评级，效率提升极大！',
         likes: 12,
         isLiked: false
       }

@@ -281,7 +281,7 @@ export const Header: React.FC = () => {
                     onClick={() => {
                       enterAdminMode();
                       setUserMenuOpen(false);
-                      showToast('已进入千机智算中心后台管理系统');
+                      showToast('已进入AI运营中心后台管理系统');
                     }}
                     className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-gradient-to-r from-slate-900 to-indigo-950 hover:from-slate-800 hover:to-indigo-900 text-white text-left transition font-bold shadow-xs my-0.5 cursor-pointer group"
                   >

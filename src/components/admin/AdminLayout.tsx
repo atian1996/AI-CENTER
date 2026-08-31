@@ -382,7 +382,7 @@ export const AdminLayout: React.FC = () => {
       case 'task_monitor':
         return {
           title: '任务执行监控',
-          subtitle: '追踪全平台任务竞标状态、阶段交付物提交流程、里程碑资金托管与履约进度',
+          subtitle: '追踪全平台任务接单状态、阶段交付物提交流程、里程碑资金托管与履约进度',
           category: '任务管理',
           crumb: ['后台管理', '任务管理', '任务监控']
         };
@@ -501,7 +501,7 @@ export const AdminLayout: React.FC = () => {
       default:
         return {
           title: '管理后台',
-          subtitle: '千机智算中心全域运营管理体系',
+          subtitle: 'AI运营中心全域运营管理体系',
           category: '系统',
           crumb: ['后台管理']
         };
@@ -534,7 +534,7 @@ export const AdminLayout: React.FC = () => {
                 </div>
                 <div>
                   <div className="text-sm font-black tracking-tight text-white flex items-center gap-1.5">
-                    千机智算中心
+                    AI运营中心
                     <span className="text-[9px] px-1 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono border border-indigo-500/30">ADMIN</span>
                   </div>
                   <div className="text-[10px] text-slate-400 font-mono tracking-wider">后台综合管理平台</div>

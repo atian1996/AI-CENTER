@@ -176,6 +176,7 @@ export interface AgentItem {
   author: string;
   authorAvatar?: string;
   baseModel?: string;
+  baseModelId?: string; // 关联平台内的模型ID
   version?: string;
   techDocs?: string;
   createdAt?: string;
@@ -602,7 +603,7 @@ export interface SkillDownloadRecord {
 }
 
 // 任务大厅规范类型
-export type TaskKindType = '比稿';
+export type TaskKindType = '接单任务' | '标准任务' | '比稿';
 export type TaskCategoryType = '任务';
 export type TaskDomainType = '技术开发' | '内容创作' | 'AI模型与数据' | '工具与自动化' | '咨询与培训';
 export type TaskDomain = TaskDomainType;
@@ -664,14 +665,27 @@ export interface TaskTakerRecord {
   submission?: TaskSubmissionRecord;
 }
 
+// 推荐平台资源字段定义
+export interface RecommendedResources {
+  agents?: string[]; // Agent ID 列表，1-3个
+  models?: string[]; // Model ID 列表，1-3个
+  datasets?: string[]; // Dataset ID 列表，1-3个
+  skills?: string[]; // Skill ID 列表，1-3个
+  environment?: {
+    spec?: string; // 规格 如 '2核CPU / 8GB' | 'NVIDIA RTX4090 / 24GB' 等
+    image?: string; // 镜像 如 'Ubuntu 22.04 LTS'
+  };
+}
+
 export interface TaskItem {
   id: string;
   title: string; // 标题限30字
-  taskType?: TaskKindType | string; // 统一为比稿/标准任务
+  taskType?: TaskKindType | string; // 统一为接单任务/标准任务
   maxTakersLimit?: number; // 上限人数（0表示不限）
   brief?: string; // 一句话简述
   domain: TaskDomainType; // 所属领域5选1
   difficulty: TaskDifficultyLevel; // 简单/中等/困难
+  recommendedResources?: RecommendedResources; // 推荐平台资源
   
   // 描述与验收标准（富文本）
   description: string; // 富文本HTML/Markdown
@@ -922,7 +936,24 @@ export interface FeedPost {
   status?: '待审核' | '已通过' | '已驳回' | '已锁定' | '已发布';
   rejectReason?: string; // 驳回原因
   tags?: string[];
-  commentsList?: { id: string; author: string; avatar: string; content: string; time: string }[];
+  commentsList?: {
+    id: string;
+    author: string;
+    avatar: string;
+    authorTag?: string;
+    content: string;
+    time: string;
+    likesCount?: number;
+    replies?: {
+      id: string;
+      author: string;
+      avatar: string;
+      authorTag?: string;
+      content: string;
+      time: string;
+      replyToUser?: string;
+    }[];
+  }[];
 }
 
 // 社区板块配置项

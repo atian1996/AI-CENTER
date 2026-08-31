@@ -155,18 +155,28 @@ export const CommunityView: React.FC = () => {
         id: c.id,
         author: c.author,
         avatar: c.avatar,
-        authorTag: '社区贡献者',
+        authorTag: c.authorTag || '社区贡献者',
         content: c.content,
         time: c.time,
-        likesCount: Math.floor(Math.random() * 8 + 2),
+        likesCount: c.likesCount || Math.floor(Math.random() * 8 + 2),
         isLiked: false,
-        replies: [
+        replies: c.replies ? c.replies.map(r => ({
+          id: r.id,
+          author: r.author,
+          avatar: r.avatar,
+          authorTag: r.authorTag || '开发者',
+          content: r.content,
+          time: r.time,
+          replyToUser: r.replyToUser || c.author,
+          likesCount: Math.floor(Math.random() * 5 + 1),
+          isLiked: false
+        })) : [
           {
             id: `r_${c.id}_1`,
-            author: '千机AI智囊',
+            author: 'AI智囊',
             avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
             authorTag: '官方架构师',
-            content: '非常赞同！在实际应用中配合量化剪枝效果更佳。',
+            content: '非常赞同！在实际应用中配合量化剪枝与上下文缓存效果更佳。',
             time: '30分钟前',
             replyToUser: c.author,
             likesCount: 3,

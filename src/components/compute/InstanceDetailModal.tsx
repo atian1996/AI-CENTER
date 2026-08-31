@@ -71,8 +71,8 @@ export const InstanceDetailModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-fade-in select-none">
-      <div className="w-full max-w-5xl bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[88vh]">
+    <div className="fixed inset-0 z-[95] overflow-y-auto flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-fade-in select-none">
+      <div className="w-full max-w-5xl bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[88vh] my-auto">
         
         {/* Header Bar */}
         <div className="p-5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 bg-slate-50/80">

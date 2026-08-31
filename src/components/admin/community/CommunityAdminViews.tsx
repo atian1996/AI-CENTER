@@ -1221,7 +1221,7 @@ export const CommunityCommentAdminView: React.FC = () => {
     {
       id: 'cm_103',
       content: '多 Agent 架构中的工具调用回调如果不做限流，在并发高的时候容易出现 API key 超频，建议大家加上指数退避重试。',
-      author: '千机AI智囊',
+      author: 'AI智囊',
       authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
       authorTag: '官方架构师',
       postId: 'p2',
@@ -1546,7 +1546,7 @@ export const CommunityStatsAdminView: React.FC = () => {
   // Top 10 Active Users
   const userRankings = [
     { rank: 1, name: '张Dev', postsCount: 42, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80' },
-    { rank: 2, name: '千机AI智囊', postsCount: 38, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80' },
+    { rank: 2, name: 'AI智囊', postsCount: 38, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80' },
     { rank: 3, name: '极客小千', postsCount: 29, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80' },
     { rank: 4, name: '李向量-数据专家', postsCount: 24, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80' },
     { rank: 5, name: '陈Agent', postsCount: 19, avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&auto=format&fit=crop&q=80' },

@@ -103,7 +103,7 @@ export const initialNotifications: AppNotification[] = [
     actionType: 'link'
   },
   { id: 'n1', title: '每日签到成功', content: '您已连续签到 5 天，获得 50 积分奖励！', type: 'points', time: '10分钟前', read: false },
-  { id: 'n2', title: '任务投标被关注', content: '您提交的《医疗QA模型微调》竞标方案已被发布者审阅。', type: 'task', time: '1小时前', read: false, targetTab: 'tasks', targetId: 'tsk_101' },
+  { id: 'n2', title: '接单方案被关注', content: '您提交的《医疗QA模型微调》交付方案已被发布者审阅。', type: 'task', time: '1小时前', read: false, targetTab: 'tasks', targetId: 'tsk_101' },
   { id: 'n3', title: 'Agent 被调用提醒', content: '您的 Agent【代码重构与安全审计 Agent】今日累计调用次数突破 1,000 次！获得 +40 积分分成。', type: 'system', time: '3小时前', read: false, targetTab: 'workspace', targetId: 'assets' },
   { id: 'n4', title: '社区点赞提醒', content: '用户 @TechMaster 点赞了您的帖子《vLLM推理加速实战解析》。', type: 'interaction', time: '5小时前', read: true, targetTab: 'community' },
   { id: 'n5', title: '帖子新评论回复', content: '用户 @李开发者 评论了您的帖子：“请问上下文超过 64k 时显存占用大概是多少？”', type: 'interaction', time: '昨天', read: false, targetTab: 'community' },
@@ -2400,26 +2400,120 @@ export const mockFeedPosts: FeedPost[] = [
   // 1. 干货分享 (10条)
   {
     id: 'pst_gh_01',
-    title: '【干货】DeepSeek-R1 8B/32B vLLM 高并发部署优化全指南',
+    title: '【干货】DeepSeek-R1 8B/32B vLLM 高并发部署优化全指南（含 TensorRT-LLM 对比实测）',
     author: '王AI-深度架构师',
     authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
     authorTag: 'VIP 核心贡献者',
-    content: '今天在千机算力工坊尝试用 A100 80GB 微调了 DeepSeek-R1-Distill 模型，发现配合 vLLM + Chunked Prefill 之后，首 Token 延迟下降了 40%！附上我们的评估日志与配置文件，欢迎大家在【AI集市】试用我发布的【代码重构与安全审计 Agent】！🚀',
+    content: `## 一、背景与问题引出
+
+大语言模型推测思考链（Reasoning Chain）在长文本与推理计算密集场景（如数学证明、复杂代码生成）中表现卓越，但也带来了巨大的首 Token 延迟与 KV Cache 显存暴涨问题。
+
+在算力工坊采用双卡 **NVIDIA A100 (80GB PCIe)** 环境测试 DeepSeek-R1 蒸馏版（DeepSeek-R1-Distill-Qwen-32B）时，使用原生 HuggingFace \`generate()\` 接口在 64 并发下，平均延迟高达 **3.8s/token**，显存瞬间发生 OOM。
+
+为了解决这一问题，我们团队深入探讨了 **vLLM (v0.6.3)** 引擎配置，结合 **PagedAttention、Chunked Prefill 与 FP8 混合精度量化** 进行了为期一周的压测调优。
+
+---
+
+## 二、架构优化方案
+
+### 1. 核心优化项一览
+- **PagedAttention 内存分页**：将 KV Cache 的连续物理内存分配转化为虚拟分页，碎片率从 35% 压降至不到 4%。
+- **Chunked Prefill（分块预填充）**：将超长 Prompt 拆分为 512/1024 令牌片段分批处理，避免 Prefill 阶段挤占 Decode 调度的算力资源。
+- **Speculative Decoding（投机采样）**：以 DeepSeek-R1-Distill-Qwen-1.5B 作为 Draft Model 引导 32B 主模型，大幅提升解码并行度。
+
+### 2. vLLM 关键启动参数配置代码
+
+\`\`\`bash
+# 启动 vLLM 高并发推理服务
+python3 -m vllm.entrypoints.openai.api_server \\
+    --model /root/models/DeepSeek-R1-Distill-Qwen-32B \\
+    --tensor-parallel-size 2 \\
+    --gpu-memory-utilization 0.92 \\
+    --max-model-len 32768 \\
+    --max-num-batched-tokens 8192 \\
+    --enable-chunked-prefill true \\
+    --speculative-model /root/models/DeepSeek-R1-Distill-Qwen-1.5B \\
+    --num-speculative-tokens 5 \\
+    --kv-cache-dtype fp8 \\
+    --port 8000
+\`\`\`
+
+---
+
+## 三、性能压测对比数据
+
+| 推理引擎配置 | 首 Token 延迟 (TTFT) | Decode 吞吐 (Tokens/s) | 显存峰值占用 | 64 并发通过率 |
+| :--- | :--- | :--- | :--- | :--- |
+| HF Baseline (FP16) | 3820 ms | 14.2 t/s | 158 GB (OOM) | 12.5% |
+| vLLM 原生 (FP16) | 1240 ms | 48.6 t/s | 134 GB | 85.0% |
+| **vLLM + FP8 KV + Chunked** | **410 ms** | **96.8 t/s** | **98 GB** | **100.0%** |
+| TensorRT-LLM (INT8) | 390 ms | 102.1 t/s | 92 GB | 100.0% |
+
+> **结论**：vLLM + FP8 KV Cache 在工程易用度与性能之间达到了极其出色的平衡！首 Token 延迟下降了 **67%**，吞吐量提升接近 **7 倍**。
+
+---
+
+## 四、经验总结与避坑提示
+
+1. **注意 Ray 集群通信开销**：在跨节点张量并行（Tensor Parallel）时，切记开启 NCCL \`NCCL_P2P_DISABLE=0\` 与 NVLink 共享内存；
+2. **避免提示词中过度冗余**：对于 DeepSeek-R1 这一类自带思维链推理的模型，System Prompt 中尽量避免添加“请一步步思考”等重复指令，否则反而会导致模型陷入无意义递归逻辑循环。
+
+欢迎大家在【AI集市】体验我基于该架构上线的 **【法律合同智能审查 Agent】** 试用服务！`,
     images: [
-      'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80'
+      'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80'
     ],
     board: '干货分享',
-    likesCount: 128,
-    commentsCount: 34,
-    sharesCount: 12,
-    viewsCount: 1420,
+    likesCount: 342,
+    commentsCount: 28,
+    sharesCount: 45,
+    viewsCount: 3890,
     time: '2小时前',
     isLiked: true,
-    tags: ['DeepSeek', 'vLLM', '推理加速', '云端部署'],
+    isTop: true,
+    isEssential: true,
+    tags: ['DeepSeek', 'vLLM', '推理加速', '云端部署', '性能调优'],
     commentsList: [
-      { id: 'c1', author: '张Dev', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80', content: '太强了！请问上下文超过 64k 时显存占用大概是多少？', time: '1小时前' },
-      { id: 'c2', author: '王AI-深度架构师', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80', content: '使用 PagedAttention 后显存只占到了 52GB，完全能够稳定运行。', time: '45分钟前' }
+      {
+        id: 'c1',
+        author: '张Dev-算法架构',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        authorTag: '高级开发者',
+        content: '干货满满！请问在上下文超过 32k 时，启用 `--kv-cache-dtype fp8` 会不会引起精度下降导致思维链推理中断？',
+        time: '1小时前',
+        likesCount: 15,
+        replies: [
+          {
+            id: 'r1_1',
+            author: '王AI-深度架构师',
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+            authorTag: '楼主',
+            content: '我们对 GSM8K 与 HumanEval 进行了专门评测，FP8 产生的 PPL 困惑度漂移在 0.3% 以内，完全不影响逻辑链条输出。',
+            time: '45分钟前',
+            replyToUser: '张Dev-算法架构'
+          }
+        ]
+      },
+      {
+        id: 'c2',
+        author: '李向量-数据专家',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+        authorTag: '数据库专家',
+        content: '请教下楼主，Speculative Decoding 用的 1.5B 草稿模型在并发高的时候会不会反而卡主模型的 GPU 调度？',
+        time: '30分钟前',
+        likesCount: 9,
+        replies: [
+          {
+            id: 'r2_1',
+            author: '王AI-深度架构师',
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+            authorTag: '楼主',
+            content: '好问题！当并发 > 128 时草稿模型确实存在瓶颈，建议设置 `--num-speculative-tokens 3` 降低等待耗时。',
+            time: '20分钟前',
+            replyToUser: '李向量-数据专家'
+          }
+        ]
+      }
     ]
   },
   {
@@ -2521,7 +2615,7 @@ export const mockFeedPosts: FeedPost[] = [
     author: '周视觉大师',
     authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
     authorTag: 'AIGC 设计师',
-    content: '通过 Ultimate SD Upscale 结合 ControlNet Tile，可以在千机算力工坊快速把 1024x1024 渲染图放大到 8K 超清细节，完全无撕裂感。导出 JSON 工作流已上传。',
+    content: '通过 Ultimate SD Upscale 结合 ControlNet Tile，可以在算力工坊快速把 1024x1024 渲染图放大到 8K 超清细节，完全无撕裂感。导出 JSON 工作流已上传。',
     images: ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80'],
     board: '干货分享',
     likesCount: 278,
@@ -2548,7 +2642,7 @@ export const mockFeedPosts: FeedPost[] = [
   },
   {
     id: 'pst_gh_10',
-    title: '【实践经验】千机算力工坊 A100/T4 节点模型训练成本对比与出包路径',
+    title: '【实践经验】算力工坊 A100/T4 节点模型训练成本对比与出包路径',
     author: '郑算力通',
     authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
     authorTag: '云基础设施官',
@@ -2569,7 +2663,7 @@ export const mockFeedPosts: FeedPost[] = [
     author: '林BugHunter',
     authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
     authorTag: '研究生',
-    content: '在千机算力工坊使用 2x A100 80GB 运行 `torchrun` 加载 Llama-3 70B 时，开启 FlashAttention-2 提示 `RuntimeError: CUDA out of memory`。我已经设置了 gradient_accumulation_steps=4，有遇到类似问题的大佬吗？',
+    content: '在算力工坊使用 2x A100 80GB 运行 `torchrun` 加载 Llama-3 70B 时，开启 FlashAttention-2 提示 `RuntimeError: CUDA out of memory`。我已经设置了 gradient_accumulation_steps=4，有遇到类似问题的大佬吗？',
     board: '求助答疑',
     likesCount: 15,
     commentsCount: 24,
@@ -2659,7 +2753,7 @@ export const mockFeedPosts: FeedPost[] = [
     author: '萧推理萌新',
     authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
     authorTag: '算法实习生',
-    content: '调用 DeepSeek-R1 时，模型在 `<think>` 标签里推理了很长一段，结果没等给出最终答案就被 `finish_reason: length` 截断了。请问大家调用官方 API 或千机 API 时 `max_tokens` 参数一般传多少合适？',
+    content: '调用 DeepSeek-R1 时，模型在 `<think>` 标签里推理了很长一段，结果没等给出最终答案就被 `finish_reason: length` 截断了。请问大家调用官方 API 或平台 API 时 `max_tokens` 参数一般传多少合适？',
     board: '求助答疑',
     likesCount: 41,
     commentsCount: 33,
@@ -2875,7 +2969,7 @@ export const mockFeedPosts: FeedPost[] = [
     author: '副业极客小王',
     authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
     authorTag: '独立开发者',
-    content: '复盘我过去 3 个月在接单大厅和海外平台上接单的经历：利用千机平台快速编排 Agent 工作流，主要接传统电商和培训机构的智能客服需求，客单价 3000 - 8000 元不等，平均两天交付一个项目。',
+    content: '复盘我过去 3 个月在接单大厅和海外平台上接单的经历：利用平台快速编排 Agent 工作流，主要接传统电商和培训机构的智能客服需求，客单价 3000 - 8000 元不等，平均两天交付一个项目。',
     board: '赚钱交流',
     likesCount: 450,
     commentsCount: 92,
@@ -2917,7 +3011,7 @@ export const mockFeedPosts: FeedPost[] = [
   },
   {
     id: 'pst_zq_04',
-    title: '【AI集市】在千机平台发布微调模型与 Agent 插件的变现分成收益总结',
+    title: '【AI集市】在平台发布微调模型与 Agent 插件的变现分成收益总结',
     author: '模型上架达人',
     authorAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80',
     authorTag: '创作者创客',
@@ -2928,7 +3022,7 @@ export const mockFeedPosts: FeedPost[] = [
     sharesCount: 28,
     viewsCount: 2900,
     time: '1天前',
-    tags: ['千机集市', '插件上架', '被动收入', '开发者分成']
+    tags: ['AI集市', '插件上架', '被动收入', '开发者分成']
   },
   {
     id: 'pst_zq_05',
@@ -3145,11 +3239,11 @@ export const mockFeedPosts: FeedPost[] = [
   },
   {
     id: 'pst_tx_09',
-    title: '【CTF战队】千机网络安全 CTF 攻防战队招募 Web 渗透与 PWN 手',
+    title: '【CTF战队】网络安全 CTF 攻防战队招募 Web 渗透与 PWN 手',
     author: '黑客攻防战队',
     authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
     authorTag: '战队队长',
-    content: '准备备战接下来的国家级网络安全攻防演练与高校 CTF 大赛，战队拥有千机算力工坊专属隔离靶场节点，欢迎喜欢挖洞与逆向攻防的硬核小伙伴报名！',
+    content: '准备备战接下来的国家级网络安全攻防演练与高校 CTF 大赛，战队拥有算力工坊专属隔离靶场节点，欢迎喜欢挖洞与逆向攻防的硬核小伙伴报名！',
     board: '同行交流',
     likesCount: 160,
     commentsCount: 29,
@@ -3392,7 +3486,7 @@ export const mockDatasetApplications: DatasetApplication[] = [
 ];
 
 export const mockCollaborationMessages: TaskCollaborationMessage[] = [
-  { id: 'm1', senderName: '北京天元律师事务所', senderAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80', isSelf: false, content: '你好！我们已经审阅了你提交的竞标方案，主要关注劳动合同与采购免责条款的抽取准确率。', time: '2026-08-10 10:00' },
+  { id: 'm1', senderName: '北京天元律师事务所', senderAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80', isSelf: false, content: '你好！我们已经审阅了你提交的交付方案，主要关注劳动合同与采购免责条款的抽取准确率。', time: '2026-08-10 10:00' },
   { id: 'm2', senderName: '极客小千 (你)', senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80', isSelf: true, content: '您好！我们基于 Qwen2.5-72B 构建了两阶段 RAG 检索引擎，在 200 例测试用例上 F1-score 达到 94.2%。我已经上传了 preliminary_test_report.pdf。', attachmentName: 'preliminary_test_report.pdf', attachmentSize: '3.2 MB', time: '2026-08-10 10:15', versionTag: '交付物 v1.0' },
   { id: 'm3', senderName: '北京天元律师事务所', senderAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80', isSelf: false, content: '太棒了！报告我们看到了，请继续推进并完成交付物归档。', time: '2026-08-10 11:05' }
 ];
@@ -3649,7 +3743,7 @@ export const mockCompetitions: CompetitionItem[] = [
     status: 'ongoing',
     typeTags: ['AI数据科学赛', 'AI安全挑战赛', 'AIGC生成赛', 'AI产品应用赛'],
     introduction: {
-      summary: '2026 AI创新巅峰赛是由中国人工智能学会主办，千机AI运营中心与多家顶尖科研院校、头部科技大厂联合承办的国家级高水平人工智能综合挑战赛。大赛旨在汇聚全球 AI 算法工程师、开发者与高校学子，围绕通用大模型、多模态智能、深度攻防安全与垂类产业应用展开全方位技术角逐，孵化具有行业颠覆价值的 AI 原生应用和前沿开源成果。',
+      summary: '2026 AI创新巅峰赛是由中国人工智能学会主办，AI运营中心与多家顶尖科研院校、头部科技大厂联合承办的国家级高水平人工智能综合挑战赛。大赛旨在汇聚全球 AI 算法工程师、开发者与高校学子，围绕通用大模型、多模态智能、深度攻防安全与垂类产业应用展开全方位技术角逐，孵化具有行业颠覆价值的 AI 原生应用和前沿开源成果。',
       schedule: [
         { stage: '第一阶段：报名与组队', time: '2026-08-01 00:00 ~ 2026-09-01 23:59', desc: '开放线上注册组队通道，发布初赛基线数据集与开发者环境指南。' },
         { stage: '第二阶段：初赛评测角逐', time: '2026-09-01 00:00 ~ 2026-10-01 23:59', desc: '各赛道评测榜单每日自动刷新评测得分，筛选 TOP 20 队伍晋级全国决赛。' },
@@ -3670,8 +3764,8 @@ export const mockCompetitions: CompetitionItem[] = [
       organizingCommittee: [
         { role: '指导单位', name: '中国人工智能学会专家指导委员会' },
         { role: '主办单位', name: '中国人工智能学会 (CAAI)' },
-        { role: '承办单位', name: '千机 AI 运营中心 / 极客智能计算联合实验室' },
-        { role: '算力与技术支持', name: '千机算力工坊 · GPU 容器集群' }
+        { role: '承办单位', name: 'AI运营中心 / 极客智能计算联合实验室' },
+        { role: '算力与技术支持', name: '算力工坊 · GPU 容器集群' }
       ]
     },
     tracks: [
@@ -3906,7 +4000,7 @@ export const mockCompetitions: CompetitionItem[] = [
       ],
       organizingCommittee: [
         { role: '主办单位', name: '数字经济产业创新联合体' },
-        { role: '协办单位', name: '千机 AI 产业生态孵化器' }
+        { role: '协办单位', name: 'AI产业生态孵化器' }
       ]
     },
     tracks: [

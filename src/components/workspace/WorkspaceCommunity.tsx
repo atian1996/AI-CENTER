@@ -74,7 +74,7 @@ const initialUserPosts: UserPostItem[] = [
   {
     id: 'up-2',
     title: '【开源分享】基于 LangGraph 的多角色 Code Review 自动化审计工具',
-    content: '写了一个轻量级的代码审计工作流，支持自动检测 SQL 注入、越权访问并生成带行号的修复 Patch，已部署在千机智算中心平台，欢迎大家体验交流！',
+    content: '写了一个轻量级的代码审计工作流，支持自动检测 SQL 注入、越权访问并生成带行号的修复 Patch，已部署在平台，欢迎大家体验交流！',
     board: '💻代码调试',
     status: 'published',
     statusLabel: '已发布',
@@ -166,8 +166,8 @@ const initialUserFavorites: UserFavoriteItem[] = [
   {
     id: 'uf-3',
     postId: 'post-203',
-    postTitle: '千机智算中心平台 2026 Q3 积分与免费算力激励计划全景指南',
-    authorName: '千机官方运营',
+    postTitle: 'AI运营中心平台 2026 Q3 积分与免费算力激励计划全景指南',
+    authorName: '官方运营',
     authorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
     board: '📢官方公告',
     collectedAt: '2026-08-15 09:30',
@@ -279,7 +279,7 @@ export const WorkspaceCommunity: React.FC = () => {
             我的社区
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            统一管理您在千机社区发布的帖子、讨论评论与收藏的精华干货
+            统一管理您在社区发布的帖子、讨论评论与收藏的精华干货
           </p>
         </div>
 
