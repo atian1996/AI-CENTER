@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { TaskDomainType, TaskDifficultyLevel, TaskKindType, TaskItem } from '../../types';
+import { TaskDomainType, TaskDifficultyLevel, TaskItem } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
@@ -11,9 +11,7 @@ import {
   Link,
   Upload,
   Check,
-  ShieldCheck,
-  Zap,
-  Palette
+  ShieldCheck
 } from 'lucide-react';
 
 interface PublishTaskModalProps {
@@ -27,7 +25,6 @@ export const PublishTaskModal: React.FC<PublishTaskModalProps> = ({ isOpen, onCl
 
   // 1. 任务信息区
   const [title, setTitle] = useState('');
-  const [taskType, setTaskType] = useState<TaskKindType>('抢单'); // 默认抢单任务
   const [domain, setDomain] = useState<TaskDomainType>('技术开发');
   const [difficulty, setDifficulty] = useState<TaskDifficultyLevel>('简单');
   
@@ -62,7 +59,6 @@ export const PublishTaskModal: React.FC<PublishTaskModalProps> = ({ isOpen, onCl
   useEffect(() => {
     if (initialTask && isOpen) {
       setTitle(initialTask.title || '');
-      setTaskType(initialTask.taskType || '抢单');
       setDomain(initialTask.domain || '技术开发');
       setDifficulty(initialTask.difficulty || '简单');
       setDescription(initialTask.description || '');
@@ -73,7 +69,6 @@ export const PublishTaskModal: React.FC<PublishTaskModalProps> = ({ isOpen, onCl
       setEndTime(initialTask.endTime || new Date().toISOString().slice(0, 19).replace('T', ' '));
     } else if (!initialTask && isOpen) {
       setTitle('');
-      setTaskType('抢单');
       setDomain('技术开发');
       setDifficulty('简单');
       setDescription('### 任务内容与背景需求\n详细说明任务目标、技术框架、功能点要求与部署背景。\n\n### 交付细节\n1. 源代码及测试脚本；\n2. 可运行的系统/模型配置文件。');
@@ -126,7 +121,7 @@ export const PublishTaskModal: React.FC<PublishTaskModalProps> = ({ isOpen, onCl
       updateTask({
         ...initialTask,
         title: title.trim(),
-        taskType,
+        taskType: '比稿',
         domain,
         difficulty,
         description,
@@ -141,7 +136,7 @@ export const PublishTaskModal: React.FC<PublishTaskModalProps> = ({ isOpen, onCl
     } else {
       addTask({
         title: title.trim(),
-        taskType,
+        taskType: '比稿',
         domain,
         difficulty,
         description,
@@ -226,57 +221,7 @@ export const PublishTaskModal: React.FC<PublishTaskModalProps> = ({ isOpen, onCl
                 />
               </div>
 
-              {/* 2. 任务类型选择 (抢单任务 / 比稿任务) */}
-              <div>
-                <label className="text-xs font-black text-slate-800 mb-2 block">
-                  <span className="text-red-500 mr-0.5">*</span> 任务类型
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* 抢单任务卡片 */}
-                  <div
-                    onClick={() => setTaskType('抢单')}
-                    className={`p-4 rounded-xl border-2 transition cursor-pointer flex flex-col justify-between space-y-1.5 ${
-                      taskType === '抢单'
-                        ? 'bg-amber-50/50 border-amber-500 ring-2 ring-amber-100'
-                        : 'bg-slate-50 border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between font-black text-xs text-amber-900">
-                      <span className="flex items-center gap-1">
-                        <Zap className="w-4 h-4 text-amber-600" />
-                        抢单任务
-                      </span>
-                      {taskType === '抢单' && <Check className="w-4 h-4 text-amber-600" />}
-                    </div>
-                    <p className="text-[11px] text-slate-500 font-medium">
-                      谁先接单谁做，先到先得
-                    </p>
-                  </div>
-
-                  {/* 比稿任务卡片 */}
-                  <div
-                    onClick={() => setTaskType('比稿')}
-                    className={`p-4 rounded-xl border-2 transition cursor-pointer flex flex-col justify-between space-y-1.5 ${
-                      taskType === '比稿'
-                        ? 'bg-indigo-50/50 border-indigo-500 ring-2 ring-indigo-100'
-                        : 'bg-slate-50 border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between font-black text-xs text-indigo-900">
-                      <span className="flex items-center gap-1">
-                        <Palette className="w-4 h-4 text-indigo-600" />
-                        比稿任务
-                      </span>
-                      {taskType === '比稿' && <Check className="w-4 h-4 text-indigo-600" />}
-                    </div>
-                    <p className="text-[11px] text-slate-500 font-medium">
-                      多人接单并提交成果，发布人从中选最优的通过验收
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 3. 所属领域与难度 */}
+              {/* 2. 所属领域与难度 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-black text-slate-800 mb-1.5 block">

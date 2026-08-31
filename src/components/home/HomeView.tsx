@@ -1174,11 +1174,8 @@ export const HomeView: React.FC = () => {
               >
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                      task.taskType === '抢单' || task.type === '悬赏任务' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                      'bg-indigo-50 text-indigo-700 border-indigo-200'
-                    }`}>
-                      {task.taskType === '抢单' ? '⚡ 抢单' : task.taskType === '比稿' ? '🎨 比稿' : (task.type || '悬赏任务')}
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold border bg-indigo-50 text-indigo-700 border-indigo-200">
+                      {task.domain || '技术开发'}
                     </span>
                     <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
                       {task.status || '进行中'}

@@ -25,7 +25,6 @@ export const TasksView: React.FC = () => {
 
   // 搜索与过滤状态
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTaskType, setSelectedTaskType] = useState<string>('全部'); // 全部 / 抢单任务 / 比稿任务
   const [selectedStatus, setSelectedStatus] = useState<string>('全部'); // 全部 / 进行中 / 已结束
   const [selectedDomain, setSelectedDomain] = useState<string>('全部'); // 全部 / 技术开发 / 内容创作 / AI模型与数据 / 工具与自动化 / 咨询与培训
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('全部'); // 全部 / 简单 / 中等 / 困难
@@ -54,11 +53,9 @@ export const TasksView: React.FC = () => {
   // 大盘统计数据
   const stats = useMemo(() => {
     const total = publicTasks.length;
-    const fcfsCount = publicTasks.filter(t => t.taskType === '抢单').length;
-    const pitchCount = publicTasks.filter(t => t.taskType === '比稿').length;
     const finishedCount = publicTasks.filter(t => isTaskFinished(t)).length;
     const ongoingCount = total - finishedCount;
-    return { total, fcfsCount, pitchCount, ongoingCount, finishedCount };
+    return { total, ongoingCount, finishedCount };
   }, [publicTasks]);
 
   // 过滤与排序
@@ -77,12 +74,6 @@ export const TasksView: React.FC = () => {
       const finished = isTaskFinished(task);
       if (selectedStatus === '进行中' && finished) return false;
       if (selectedStatus === '已结束' && !finished) return false;
-
-      // 任务类型筛选 (全部 / 抢单任务 / 比稿任务)
-      if (selectedTaskType !== '全部') {
-        if (selectedTaskType === '抢单任务' && task.taskType !== '抢单') return false;
-        if (selectedTaskType === '比稿任务' && task.taskType !== '比稿') return false;
-      }
 
       // 所属领域筛选
       if (selectedDomain !== '全部' && task.domain !== selectedDomain) {
@@ -107,10 +98,9 @@ export const TasksView: React.FC = () => {
       // 最新发布
       return new Date(b.publishTime || b.startTime || Date.now()).getTime() - new Date(a.publishTime || a.startTime || Date.now()).getTime();
     });
-  }, [publicTasks, searchQuery, selectedStatus, selectedTaskType, selectedDomain, selectedDifficulty, sortBy]);
+  }, [publicTasks, searchQuery, selectedStatus, selectedDomain, selectedDifficulty, sortBy]);
 
   const statusesList = ['全部', '进行中', '已结束'];
-  const taskTypesList = ['全部', '抢单任务', '比稿任务'];
   const domainsList = ['全部', '技术开发', '内容创作', 'AI模型与数据', '工具与自动化', '咨询与培训'];
   const difficultiesList = ['全部', '简单', '中等', '困难'];
 
@@ -132,7 +122,7 @@ export const TasksView: React.FC = () => {
             </h1>
 
             <p className="text-xs text-slate-500 font-medium mt-1">
-              提供「⚡ 抢单速配」与「🎨 方案比稿」双重任务模式，实时连接开发者与优质产品需求
+              汇聚优质 AI 开发与数据标注需求，实时连接开发者与需求方
             </p>
           </div>
         </div>
@@ -146,7 +136,7 @@ export const TasksView: React.FC = () => {
         </button>
       </div>
 
-      {/* 2. 搜索与五维多选择筛选栏 */}
+      {/* 2. 搜索与筛选栏 */}
       <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-4">
         {/* 一整行搜索框 */}
         <div className="relative w-full">
@@ -169,7 +159,7 @@ export const TasksView: React.FC = () => {
         </div>
 
         {/* 筛选控件区 */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-3 border-t border-slate-100">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-slate-100">
           {/* 筛选一：任务状态 */}
           <div className="space-y-1">
             <label className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
@@ -187,24 +177,7 @@ export const TasksView: React.FC = () => {
             </select>
           </div>
 
-          {/* 筛选二：任务模式 */}
-          <div className="space-y-1">
-            <label className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
-              <Filter className="w-3 h-3 text-slate-400" />
-              <span>任务类型</span>
-            </label>
-            <select
-              value={selectedTaskType}
-              onChange={(e) => setSelectedTaskType(e.target.value)}
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-bold outline-none focus:bg-white focus:border-indigo-500 cursor-pointer"
-            >
-              {taskTypesList.map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* 筛选三：所属领域 */}
+          {/* 筛选二：所属领域 */}
           <div className="space-y-1">
             <label className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
               <Layers className="w-3 h-3 text-slate-400" />
@@ -221,7 +194,7 @@ export const TasksView: React.FC = () => {
             </select>
           </div>
 
-          {/* 筛选四：任务难度 */}
+          {/* 筛选三：任务难度 */}
           <div className="space-y-1">
             <label className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
               <Award className="w-3 h-3 text-slate-400" />
@@ -238,8 +211,8 @@ export const TasksView: React.FC = () => {
             </select>
           </div>
 
-          {/* 筛选五：排序 */}
-          <div className="space-y-1 col-span-2 sm:col-span-1">
+          {/* 筛选四：排序 */}
+          <div className="space-y-1">
             <label className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
               <ArrowUpDown className="w-3 h-3 text-slate-400" />
               <span>排序规则</span>
@@ -276,11 +249,10 @@ export const TasksView: React.FC = () => {
           </div>
         </div>
 
-        {(selectedStatus !== '全部' || selectedTaskType !== '全部' || selectedDomain !== '全部' || selectedDifficulty !== '全部' || searchQuery) && (
+        {(selectedStatus !== '全部' || selectedDomain !== '全部' || selectedDifficulty !== '全部' || searchQuery) && (
           <button
             onClick={() => {
               setSelectedStatus('全部');
-              setSelectedTaskType('全部');
               setSelectedDomain('全部');
               setSelectedDifficulty('全部');
               setSearchQuery('');
@@ -293,7 +265,7 @@ export const TasksView: React.FC = () => {
         )}
       </div>
 
-      {/* 4. 高质感 1920*1080 适配 Bento/Grid 卡片布局 */}
+      {/* 4. 卡片布局 */}
       {filteredTasks.length === 0 ? (
         <div className="bg-white rounded-2xl p-16 text-center border border-slate-200 space-y-3">
           <FileText className="w-12 h-12 text-slate-300 mx-auto" />
@@ -311,7 +283,6 @@ export const TasksView: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredTasks.map(task => {
-            const isFcfs = task.taskType === '抢单';
             const acceptedNum = (task.takers || []).length || task.acceptedCount || 0;
             const finished = isTaskFinished(task);
 
@@ -325,7 +296,7 @@ export const TasksView: React.FC = () => {
                     : 'border-slate-200/90 hover:border-indigo-500/80 hover:shadow-lg hover:-translate-y-0.5'
                 }`}
               >
-                {/* 顶栏：标题 + 类型 Crystal Badge + 状态 Badge */}
+                {/* 顶栏：标题 + 状态 Badge */}
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-base font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
@@ -333,17 +304,6 @@ export const TasksView: React.FC = () => {
                     </h3>
 
                     <div className="flex items-center gap-1.5 shrink-0">
-                      {isFcfs ? (
-                        <span className="px-2.5 py-0.5 rounded-lg text-xs font-black bg-amber-50 text-amber-800 border border-amber-200/80 shrink-0">
-                          ⚡ 抢单
-                        </span>
-                      ) : (
-                        <span className="px-2.5 py-0.5 rounded-lg text-xs font-black bg-indigo-50 text-indigo-800 border border-indigo-200/80 shrink-0">
-                          🎨 比稿
-                        </span>
-                      )}
-
-                      {/* 显式展示【进行中】与【已结束】状态，已删除资金托管标签 */}
                       {finished ? (
                         <span className="px-2.5 py-0.5 rounded-lg text-xs font-extrabold bg-slate-200 text-slate-600 border border-slate-300/80">
                           已结束

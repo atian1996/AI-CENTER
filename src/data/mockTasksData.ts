@@ -156,7 +156,7 @@ export const mockRichTasks: TaskItem[] = [
   {
     id: 'tsk_103',
     title: '搭建电商小红书爆款文案与多图生成 Dify 工作流',
-    taskType: '抢单',
+    taskType: '比稿',
     brief: '输入商品卖点与白底图，一键输出小红书种草文案与排版海报',
     domain: '工具与自动化',
     difficulty: '简单',
@@ -384,7 +384,7 @@ export const mockRichTasks: TaskItem[] = [
   {
     id: 'tsk_completed_01',
     title: '金融新闻情感分类模型优化与高频特征挖掘',
-    taskType: '抢单',
+    taskType: '比稿',
     brief: '优化分类模型在金融新闻特定语料上的误判特征，F1-Score 提升至 93%+',
     domain: 'AI模型与数据',
     difficulty: '中等',
@@ -473,7 +473,7 @@ export const mockRichTasks: TaskItem[] = [
   {
     id: 'tsk_rejected_01',
     title: '爬取某平台全量未公开商业会员隐私数据',
-    taskType: '抢单',
+    taskType: '比稿',
     brief: '需要编写高频爬虫绕过反爬机制获取联系方式',
     domain: '技术开发',
     difficulty: '简单',
@@ -505,7 +505,7 @@ export const mockRichTasks: TaskItem[] = [
   {
     id: 'tsk_104',
     title: '撰写《大模型 RAG 企业级落地方案与避坑指南》深度专栏',
-    taskType: '抢单',
+    taskType: '比稿',
     brief: '包含 Chunk 切分、多路召回重排、GraphRAG 等前沿工程实践',
     domain: '内容创作',
     difficulty: '中等',
@@ -700,7 +700,7 @@ export const mockRichTasks: TaskItem[] = [
   {
     id: 'tsk_my_und_fcfs_ing',
     title: '基于 Qwen2-VL 的医疗电子病历多模态 OCR 结构化提取插件',
-    taskType: '抢单',
+    taskType: '比稿',
     brief: '识别手写病历与检验单 PDF，结构化提取患者主诉、诊断及用药明细',
     domain: 'AI模型与数据',
     difficulty: '中等',
@@ -738,7 +738,7 @@ export const mockRichTasks: TaskItem[] = [
   {
     id: 'tsk_my_und_fcfs_win',
     title: '智算节点 GPU 动态监控 Grafana 仪表盘与 PromQL 插件',
-    taskType: '抢单',
+    taskType: '比稿',
     brief: '针对 NVIDIA H100/A100 集群编排实时显存、功耗与 CUDA 占用监控 Dashboard',
     domain: '工具与自动化',
     difficulty: '简单',
@@ -868,7 +868,7 @@ export const mockRichTasks: TaskItem[] = [
   {
     id: 'tsk_my_pub_ing_fcfs',
     title: '搭建企业级 Milvus 向量数据库开箱即用 K8s Helm Chart',
-    taskType: '抢单',
+    taskType: '比稿',
     brief: '包含分布式 Milvus 2.4 集群、Attu 管理面板及云原生持久化存储编排',
     domain: '工具与自动化',
     difficulty: '中等',
@@ -895,7 +895,7 @@ export const mockRichTasks: TaskItem[] = [
         username: 'K8s云原生运维队',
         userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
         takeTime: '2026-08-16 09:20:00',
-        status: '已抢单承接'
+        status: '已接单'
       }
     ],
     submissions: [],
@@ -1012,7 +1012,7 @@ export const mockRichTasks: TaskItem[] = [
   {
     id: 'tsk_my_pub_rejected_2',
     title: '自动批量注册某平台无感账号并绕过人脸识别验证',
-    taskType: '抢单',
+    taskType: '比稿',
     brief: '编写自动化黑产脚本用于高频注册',
     domain: '工具与自动化',
     difficulty: '简单',

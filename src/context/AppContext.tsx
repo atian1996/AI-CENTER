@@ -2255,7 +2255,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newTask: TaskItem = {
       id: `tsk_${Date.now()}`,
       title: newTaskData.title?.trim() || '未命名任务',
-      taskType: newTaskData.taskType || '抢单',
+      taskType: '比稿',
       brief: newTaskData.brief || newTaskData.description?.replace(/<[^>]+>/g, '').slice(0, 50) || '任务简述',
       domain: newTaskData.domain || '技术开发',
       difficulty: newTaskData.difficulty || '简单',
@@ -2359,20 +2359,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           showToast('该任务当前不可接单');
           return t;
         }
-        // 抢单任务规则：只能有1个人接单，先到先得
-        if (t.taskType === '抢单' && (t.acceptedCount || 0) >= 1) {
-          showToast('⚡ 该抢单任务已被其他人接单，抢单任务只能由一人承接');
-          return t;
-        }
-        // 比稿任务上限人数校验
-        if (t.taskType === '比稿' && t.maxTakersLimit && (t.acceptedCount || 0) >= t.maxTakersLimit) {
-          showToast(`🎨 该比稿任务已达到最高接单人数限制 (${t.maxTakersLimit}人)`);
+        // 上限人数校验
+        if (t.maxTakersLimit && (t.acceptedCount || 0) >= t.maxTakersLimit) {
+          showToast(`该任务已达到最高接单人数限制 (${t.maxTakersLimit}人)`);
           return t;
         }
         // 检查是否已接单
         const existing = (t.takers || []).find(tk => tk.username === user.name || tk.username.includes('你'));
         if (existing) {
-          showToast('您已经接单该任务，请在“我承接的任务”中提交交付成果');
+          showToast('您已经接单该任务，请在“我接单的任务”中提交交付成果');
           return t;
         }
         const newTaker = {
@@ -2384,7 +2379,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           status: '已接单' as const
         };
         const updatedStatus = t.status === '已发布' ? '进行中' : t.status;
-        showToast(`成功接单【${t.title}】（${t.taskType === '抢单' ? '⚡ 抢单任务' : '🎨 比稿任务'}）！`);
+        showToast(`成功接单【${t.title}】！`);
         return {
           ...t,
           status: updatedStatus,
@@ -2473,11 +2468,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               verifiedTime: new Date().toISOString().replace('T', ' ').substring(0, 19)
             };
           } else if (approved) {
-            // 比稿任务中，一旦某个成果被“选为通过”，其他未被选中的成果自动标注为“未通过” / “已驳回”
+            // 一旦某个成果被“选为通过”，其他未被选中的成果自动标注为“未通过” / “已驳回”
             return {
               ...s,
               status: '已驳回' as const,
-              rejectReason: '未被选为最佳比稿通过方案。'
+              rejectReason: '未被选为验收通过方案。'
             };
           }
           return s;
@@ -2522,33 +2517,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               points: u.points + earnedPoints,
               todayEarnedPoints: u.todayEarnedPoints + earnedPoints
             }));
-            showToast(`🎉 恭喜！您的比稿/抢单作品已被选为【验收通过】，赏金 ¥${earnedCash.toLocaleString()} 及 ${earnedPoints} 积分已到账！`);
+            showToast(`🎉 恭喜！您的方案成果已被选为【验收通过】，赏金 ¥${earnedCash.toLocaleString()} 及 ${earnedPoints} 积分已到账！`);
           } else if (t.publisher === user.name) {
             showToast(`已成功将【${subTargetUser}】的成果【选为通过】！赏金结算完毕，任务已顺利结束。`);
           }
         } else {
-          // 拒绝/未通过逻辑
-          if (t.taskType === '抢单') {
-            // 抢单任务拒绝后，退还预付资金给发布者，任务结束
-            if (t.publisher === user.name) {
-              const refundCash = t.cashReward || 0;
-              const refundPoints = t.pointsReward || 0;
-              setUser(u => ({
-                ...u,
-                balance: u.balance + refundCash,
-                points: u.points + refundPoints,
-                frozenBalance: Math.max(0, (u.frozenBalance || 0) - refundCash),
-                frozenPoints: Math.max(0, (u.frozenPoints || 0) - refundPoints)
-              }));
-              showToast(`已拒绝抢单成果。预付保证金 ¥${refundCash.toLocaleString()} 已解冻退还，任务已结束。`);
-            }
-          } else {
-            showToast(`已驳回【${subTargetUser}】提交的成果。`);
-          }
+          // 驳回单份成果
+          showToast(`已驳回【${subTargetUser}】提交的成果。`);
         }
 
-        // 抢单任务拒绝后任务也直接结束；比稿任务选为通过后任务结束
-        const isTaskFinished = approved || t.taskType === '抢单';
+        // 选为通过后任务结束
+        const isTaskFinished = approved;
 
         return {
           ...t,

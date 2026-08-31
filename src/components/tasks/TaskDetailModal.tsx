@@ -51,7 +51,6 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
   const mySubmission = (task.submissions || []).find(s => s.username === user.name || s.username.includes('你') || s.username.includes('极客小千'));
   const hasSubmitted = !!mySubmission || myTakerRecord?.status === '已提交' || myTakerRecord?.status === '已验收';
 
-  const isFcfs = task.taskType === '抢单';
   const takersList = task.takers || [];
   const submissionsList = task.submissions || [];
 
@@ -96,21 +95,11 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
               </button>
             </div>
 
-            {/* 中间：任务标题与类型标签 */}
+            {/* 中间：任务标题 */}
             <div className="flex items-start justify-between gap-4">
               <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-snug">
                 {task.title}
               </h2>
-
-              {isFcfs ? (
-                <span className="px-3 py-1 rounded-lg text-xs font-black bg-amber-100 text-amber-800 border border-amber-200 shrink-0 flex items-center gap-1">
-                  <span>⚡ 抢单任务</span>
-                </span>
-              ) : (
-                <span className="px-3 py-1 rounded-lg text-xs font-black bg-indigo-100 text-indigo-800 border border-indigo-200 shrink-0 flex items-center gap-1">
-                  <span>🎨 比稿任务</span>
-                </span>
-              )}
             </div>
 
             {/* 标题下方属性横栏 */}
@@ -212,23 +201,17 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
                     <span className="w-2 h-2 rounded-full bg-amber-500" />
                     <span>奖励信息</span>
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-5 bg-slate-50 border border-slate-200 rounded-2xl text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 bg-slate-50 border border-slate-200 rounded-2xl text-xs">
                     <div>
-                      <div className="text-slate-400 font-bold mb-1">单份现金奖励</div>
+                      <div className="text-slate-400 font-bold mb-1">现金奖励</div>
                       <div className="text-lg font-black font-mono text-indigo-600">
                         ¥{(task.cashReward || 0).toLocaleString()} 元
                       </div>
                     </div>
                     <div>
-                      <div className="text-slate-400 font-bold mb-1">单份积分奖励</div>
+                      <div className="text-slate-400 font-bold mb-1">积分奖励</div>
                       <div className="text-lg font-black font-mono text-amber-600">
                         {task.pointsReward || 0} 个积分
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-slate-400 font-bold mb-1">任务机制</div>
-                      <div className="text-xs font-extrabold text-slate-800">
-                        {isFcfs ? '⚡ 抢单任务（一人独承）' : '🎨 比稿任务（多人竞争择优）'}
                       </div>
                     </div>
                   </div>
@@ -434,13 +417,13 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
                 </button>
               )}
 
-              {/* 开发者视角：进行中且未接单 -> 抢单/比稿 */}
+              {/* 开发者视角：进行中且未接单 -> 立即接单 */}
               {!isPublisher && !isFinished && !hasTaken && (
                 <button
                   onClick={handleTake}
                   className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-xs transition active:scale-95 cursor-pointer"
                 >
-                  {isFcfs ? '⚡ 立即抢单' : '🎨 参与比稿'}
+                  立即接单
                 </button>
               )}
 

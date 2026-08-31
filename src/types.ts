@@ -602,7 +602,7 @@ export interface SkillDownloadRecord {
 }
 
 // 任务大厅规范类型
-export type TaskKindType = '抢单' | '比稿';
+export type TaskKindType = '比稿';
 export type TaskCategoryType = '任务';
 export type TaskDomainType = '技术开发' | '内容创作' | 'AI模型与数据' | '工具与自动化' | '咨询与培训';
 export type TaskDomain = TaskDomainType;
@@ -659,7 +659,7 @@ export interface TaskTakerRecord {
   username: string;
   userAvatar: string;
   takeTime: string;
-  status: '已接单' | '已抢单承接' | '已提交' | '已验收' | '已驳回';
+  status: '已接单' | '已提交' | '已验收' | '已驳回';
   submissionId?: string;
   submission?: TaskSubmissionRecord;
 }
@@ -667,8 +667,8 @@ export interface TaskTakerRecord {
 export interface TaskItem {
   id: string;
   title: string; // 标题限30字
-  taskType: TaskKindType; // '抢单' 或 '比稿'
-  maxTakersLimit?: number; // 比稿任务上限人数（如最少不少于2人，0表示不限）
+  taskType?: TaskKindType | string; // 统一为比稿/标准任务
+  maxTakersLimit?: number; // 上限人数（0表示不限）
   brief?: string; // 一句话简述
   domain: TaskDomainType; // 所属领域5选1
   difficulty: TaskDifficultyLevel; // 简单/中等/困难

@@ -167,7 +167,6 @@ export const WorkspaceTasks: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {filteredPublishedTasks.map(task => {
-                const isFcfs = task.taskType === '抢单';
                 const pendingCount = (task.submissions || []).filter(s => s.status === '待验收').length;
                 const isFinished = task.status === '已结束' || task.status === '已验收';
                 const isAuditing = task.status === '审核中';
@@ -178,23 +177,12 @@ export const WorkspaceTasks: React.FC = () => {
                     key={task.id}
                     className="bg-white rounded-2xl p-6 border border-slate-200 hover:border-slate-300 shadow-2xs space-y-4 transition"
                   >
-                    {/* 头部：标题 + 任务类型标签 + 任务状态标签 */}
+                    {/* 头部：标题 + 领域/难度 + 任务状态标签 */}
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
-                          {/* 任务类型标签 */}
-                          {isFcfs ? (
-                            <span className="px-2.5 py-0.5 rounded-md text-[11px] font-black bg-amber-50 text-amber-800 border border-amber-200">
-                              ⚡ 抢单任务
-                            </span>
-                          ) : (
-                            <span className="px-2.5 py-0.5 rounded-md text-[11px] font-black bg-indigo-50 text-indigo-800 border border-indigo-200">
-                              🎨 比稿任务
-                            </span>
-                          )}
-
                           {/* 所属领域与难度 */}
-                          <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700">
+                          <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
                             {task.domain}
                           </span>
                           <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700">
@@ -374,7 +362,6 @@ export const WorkspaceTasks: React.FC = () => {
                 const isFinished = task.status === '已结束' || task.status === '已验收' || (task.endTime && new Date(task.endTime) < new Date());
                 const isWinner = task.winner?.username === myRecord?.username || task.winner?.username === user.name || mySub?.status === '已通过' || myRecord?.status === '已验收';
                 const hasSubmitted = !!mySub || myRecord?.status === '已提交' || myRecord?.status === '已验收';
-                const isFcfs = task.taskType === '抢单';
 
                 return (
                   <div
@@ -388,18 +375,7 @@ export const WorkspaceTasks: React.FC = () => {
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
-                          {/* 任务类型标签 */}
-                          {isFcfs ? (
-                            <span className="px-2.5 py-0.5 rounded-md text-[11px] font-black bg-amber-50 text-amber-800 border border-amber-200">
-                              ⚡ 抢单任务
-                            </span>
-                          ) : (
-                            <span className="px-2.5 py-0.5 rounded-md text-[11px] font-black bg-indigo-50 text-indigo-800 border border-indigo-200">
-                              🎨 比稿任务
-                            </span>
-                          )}
-
-                          <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700">
+                          <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
                             {task.domain}
                           </span>
 

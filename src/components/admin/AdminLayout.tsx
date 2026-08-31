@@ -803,7 +803,6 @@ const PublishAuditAdminView: React.FC = () => {
 
   // 综合多维筛选控制台状态
   const [searchQuery, setSearchQuery] = useState<string>(''); // 关键词搜索
-  const [typeFilter, setTypeFilter] = useState<string>('全部'); // 全部 / 抢单任务 / 比稿任务
   const [domainFilter, setDomainFilter] = useState<string>('全部'); // 全部 / 各领域
   const [statusFilter, setStatusFilter] = useState<string>('待审核'); // 全部 / 待审核 / 审核通过 / 已驳回
 
@@ -818,16 +817,11 @@ const PublishAuditAdminView: React.FC = () => {
         const matchPublisher = (task.publisher || '').toLowerCase().includes(q);
         if (!matchTitle && !matchDesc && !matchPublisher) return false;
       }
-      // 2. 任务类型筛选
-      if (typeFilter !== '全部') {
-        if (typeFilter === '抢单任务' && task.taskType !== '抢单') return false;
-        if (typeFilter === '比稿任务' && task.taskType !== '比稿') return false;
-      }
-      // 3. 所属领域筛选
+      // 2. 所属领域筛选
       if (domainFilter !== '全部' && task.domain !== domainFilter) {
         return false;
       }
-      // 4. 任务状态筛选
+      // 3. 任务状态筛选
       if (statusFilter !== '全部') {
         if (statusFilter === '待审核' && task.status !== '审核中') return false;
         if (statusFilter === '审核通过' && (task.status === '审核中' || task.status === '已驳回')) return false;
@@ -835,7 +829,7 @@ const PublishAuditAdminView: React.FC = () => {
       }
       return true;
     });
-  }, [tasks, searchQuery, typeFilter, domainFilter, statusFilter]);
+  }, [tasks, searchQuery, domainFilter, statusFilter]);
 
   const handlePass = (taskId: string, title: string) => {
     auditTask(taskId, true);
@@ -865,7 +859,7 @@ const PublishAuditAdminView: React.FC = () => {
           <Filter className="w-3.5 h-3.5 text-indigo-400" />
           <span>任务发布审核多维查询控制台</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* 关键词搜索 */}
           <div>
             <label className="text-[11px] font-bold text-slate-400 mb-1 block">关键词搜索</label>
@@ -881,21 +875,7 @@ const PublishAuditAdminView: React.FC = () => {
             </div>
           </div>
 
-          {/* 筛选1：任务类型 */}
-          <div>
-            <label className="text-[11px] font-bold text-slate-400 mb-1 block">任务类型</label>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-bold outline-none focus:border-indigo-500"
-            >
-              <option value="全部">全部类型</option>
-              <option value="抢单任务">抢单任务</option>
-              <option value="比稿任务">比稿任务</option>
-            </select>
-          </div>
-
-          {/* 筛选2：所属领域 */}
+          {/* 筛选1：所属领域 */}
           <div>
             <label className="text-[11px] font-bold text-slate-400 mb-1 block">所属领域</label>
             <select
@@ -912,7 +892,7 @@ const PublishAuditAdminView: React.FC = () => {
             </select>
           </div>
 
-          {/* 筛选3：审核状态 */}
+          {/* 筛选2：审核状态 */}
           <div>
             <label className="text-[11px] font-bold text-slate-400 mb-1 block">审核状态</label>
             <select
@@ -956,7 +936,6 @@ const PublishAuditAdminView: React.FC = () => {
               <thead>
                 <tr className="border-b border-slate-800 bg-slate-950/60 text-slate-400 font-bold uppercase text-[11px]">
                   <th className="py-3 px-4 min-w-[220px]">任务标题 / 属性</th>
-                  <th className="py-3 px-3">任务机制</th>
                   <th className="py-3 px-4 min-w-[160px]">发布人</th>
                   <th className="py-3 px-3 text-right">赏金预算</th>
                   <th className="py-3 px-3">截止时间</th>
@@ -966,7 +945,6 @@ const PublishAuditAdminView: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-800/60 text-slate-300">
                 {filteredAuditTasks.map(task => {
-                  const isFcfs = task.taskType === '抢单';
                   const isAuditing = task.status === '审核中';
                   const isRejected = task.status === '已驳回';
 
@@ -987,20 +965,7 @@ const PublishAuditAdminView: React.FC = () => {
                           </div>
                         </td>
 
-                        {/* 2. 任务机制 */}
-                        <td className="py-3.5 px-3">
-                          {isFcfs ? (
-                            <span className="px-2 py-0.5 rounded text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap">
-                              ⚡ 抢单
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded text-[11px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 whitespace-nowrap">
-                              🎨 比稿
-                            </span>
-                          )}
-                        </td>
-
-                        {/* 3. 发布人 */}
+                        {/* 2. 发布人 */}
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-2">
                             <img
@@ -1015,7 +980,7 @@ const PublishAuditAdminView: React.FC = () => {
                           </div>
                         </td>
 
-                        {/* 4. 赏金预算 */}
+                        {/* 3. 赏金预算 */}
                         <td className="py-3.5 px-3 text-right">
                           <div className="font-black font-mono text-emerald-400 text-sm">
                             ¥{(task.cashReward || 0).toLocaleString()}
@@ -1025,12 +990,12 @@ const PublishAuditAdminView: React.FC = () => {
                           )}
                         </td>
 
-                        {/* 5. 截止时间 */}
+                        {/* 4. 截止时间 */}
                         <td className="py-3.5 px-3 font-mono text-[11px] text-slate-300 whitespace-nowrap">
                           {task.endTime}
                         </td>
 
-                        {/* 6. 审核状态 */}
+                        {/* 5. 审核状态 */}
                         <td className="py-3.5 px-3 whitespace-nowrap">
                           <span className={`px-2.5 py-1 rounded-lg text-[11px] font-black ${
                             isAuditing
@@ -1043,7 +1008,7 @@ const PublishAuditAdminView: React.FC = () => {
                           </span>
                         </td>
 
-                        {/* 7. 集中操作列 */}
+                        {/* 6. 集中操作列 */}
                         <td className="py-3.5 px-4 text-center whitespace-nowrap">
                           <div className="flex items-center justify-center gap-2">
                             <button
@@ -1077,7 +1042,7 @@ const PublishAuditAdminView: React.FC = () => {
                       {/* 展开的驳回原因填写行 */}
                       {rejectingTaskId === task.id && (
                         <tr className="bg-red-950/30 border-b border-red-900/50">
-                          <td colSpan={7} className="p-4">
+                          <td colSpan={6} className="p-4">
                             <div className="flex items-center gap-3">
                               <span className="text-xs font-bold text-red-300 shrink-0">驳回说明：</span>
                               <input
@@ -1131,7 +1096,6 @@ const TaskMonitorAdminView: React.FC = () => {
 
   // 筛选控制台状态
   const [searchQuery, setSearchQuery] = useState<string>(''); // 关键词搜索
-  const [typeFilter, setTypeFilter] = useState<string>('全部'); // 全部 / 抢单任务 / 比稿任务
   const [domainFilter, setDomainFilter] = useState<string>('全部'); // 全部 / 各领域
   const [statusFilter, setStatusFilter] = useState<string>('全部'); // 全部 / 进行中 / 已结束
 
@@ -1150,16 +1114,11 @@ const TaskMonitorAdminView: React.FC = () => {
         const matchPublisher = (task.publisher || '').toLowerCase().includes(q);
         if (!matchTitle && !matchDesc && !matchPublisher) return false;
       }
-      // 2. 任务类型
-      if (typeFilter !== '全部') {
-        if (typeFilter === '抢单任务' && task.taskType !== '抢单') return false;
-        if (typeFilter === '比稿任务' && task.taskType !== '比稿') return false;
-      }
-      // 3. 所属领域
+      // 2. 所属领域
       if (domainFilter !== '全部' && task.domain !== domainFilter) {
         return false;
       }
-      // 4. 运行状态
+      // 3. 运行状态
       if (statusFilter !== '全部') {
         const isFinished = task.status === '已结束' || task.status === '已验收';
         if (statusFilter === '进行中' && isFinished) return false;
@@ -1167,7 +1126,7 @@ const TaskMonitorAdminView: React.FC = () => {
       }
       return true;
     });
-  }, [approvedTasks, searchQuery, typeFilter, domainFilter, statusFilter]);
+  }, [approvedTasks, searchQuery, domainFilter, statusFilter]);
 
   return (
     <div className="space-y-6">
@@ -1177,7 +1136,7 @@ const TaskMonitorAdminView: React.FC = () => {
           <Filter className="w-3.5 h-3.5 text-cyan-400" />
           <span>全网任务执行轨迹监控筛选控制台</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* 关键词搜索 */}
           <div>
             <label className="text-[11px] font-bold text-slate-400 mb-1 block">关键词搜索</label>
@@ -1191,19 +1150,6 @@ const TaskMonitorAdminView: React.FC = () => {
                 className="w-full pl-8 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-500 font-medium outline-none focus:border-indigo-500"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="text-[11px] font-bold text-slate-400 mb-1 block">任务类型</label>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-bold outline-none focus:border-indigo-500"
-            >
-              <option value="全部">全部类型</option>
-              <option value="抢单任务">抢单任务</option>
-              <option value="比稿任务">比稿任务</option>
-            </select>
           </div>
 
           <div>
@@ -1257,7 +1203,6 @@ const TaskMonitorAdminView: React.FC = () => {
               <thead>
                 <tr className="border-b border-slate-800 bg-slate-950/60 text-slate-400 font-bold uppercase text-[11px]">
                   <th className="py-3 px-4 min-w-[220px]">任务标题 / 领域</th>
-                  <th className="py-3 px-3">机制</th>
                   <th className="py-3 px-4 min-w-[150px]">发布雇主</th>
                   <th className="py-3 px-4">接单与成果提交履约</th>
                   <th className="py-3 px-3 text-right">赏金预算</th>
@@ -1268,7 +1213,6 @@ const TaskMonitorAdminView: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-800/60 text-slate-300">
                 {filteredMonitoredTasks.map(task => {
-                  const isFcfs = task.taskType === '抢单';
                   const takers = task.takers || [];
                   const submissions = task.submissions || [];
                   const isFinished = task.status === '已结束' || task.status === '已验收';
@@ -1288,31 +1232,16 @@ const TaskMonitorAdminView: React.FC = () => {
                         </div>
                       </td>
 
-                      {/* 2. 机制 */}
-                      <td className="py-3.5 px-3 whitespace-nowrap">
-                        {isFcfs ? (
-                          <span className="px-2 py-0.5 rounded text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                            ⚡ 抢单
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded text-[11px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                            🎨 比稿
-                          </span>
-                        )}
-                      </td>
-
-                      {/* 3. 发布雇主 */}
+                      {/* 2. 发布雇主 */}
                       <td className="py-3.5 px-4">
                         <div className="font-bold text-slate-200 text-xs">{task.publisher}</div>
                         <div className="text-[10px] text-slate-500 font-mono">{task.publishTime}</div>
                       </td>
 
-                      {/* 4. 接单与成果履约 */}
+                      {/* 3. 接单与成果履约 */}
                       <td className="py-3.5 px-4">
                         <div className="text-xs font-bold text-slate-300">
-                          {isFcfs
-                            ? `接单: ${takers.length}/1 人`
-                            : `接单: ${takers.length}人 · 已提交: ${submissions.length}份`}
+                          {`接单: ${takers.length}人 · 已提交: ${submissions.length}份`}
                         </div>
                         {takers.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1">
@@ -1328,7 +1257,7 @@ const TaskMonitorAdminView: React.FC = () => {
                         )}
                       </td>
 
-                      {/* 5. 赏金预算 */}
+                      {/* 4. 赏金预算 */}
                       <td className="py-3.5 px-3 text-right whitespace-nowrap">
                         <div className="font-black font-mono text-emerald-400 text-sm">
                           ¥{(task.cashReward || 0).toLocaleString()}
@@ -1338,12 +1267,12 @@ const TaskMonitorAdminView: React.FC = () => {
                         )}
                       </td>
 
-                      {/* 6. 截止时间 */}
+                      {/* 5. 截止时间 */}
                       <td className="py-3.5 px-3 font-mono text-[11px] text-slate-300 whitespace-nowrap">
                         {task.endTime}
                       </td>
 
-                      {/* 7. 运行状态 */}
+                      {/* 6. 运行状态 */}
                       <td className="py-3.5 px-3 whitespace-nowrap">
                         <span className={`px-2.5 py-1 rounded-lg text-[11px] font-bold ${
                           isFinished
@@ -1354,7 +1283,7 @@ const TaskMonitorAdminView: React.FC = () => {
                         </span>
                       </td>
 
-                      {/* 8. 集中操作列 */}
+                      {/* 7. 集中操作列 */}
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         <button
                           onClick={() => setDetailTaskId(task.id)}
