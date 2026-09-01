@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   AreaChart,
   Area,
@@ -1117,9 +1118,9 @@ export const ModelListAdminView: React.FC = () => {
       </div>
 
       {/* 删除确认弹窗 */}
-      {deletingModelId && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl text-slate-100">
+      {deletingModelId && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl text-slate-100 animate-fade-in">
             <div className="flex items-center gap-3 text-rose-400">
               <AlertTriangle className="w-6 h-6 shrink-0" />
               <h3 className="font-bold text-base">确认彻底删除大模型？</h3>
@@ -1130,7 +1131,7 @@ export const ModelListAdminView: React.FC = () => {
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setDeletingModelId(null)}
-                className="px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700 text-xs font-semibold transition"
+                className="px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700 text-xs font-semibold transition cursor-pointer"
               >
                 取消
               </button>
@@ -1140,13 +1141,14 @@ export const ModelListAdminView: React.FC = () => {
                   setDeletingModelId(null);
                   if (showToast) showToast('已彻底删除该模型配置');
                 }}
-                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-lg shadow-rose-600/30 transition"
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-lg shadow-rose-600/30 transition cursor-pointer"
               >
                 确认删除
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
 

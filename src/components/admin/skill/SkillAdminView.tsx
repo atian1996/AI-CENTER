@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useApp } from '../../../context/AppContext';
 import { SkillPluginItem, AdminMenuKey } from '../../../types';
 import {
@@ -644,9 +645,9 @@ export const SkillAdminView: React.FC<SkillAdminViewProps> = ({ activeSubMenu })
       </div>
 
       {/* Preview Modal */}
-      {previewModalSkill && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
-          <div className="bg-slate-900 rounded-2xl border border-slate-800 max-w-2xl w-full p-6 space-y-4 shadow-2xl text-slate-100">
+      {previewModalSkill && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
+          <div className="bg-slate-900 rounded-2xl border border-slate-800 max-w-2xl w-full p-6 space-y-4 shadow-2xl text-slate-100 animate-fade-in">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <FileCode className="w-5 h-5 text-indigo-400" />
@@ -681,7 +682,8 @@ export const SkillAdminView: React.FC<SkillAdminViewProps> = ({ activeSubMenu })
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -1014,8 +1016,8 @@ if __name__ == "__main__":
       </div>
 
       {/* Audit Detail Modal */}
-      {detailSkill && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs overflow-y-auto">
+      {detailSkill && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-4xl w-full p-6 space-y-6 shadow-2xl animate-fade-in my-8 max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
@@ -1148,12 +1150,13 @@ if __name__ == "__main__":
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Reject Dialog */}
-      {rejectModalSkill && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+      {rejectModalSkill && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-fade-in">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-white">驳回 Skill 审核</h3>
@@ -1192,7 +1195,8 @@ if __name__ == "__main__":
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

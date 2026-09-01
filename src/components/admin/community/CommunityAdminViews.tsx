@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import Markdown from 'react-markdown';
 import { useApp } from '../../../context/AppContext';
 import { FeedPost, CommunityBoard, CommunityBoardItem, CommunityCommentItem } from '../../../types';
@@ -344,9 +345,9 @@ export const CommunityAuditAdminView: React.FC = () => {
       </div>
 
       {/* Audit Detail Modal */}
-      {isDetailModalOpen && selectedPost && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-6 animate-scale-up">
+      {isDetailModalOpen && selectedPost && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-6 animate-fade-in">
             
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
               <div className="flex items-center gap-2">
@@ -355,7 +356,7 @@ export const CommunityAuditAdminView: React.FC = () => {
               </div>
               <button
                 onClick={() => setIsDetailModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -434,20 +435,21 @@ export const CommunityAuditAdminView: React.FC = () => {
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Reject Modal */}
-      {isRejectModalOpen && selectedPost && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-5 animate-scale-up">
+      {isRejectModalOpen && selectedPost && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-5 animate-fade-in">
             
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <XCircle className="w-4 h-4 text-rose-400" />
                 驳回帖子 - 填写驳回原因
               </h3>
-              <button onClick={() => setIsRejectModalOpen(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setIsRejectModalOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -473,20 +475,21 @@ export const CommunityAuditAdminView: React.FC = () => {
             <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-3">
               <button
                 onClick={() => setIsRejectModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition"
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition cursor-pointer"
               >
                 取消
               </button>
               <button
                 onClick={handleConfirmReject}
-                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-600/20 transition"
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-600/20 transition cursor-pointer"
               >
                 确认驳回
               </button>
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>
@@ -944,9 +947,9 @@ export const CommunityPostAdminView: React.FC = () => {
       </div>
 
       {/* Post Detail Modal */}
-      {isDetailModalOpen && selectedPost && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-6 animate-scale-up">
+      {isDetailModalOpen && selectedPost && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-6 animate-fade-in">
             
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
               <div className="flex items-center gap-2">
@@ -955,7 +958,7 @@ export const CommunityPostAdminView: React.FC = () => {
               </div>
               <button
                 onClick={() => setIsDetailModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1002,19 +1005,19 @@ export const CommunityPostAdminView: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => togglePin(selectedPost.id)}
-                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition"
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer"
                 >
                   {selectedPost.isPinned ? '取消置顶' : '置顶文章'}
                 </button>
                 <button
                   onClick={() => toggleEssential(selectedPost.id)}
-                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition"
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer"
                 >
                   {selectedPost.isEssential ? '取消加精' : '设为精华'}
                 </button>
                 <button
                   onClick={() => setIsDetailModalOpen(false)}
-                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition"
+                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition cursor-pointer"
                 >
                   确定
                 </button>
@@ -1022,20 +1025,21 @@ export const CommunityPostAdminView: React.FC = () => {
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Board Management Drawer/Modal */}
-      {isBoardModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-6 animate-scale-up">
+      {isBoardModalOpen && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-6 animate-fade-in">
             
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
               <div className="flex items-center gap-2">
                 <FolderTree className="w-5 h-5 text-indigo-400" />
                 <h2 className="text-base font-bold text-white">社区板块管理</h2>
               </div>
-              <button onClick={() => setIsBoardModalOpen(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setIsBoardModalOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1052,7 +1056,7 @@ export const CommunityPostAdminView: React.FC = () => {
                       setBoardDescInput('');
                       setBoardSortInput(1);
                     }}
-                    className="text-[10px] text-slate-400 hover:text-slate-200 underline"
+                    className="text-[10px] text-slate-400 hover:text-slate-200 underline cursor-pointer"
                   >
                     取消编辑
                   </button>
@@ -1138,21 +1142,21 @@ export const CommunityPostAdminView: React.FC = () => {
                             setBoardDescInput(b.description);
                             setBoardSortInput(b.sortWeight);
                           }}
-                          className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold"
+                          className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold cursor-pointer"
                         >
                           编辑
                         </button>
 
                         <button
                           onClick={() => toggleBoardStatus(b.id)}
-                          className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold"
+                          className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold cursor-pointer"
                         >
                           {b.status === '已启用' ? '停用' : '启用'}
                         </button>
 
                         <button
                           onClick={() => handleDeleteBoard(b)}
-                          className="p-1 rounded text-rose-400 hover:text-rose-300 hover:bg-rose-500/20"
+                          className="p-1 rounded text-rose-400 hover:text-rose-300 hover:bg-rose-500/20 cursor-pointer"
                           title="删除"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -1169,7 +1173,8 @@ export const CommunityPostAdminView: React.FC = () => {
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>
@@ -1433,16 +1438,16 @@ export const CommunityCommentAdminView: React.FC = () => {
       </div>
 
       {/* Comment Detail Modal */}
-      {isDetailModalOpen && selectedComment && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl p-6 space-y-5 animate-scale-up">
+      {isDetailModalOpen && selectedComment && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl p-6 space-y-5 animate-fade-in">
             
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-5 h-5 text-indigo-400" />
                 <h2 className="text-base font-bold text-white">评论详情与管理</h2>
               </div>
-              <button onClick={() => setIsDetailModalOpen(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setIsDetailModalOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1493,14 +1498,15 @@ export const CommunityCommentAdminView: React.FC = () => {
 
               <button
                 onClick={() => setIsDetailModalOpen(false)}
-                className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition"
+                className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer"
               >
                 关闭
               </button>
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>

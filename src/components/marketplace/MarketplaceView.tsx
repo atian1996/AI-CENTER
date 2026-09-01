@@ -28,7 +28,7 @@ export const MarketplaceView: React.FC = () => {
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
-              AI 资产统一发现与交易集市
+              AI集市
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
                 一站式集市
               </span>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useApp } from '../../../context/AppContext';
 import { AdminMenuKey } from '../../../types';
 import {
@@ -337,7 +338,7 @@ export const OperationsDashboard: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-sm font-extrabold text-white">📋 任务大厅</h3>
-                <p className="text-[11px] text-slate-400 font-medium">众包任务交付、交易佣金与状态</p>
+                <p className="text-[11px] text-slate-400 font-medium">众包任务交付、阶段验收与履约状态</p>
               </div>
             </div>
             <button
@@ -356,7 +357,7 @@ export const OperationsDashboard: React.FC = () => {
               <div className="text-base font-black text-white font-mono mt-0.5">89</div>
             </div>
             <div>
-              <div className="text-[11px] text-slate-400 font-bold">今日新增</div>
+              <div className="text-[11px] text-slate-400 font-bold">今日发布</div>
               <div className="text-base font-black text-sky-400 font-mono mt-0.5">12</div>
             </div>
             <div>
@@ -364,8 +365,8 @@ export const OperationsDashboard: React.FC = () => {
               <div className="text-base font-black text-white font-mono mt-0.5">7</div>
             </div>
             <div>
-              <div className="text-[11px] text-slate-400 font-bold">今日收入</div>
-              <div className="text-base font-black text-emerald-400 font-mono mt-0.5">¥350</div>
+              <div className="text-[11px] text-slate-400 font-bold truncate">托管赏金总额</div>
+              <div className="text-base font-black text-emerald-400 font-mono mt-0.5">¥3.85万</div>
             </div>
           </div>
 
@@ -453,7 +454,7 @@ export const OperationsDashboard: React.FC = () => {
             </div>
             <div>
               <div className="text-[11px] text-slate-400 font-bold">今日收入</div>
-              <div className="text-base font-black text-emerald-400 font-mono mt-0.5">¥450</div>
+              <div className="text-base font-black text-emerald-400 font-mono mt-0.5">¥3,450</div>
             </div>
             <div>
               <div className="text-[11px] text-slate-400 font-bold">GPU利用率</div>
@@ -696,7 +697,7 @@ export const OperationsDashboard: React.FC = () => {
         <div className="flex items-center justify-between border-b border-rose-900/40 pb-2.5">
           <div className="flex items-center gap-2 text-rose-400 font-black text-sm">
             <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
-            <span>⚠️ 异常预警与系统故障监控</span>
+            <span>⚠️ 异常预警与系统运行监控</span>
           </div>
           <span className="text-xs text-slate-400 font-medium">
             实时诊断 (4 项待关注，其中 2 项紧急)
@@ -716,7 +717,7 @@ export const OperationsDashboard: React.FC = () => {
               </span>
               <div>
                 <span className="font-bold text-rose-100">审核堆积：</span>
-                <span className="font-medium text-rose-200">3个数据集待审核超过24小时，请及时处理</span>
+                <span className="font-medium text-rose-200">3个数据集/任务待审核超过24小时，请及时处理</span>
               </div>
             </div>
             <span className="text-rose-400 font-bold text-[11px] shrink-0 group-hover:translate-x-0.5 transition">
@@ -735,7 +736,7 @@ export const OperationsDashboard: React.FC = () => {
               </span>
               <div>
                 <span className="font-bold text-rose-100">节点异常：</span>
-                <span className="font-medium text-rose-200">电信云-华东1节点CPU使用率持续高于80%，建议扩容</span>
+                <span className="font-medium text-rose-200">电信云-华东1节点GPU显存负载持续高于85%，建议调度扩容</span>
               </div>
             </div>
             <span className="text-rose-400 font-bold text-[11px] shrink-0 group-hover:translate-x-0.5 transition">
@@ -745,7 +746,7 @@ export const OperationsDashboard: React.FC = () => {
 
           {/* 🟠 提示 1 */}
           <div
-            onClick={() => handleNavigate('agent_orders')}
+            onClick={() => handleNavigate('compute_settlement')}
             className="p-3 rounded-xl bg-amber-950/40 border border-amber-900/60 text-amber-200 flex items-start justify-between gap-3 hover:bg-amber-900/40 transition cursor-pointer group"
           >
             <div className="flex items-start gap-2">
@@ -753,18 +754,18 @@ export const OperationsDashboard: React.FC = () => {
                 🟠 提示
               </span>
               <div>
-                <span className="font-bold text-amber-100">支付异常：</span>
-                <span className="font-medium text-amber-200">2笔支付订单回调超时异常，需人工核查账单</span>
+                <span className="font-bold text-amber-100">订单对账：</span>
+                <span className="font-medium text-amber-200">2笔算力订单回调处理超时，请前往结算中心核对</span>
               </div>
             </div>
             <span className="text-amber-400 font-bold text-[11px] shrink-0 group-hover:translate-x-0.5 transition">
-              核查订单 →
+              核查账单 →
             </span>
           </div>
 
           {/* 🟠 提示 2 */}
           <div
-            onClick={() => handleNavigate('model_calls')}
+            onClick={() => handleNavigate('compute_pool')}
             className="p-3 rounded-xl bg-amber-950/40 border border-amber-900/60 text-amber-200 flex items-start justify-between gap-3 hover:bg-amber-900/40 transition cursor-pointer group"
           >
             <div className="flex items-start gap-2">
@@ -772,12 +773,12 @@ export const OperationsDashboard: React.FC = () => {
                 🟠 提示
               </span>
               <div>
-                <span className="font-bold text-amber-100">数据异常：</span>
-                <span className="font-medium text-amber-200">模型「图像生成Pro」今日调用量下降62%，建议检查接口服务</span>
+                <span className="font-bold text-amber-100">资源紧张：</span>
+                <span className="font-medium text-amber-200">华北资源池 RTX 4090 实例空闲仅剩 2 槽位，利用率达 94%</span>
               </div>
             </div>
             <span className="text-amber-400 font-bold text-[11px] shrink-0 group-hover:translate-x-0.5 transition">
-              检查接口 →
+              查看资源池 →
             </span>
           </div>
 
@@ -787,9 +788,9 @@ export const OperationsDashboard: React.FC = () => {
       {/* ========================================== */}
       {/* 待办事项明细弹窗 (Pending Tasks Modal)      */}
       {/* ========================================== */}
-      {showPendingModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-slate-900 rounded-3xl border border-slate-800 shadow-2xl max-w-xl w-full p-6 space-y-5 animate-scale-up text-white">
+      {showPendingModal && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-slate-900 rounded-3xl border border-slate-800 shadow-2xl max-w-xl w-full p-6 space-y-5 text-white animate-fade-in">
             
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-slate-800 pb-4">
@@ -800,7 +801,7 @@ export const OperationsDashboard: React.FC = () => {
                 <div>
                   <h3 className="text-base font-black text-white">📋 待办事项明细处理中心</h3>
                   <p className="text-xs text-slate-400 font-medium">
-                    汇总全平台待审核队列，点击对应的“前往处理”快速完成审查
+                    汇总全平台待审核与待核对队列，点击对应的“前往处理”快速完成审查
                   </p>
                 </div>
               </div>
@@ -867,7 +868,29 @@ export const OperationsDashboard: React.FC = () => {
                 </button>
               </div>
 
-              {/* Queue 3: 算力结算 */}
+              {/* Queue 3: Skill / 插件发布审核 */}
+              <div className="p-3.5 rounded-2xl border border-slate-800/80 bg-slate-950/60 flex items-center justify-between hover:bg-slate-800/60 transition">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-purple-950 text-purple-400 border border-purple-800 font-bold flex items-center justify-center text-xs">
+                    技
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-white">Skill / 插件发布审核</div>
+                    <div className="text-[11px] text-slate-400 font-medium mt-0.5">
+                      待审核 <span className="font-bold text-white font-mono">3</span> 项 · <span className="text-slate-400">常规审查队列</span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleNavigate('skill_audit')}
+                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                >
+                  <span>前往处理</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Queue 4: 算力结算账单核对 */}
               <div className="p-3.5 rounded-2xl border border-slate-800/80 bg-slate-950/60 flex items-center justify-between hover:bg-slate-800/60 transition">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-amber-950 text-amber-400 border border-amber-800 font-bold flex items-center justify-center text-xs">
@@ -889,31 +912,10 @@ export const OperationsDashboard: React.FC = () => {
                 </button>
               </div>
 
-              {/* Queue 4: 社区风控举报 */}
-              <div className="p-3.5 rounded-2xl border border-slate-800/80 bg-slate-950/60 flex items-center justify-between hover:bg-slate-800/60 transition">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold flex items-center justify-center text-xs">
-                    社
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-white">社区帖子违规举报</div>
-                    <div className="text-[11px] text-slate-400 font-medium mt-0.5">
-                      待审核 <span className="font-bold text-white font-mono">3</span> 项 · <span className="text-slate-400">常规队列</span>
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleNavigate('community_audit')}
-                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center gap-1 cursor-pointer"
-                >
-                  <span>前往处理</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>

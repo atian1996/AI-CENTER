@@ -745,6 +745,8 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
   // Multi-select help state for form
   const [formAppScenarios, setFormAppScenarios] = useState<string[]>([]);
   const [formIndustries, setFormIndustries] = useState<string[]>([]);
+  // Base model source: is platform model (true) or custom/external text input (false)
+  const [isPlatformModel, setIsPlatformModel] = useState<boolean>(true);
   // Launch status toggle (default: false / 关闭)
   const [isPublishedToggle, setIsPublishedToggle] = useState<boolean>(false);
 
@@ -785,6 +787,7 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
     });
     setFormAppScenarios([]);
     setFormIndustries([]);
+    setIsPlatformModel(true);
     setIsPublishedToggle(false); // 默认为关闭
     setIsEditing(true);
   };
@@ -800,6 +803,8 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
       : ag.industry ? [ag.industry] : ['通用'];
     setFormAppScenarios(initialScenarios);
     setFormIndustries(initialInds);
+    const isPlatform = models.some(m => m.id === ag.baseModelId || m.name === ag.linkedModel || m.name === ag.baseModel);
+    setIsPlatformModel(isPlatform);
     setIsPublishedToggle(ag.status === '已上架');
     setIsEditing(true);
   };
@@ -1114,32 +1119,97 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                 </select>
               </div>
 
-              {/* 关联底座模型 */}
-              <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">
-                  关联基座模型 <span className="text-slate-500 font-normal">(选择平台已有模型)</span>
+              {/* 关联基座模型 */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-300 block">
+                  关联基座模型 <span className="text-slate-500 font-normal">(底层驱动大模型)</span>
                 </label>
-                <select
-                  value={editingAgent.baseModelId || (models.find(m => m.name === editingAgent.linkedModel || m.name === editingAgent.baseModel)?.id || '')}
-                  onChange={e => {
-                    const selectedId = e.target.value;
-                    const matchedModel = models.find(m => m.id === selectedId);
-                    setEditingAgent({
-                      ...editingAgent,
-                      baseModelId: selectedId,
-                      baseModel: matchedModel ? matchedModel.name : (editingAgent.baseModel || matchedModel?.name),
-                      linkedModel: matchedModel ? matchedModel.name : editingAgent.linkedModel
-                    });
-                  }}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:border-indigo-500 outline-none transition font-bold cursor-pointer"
-                >
-                  <option value="">-- 请选择平台已有模型 --</option>
-                  {models.map(m => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} ({m.vendor || 'AI底座'})
-                    </option>
-                  ))}
-                </select>
+
+                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2.5">
+                  {/* 选择是否平台模型 */}
+                  <div className="flex items-center gap-4 text-xs font-bold">
+                    <span className="text-slate-400 text-[11px]">是否平台模型:</span>
+                    <label className="inline-flex items-center gap-1.5 cursor-pointer text-slate-200 hover:text-white">
+                      <input
+                        type="radio"
+                        name="isPlatformModel"
+                        checked={isPlatformModel}
+                        onChange={() => {
+                          setIsPlatformModel(true);
+                          const defaultModel = models.find(m => m.name === editingAgent.linkedModel || m.name === editingAgent.baseModel) || models[0];
+                          if (defaultModel) {
+                            setEditingAgent({
+                              ...editingAgent,
+                              baseModelId: defaultModel.id,
+                              baseModel: defaultModel.name,
+                              linkedModel: defaultModel.name
+                            });
+                          }
+                        }}
+                        className="text-indigo-600 focus:ring-indigo-500 rounded-full cursor-pointer"
+                      />
+                      <span>是 (平台模型)</span>
+                    </label>
+                    <label className="inline-flex items-center gap-1.5 cursor-pointer text-slate-200 hover:text-white">
+                      <input
+                        type="radio"
+                        name="isPlatformModel"
+                        checked={!isPlatformModel}
+                        onChange={() => {
+                          setIsPlatformModel(false);
+                          setEditingAgent({
+                            ...editingAgent,
+                            baseModelId: '',
+                          });
+                        }}
+                        className="text-indigo-600 focus:ring-indigo-500 rounded-full cursor-pointer"
+                      />
+                      <span>否 (外部/自定义模型)</span>
+                    </label>
+                  </div>
+
+                  {/* 如果是平台模型：下拉框 */}
+                  {isPlatformModel ? (
+                    <select
+                      value={editingAgent.baseModelId || (models.find(m => m.name === editingAgent.linkedModel || m.name === editingAgent.baseModel)?.id || '')}
+                      onChange={e => {
+                        const selectedId = e.target.value;
+                        const matchedModel = models.find(m => m.id === selectedId);
+                        setEditingAgent({
+                          ...editingAgent,
+                          baseModelId: selectedId,
+                          baseModel: matchedModel ? matchedModel.name : (editingAgent.baseModel || matchedModel?.name),
+                          linkedModel: matchedModel ? matchedModel.name : editingAgent.linkedModel
+                        });
+                      }}
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:border-indigo-500 outline-none transition font-bold cursor-pointer"
+                    >
+                      <option value="">-- 请选择平台已有模型 --</option>
+                      {models.map(m => (
+                        <option key={m.id} value={m.id}>
+                          {m.name} ({m.vendor || 'AI底座'})
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    /* 如果否：文本框输入模型名称 */
+                    <input
+                      type="text"
+                      placeholder="请输入模型名称，例如 Claude 3.5 Sonnet / GPT-4o / 自建私有大模型"
+                      value={editingAgent.linkedModel || editingAgent.baseModel || ''}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setEditingAgent({
+                          ...editingAgent,
+                          baseModelId: '',
+                          baseModel: val,
+                          linkedModel: val
+                        });
+                      }}
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder:text-slate-600 focus:border-indigo-500 outline-none transition"
+                    />
+                  )}
+                </div>
               </div>
             </div>
 
