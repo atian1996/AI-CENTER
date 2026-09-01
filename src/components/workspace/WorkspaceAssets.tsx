@@ -12,7 +12,6 @@ import {
   Bot, 
   Database, 
   Wrench, 
-  Bookmark, 
   Plus, 
   Search, 
   Filter, 
@@ -383,7 +382,7 @@ export const WorkspaceAssets: React.FC = () => {
   } = useApp();
 
   const [orchestratingAgent, setOrchestratingAgent] = useState<AgentItem | null>(null);
-  const [activeAssetTab, setActiveAssetTab] = useState<'agents' | 'datasets' | 'skills' | 'favorites'>('agents');
+  const [activeAssetTab, setActiveAssetTab] = useState<'agents' | 'datasets' | 'skills'>('agents');
   
   // Agent Sub-tab: 我创建的 vs 我订阅的
   const [agentScopeTab, setAgentScopeTab] = useState<'created' | 'subscribed'>('created');
@@ -611,7 +610,6 @@ export const WorkspaceAssets: React.FC = () => {
           { key: 'agents', label: '我的 Agent', count: userAgents.length, icon: Bot },
           { key: 'datasets', label: '我的数据集', count: datasets.length, icon: Database },
           { key: 'skills', label: '我的 Skill', count: skills.length, icon: Wrench },
-          { key: 'favorites', label: '我的收藏', count: favorites.length, icon: Bookmark },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeAssetTab === tab.key;
@@ -1484,48 +1482,6 @@ export const WorkspaceAssets: React.FC = () => {
           )}
         </div>
       )}
-
-      {/* 4. SubTab: 我的收藏 */}
-      {activeAssetTab === 'favorites' && (
-        <div className="space-y-3">
-          {favorites.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-3xl border border-slate-200 text-slate-400 text-xs font-medium">
-              您还没有收藏任何 Agent，可以在集市中浏览并点击收藏 ⭐️
-            </div>
-          ) : (
-            favorites.map((ag) => (
-              <div key={ag.id} className="bg-white p-4 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-xl font-bold">
-                    {ag.avatar}
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-extrabold text-slate-900">{ag.name}</h4>
-                    <p className="text-[10px] text-slate-400 font-medium line-clamp-1">{ag.description}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => setSelectedMainTab('marketplace')}
-                    className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold transition cursor-pointer"
-                  >
-                    立即体验
-                  </button>
-                  <button
-                    onClick={() => toggleFavoriteAgent(ag.id)}
-                    className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition cursor-pointer"
-                  >
-                    取消收藏
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-
 
       {/* 只读数据集详情弹窗 */}
       {readOnlyDatasetModal && (

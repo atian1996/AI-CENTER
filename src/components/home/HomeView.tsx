@@ -65,7 +65,7 @@ const competitionTrackCards = [
     iconBg: 'bg-cyan-100 text-cyan-600',
     image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=500&auto=format&fit=crop&q=80',
     accentGradient: 'from-cyan-500/15 via-blue-500/5 to-transparent',
-    url: 'https://adworld.xctf.org.cn/competitions-hall/competitions'
+    url: 'http://10.2.89.1/saas/contest/web/contest/ai/enter/805f06cb51fea51263cf33ea15c2b1f6/rank'
   },
   {
     id: 'ai_security',
@@ -81,7 +81,7 @@ const competitionTrackCards = [
     iconBg: 'bg-emerald-100 text-emerald-600',
     image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=500&auto=format&fit=crop&q=80',
     accentGradient: 'from-emerald-500/15 via-teal-500/5 to-transparent',
-    url: 'https://adworld.xctf.org.cn/competitions-hall/competitions'
+    url: 'http://10.2.89.1/saas/contest/agentctf/d6a21329d479860493c6f3a6aeee9896'
   },
   {
     id: 'aigc_creation',
@@ -97,7 +97,7 @@ const competitionTrackCards = [
     iconBg: 'bg-purple-100 text-purple-600',
     image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=80',
     accentGradient: 'from-purple-500/15 via-indigo-500/5 to-transparent',
-    url: 'http://10.4.5.3/page/mg/project-hall'
+    url: 'http://10.2.89.1/competitions-hall/competitions/aia-race-detail/40f258969d2e43858383b6e5a7423e3a'
   },
   {
     id: 'ai_application',
@@ -112,7 +112,8 @@ const competitionTrackCards = [
     bgClass: 'bg-indigo-50/40 hover:bg-indigo-50/80 border-indigo-200/80 hover:border-indigo-300',
     iconBg: 'bg-indigo-100 text-indigo-600',
     image: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=500&auto=format&fit=crop&q=80',
-    accentGradient: 'from-indigo-500/15 via-purple-500/5 to-transparent'
+    accentGradient: 'from-indigo-500/15 via-purple-500/5 to-transparent',
+    url: 'http://10.2.89.1/competitions-hall/competitions/aia-race-detail/1973c668ec1a4bd2aae36e2a3043890d'
   }
 ];
 

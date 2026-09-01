@@ -1076,9 +1076,12 @@ export interface TaskCollaborationMessage {
 export type CompetitionStatus = 'all' | 'unstarted' | 'ongoing' | 'ended';
 
 export type CompetitionTypeTag = 
+  | 'AI挑战赛'
+  | '数据科学赛'
+  | 'AIGC生成赛' 
+  | 'AI产品创新赛'
   | 'AI数据科学赛' 
   | 'AI安全挑战赛' 
-  | 'AIGC生成赛' 
   | 'AI产品应用赛';
 
 export interface MatchTrackItem {

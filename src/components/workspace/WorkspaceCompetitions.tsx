@@ -4,22 +4,12 @@ import {
   Trophy, 
   Search, 
   Clock, 
-  Calendar, 
-  CheckCircle2, 
   ExternalLink, 
-  Upload, 
-  FileText, 
-  Award, 
-  Eye, 
-  Send, 
-  X, 
   Building2, 
-  Users, 
-  Layers, 
-  ArrowRight,
+  Play,
+  FileText,
   Sparkles,
-  Link2,
-  FileCheck
+  ChevronRight
 } from 'lucide-react';
 
 export interface UserRegisteredCompetition {
@@ -28,24 +18,13 @@ export interface UserRegisteredCompetition {
   title: string;
   organizer: string;
   organizerBadge?: string;
-  typeTag: 'AI数据科学赛' | 'AI安全挑战赛' | 'AIGC生成赛' | 'AI产品应用赛';
+  typeTag: 'AI挑战赛' | '数据科学赛' | 'AIGC生成赛' | 'AI产品创新赛' | 'AI数据科学赛' | 'AI安全挑战赛' | 'AI产品应用赛';
   registeredAt: string;
-  status: 'registered_unstarted' | 'competing' | 'ended';
-  statusLabel: string;
+  status: 'unstarted' | 'ongoing' | 'ended';
+  statusLabel: '未开始' | '进行中' | '已结束';
   deadline: string;
   teamType: '个人参赛' | '3人战队';
   teamName?: string;
-  workStatus: 'submitted' | 'unsubmitted' | 'awarded';
-  workDetail?: {
-    workTitle: string;
-    submittedAt: string;
-    score?: number;
-    awardTitle?: string;
-    reviewStatus: '评审中' | '已完成评审' | '复赛晋级';
-    summary: string;
-    repoUrl?: string;
-    fileUrl?: string;
-  };
 }
 
 const initialRegisteredCompetitions: UserRegisteredCompetition[] = [
@@ -55,22 +34,13 @@ const initialRegisteredCompetitions: UserRegisteredCompetition[] = [
     title: '2026 AI创新巅峰赛',
     organizer: '中国人工智能学会',
     organizerBadge: '国家一级学会',
-    typeTag: 'AI产品应用赛',
+    typeTag: 'AI产品创新赛',
     registeredAt: '2026-08-15 14:30',
-    status: 'competing',
-    statusLabel: '参赛中',
+    status: 'ongoing',
+    statusLabel: '进行中',
     deadline: '2026-09-20 23:59',
     teamType: '3人战队',
-    teamName: '极光智能创新小组',
-    workStatus: 'submitted',
-    workDetail: {
-      workTitle: '基于多Agent协同的医疗影像智能辅助初筛系统',
-      submittedAt: '2026-08-22 18:45',
-      reviewStatus: '评审中',
-      summary: '采用平台提供的多Agent协同框架，构建针对CT/MRI切片多模态特征的自动化质控、标注、报告初稿生成工作流，F1-Score提升14.2%。',
-      repoUrl: 'https://github.com/developer/medical-agent-flow',
-      fileUrl: 'medical_agent_v1.0_submission.zip'
-    }
+    teamName: '极光智能创新小组'
   },
   {
     id: 'user-comp-02',
@@ -78,13 +48,12 @@ const initialRegisteredCompetitions: UserRegisteredCompetition[] = [
     title: '2026 数据科学挑战赛',
     organizer: '国家数据科学研究院',
     organizerBadge: '国家重点实验室',
-    typeTag: 'AI数据科学赛',
+    typeTag: '数据科学赛',
     registeredAt: '2026-08-18 10:15',
-    status: 'competing',
-    statusLabel: '参赛中',
+    status: 'unstarted',
+    statusLabel: '未开始',
     deadline: '2026-09-30 18:00',
-    teamType: '个人参赛',
-    workStatus: 'unsubmitted',
+    teamType: '个人参赛'
   },
   {
     id: 'user-comp-03',
@@ -92,23 +61,12 @@ const initialRegisteredCompetitions: UserRegisteredCompetition[] = [
     title: '2026 网络与AI安全攻防挑战赛',
     organizer: '网络空间安全人才培养基地',
     organizerBadge: '网安重点专项',
-    typeTag: 'AI安全挑战赛',
+    typeTag: 'AI挑战赛',
     registeredAt: '2026-07-10 09:20',
     status: 'ended',
     statusLabel: '已结束',
     deadline: '2026-08-05 20:00',
-    teamType: '个人参赛',
-    workStatus: 'awarded',
-    workDetail: {
-      workTitle: '基于沙箱隔离的防越狱对抗防御护栏 (PromptGuard)',
-      submittedAt: '2026-08-04 16:30',
-      score: 96.8,
-      awardTitle: '🏆 决赛一等奖 (¥30,000)',
-      reviewStatus: '已完成评审',
-      summary: '设计了双向动态过滤与对抗扰动检测机制，在300余种新型越狱提示词测试集中取得99.4%拦截率，零误杀率。',
-      repoUrl: 'https://github.com/qianji-developer/prompt-guard-engine',
-      fileUrl: 'promptguard_final_defense.zip'
-    }
+    teamType: '个人参赛'
   },
   {
     id: 'user-comp-04',
@@ -118,35 +76,40 @@ const initialRegisteredCompetitions: UserRegisteredCompetition[] = [
     organizerBadge: '产业联盟',
     typeTag: 'AIGC生成赛',
     registeredAt: '2026-08-20 16:00',
-    status: 'registered_unstarted',
-    statusLabel: '报名成功(未开始)',
+    status: 'ongoing',
+    statusLabel: '进行中',
     deadline: '2026-10-15 20:00',
-    teamType: '个人参赛',
-    workStatus: 'unsubmitted',
+    teamType: '个人参赛'
   }
 ];
+
+// 根据比赛类型获取对应的进入比赛跳转链接
+export const getCompetitionEnterUrl = (typeTag: string, title?: string): string => {
+  const str = `${typeTag || ''} ${title || ''}`.toLowerCase();
+  if (str.includes('挑战') || str.includes('安全') || str.includes('ctf') || str.includes('agentctf')) {
+    return 'http://10.2.89.1/saas/contest/agentctf/d6a21329d479860493c6f3a6aeee9896';
+  }
+  if (str.includes('数据科学') || str.includes('时序')) {
+    return 'http://10.2.89.1/saas/contest/web/contest/ai/enter/805f06cb51fea51263cf33ea15c2b1f6/rank';
+  }
+  if (str.includes('aigc') || str.includes('生成') || str.includes('创作') || str.includes('营销')) {
+    return 'http://10.2.89.1/competitions-hall/competitions/aia-race-detail/40f258969d2e43858383b6e5a7423e3a';
+  }
+  if (str.includes('产品') || str.includes('创新') || str.includes('应用') || str.includes('原生')) {
+    return 'http://10.2.89.1/competitions-hall/competitions/aia-race-detail/1973c668ec1a4bd2aae36e2a3043890d';
+  }
+  return 'http://10.2.89.1/competitions-hall/competitions/aia-race-detail/1973c668ec1a4bd2aae36e2a3043890d';
+};
 
 export const WorkspaceCompetitions: React.FC = () => {
   const { openCompetitionDetail, showToast } = useApp();
   
-  const [competitionsList, setCompetitionsList] = useState<UserRegisteredCompetition[]>(initialRegisteredCompetitions);
+  const [competitionsList] = useState<UserRegisteredCompetition[]>(initialRegisteredCompetitions);
 
   // Filters
-  const [statusFilter, setStatusFilter] = useState<'all' | 'registered_unstarted' | 'competing' | 'ended'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'unstarted' | 'ongoing' | 'ended'>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-
-  // Modals
-  const [detailItem, setDetailItem] = useState<UserRegisteredCompetition | null>(null);
-  const [submitModalItem, setSubmitModalItem] = useState<UserRegisteredCompetition | null>(null);
-
-  // Submit Form States
-  const [submitForm, setSubmitForm] = useState({
-    workTitle: '',
-    summary: '',
-    repoUrl: '',
-    fileName: ''
-  });
 
   // Filtered
   const filteredList = competitionsList.filter((comp) => {
@@ -154,7 +117,12 @@ export const WorkspaceCompetitions: React.FC = () => {
     if (statusFilter !== 'all' && comp.status !== statusFilter) return false;
 
     // Type
-    if (typeFilter !== 'all' && comp.typeTag !== typeFilter) return false;
+    if (typeFilter !== 'all') {
+      if (typeFilter === 'AI挑战赛' && !['AI挑战赛', 'AI安全挑战赛'].includes(comp.typeTag)) return false;
+      if (typeFilter === '数据科学赛' && !['数据科学赛', 'AI数据科学赛'].includes(comp.typeTag)) return false;
+      if (typeFilter === 'AIGC生成赛' && comp.typeTag !== 'AIGC生成赛') return false;
+      if (typeFilter === 'AI产品创新赛' && !['AI产品创新赛', 'AI产品应用赛'].includes(comp.typeTag)) return false;
+    }
 
     // Search
     if (searchQuery.trim()) {
@@ -168,43 +136,61 @@ export const WorkspaceCompetitions: React.FC = () => {
 
   // Stats
   const registeredTotal = competitionsList.length;
-  const competingTotal = competitionsList.filter(c => c.status === 'competing').length;
+  const unstartedTotal = competitionsList.filter(c => c.status === 'unstarted').length;
+  const ongoingTotal = competitionsList.filter(c => c.status === 'ongoing').length;
   const endedTotal = competitionsList.filter(c => c.status === 'ended').length;
 
-  const handleSubmitWork = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!submitModalItem) return;
-    if (!submitForm.workTitle.trim() || !submitForm.summary.trim()) {
-      showToast('请完整填写作品标题和概述');
-      return;
+  const handleEnterCompetition = (comp: UserRegisteredCompetition) => {
+    const url = getCompetitionEnterUrl(comp.typeTag, comp.title);
+    showToast(`正在跳转进入【${comp.title}】比赛系统...`);
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const getStatusBadge = (status: UserRegisteredCompetition['status']) => {
+    switch (status) {
+      case 'unstarted':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+            <Clock className="w-3 h-3 text-amber-500" />
+            未开始
+          </span>
+        );
+      case 'ongoing':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            进行中
+          </span>
+        );
+      case 'ended':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+            已结束
+          </span>
+        );
     }
+  };
 
-    // Update competition work
-    setCompetitionsList(prev => prev.map(item => {
-      if (item.id === submitModalItem.id) {
-        return {
-          ...item,
-          workStatus: 'submitted',
-          workDetail: {
-            workTitle: submitForm.workTitle,
-            submittedAt: new Date().toLocaleString(),
-            reviewStatus: '评审中',
-            summary: submitForm.summary,
-            repoUrl: submitForm.repoUrl || 'https://github.com/qianji-developer/my-submission',
-            fileUrl: submitForm.fileName || 'submission_package.zip'
-          }
-        };
-      }
-      return item;
-    }));
-
-    showToast('作品提交成功！评委会将进行线上盲审');
-    setSubmitModalItem(null);
-    setSubmitForm({ workTitle: '', summary: '', repoUrl: '', fileName: '' });
+  const getTypeTagStyle = (tag: string) => {
+    switch (tag) {
+      case 'AI数据科学赛':
+      case '数据科学赛':
+        return 'bg-cyan-50 text-cyan-700 border-cyan-200';
+      case 'AI安全挑战赛':
+      case 'AI挑战赛':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'AIGC生成赛':
+        return 'bg-purple-50 text-purple-700 border-purple-200';
+      case 'AI产品应用赛':
+      case 'AI产品创新赛':
+        return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+      default:
+        return 'bg-slate-50 text-slate-700 border-slate-200';
+    }
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div id="workspace-competitions-view" className="p-6 space-y-6 max-w-7xl mx-auto font-sans">
       
       {/* 顶部标题 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -214,7 +200,7 @@ export const WorkspaceCompetitions: React.FC = () => {
             我的赛事
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            展示您报名参与的所有官方赛事，便捷查看赛程进度、提交比赛作品与查看获奖成果
+            展示您报名参与的所有官方赛事，便捷查看赛程详情并一键直达竞赛平台
           </p>
         </div>
       </div>
@@ -238,31 +224,31 @@ export const WorkspaceCompetitions: React.FC = () => {
 
         <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs flex items-center justify-between">
           <div className="space-y-1">
-            <div className="text-xs text-slate-500 font-bold">正在参赛中</div>
-            <div className="text-2xl font-black text-purple-600 font-mono">
-              {competingTotal} <span className="text-xs text-slate-400 font-normal">项</span>
+            <div className="text-xs text-slate-500 font-bold">进行中赛事</div>
+            <div className="text-2xl font-black text-emerald-600 font-mono">
+              {ongoingTotal} <span className="text-xs text-slate-400 font-normal">项</span>
             </div>
-            <div className="text-[11px] text-purple-600/80 font-medium">
-              请留意作品提交截止时间
+            <div className="text-[11px] text-emerald-600/80 font-medium">
+              实时角逐中
             </div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
             <Clock className="w-6 h-6 animate-pulse" />
           </div>
         </div>
 
         <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs flex items-center justify-between">
           <div className="space-y-1">
-            <div className="text-xs text-slate-500 font-bold">已完赛 / 获奖</div>
-            <div className="text-2xl font-black text-amber-600 font-mono">
+            <div className="text-xs text-slate-500 font-bold">已结束赛事</div>
+            <div className="text-2xl font-black text-slate-600 font-mono">
               {endedTotal} <span className="text-xs text-slate-400 font-normal">项</span>
             </div>
-            <div className="text-[11px] text-amber-600/80 font-medium">
-              累计获得荣誉大奖 1 项
+            <div className="text-[11px] text-slate-400 font-medium">
+              已完赛归档
             </div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100">
-            <Award className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-600 flex items-center justify-center border border-slate-200">
+            <Sparkles className="w-6 h-6" />
           </div>
         </div>
       </div>
@@ -273,11 +259,11 @@ export const WorkspaceCompetitions: React.FC = () => {
           
           {/* 状态筛选 */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs text-slate-400 font-bold mr-1">状态:</span>
+            <span className="text-xs text-slate-400 font-bold mr-1">比赛状态:</span>
             {[
               { id: 'all', label: '全部' },
-              { id: 'registered_unstarted', label: '报名成功(未开始)' },
-              { id: 'competing', label: `参赛中 (${competingTotal})` },
+              { id: 'unstarted', label: `未开始 (${unstartedTotal})` },
+              { id: 'ongoing', label: `进行中 (${ongoingTotal})` },
               { id: 'ended', label: `已结束 (${endedTotal})` },
             ].map((tab) => (
               <button
@@ -297,17 +283,17 @@ export const WorkspaceCompetitions: React.FC = () => {
           {/* 赛事类型 & 搜索 */}
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 font-bold">类型:</span>
+              <span className="text-xs text-slate-400 font-bold">赛事类型:</span>
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
                 className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-purple-500 cursor-pointer"
               >
                 <option value="all">全部赛事类型</option>
-                <option value="AI数据科学赛">AI数据科学赛</option>
-                <option value="AI安全挑战赛">AI安全挑战赛</option>
+                <option value="AI挑战赛">AI挑战赛</option>
+                <option value="数据科学赛">数据科学赛</option>
                 <option value="AIGC生成赛">AIGC生成赛</option>
-                <option value="AI产品应用赛">AI产品应用赛</option>
+                <option value="AI产品创新赛">AI产品创新赛</option>
               </select>
             </div>
 
@@ -347,17 +333,12 @@ export const WorkspaceCompetitions: React.FC = () => {
                   <th className="py-3.5 px-4">赛事类型</th>
                   <th className="py-3.5 px-4">报名时间</th>
                   <th className="py-3.5 px-4">比赛状态</th>
-                  <th className="py-3.5 px-4">我的作品状态</th>
                   <th className="py-3.5 px-4">参赛模式</th>
                   <th className="py-3.5 px-4 text-right">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
                 {filteredList.map((item) => {
-                  const isCompeting = item.status === 'competing';
-                  const isUnstarted = item.status === 'registered_unstarted';
-                  const isEnded = item.status === 'ended';
-
                   return (
                     <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
                       {/* 赛事名称 */}
@@ -380,7 +361,7 @@ export const WorkspaceCompetitions: React.FC = () => {
 
                       {/* 赛事类型 */}
                       <td className="py-3.5 px-4">
-                        <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700">
+                        <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${getTypeTagStyle(item.typeTag)}`}>
                           {item.typeTag}
                         </span>
                       </td>
@@ -390,45 +371,9 @@ export const WorkspaceCompetitions: React.FC = () => {
                         {item.registeredAt}
                       </td>
 
-                      {/* 比赛状态 */}
+                      {/* 比赛状态 (未开始 / 进行中 / 已结束) */}
                       <td className="py-3.5 px-4">
-                        {isCompeting && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-purple-50 text-purple-700 border border-purple-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
-                            参赛中
-                          </span>
-                        )}
-                        {isUnstarted && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                            报名成功(未开始)
-                          </span>
-                        )}
-                        {isEnded && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600">
-                            已完赛
-                          </span>
-                        )}
-                      </td>
-
-                      {/* 我的作品 */}
-                      <td className="py-3.5 px-4">
-                        {item.workStatus === 'awarded' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-50 text-amber-700 border border-amber-200">
-                            <Award className="w-3 h-3 text-amber-600" />
-                            {item.workDetail?.awardTitle || '已获奖'}
-                          </span>
-                        )}
-                        {item.workStatus === 'submitted' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            <FileCheck className="w-3 h-3 text-emerald-600" />
-                            已提交作品 ({item.workDetail?.reviewStatus || '评审中'})
-                          </span>
-                        )}
-                        {item.workStatus === 'unsubmitted' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-400">
-                            未提交
-                          </span>
-                        )}
+                        {getStatusBadge(item.status)}
                       </td>
 
                       {/* 参赛模式 */}
@@ -441,60 +386,28 @@ export const WorkspaceCompetitions: React.FC = () => {
                         </div>
                       </td>
 
-                      {/* 操作 */}
+                      {/* 操作 (只有 赛事详情 和 进入比赛 两个按钮) */}
                       <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-2">
                           
-                          {/* 查看详情 */}
+                          {/* 赛事详情 */}
                           <button
-                            onClick={() => setDetailItem(item)}
-                            className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
+                            id={`view-detail-${item.id}`}
+                            onClick={() => openCompetitionDetail(item.competitionId)}
+                            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs transition cursor-pointer"
                           >
-                            详情
+                            赛事详情
                           </button>
 
-                          {/* 参赛中：进入比赛 / 提交作品 */}
-                          {isCompeting && (
-                            <>
-                              <button
-                                onClick={() => openCompetitionDetail(item.competitionId)}
-                                className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-bold text-xs transition cursor-pointer"
-                              >
-                                进入比赛
-                              </button>
-
-                              <button
-                                onClick={() => {
-                                  setSubmitModalItem(item);
-                                  if (item.workDetail) {
-                                    setSubmitForm({
-                                      workTitle: item.workDetail.workTitle,
-                                      summary: item.workDetail.summary,
-                                      repoUrl: item.workDetail.repoUrl || '',
-                                      fileName: item.workDetail.fileUrl || ''
-                                    });
-                                  } else {
-                                    setSubmitForm({ workTitle: '', summary: '', repoUrl: '', fileName: '' });
-                                  }
-                                }}
-                                className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition cursor-pointer flex items-center gap-1"
-                              >
-                                <Upload className="w-3 h-3" />
-                                <span>{item.workStatus === 'submitted' ? '更新作品' : '提交作品'}</span>
-                              </button>
-                            </>
-                          )}
-
-                          {/* 已结束：查看作品 */}
-                          {isEnded && item.workDetail && (
-                            <button
-                              onClick={() => setDetailItem(item)}
-                              className="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-bold text-xs transition cursor-pointer flex items-center gap-1"
-                            >
-                              <Award className="w-3 h-3" />
-                              <span>查看作品</span>
-                            </button>
-                          )}
+                          {/* 进入比赛 */}
+                          <button
+                            id={`enter-match-${item.id}`}
+                            onClick={() => handleEnterCompetition(item)}
+                            className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs transition shadow-2xs flex items-center gap-1 cursor-pointer"
+                          >
+                            <span>进入比赛</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </button>
 
                         </div>
                       </td>
@@ -507,296 +420,7 @@ export const WorkspaceCompetitions: React.FC = () => {
         )}
       </div>
 
-      {/* 4. 赛事详情弹窗 */}
-      {detailItem && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-            
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
-                  <Trophy className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900">
-                    {detailItem.title}
-                  </h3>
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
-                    <span>{detailItem.organizer}</span>
-                    <span>•</span>
-                    <span className="text-purple-600 font-bold">{detailItem.typeTag}</span>
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => setDetailItem(null)}
-                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* 1. 报名信息 */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider">
-                我的报名信息
-              </h4>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="text-[10px] text-slate-400 font-bold">报名时间</div>
-                  <div className="text-xs font-mono font-bold text-slate-800 mt-0.5">
-                    {detailItem.registeredAt}
-                  </div>
-                </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="text-[10px] text-slate-400 font-bold">参赛状态</div>
-                  <div className="text-xs font-bold text-purple-700 mt-0.5">
-                    {detailItem.statusLabel}
-                  </div>
-                </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="text-[10px] text-slate-400 font-bold">参赛方式</div>
-                  <div className="text-xs font-bold text-slate-800 mt-0.5">
-                    {detailItem.teamType} {detailItem.teamName ? `(${detailItem.teamName})` : ''}
-                  </div>
-                </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="text-[10px] text-slate-400 font-bold">截稿截止</div>
-                  <div className="text-xs font-mono font-bold text-slate-800 mt-0.5">
-                    {detailItem.deadline}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 2. 我的参赛作品 */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider">
-                参赛作品与评审进展
-              </h4>
-
-              {detailItem.workDetail ? (
-                <div className="p-4 rounded-2xl bg-purple-50/50 border border-purple-100 space-y-3 text-xs">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-black text-slate-900">
-                      {detailItem.workDetail.workTitle}
-                    </div>
-                    {detailItem.workDetail.awardTitle && (
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-500 text-white shadow-xs">
-                        {detailItem.workDetail.awardTitle}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-[11px]">
-                    <div className="flex items-center gap-1.5 text-slate-600">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      <span>提交时间: <strong className="font-mono text-slate-800">{detailItem.workDetail.submittedAt}</strong></span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-slate-600">
-                      <FileCheck className="w-3.5 h-3.5 text-purple-600" />
-                      <span>评审状态: <strong className="text-purple-700 font-bold">{detailItem.workDetail.reviewStatus}</strong></span>
-                    </div>
-                    {detailItem.workDetail.score && (
-                      <div className="flex items-center gap-1.5 text-slate-600">
-                        <Award className="w-3.5 h-3.5 text-amber-500" />
-                        <span>专家评分: <strong className="font-mono font-black text-amber-600">{detailItem.workDetail.score} 分</strong></span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-1 pt-2 border-t border-purple-100">
-                    <div className="text-[11px] font-bold text-slate-500">作品简介与技术亮点:</div>
-                    <p className="text-slate-700 leading-relaxed">
-                      {detailItem.workDetail.summary}
-                    </p>
-                  </div>
-
-                  {(detailItem.workDetail.repoUrl || detailItem.workDetail.fileUrl) && (
-                    <div className="pt-2 border-t border-purple-100 flex flex-wrap gap-3">
-                      {detailItem.workDetail.repoUrl && (
-                        <a
-                          href={detailItem.workDetail.repoUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:underline"
-                        >
-                          <Link2 className="w-3.5 h-3.5" />
-                          <span>源码仓库: {detailItem.workDetail.repoUrl}</span>
-                        </a>
-                      )}
-                      {detailItem.workDetail.fileUrl && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500">
-                          <FileText className="w-3.5 h-3.5" />
-                          <span>已上传附件: {detailItem.workDetail.fileUrl}</span>
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100 text-center space-y-2">
-                  <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
-                    <Upload className="w-5 h-5" />
-                  </div>
-                  <div className="text-xs font-bold text-slate-700">您尚未提交参赛作品</div>
-                  <p className="text-[11px] text-slate-400">
-                    作品提交截止时间为 {detailItem.deadline}，请抓紧时间完成技术方案与原型部署
-                  </p>
-                  {detailItem.status === 'competing' && (
-                    <button
-                      onClick={() => {
-                        setDetailItem(null);
-                        setSubmitModalItem(detailItem);
-                      }}
-                      className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs transition cursor-pointer inline-flex items-center gap-1"
-                    >
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>立即提交作品</span>
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-              <button
-                onClick={() => {
-                  setDetailItem(null);
-                  openCompetitionDetail(detailItem.competitionId);
-                }}
-                className="px-4 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs transition flex items-center gap-1 cursor-pointer"
-              >
-                <span>查看官方赛程与赛题说明</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-
-              <button
-                onClick={() => setDetailItem(null)}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
-              >
-                关闭
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-      {/* 5. 提交作品弹窗 */}
-      {submitModalItem && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 space-y-5 shadow-2xl border border-slate-200">
-            
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                  <Upload className="w-4 h-4 text-purple-600" />
-                  提交比赛作品 · {submitModalItem.title}
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  请上传您参赛的技术成果、方案架构与开源代码/模型链接
-                </p>
-              </div>
-              <button
-                onClick={() => setSubmitModalItem(null)}
-                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmitWork} className="space-y-4 text-xs">
-              
-              {/* 作品标题 */}
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700">作品名称 / 方案标题 <span className="text-rose-500">*</span></label>
-                <input
-                  type="text"
-                  required
-                  placeholder="例如：基于多Agent协同的医疗诊断助手"
-                  value={submitForm.workTitle}
-                  onChange={(e) => setSubmitForm({ ...submitForm, workTitle: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-purple-500 text-slate-900 font-medium"
-                />
-              </div>
-
-              {/* 作品简介与技术架构 */}
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700">作品简介与技术亮点 <span className="text-rose-500">*</span></label>
-                <textarea
-                  required
-                  rows={4}
-                  placeholder="简要说明参赛模型架构、微调方法、评测指标提升及实际落地价值..."
-                  value={submitForm.summary}
-                  onChange={(e) => setSubmitForm({ ...submitForm, summary: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-purple-500 text-slate-900 font-medium leading-relaxed"
-                />
-              </div>
-
-              {/* 源码仓库/体验链接 */}
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700">代码仓库 / Demo 在线体验 URL</label>
-                <input
-                  type="url"
-                  placeholder="https://github.com/..."
-                  value={submitForm.repoUrl}
-                  onChange={(e) => setSubmitForm({ ...submitForm, repoUrl: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-purple-500 text-slate-900 font-mono"
-                />
-              </div>
-
-              {/* 方案附件打包 */}
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700">提交文件包 / 答辩 PPT</label>
-                <div className="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center bg-slate-50 hover:bg-purple-50/50 hover:border-purple-300 transition cursor-pointer">
-                  <Upload className="w-5 h-5 text-slate-400 mx-auto mb-1" />
-                  <span className="text-[11px] text-slate-600 font-bold block">
-                    {submitForm.fileName ? `已选文件: ${submitForm.fileName}` : '点击或拖拽 ZIP/PDF 附件到此处上传'}
-                  </span>
-                  <span className="text-[10px] text-slate-400">支持 .zip, .tar.gz, .pdf (不超过 500MB)</span>
-                  <input
-                    type="file"
-                    className="hidden"
-                    id="comp-work-file"
-                    onChange={(e) => {
-                      if (e.target.files?.[0]) {
-                        setSubmitForm({ ...submitForm, fileName: e.target.files[0].name });
-                      }
-                    }}
-                  />
-                  <label htmlFor="comp-work-file" className="mt-2 inline-block px-3 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-purple-600 cursor-pointer">
-                    选择本地文件
-                  </label>
-                </div>
-              </div>
-
-              {/* 提交按钮 */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setSubmitModalItem(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
-                >
-                  取消
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs transition shadow-xs flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>确认提交</span>
-                </button>
-              </div>
-
-            </form>
-
-          </div>
-        </div>
-      )}
-
     </div>
   );
 };
+

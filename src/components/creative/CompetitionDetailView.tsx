@@ -33,6 +33,23 @@ interface CompetitionDetailViewProps {
   onBack: () => void;
 }
 
+export const getCompetitionLinkByType = (typeOrName: string): string => {
+  const str = (typeOrName || '').toLowerCase();
+  if (str.includes('挑战') || str.includes('安全') || str.includes('ctf') || str.includes('agentctf')) {
+    return 'http://10.2.89.1/saas/contest/agentctf/d6a21329d479860493c6f3a6aeee9896';
+  }
+  if (str.includes('数据科学') || str.includes('时序')) {
+    return 'http://10.2.89.1/saas/contest/web/contest/ai/enter/805f06cb51fea51263cf33ea15c2b1f6/rank';
+  }
+  if (str.includes('aigc') || str.includes('生成') || str.includes('创作') || str.includes('营销')) {
+    return 'http://10.2.89.1/competitions-hall/competitions/aia-race-detail/40f258969d2e43858383b6e5a7423e3a';
+  }
+  if (str.includes('产品') || str.includes('创新') || str.includes('应用') || str.includes('原生')) {
+    return 'http://10.2.89.1/competitions-hall/competitions/aia-race-detail/1973c668ec1a4bd2aae36e2a3043890d';
+  }
+  return 'http://10.2.89.1/competitions-hall/competitions/aia-race-detail/1973c668ec1a4bd2aae36e2a3043890d';
+};
+
 export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ competition, onBack }) => {
   const { showToast } = useApp();
 
@@ -73,12 +90,15 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
   const getTypeTagStyle = (tag: string) => {
     switch (tag) {
       case 'AI数据科学赛':
+      case '数据科学赛':
         return 'bg-cyan-50 text-cyan-700 border-cyan-200';
       case 'AI安全挑战赛':
+      case 'AI挑战赛':
         return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       case 'AIGC生成赛':
         return 'bg-purple-50 text-purple-700 border-purple-200';
       case 'AI产品应用赛':
+      case 'AI产品创新赛':
         return 'bg-indigo-50 text-indigo-700 border-indigo-200';
       default:
         return 'bg-slate-50 text-slate-700 border-slate-200';
@@ -86,12 +106,9 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
   };
 
   const handleEnterMatch = (track: MatchTrackItem) => {
-    if (track.targetUrl) {
-      showToast(`正在跳转进入【${track.name}】官方参赛平台...`);
-      window.open(track.targetUrl, '_blank', 'noopener,noreferrer');
-    } else {
-      showToast(`【${track.name}】参赛平台准备中，即将开放！`);
-    }
+    const targetUrl = track.targetUrl || getCompetitionLinkByType(track.typeTag || track.name);
+    showToast(`正在跳转进入【${track.name}】官方参赛平台...`);
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleToggleLike = (workId: string) => {

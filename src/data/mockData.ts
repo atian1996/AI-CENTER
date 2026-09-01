@@ -3781,7 +3781,7 @@ export const mockCompetitions: CompetitionItem[] = [
         evaluationMetrics: '主观得分由客观排行榜指标决定：采用宏平均 F1 值（Macro-F1）作为核心评估基准，结合推理耗时（P95 Latency ≤ 35ms）进行综合打分。',
         dataDescription: '训练集：包含 100,000 条结构化标注语料（文本内容、来源机构、情绪极性、涨跌波幅）；测试集：包含 20,000 条盲测样本；所有数据均已去除涉及隐私的敏感字段。',
         ruleDescription: '参赛队伍每日最多可提交 5 次预测结果（CSV 格式）；禁止使用赛题未允许的外部收费闭源大模型 API 泄题。',
-        targetUrl: 'https://adworld.xctf.org.cn/competitions-hall/competitions',
+        targetUrl: 'http://10.2.89.1/saas/contest/web/contest/ai/enter/805f06cb51fea51263cf33ea15c2b1f6/rank',
         participantsCount: 428,
         submissionsCount: 1892
       },
@@ -3797,7 +3797,7 @@ export const mockCompetitions: CompetitionItem[] = [
         evaluationMetrics: '以成功触发目标敏感 Flag 的有效攻击链数量、突破难度层级（Level 1~5）及越狱样本简洁度进行积分排名（Capture The Flag 模式）。',
         dataDescription: '提供虚拟靶场沙箱 API 接入凭据，靶场内含 8 个不同安全防御等级的真实企业智能体应用场景。',
         ruleDescription: '严禁对比赛沙箱平台服务器实施 DoS/DDoS 暴力拒绝服务攻击；提交攻击报告需附带可复现的 HTTP 请求报文与执行日志。',
-        targetUrl: 'https://adworld.xctf.org.cn/competitions-hall/competitions',
+        targetUrl: 'http://10.2.89.1/saas/contest/agentctf/d6a21329d479860493c6f3a6aeee9896',
         participantsCount: 310,
         submissionsCount: 940
       },
@@ -3813,7 +3813,7 @@ export const mockCompetitions: CompetitionItem[] = [
         evaluationMetrics: '评审团由资深概念艺术家与 AI 技术专家联合打分：视觉艺术表现力（40%）+ 主题叙事连贯性（30%）+ AI生成技术难度与工作流复现度（30%）。',
         dataDescription: '官方算力工坊已预置 Flux 1.0、SDXL 与 Wan2.2 视频生成节点环境，参赛者可一键挂载使用。',
         ruleDescription: '作品必须为原创生成，不得侵犯第三方知识产权；需提供原始提示词、种子值与工作流文件。',
-        targetUrl: 'http://10.4.5.3/page/mg/project-hall',
+        targetUrl: 'http://10.2.89.1/competitions-hall/competitions/aia-race-detail/40f258969d2e43858383b6e5a7423e3a',
         participantsCount: 560,
         submissionsCount: 720,
         featuredWorks: [
@@ -3851,7 +3851,7 @@ export const mockCompetitions: CompetitionItem[] = [
         evaluationMetrics: '业务场景商业价值（35%）+ 产品 UI/UX 交互体验（30%）+ AI 技术结合深度与系统稳定性（25%）+ 开源生态贡献度（10%）。',
         dataDescription: '提供平台百款精选 Agent 资产与大模型统一 API 网关接入额度支持。',
         ruleDescription: '参赛项目需提供线上可访问的 Demo 体验链接及 GitHub/Gitee 开源代码仓库。',
-        targetUrl: 'http://10.4.5.3/page/mg/project-hall',
+        targetUrl: 'http://10.2.89.1/competitions-hall/competitions/aia-race-detail/1973c668ec1a4bd2aae36e2a3043890d',
         participantsCount: 380,
         submissionsCount: 210,
         featuredWorks: [
@@ -3915,7 +3915,7 @@ export const mockCompetitions: CompetitionItem[] = [
         evaluationMetrics: '采用加权对称平均绝对百分比误差（WMAPE）作为排榜指标，得分越低排名越靠前。',
         dataDescription: '包含近 3 年 15 分钟级电网负荷数据及同期区域温湿度、节假日特征数据集。',
         ruleDescription: '严禁进行任何形式的人工标注与标签穿越；模型必须提供无网络环境下的单机 Docker 推理镜像。',
-        targetUrl: 'https://adworld.xctf.org.cn/competitions-hall/competitions',
+        targetUrl: 'http://10.2.89.1/saas/contest/web/contest/ai/enter/805f06cb51fea51263cf33ea15c2b1f6/rank',
         participantsCount: 290,
         submissionsCount: 650
       }
@@ -3964,7 +3964,7 @@ export const mockCompetitions: CompetitionItem[] = [
         evaluationMetrics: 'Flag 提交系统自动实时校验判分。',
         dataDescription: '提供沙箱靶场动态下发的 Docker 容器实例。',
         ruleDescription: '已顺利完赛闭幕，历届赛题与官方解题 Writeup 已归档入库。',
-        targetUrl: 'https://adworld.xctf.org.cn/competitions-hall/competitions',
+        targetUrl: 'http://10.2.89.1/saas/contest/agentctf/d6a21329d479860493c6f3a6aeee9896',
         participantsCount: 520,
         submissionsCount: 2310
       }
@@ -4015,7 +4015,7 @@ export const mockCompetitions: CompetitionItem[] = [
         problemStatement: '参赛团队需提供整套可落地的 AIGC 创意营销解决方案及实际生成的高清样片与文案转化率测试数据。',
         evaluationMetrics: '创意新颖度与商业品牌传播效果综合打分。',
         dataDescription: '提供数十套行业营销数据集及品牌官方图库。',
-        targetUrl: 'http://10.4.5.3/page/mg/project-hall',
+        targetUrl: 'http://10.2.89.1/competitions-hall/competitions/aia-race-detail/40f258969d2e43858383b6e5a7423e3a',
         participantsCount: 215,
         submissionsCount: 180,
         featuredWorks: [
@@ -4042,21 +4042,7 @@ export const mockCompetitions: CompetitionItem[] = [
         problemStatement: '打造具备企业级权限隔离、外部系统 OpenAPI 联动与私有知识库 RAG 检索的生产级 AI 软件。',
         evaluationMetrics: '企业专家评审团针对系统可用性与工程鲁棒性进行现场打分。',
         dataDescription: '提供脱敏后的行业业务系统接口规范。',
-        targetUrl: 'http://10.4.5.3/page/mg/project-hall',
-        participantsCount: 180,
-        submissionsCount: 95,
-        featuredWorks: [
-          {
-            id: 'work-5',
-            title: '《工业智造设备故障多模态诊断专家》',
-            author: '智控物联团队',
-            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-            image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&auto=format&fit=crop&q=80',
-            score: '96.2 分',
-            description: '结合工业振动频谱声纹与大模型故障知识库，准确率达 98.4% 的工业设备巡检 Agent。',
-            likes: 310
-          }
-        ]
+        targetUrl: 'http://10.2.89.1/competitions-hall/competitions/aia-race-detail/1973c668ec1a4bd2aae36e2a3043890d'
       }
     ]
   }
