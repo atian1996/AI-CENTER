@@ -1,6 +1,41 @@
 import { AgentItem } from '../types';
 
 export const mock60Agents: AgentItem[] = [
+  // ================= 🌟 重点推荐 / 核心企业服务 Agent =================
+  {
+    id: 'ag_22',
+    name: '企业客服Agent',
+    avatar: '🤖',
+    description: '一站式企业多渠道客户接待，解答产品使用、续费与技术问题',
+    category: 'vertical',
+    rating: 4.9,
+    ratingCount: 260,
+    priceType: 'token',
+    priceValue: 0.50,
+    priceModel: '按Token计费',
+    priceText: '¥0.50 / 万Token',
+    techForm: 'Agent',
+    scene: '智能客服',
+    industry: '通用',
+    servicedCount: 3800,
+    developer: '企服全能通',
+    trialUrl: 'http://127.0.0.1:5173/',
+    giftTokenText: '新用户赠送 10万Token体验额度（7天有效）',
+    capabilityDesc: [
+      '支持企业 API/SDK 接入，全渠道同步客户历史互动与身份权限',
+      '解答软件功能操作、账号授权、发票开具与续费折扣',
+      '自带满意度评价回访与常见问题 FAQ 热度统计看板'
+    ],
+    applicableScenes: [
+      '软件/SaaS企业：7x24 在线技术支持与客户成功（CSM）接单',
+      '传统企业：全套客户咨询入口统一收口与分流答疑'
+    ],
+    inputExample: '我们公司需要开具增值税专用发票，请问在哪里填写抬头信息？多久能开好？',
+    outputExample: '您好！开具专票路径如下：登录管理后台 -> 点击“费用与账单” -> 选中需开票订单 -> 点击“申请发票”，填写单位名称与纳税人识别号。系统将在 1 个工作日内发送电子专票至您的邮箱。',
+    tags: ['企业客服', '技术支持', '发票开具', 'SaaS服务'],
+    author: '企服全能通',
+    usageCount: 32600
+  },
   // ================= 🌟 用户指定新增 Agent 示例集合（21个） =================
   {
     id: 'ag_new_01',
@@ -1397,39 +1432,6 @@ export const mock60Agents: AgentItem[] = [
     tags: ['售后工单', '物流追踪', '极速退款', '客诉处理'],
     author: '工单智派系统',
     usageCount: 12800
-  },
-  {
-    id: 'ag_22',
-    name: '企业客服Agent',
-    avatar: '🤖',
-    description: '一站式企业多渠道客户接待，解答产品使用、续费与技术问题',
-    category: 'vertical',
-    rating: 4.8,
-    ratingCount: 180,
-    priceType: 'token',
-    priceValue: 0.50,
-    priceModel: '按Token计费',
-    priceText: '¥0.50 / 万Token',
-    techForm: 'Agent',
-    scene: '智能客服',
-    industry: '通用',
-    servicedCount: 2200,
-    developer: '企服全能通',
-    giftTokenText: '新用户赠送 10万Token体验额度（7天有效）',
-    capabilityDesc: [
-      '支持企业 API/SDK 接入，全渠道同步客户历史互动与身份权限',
-      '解答软件功能操作、账号授权、发票开具与续费折扣',
-      '自带满意度评价回访与常见问题 FAQ 热度统计看板'
-    ],
-    applicableScenes: [
-      '软件/SaaS企业：7x24 在线技术支持与客户成功（CSM）接单',
-      '传统企业：全套客户咨询入口统一收口与分流答疑'
-    ],
-    inputExample: '我们公司需要开具增值税专用发票，请问在哪里填写抬头信息？多久能开好？',
-    outputExample: '您好！开具专票路径如下：登录管理后台 -> 点击“费用与账单” -> 选中需开票订单 -> 点击“申请发票”，填写单位名称与纳税人识别号。系统将在 1 个工作日内发送电子专票至您的邮箱。',
-    tags: ['企业客服', '技术支持', '发票开具', 'SaaS服务'],
-    author: '企服全能通',
-    usageCount: 14500
   },
   {
     id: 'ag_23',

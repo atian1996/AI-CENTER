@@ -204,6 +204,7 @@ export interface AgentItem {
   apiAddress?: string;
   status?: '已上架' | '已停止新订阅' | '已下架' | '草稿';
   freeTrialCount?: number; // 免费试用次数
+  trialUrl?: string; // 外部免费试用或独立体验页面URL
   categoryTags?: string[];
   industryTags?: string[];
 }

@@ -250,7 +250,13 @@ export const initialDevelopedApps: AgentItem[] = [
   }
 ];
 
-export const mockAgents: AgentItem[] = [...initialDevelopedApps, ...mock60Agents];
+// 优先将「企业客服Agent」排在商店第 1 位
+const enterpriseAgent = mock60Agents.find(a => a.name === '企业客服Agent' || a.id === 'ag_22');
+const remainingMockAgents = mock60Agents.filter(a => a !== enterpriseAgent);
+
+export const mockAgents: AgentItem[] = enterpriseAgent 
+  ? [enterpriseAgent, ...initialDevelopedApps, ...remainingMockAgents]
+  : [...mock60Agents, ...initialDevelopedApps];
 
 export const mockModels: ModelItem[] = [
   // --- 文本大模型 ---

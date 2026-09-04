@@ -874,8 +874,8 @@ export const WorkspaceAssets: React.FC = () => {
                       if (agentScopeTab === 'created') {
                         setOrchestratingAgent(ag);
                       } else {
-                        const trialUrl = `${window.location.origin}${window.location.pathname}?trial=${ag.id}`;
-                        window.open(trialUrl, '_blank');
+                        const targetUrl = ag.trialUrl || (ag.id === 'ag_22' || ag.name.includes('企业客服') ? 'http://127.0.0.1:5173/' : `${window.location.origin}${window.location.pathname}?trial=${ag.id}`);
+                        window.open(targetUrl, '_blank');
                       }
                     }}
                     className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all cursor-pointer flex flex-col justify-between group min-h-[190px]"
@@ -945,8 +945,8 @@ export const WorkspaceAssets: React.FC = () => {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              const trialUrl = `${window.location.origin}${window.location.pathname}?trial=${ag.id}`;
-                              window.open(trialUrl, '_blank');
+                              const targetUrl = ag.trialUrl || (ag.id === 'ag_22' || ag.name.includes('企业客服') ? 'http://127.0.0.1:5173/' : `${window.location.origin}${window.location.pathname}?trial=${ag.id}`);
+                              window.open(targetUrl, '_blank');
                             }}
                             className="text-[10px] font-bold px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md transition cursor-pointer shrink-0 ml-1 shadow-2xs"
                           >

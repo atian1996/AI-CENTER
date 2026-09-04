@@ -141,6 +141,12 @@ export const AgentStore: React.FC = () => {
   // Actions
   const handleFreeTrialClick = (agent: AgentItem, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (agent.trialUrl || agent.id === 'ag_22' || agent.name.includes('企业客服')) {
+      const targetUrl = agent.trialUrl || 'http://127.0.0.1:5173/';
+      showToast(`正在打开【${agent.name}】独立在线体验系统...`);
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
     const trialUrl = `${window.location.origin}${window.location.pathname}?trial=${agent.id}`;
     window.open(trialUrl, '_blank');
   };
