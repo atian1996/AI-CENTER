@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { CompetitionItem, MatchTrackItem } from '../../types';
 import { 
@@ -123,6 +123,39 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
 
   const activeTrack = competition.tracks.find(t => t.id === activeTabId);
 
+  // 大赛时间节点列表计算 (参考用户上传设计图)
+  const timelineNodes = useMemo(() => {
+    if (competition.introduction.schedule && competition.introduction.schedule.length > 0) {
+      return competition.introduction.schedule.map((s, idx) => {
+        let name = s.stage.replace(/^第[一二三四五\d]+阶段[：:]\s*/, '').trim();
+        if (idx === 0 && !name.includes('报名')) name = '比赛报名';
+        else if (idx === 1 && !name.includes('初赛')) name = '线上初赛';
+        else if (idx === 2 && !name.includes('决赛')) name = '决赛提交期';
+
+        let time = s.time;
+        if (time.includes('~')) {
+          const parts = time.split('~').map(p => p.trim());
+          const formatPart = (p: string, isEnd = false) => {
+            if (p.length === 16) {
+              return `${p}:00`;
+            } else if (p.length === 10) {
+              return isEnd ? `${p} 23:59:59` : `${p} 00:00:00`;
+            }
+            return p;
+          };
+          time = `${formatPart(parts[0], false)} ~ ${formatPart(parts[1], true)}`;
+        }
+        return { name, time };
+      });
+    }
+
+    return [
+      { name: '比赛报名', time: '2026-07-01 00:00:00 ~ 2026-07-31 23:59:59' },
+      { name: '线上初赛', time: '2026-08-01 09:00:00 ~ 2026-08-21 09:00:00' },
+      { name: '决赛提交期', time: '2026-09-01 00:00:00 ~ 2026-09-30 00:00:00' }
+    ];
+  }, [competition]);
+
   return (
     <div id="competition-detail-container" className="w-full space-y-6 animate-fade-in pb-16 select-none font-sans">
       
@@ -172,14 +205,6 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
                 {getStatusBadge(competition.status)}
-                {competition.typeTags.map(tag => (
-                  <span 
-                    key={tag} 
-                    className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/20 text-white backdrop-blur-md border border-white/30"
-                  >
-                    🔖 {tag}
-                  </span>
-                ))}
               </div>
 
               <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight drop-shadow-md">
@@ -228,12 +253,13 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
             }`}
           >
             <Trophy className="w-4 h-4" />
-            <span>赛事介绍 (通用)</span>
+            <span>赛事介绍</span>
           </button>
 
-          {/* 比赛 TAB 1 ~ N: TAB 名称使用比赛的简称 shortName */}
-          {competition.tracks.map((track, idx) => {
+          {/* 比赛 TAB 1 ~ N: TAB 名称去数字序号、去掉“赛道”改为“赛”、去掉右侧灰色模式标签 */}
+          {competition.tracks.map((track) => {
             const isActive = activeTabId === track.id;
+            const displayTabName = track.shortName.replace(/赛道$/, '赛').replace(/赛道/g, '赛');
             return (
               <button
                 key={track.id}
@@ -245,13 +271,7 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                <span className="w-4 h-4 rounded-full bg-slate-200 text-slate-700 text-[10px] flex items-center justify-center font-bold">
-                  {idx + 1}
-                </span>
-                <span>{track.shortName}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-md ${isActive ? 'bg-indigo-700 text-indigo-100' : 'bg-slate-100 text-slate-500'}`}>
-                  {track.typeTag.replace('AI', '')}
-                </span>
+                <span>{displayTabName}</span>
               </button>
             );
           })}
@@ -358,7 +378,7 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
               </div>
             </div>
 
-            {/* 评审标准与组委会 */}
+            {/* 评审标准与组委会 + 大赛时间节点 */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
               {/* 评审标准 */}
@@ -380,22 +400,61 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
                 </ul>
               </div>
 
-              {/* 组委会信息 */}
-              <div className="p-7 bg-white rounded-3xl border border-slate-200/90 shadow-2xs space-y-4">
-                <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
-                  <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center font-bold">
-                    <Building2 className="w-4 h-4" />
+              {/* 右侧：大赛时间节点 + 组织机构 */}
+              <div className="space-y-6">
+                {/* 大赛时间节点 (完全参考用户上传设计图样式) */}
+                <div id="intro-competition-timeline-nodes-card" className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs overflow-hidden">
+                  <div className="px-5 py-3.5 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-slate-800 tracking-tight">
+                      大赛时间节点
+                    </h3>
                   </div>
-                  <h3 className="text-base font-black text-slate-900">组织机构与支持</h3>
+
+                  <div className="p-5 space-y-0">
+                    {timelineNodes.map((node, index) => {
+                      const isLast = index === timelineNodes.length - 1;
+                      return (
+                        <div key={index} className="relative flex items-start gap-3 pb-5 last:pb-1">
+                          {/* 垂直连接线 */}
+                          {!isLast && (
+                            <div className="absolute left-[4.5px] top-[14px] bottom-0 w-[1.5px] bg-slate-200" />
+                          )}
+
+                          {/* 蓝色圆点 */}
+                          <div className="relative z-10 w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-blue-50 shrink-0 mt-1" />
+
+                          {/* 节点名称与时间 */}
+                          <div className="space-y-0.5">
+                            <h4 className="text-xs sm:text-sm font-semibold text-slate-800">
+                              {node.name}
+                            </h4>
+                            <div className="text-[11px] sm:text-xs text-slate-400 font-mono tracking-tight">
+                              {node.time}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div className="space-y-3">
-                  {competition.introduction.organizingCommittee.map((org, idx) => (
-                    <div key={idx} className="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
-                      <div className="text-[11px] text-slate-400 font-medium">{org.role}</div>
-                      <div className="text-xs font-bold text-slate-800 mt-0.5">{org.name}</div>
+                {/* 组委会信息 */}
+                <div className="p-7 bg-white rounded-3xl border border-slate-200/90 shadow-2xs space-y-4">
+                  <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
+                    <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center font-bold">
+                      <Building2 className="w-4 h-4" />
                     </div>
-                  ))}
+                    <h3 className="text-base font-black text-slate-900">组织机构与支持</h3>
+                  </div>
+
+                  <div className="space-y-3">
+                    {competition.introduction.organizingCommittee.map((org, idx) => (
+                      <div key={idx} className="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                        <div className="text-[11px] text-slate-400 font-medium">{org.role}</div>
+                        <div className="text-xs font-bold text-slate-800 mt-0.5">{org.name}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -434,9 +493,6 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
                     <h2 className="text-xl font-black text-slate-900">
                       {activeTrack.name}
                     </h2>
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                      {activeTrack.shortName}
-                    </span>
                   </div>
 
                   <div className="flex items-center gap-2 text-xs text-slate-500 font-mono">
@@ -464,8 +520,8 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
                   <ExternalLink className="w-3.5 h-3.5" />
                 </button>
 
-                {/* AIGC生成赛和AI产品应用赛额外增加【作品阅览】按钮 */}
-                {(activeTrack.typeTag === 'AIGC生成赛' || activeTrack.typeTag === 'AI产品应用赛') && (
+                {/* AIGC生成赛和AI产品创新赛额外增加【作品阅览】按钮 */}
+                {(activeTrack.typeTag === 'AIGC生成赛' || activeTrack.typeTag === 'AI产品创新赛') && (
                   <button
                     id={`view-works-btn-${activeTrack.id}`}
                     onClick={() => {
@@ -541,6 +597,42 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
               {/* 右侧评估指标与比赛规则 */}
               <div className="space-y-6">
                 
+                {/* 大赛时间节点 (完全参考用户上传设计图样式) */}
+                <div id="track-competition-timeline-nodes-card" className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs overflow-hidden">
+                  <div className="px-5 py-3.5 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-slate-800 tracking-tight">
+                      大赛时间节点
+                    </h3>
+                  </div>
+
+                  <div className="p-5 space-y-0">
+                    {timelineNodes.map((node, index) => {
+                      const isLast = index === timelineNodes.length - 1;
+                      return (
+                        <div key={index} className="relative flex items-start gap-3 pb-5 last:pb-1">
+                          {/* 垂直连接线 */}
+                          {!isLast && (
+                            <div className="absolute left-[4.5px] top-[14px] bottom-0 w-[1.5px] bg-slate-200" />
+                          )}
+
+                          {/* 蓝色圆点 */}
+                          <div className="relative z-10 w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-blue-50 shrink-0 mt-1" />
+
+                          {/* 节点名称与时间 */}
+                          <div className="space-y-0.5">
+                            <h4 className="text-xs sm:text-sm font-semibold text-slate-800">
+                              {node.name}
+                            </h4>
+                            <div className="text-[11px] sm:text-xs text-slate-400 font-mono tracking-tight">
+                              {node.time}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* 评估指标 */}
                 <div className="p-6 bg-white rounded-3xl border border-slate-200/90 shadow-2xs space-y-3">
                   <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
@@ -586,8 +678,8 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
 
             </div>
 
-            {/* 作品阅览板块 (仅针对 AIGC生成赛与 AI产品应用赛) */}
-            {(activeTrack.typeTag === 'AIGC生成赛' || activeTrack.typeTag === 'AI产品应用赛') && activeTrack.featuredWorks && activeTrack.featuredWorks.length > 0 && (
+            {/* 作品阅览板块 (仅针对 AIGC生成赛与 AI产品创新赛) */}
+            {(activeTrack.typeTag === 'AIGC生成赛' || activeTrack.typeTag === 'AI产品创新赛') && activeTrack.featuredWorks && activeTrack.featuredWorks.length > 0 && (
               <div id="match-featured-works-section" className="p-7 bg-white rounded-3xl border border-slate-200/90 shadow-2xs space-y-5">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                   <div className="flex items-center gap-2.5">

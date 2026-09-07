@@ -1082,13 +1082,12 @@ export type CompetitionTypeTag =
   | 'AIGC生成赛' 
   | 'AI产品创新赛'
   | 'AI数据科学赛' 
-  | 'AI安全挑战赛' 
-  | 'AI产品应用赛';
+  | 'AI安全挑战赛';
 
 export interface MatchTrackItem {
   id: string;
-  name: string; // 全称 如 "AI数据科学赛道"
-  shortName: string; // 简称 如 "数据科学赛道"，用于 TAB 名称
+  name: string; // 全称 如 "AI数据科学赛"
+  shortName: string; // 简称 如 "数据科学赛"，用于 TAB 名称
   coverImage: string; // 比赛封面小图
   timeRange: string; // 如 "2026-09-01 00:00:00 ~ 2026-10-15 23:59:59"
   typeTag: CompetitionTypeTag;
@@ -1122,7 +1121,10 @@ export interface CompetitionItem {
   startTime: string; // 年月日时分秒 如 "2026-08-01 00:00:00"
   endTime: string; // 年月日时分秒 如 "2026-10-31 23:59:59"
   status: 'unstarted' | 'ongoing' | 'ended'; // 状态: 未开始 / 进行中 / 已结束
-  typeTags: CompetitionTypeTag[]; // 赛事类型列表
+  typeTags: CompetitionTypeTag[]; // 赛事模式列表
+  tags?: string[]; // 自定义赛事技术标签 (如 '机器学习', '二分类', 'NLP')
+  viewsCount?: number; // 点击量 / 浏览量
+  isInternalOnly?: boolean; // 是否为企业内部专有赛事 (仅限受邀人员)
   
   // 赛事介绍 TAB 固定内容
   introduction: {

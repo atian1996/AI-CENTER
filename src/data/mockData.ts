@@ -3747,7 +3747,9 @@ export const mockCompetitions: CompetitionItem[] = [
     startTime: '2026-08-01 00:00:00',
     endTime: '2026-10-31 23:59:59',
     status: 'ongoing',
-    typeTags: ['AI数据科学赛', 'AI安全挑战赛', 'AIGC生成赛', 'AI产品应用赛'],
+    typeTags: ['AI数据科学赛', 'AI安全挑战赛', 'AIGC生成赛', 'AI产品创新赛'],
+    tags: ['机器学习', '金融时序', '二分类', '越狱攻防', 'Flux/LoRA', '多Agent协作'],
+    viewsCount: 18620,
     introduction: {
       summary: '2026 AI创新巅峰赛是由中国人工智能学会主办，AI运营中心与多家顶尖科研院校、头部科技大厂联合承办的国家级高水平人工智能综合挑战赛。大赛旨在汇聚全球 AI 算法工程师、开发者与高校学子，围绕通用大模型、多模态智能、深度攻防安全与垂类产业应用展开全方位技术角逐，孵化具有行业颠覆价值的 AI 原生应用和前沿开源成果。',
       schedule: [
@@ -3777,8 +3779,8 @@ export const mockCompetitions: CompetitionItem[] = [
     tracks: [
       {
         id: 'track-01-1',
-        name: 'AI数据科学赛道',
-        shortName: '数据科学赛道',
+        name: 'AI数据科学赛',
+        shortName: '数据科学赛',
         coverImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=80',
         timeRange: '2026-09-01 00:00:00 ~ 2026-10-15 23:59:59',
         typeTag: 'AI数据科学赛',
@@ -3793,8 +3795,8 @@ export const mockCompetitions: CompetitionItem[] = [
       },
       {
         id: 'track-01-2',
-        name: 'AI安全挑战赛道',
-        shortName: '安全挑战赛道',
+        name: 'AI安全挑战赛',
+        shortName: '安全挑战赛',
         coverImage: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600&auto=format&fit=crop&q=80',
         timeRange: '2026-09-01 00:00:00 ~ 2026-10-20 23:59:59',
         typeTag: 'AI安全挑战赛',
@@ -3809,8 +3811,8 @@ export const mockCompetitions: CompetitionItem[] = [
       },
       {
         id: 'track-01-3',
-        name: 'AIGC多模态创作赛道',
-        shortName: 'AIGC创作赛道',
+        name: 'AIGC多模态创作赛',
+        shortName: 'AIGC创作赛',
         coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
         timeRange: '2026-09-01 00:00:00 ~ 2026-10-25 23:59:59',
         typeTag: 'AIGC生成赛',
@@ -3847,11 +3849,11 @@ export const mockCompetitions: CompetitionItem[] = [
       },
       {
         id: 'track-01-4',
-        name: 'AI产品应用创新赛道',
-        shortName: '产品应用赛道',
+        name: 'AI产品创新赛',
+        shortName: 'AI产品创新赛',
         coverImage: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=600&auto=format&fit=crop&q=80',
         timeRange: '2026-09-01 00:00:00 ~ 2026-10-31 23:59:59',
-        typeTag: 'AI产品应用赛',
+        typeTag: 'AI产品创新赛',
         description: '聚焦“AI + 真实业务场景”，构建具备完整商业价值闭环的独立 Web / 移动端 AI 原生产品原型或多 Agent 协作系统。',
         problemStatement: '参赛队伍需针对医疗健康、智慧政务、工业智造或跨境电商等实际行业痛点，开发一款具有可用交互 UI 与后端业务逻辑的完整 AI 原生应用。',
         evaluationMetrics: '业务场景商业价值（35%）+ 产品 UI/UX 交互体验（30%）+ AI 技术结合深度与系统稳定性（25%）+ 开源生态贡献度（10%）。',
@@ -3886,6 +3888,8 @@ export const mockCompetitions: CompetitionItem[] = [
     endTime: '2026-12-31 23:59:59',
     status: 'unstarted',
     typeTags: ['AI数据科学赛'],
+    tags: ['机器学习', '时序分析', '二分类', '能源负荷预测', '特征工程', 'LightGBM'],
+    viewsCount: 8430,
     introduction: {
       summary: '2026 数据科学挑战赛聚焦于工业大数据分析、能源负荷高精度预测与时序异常检测。旨在发掘具备高超特征工程构建能力与先进算法建模能力的优秀数据科学家。',
       schedule: [
@@ -3911,8 +3915,8 @@ export const mockCompetitions: CompetitionItem[] = [
     tracks: [
       {
         id: 'track-02-1',
-        name: '工业时序数据科学建模赛道',
-        shortName: '数据科学赛道',
+        name: '工业时序数据科学建模赛',
+        shortName: '数据科学赛',
         coverImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=80',
         timeRange: '2026-09-01 00:00:00 ~ 2026-12-15 23:59:59',
         typeTag: 'AI数据科学赛',
@@ -3938,6 +3942,8 @@ export const mockCompetitions: CompetitionItem[] = [
     endTime: '2026-07-31 23:59:59',
     status: 'ended',
     typeTags: ['AI安全挑战赛'],
+    tags: ['提示词注入', '红蓝对抗', 'Agent渗透越权', 'CTF夺旗', '漏洞挖掘'],
+    viewsCount: 12580,
     introduction: {
       summary: '2026 网络与AI安全攻防挑战赛是国内首个针对大模型供应链安全与自动化智能体（Agent）渗透防御的实战对抗赛事。',
       schedule: [
@@ -3960,8 +3966,8 @@ export const mockCompetitions: CompetitionItem[] = [
     tracks: [
       {
         id: 'track-03-1',
-        name: 'AI大模型安全攻防赛道',
-        shortName: '安全挑战赛道',
+        name: 'AI大模型安全攻防赛',
+        shortName: '安全挑战赛',
         coverImage: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600&auto=format&fit=crop&q=80',
         timeRange: '2026-06-01 00:00:00 ~ 2026-07-31 23:59:59',
         typeTag: 'AI安全挑战赛',
@@ -3986,7 +3992,9 @@ export const mockCompetitions: CompetitionItem[] = [
     startTime: '2026-08-15 00:00:00',
     endTime: '2026-11-20 23:59:59',
     status: 'ongoing',
-    typeTags: ['AIGC生成赛', 'AI产品应用赛'],
+    typeTags: ['AIGC生成赛', 'AI产品创新赛'],
+    tags: ['AIGC生成', 'AI产品创新', '多模态营销', '垂直行业Agent', '商业落地'],
+    viewsCount: 9240,
     introduction: {
       summary: '推动大模型从技术试验走向千万级产业落地，鼓励开发者结合具体企业数字化转型场景（营销、研发、政务、文旅）打造高价值 AI 软件原型。',
       schedule: [
@@ -4012,8 +4020,8 @@ export const mockCompetitions: CompetitionItem[] = [
     tracks: [
       {
         id: 'track-04-1',
-        name: 'AIGC智能营销与内容生成赛道',
-        shortName: 'AIGC创作赛道',
+        name: 'AIGC智能营销与内容生成赛',
+        shortName: 'AIGC创作赛',
         coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
         timeRange: '2026-08-15 00:00:00 ~ 2026-11-15 23:59:59',
         typeTag: 'AIGC生成赛',
@@ -4039,16 +4047,117 @@ export const mockCompetitions: CompetitionItem[] = [
       },
       {
         id: 'track-04-2',
-        name: '垂直行业AI原生应用落地赛道',
-        shortName: '产品应用赛道',
+        name: '垂直行业AI原生应用落地赛',
+        shortName: 'AI产品创新赛',
         coverImage: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=600&auto=format&fit=crop&q=80',
         timeRange: '2026-08-15 00:00:00 ~ 2026-11-20 23:59:59',
-        typeTag: 'AI产品应用赛',
+        typeTag: 'AI产品创新赛',
         description: '聚焦于政务、医疗、制造业等实际场景的 Agent 与大模型工作流应用开发。',
         problemStatement: '打造具备企业级权限隔离、外部系统 OpenAPI 联动与私有知识库 RAG 检索的生产级 AI 软件。',
         evaluationMetrics: '企业专家评审团针对系统可用性与工程鲁棒性进行现场打分。',
         dataDescription: '提供脱敏后的行业业务系统接口规范。',
         targetUrl: 'http://10.2.89.1/competitions-hall/competitions/aia-race-detail/1973c668ec1a4bd2aae36e2a3043890d'
+      }
+    ]
+  },
+  // ================= 🏢 企业内部专有赛事示例 =================
+  {
+    id: 'comp-internal-01',
+    title: '2026 金融数智化·大模型风控算法内部封闭实战赛',
+    organizer: '华夏智慧金融科技实验室',
+    organizerBadge: '特邀内训赛',
+    coverImage: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800&auto=format&fit=crop&q=80',
+    bannerImage: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=1600&auto=format&fit=crop&q=80',
+    startTime: '2026-09-01 00:00:00',
+    endTime: '2026-10-30 23:59:59',
+    status: 'ongoing',
+    typeTags: ['AI数据科学赛', 'AI产品创新赛'],
+    tags: ['机器学习', '二分类', '金融风控', '信贷反欺诈', '图神经网络', '特征工程'],
+    viewsCount: 3520,
+    isInternalOnly: true,
+    introduction: {
+      summary: '本赛事为金融集团面向全行总分行科技与风险条线业务人员设立的内部算法封闭选拔赛。比赛基于银行核心风控脱敏数据集，考察选手利用前沿机器学习与大模型知识挖掘黑灰产团伙欺诈行为的综合算法能力。',
+      schedule: [
+        { stage: '封闭靶场开放', time: '2026-09-01 00:00 ~ 2026-09-20 23:59', desc: '内部受邀账号登录专网沙箱靶场获取训练集。' },
+        { stage: '模型评测排榜', time: '2026-09-21 00:00 ~ 2026-10-20 23:59', desc: '每日自动刷榜，评测 AUC 与 KS 指标。' },
+        { stage: '行内答辩表彰', time: '2026-10-25 00:00 ~ 2026-10-30 23:59', desc: '行领导现场评审并授予数智先锋特等奖金。' }
+      ],
+      awards: [
+        { rank: '金牌算法战队 (1 名)', reward: '¥50,000 行内创新基金 + 职级晋升绿卡', quota: '1 支队伍', iconBg: 'from-amber-400 to-amber-600' },
+        { rank: '银牌战队 (2 名)', reward: '¥20,000 创新基金 + 集团技术专家称号', quota: '2 支队伍', iconBg: 'from-slate-300 to-slate-500' }
+      ],
+      evaluationStandards: [
+        'KS 值与 ROC-AUC 指标（占比 60%）；',
+        '特征工程可解释性与金融合规性（占比 30%）；',
+        '模型单机推理吞吐性能（占比 10%）。'
+      ],
+      organizingCommittee: [
+        { role: '主办单位', name: '华夏智慧金融科技实验室' },
+        { role: '指导部门', name: '集团风险管理部 / 科技创新部' }
+      ]
+    },
+    tracks: [
+      {
+        id: 'track-internal-01-1',
+        name: '信贷交易反欺诈多模态二分类算法赛',
+        shortName: '数据科学赛',
+        coverImage: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=600&auto=format&fit=crop&q=80',
+        timeRange: '2026-09-01 00:00:00 ~ 2026-10-20 23:59:59',
+        typeTag: 'AI数据科学赛',
+        description: '基于亿级交易流水、多维行为时序与设备指纹，构建精准识别信贷申请违约与团伙套现的二分类模型。',
+        problemStatement: '通过深度特征交叉与图学习算法，在 99.5% 的极度样本不平衡下实现极低误杀率的高精召回。',
+        evaluationMetrics: '以 AUC (Top 1% TPR) 与 KS 值为评测排榜标准。',
+        targetUrl: 'http://10.2.89.1/saas/contest/web/contest/ai/enter/805f06cb51fea51263cf33ea15c2b1f6/rank'
+      }
+    ]
+  },
+  {
+    id: 'comp-internal-02',
+    title: '2026 高端制造工业质检视觉大模型定向攻关赛',
+    organizer: '未来精密制造集团技术中心',
+    organizerBadge: '内部专享',
+    coverImage: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&auto=format&fit=crop&q=80',
+    bannerImage: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1600&auto=format&fit=crop&q=80',
+    startTime: '2026-09-15 00:00:00',
+    endTime: '2026-11-30 23:59:59',
+    status: 'unstarted',
+    typeTags: ['AI数据科学赛', 'AI产品创新赛'],
+    tags: ['机器学习', '工业视觉', '表面缺陷检测', '二分类', '轻量化部署', 'YOLOv10'],
+    viewsCount: 2480,
+    isInternalOnly: true,
+    introduction: {
+      summary: '本赛事面向集团各大产线工厂与视觉算法研发小组定向举办，旨在攻克半导体晶圆与高精汽车零部件表面微米级微瑕疵在线秒级二分类与定位质检难题。',
+      schedule: [
+        { stage: '产线样本下发', time: '2026-09-15 00:00 ~ 2026-10-01 23:59', desc: '下发百万张工业显微高清标注数据集。' },
+        { stage: '边缘端推理跑分', time: '2026-10-01 00:00 ~ 2026-11-15 23:59', desc: '在指定嵌入式工控板卡上进行实机吞吐与 mAP 评测。' },
+        { stage: '成果上线产线', time: '2026-11-15 00:00 ~ 2026-11-30 23:59', desc: '优胜算法直通智能产线试点应用。' }
+      ],
+      awards: [
+        { rank: '卓越工程奖 (1 名)', reward: '¥60,000 研发专项奖金 + 专利特别津贴', quota: '1 支团队', iconBg: 'from-amber-400 to-amber-600' },
+        { rank: '先锋创新奖 (2 名)', reward: '¥25,000 奖金 + 集团重点表彰', quota: '2 支团队', iconBg: 'from-slate-300 to-slate-500' }
+      ],
+      evaluationStandards: [
+        '缺陷检出 mAP@0.5 与二分类漏检率（占比 50%）；',
+        '边缘设备推理时延 (FPS ≥ 60)（占比 35%）；',
+        '模型量化压缩比与内存占用（占比 15%）。'
+      ],
+      organizingCommittee: [
+        { role: '主办单位', name: '未来精密制造集团技术中心' },
+        { role: '协办单位', name: '先进制造智能感知实验室' }
+      ]
+    },
+    tracks: [
+      {
+        id: 'track-internal-02-1',
+        name: '微米级表面缺陷高精二分类检测赛',
+        shortName: '数据科学赛',
+        coverImage: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&auto=format&fit=crop&q=80',
+        timeRange: '2026-09-15 00:00:00 ~ 2026-11-15 23:59:59',
+        typeTag: 'AI数据科学赛',
+        description: '在复杂光照与强反光金属表面下实现 0.01mm 级裂纹与气泡瑕疵的精准识别与缺陷判定。',
+        problemStatement: '训练轻量级端侧视觉模型，完成良品与次品的实时二分类与热力图缺陷分割。',
+        evaluationMetrics: '综合考虑 F1-Score 与嵌入式推理速度。',
+        targetUrl: 'http://10.2.89.1/saas/contest/web/contest/ai/enter/805f06cb51fea51263cf33ea15c2b1f6/rank'
       }
     ]
   }

@@ -10,13 +10,10 @@ import {
   Layers, 
   ArrowRight, 
   Clock, 
-  Sparkles,
-  ShieldCheck,
-  CheckCircle2,
   Filter,
-  Users,
-  Award,
-  Zap
+  Eye,
+  Lock,
+  Tag
 } from 'lucide-react';
 
 export const CreativeView: React.FC = () => {
@@ -40,13 +37,13 @@ export const CreativeView: React.FC = () => {
     { value: 'ended', label: '已结束' },
   ];
 
-  // 类型选项
+  // 赛事模式选项
   const typeOptions: { value: CompetitionTypeTag | 'all'; label: string }[] = [
     { value: 'all', label: '全部' },
     { value: 'AI数据科学赛', label: 'AI数据科学赛' },
     { value: 'AI安全挑战赛', label: 'AI安全挑战赛' },
     { value: 'AIGC生成赛', label: 'AIGC生成赛' },
-    { value: 'AI产品应用赛', label: 'AI产品应用赛' },
+    { value: 'AI产品创新赛', label: 'AI产品创新赛' },
   ];
 
   // 过滤后的赛事列表
@@ -56,23 +53,33 @@ export const CreativeView: React.FC = () => {
       if (statusFilter !== 'all' && item.status !== statusFilter) {
         return false;
       }
-      // 类型筛选 (包含任意一个匹配标签)
+      // 赛事模式筛选 (包含任意一个匹配标签)
       if (typeFilter !== 'all' && !item.typeTags.includes(typeFilter as CompetitionTypeTag)) {
         return false;
       }
-      // 关键字搜索 (标题、主办方、简介)
+      // 关键字搜索 (标题、主办方、简介、标签)
       if (searchKeyword.trim()) {
         const kw = searchKeyword.toLowerCase();
         const matchTitle = item.title.toLowerCase().includes(kw);
         const matchOrg = item.organizer.toLowerCase().includes(kw);
         const matchSummary = item.introduction.summary.toLowerCase().includes(kw);
-        if (!matchTitle && !matchOrg && !matchSummary) {
+        const matchTags = item.tags?.some(t => t.toLowerCase().includes(kw)) || false;
+        if (!matchTitle && !matchOrg && !matchSummary && !matchTags) {
           return false;
         }
       }
       return true;
     });
   }, [competitions, statusFilter, typeFilter, searchKeyword]);
+
+  // 点击查看详情处理
+  const handleOpenDetail = (item: CompetitionItem) => {
+    if (item.isInternalOnly) {
+      showToast('本赛事为企业内部专有赛事，仅限受邀人员参与，暂不面向大众开放报名。敬请关注后续更多公开赛事。');
+      return;
+    }
+    setSelectedCompetitionId(item.id);
+  };
 
   // 获取当前查看详情的赛事
   const selectedCompetition = useMemo(() => {
@@ -91,7 +98,15 @@ export const CreativeView: React.FC = () => {
   }
 
   // 状态 Badge 渲染
-  const getStatusBadge = (status: CompetitionStatus) => {
+  const getStatusBadge = (status: CompetitionStatus, isInternalOnly?: boolean) => {
+    if (isInternalOnly) {
+      return (
+        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-indigo-950/90 text-indigo-200 border border-indigo-500/40 shadow-xs flex items-center gap-1 backdrop-blur-md">
+          <Lock className="w-3 h-3 text-indigo-300" />
+          企业专享
+        </span>
+      );
+    }
     switch (status) {
       case 'ongoing':
         return (
@@ -150,7 +165,6 @@ export const CreativeView: React.FC = () => {
         </div>
       </div>
 
-
       {/* 筛选与检索控制中心 */}
       <div id="competition-filter-card" className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs space-y-4">
         
@@ -181,11 +195,11 @@ export const CreativeView: React.FC = () => {
           </div>
         </div>
 
-        {/* 赛道分类 */}
+        {/* 赛事模式 (原赛道分类) */}
         <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-slate-100">
           <span className="text-xs font-black text-slate-500 flex items-center gap-1.5 w-16 shrink-0">
             <Layers className="w-3.5 h-3.5 text-indigo-600" />
-            <span>赛道分类：</span>
+            <span>赛事模式：</span>
           </span>
           <div className="flex flex-wrap items-center gap-2">
             {typeOptions.map(opt => {
@@ -217,7 +231,7 @@ export const CreativeView: React.FC = () => {
               type="text"
               value={searchKeyword}
               onChange={e => setSearchKeyword(e.target.value)}
-              placeholder="搜索赛事名称、主办方或赛题关键字..."
+              placeholder="搜索赛事名称、主办方或赛事介绍关键字..."
               className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-indigo-500 focus:outline-none transition"
             />
           </div>
@@ -268,79 +282,93 @@ export const CreativeView: React.FC = () => {
                   
                   {/* 状态徽标 */}
                   <div className="absolute top-3 left-3 z-10">
-                    {getStatusBadge(item.status)}
+                    {getStatusBadge(item.status, item.isInternalOnly)}
                   </div>
 
-                  {/* 赛道类型标签集合 */}
-                  <div className="absolute top-3 right-3 z-10 flex flex-wrap gap-1 justify-end max-w-[200px]">
-                    {item.typeTags.slice(0, 2).map(tag => (
+                  {/* 包含的模式标签全部显示全 (不折叠+1、+2) */}
+                  <div className="absolute top-3 right-3 z-10 flex flex-wrap gap-1 justify-end max-w-[240px]">
+                    {item.typeTags.map(tag => (
                       <span
                         key={tag}
-                        className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/30"
+                        className="px-2 py-0.5 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/30 shadow-2xs"
                       >
                         {tag}
                       </span>
                     ))}
-                    {item.typeTags.length > 2 && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/30">
-                        +{item.typeTags.length - 2}
-                      </span>
-                    )}
                   </div>
 
                   {/* 底部主办方信息 */}
                   <div className="absolute bottom-3 left-3 right-3 z-10 flex items-center justify-between text-white">
                     <div className="flex items-center gap-1.5">
-                      <div className="w-5 h-5 rounded-md bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30">
+                      <div className="w-5 h-5 rounded-md bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shrink-0">
                         <Building2 className="w-3 h-3" />
                       </div>
                       <span className="text-xs font-bold drop-shadow-sm line-clamp-1 text-slate-100">
                         {item.organizer}
                       </span>
+                      {item.organizerBadge && (
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-indigo-500/40 text-indigo-200 border border-indigo-300/40 shrink-0">
+                          {item.organizerBadge}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 {/* 赛事核心信息区 */}
-                <div className="p-5 space-y-3">
+                <div className="p-5 space-y-3.5">
                   {/* 标题 */}
                   <h3 className="text-base font-black text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug line-clamp-1">
                     {item.title}
                   </h3>
 
-                  {/* 赛事时间 */}
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500 font-mono">
-                    <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                    <span className="truncate">赛程：<strong className="text-slate-700 font-bold">{item.startTime} ~ {item.endTime}</strong></span>
+                  {/* 赛事时间与点击量信息 */}
+                  <div className="flex items-center justify-between text-xs text-slate-500 font-mono gap-2">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                      <span className="truncate">赛程：<strong className="text-slate-700 font-bold">{item.startTime?.split(' ')?.[0]} ~ {item.endTime?.split(' ')?.[0]}</strong></span>
+                    </div>
+                    {/* 点击量显示 */}
+                    <div className="flex items-center gap-1 text-[11px] text-slate-500 font-sans font-medium shrink-0 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
+                      <Eye className="w-3 h-3 text-slate-400" />
+                      <span>点击量 <strong className="text-slate-700 font-bold font-mono">{(item.viewsCount || 1280).toLocaleString()}</strong></span>
+                    </div>
                   </div>
+
+                  {/* 赛事标签展示区 (后台添加赛事时自定义的关键词，如“机器学习”、“二分类”等相关技术) */}
+                  {item.tags && item.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {item.tags.map(tag => (
+                        <span
+                          key={tag}
+                          className="px-2 py-0.5 rounded-lg text-[10.5px] font-semibold bg-slate-100/90 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 border border-slate-200/70 transition-colors"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
                   {/* 简介 */}
                   <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 font-normal">
                     {item.introduction.summary}
                   </p>
-
-                  {/* 核心指标统计区 */}
-                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs">
-                    <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 text-slate-600">
-                      <div className="text-[10px] text-slate-400 font-medium">赛道包含</div>
-                      <div className="font-bold text-slate-800 truncate">{item.tracks.length} 个比赛赛道</div>
-                    </div>
-                    <div className="p-2 rounded-xl bg-indigo-50/60 border border-indigo-100/80 text-indigo-900">
-                      <div className="text-[10px] text-indigo-600/80 font-medium">奖池与奖励</div>
-                      <div className="font-mono font-black text-indigo-700 truncate">最高 ¥200,000</div>
-                    </div>
-                  </div>
                 </div>
               </div>
 
-              {/* 底部进入详情按钮 */}
+              {/* 底部进入详情按钮 (改为“赛事详情”) */}
               <div className="px-5 pb-5 pt-1">
                 <button
                   id={`enter-competition-detail-btn-${item.id}`}
-                  onClick={() => setSelectedCompetitionId(item.id)}
-                  className="w-full py-2.5 rounded-2xl bg-slate-900 group-hover:bg-indigo-600 text-white border border-transparent text-xs font-black shadow-2xs group-hover:shadow-md flex items-center justify-center gap-1.5 cursor-pointer transition-all duration-200"
+                  onClick={() => handleOpenDetail(item)}
+                  className={`w-full py-2.5 rounded-2xl text-xs font-black shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer transition-all duration-200 ${
+                    item.isInternalOnly
+                      ? 'bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700'
+                      : 'bg-slate-900 group-hover:bg-indigo-600 text-white border border-transparent group-hover:shadow-md'
+                  }`}
                 >
-                  <span>查看赛事详情与参赛</span>
+                  {item.isInternalOnly && <Lock className="w-3.5 h-3.5 text-indigo-300" />}
+                  <span>赛事详情</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>

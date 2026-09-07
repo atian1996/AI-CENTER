@@ -2039,6 +2039,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const openCompetitionDetail = (compId: string) => {
+    const targetComp = competitions.find(c => c.id === compId);
+    if (targetComp?.isInternalOnly) {
+      showToast('本赛事为企业内部专有赛事，仅限受邀人员参与，暂不面向大众开放报名。敬请关注后续更多公开赛事。');
+      return;
+    }
     handleSetActiveTab('creative');
     // Set selected competition detail explicitly after resetting tab
     setSelectedCompetitionId(compId);
