@@ -12,7 +12,6 @@ import {
   Clock, 
   Filter,
   Eye,
-  Lock,
   Tag
 } from 'lucide-react';
 
@@ -75,7 +74,7 @@ export const CreativeView: React.FC = () => {
   // 点击查看详情处理
   const handleOpenDetail = (item: CompetitionItem) => {
     if (item.isInternalOnly) {
-      showToast('本赛事为企业内部专有赛事，仅限受邀人员参与，暂不面向大众开放报名。敬请关注后续更多公开赛事。');
+      showToast('该赛事为企业内部定向赛事，暂未开放公开详情访问。');
       return;
     }
     setSelectedCompetitionId(item.id);
@@ -98,15 +97,7 @@ export const CreativeView: React.FC = () => {
   }
 
   // 状态 Badge 渲染
-  const getStatusBadge = (status: CompetitionStatus, isInternalOnly?: boolean) => {
-    if (isInternalOnly) {
-      return (
-        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-indigo-950/90 text-indigo-200 border border-indigo-500/40 shadow-xs flex items-center gap-1 backdrop-blur-md">
-          <Lock className="w-3 h-3 text-indigo-300" />
-          企业专享
-        </span>
-      );
-    }
+  const getStatusBadge = (status: CompetitionStatus) => {
     switch (status) {
       case 'ongoing':
         return (
@@ -282,7 +273,7 @@ export const CreativeView: React.FC = () => {
                   
                   {/* 状态徽标 */}
                   <div className="absolute top-3 left-3 z-10">
-                    {getStatusBadge(item.status, item.isInternalOnly)}
+                    {getStatusBadge(item.status)}
                   </div>
 
                   {/* 包含的模式标签全部显示全 (不折叠+1、+2) */}
@@ -306,11 +297,6 @@ export const CreativeView: React.FC = () => {
                       <span className="text-xs font-bold drop-shadow-sm line-clamp-1 text-slate-100">
                         {item.organizer}
                       </span>
-                      {item.organizerBadge && (
-                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-indigo-500/40 text-indigo-200 border border-indigo-300/40 shrink-0">
-                          {item.organizerBadge}
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -328,10 +314,10 @@ export const CreativeView: React.FC = () => {
                       <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
                       <span className="truncate">赛程：<strong className="text-slate-700 font-bold">{item.startTime?.split(' ')?.[0]} ~ {item.endTime?.split(' ')?.[0]}</strong></span>
                     </div>
-                    {/* 点击量显示 */}
-                    <div className="flex items-center gap-1 text-[11px] text-slate-500 font-sans font-medium shrink-0 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
-                      <Eye className="w-3 h-3 text-slate-400" />
-                      <span>点击量 <strong className="text-slate-700 font-bold font-mono">{(item.viewsCount || 1280).toLocaleString()}</strong></span>
+                    {/* 浏览量显示 (仅图标 + 数字) */}
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium shrink-0 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100" title="浏览量">
+                      <Eye className="w-3.5 h-3.5 text-slate-400" />
+                      <strong className="text-slate-700 font-bold font-mono">{(item.viewsCount || 1280).toLocaleString()}</strong>
                     </div>
                   </div>
 
@@ -356,18 +342,13 @@ export const CreativeView: React.FC = () => {
                 </div>
               </div>
 
-              {/* 底部进入详情按钮 (改为“赛事详情”) */}
+              {/* 底部进入详情按钮 (统一外观) */}
               <div className="px-5 pb-5 pt-1">
                 <button
                   id={`enter-competition-detail-btn-${item.id}`}
                   onClick={() => handleOpenDetail(item)}
-                  className={`w-full py-2.5 rounded-2xl text-xs font-black shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer transition-all duration-200 ${
-                    item.isInternalOnly
-                      ? 'bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700'
-                      : 'bg-slate-900 group-hover:bg-indigo-600 text-white border border-transparent group-hover:shadow-md'
-                  }`}
+                  className="w-full py-2.5 rounded-2xl text-xs font-black shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer transition-all duration-200 bg-slate-900 group-hover:bg-indigo-600 text-white border border-transparent group-hover:shadow-md"
                 >
-                  {item.isInternalOnly && <Lock className="w-3.5 h-3.5 text-indigo-300" />}
                   <span>赛事详情</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>

@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   Trophy, 
   Search, 
   Clock, 
-  ExternalLink, 
+  Calendar,
   Building2, 
-  Play,
-  FileText,
-  Sparkles,
-  ChevronRight
+  ChevronRight,
+  User,
+  Users
 } from 'lucide-react';
 
 export interface UserRegisteredCompetition {
@@ -17,14 +16,10 @@ export interface UserRegisteredCompetition {
   competitionId: string;
   title: string;
   organizer: string;
-  organizerBadge?: string;
-  typeTag: 'AI挑战赛' | '数据科学赛' | 'AIGC生成赛' | 'AI产品创新赛' | 'AI数据科学赛' | 'AI安全挑战赛' | 'AI产品应用赛';
-  registeredAt: string;
-  status: 'unstarted' | 'ongoing' | 'ended';
-  statusLabel: '未开始' | '进行中' | '已结束';
-  deadline: string;
-  teamType: '个人参赛' | '3人战队';
-  teamName?: string;
+  typeTags: string[];
+  startTime: string;
+  endTime: string;
+  teamType: '个人参赛' | '团队参赛';
 }
 
 const initialRegisteredCompetitions: UserRegisteredCompetition[] = [
@@ -33,26 +28,19 @@ const initialRegisteredCompetitions: UserRegisteredCompetition[] = [
     competitionId: 'comp-01',
     title: '2026 AI创新巅峰赛',
     organizer: '中国人工智能学会',
-    organizerBadge: '国家一级学会',
-    typeTag: 'AI产品创新赛',
-    registeredAt: '2026-08-15 14:30',
-    status: 'ongoing',
-    statusLabel: '进行中',
-    deadline: '2026-09-20 23:59',
-    teamType: '3人战队',
-    teamName: '极光智能创新小组'
+    typeTags: ['AI数据科学赛', 'AI产品创新赛'],
+    startTime: '2026-08-01 00:00',
+    endTime: '2026-10-31 23:59',
+    teamType: '团队参赛'
   },
   {
     id: 'user-comp-02',
     competitionId: 'comp-02',
     title: '2026 数据科学挑战赛',
     organizer: '国家数据科学研究院',
-    organizerBadge: '国家重点实验室',
-    typeTag: '数据科学赛',
-    registeredAt: '2026-08-18 10:15',
-    status: 'unstarted',
-    statusLabel: '未开始',
-    deadline: '2026-09-30 18:00',
+    typeTags: ['AI数据科学赛'],
+    startTime: '2026-10-01 09:00',
+    endTime: '2026-11-30 18:00',
     teamType: '个人参赛'
   },
   {
@@ -60,12 +48,9 @@ const initialRegisteredCompetitions: UserRegisteredCompetition[] = [
     competitionId: 'comp-03',
     title: '2026 网络与AI安全攻防挑战赛',
     organizer: '网络空间安全人才培养基地',
-    organizerBadge: '网安重点专项',
-    typeTag: 'AI挑战赛',
-    registeredAt: '2026-07-10 09:20',
-    status: 'ended',
-    statusLabel: '已结束',
-    deadline: '2026-08-05 20:00',
+    typeTags: ['AI安全挑战赛'],
+    startTime: '2026-06-01 09:00',
+    endTime: '2026-07-31 20:00',
     teamType: '个人参赛'
   },
   {
@@ -73,36 +58,25 @@ const initialRegisteredCompetitions: UserRegisteredCompetition[] = [
     competitionId: 'comp-04',
     title: '2026 产业大模型应用创意赛',
     organizer: '数字经济产业创新联合体',
-    organizerBadge: '产业联盟',
-    typeTag: 'AIGC生成赛',
-    registeredAt: '2026-08-20 16:00',
-    status: 'ongoing',
-    statusLabel: '进行中',
-    deadline: '2026-10-15 20:00',
-    teamType: '个人参赛'
+    typeTags: ['AIGC生成赛', 'AI产品创新赛'],
+    startTime: '2026-08-15 00:00',
+    endTime: '2026-10-15 20:00',
+    teamType: '团队参赛'
   }
 ];
 
-// 根据比赛类型获取对应的进入比赛跳转链接
-export const getCompetitionEnterUrl = (typeTag: string, title?: string): string => {
-  const str = `${typeTag || ''} ${title || ''}`.toLowerCase();
-  if (str.includes('挑战') || str.includes('安全') || str.includes('ctf') || str.includes('agentctf')) {
-    return 'http://10.2.89.1/saas/contest/agentctf/d6a21329d479860493c6f3a6aeee9896';
-  }
-  if (str.includes('数据科学') || str.includes('时序')) {
-    return 'http://10.2.89.1/saas/contest/web/contest/ai/enter/805f06cb51fea51263cf33ea15c2b1f6/rank';
-  }
-  if (str.includes('aigc') || str.includes('生成') || str.includes('创作') || str.includes('营销')) {
-    return 'http://10.2.89.1/competitions-hall/competitions/aia-race-detail/40f258969d2e43858383b6e5a7423e3a';
-  }
-  if (str.includes('产品') || str.includes('创新') || str.includes('应用') || str.includes('原生')) {
-    return 'http://10.2.89.1/competitions-hall/competitions/aia-race-detail/1973c668ec1a4bd2aae36e2a3043890d';
-  }
-  return 'http://10.2.89.1/competitions-hall/competitions/aia-race-detail/1973c668ec1a4bd2aae36e2a3043890d';
+// 根据赛事起止时间动态判断赛事状态
+export const getCompetitionStatusByTime = (startTime: string, endTime: string): 'unstarted' | 'ongoing' | 'ended' => {
+  const now = Date.now();
+  const start = new Date(startTime.replace(/-/g, '/')).getTime();
+  const end = new Date(endTime.replace(/-/g, '/')).getTime();
+  if (!isNaN(start) && now < start) return 'unstarted';
+  if (!isNaN(end) && now > end) return 'ended';
+  return 'ongoing';
 };
 
 export const WorkspaceCompetitions: React.FC = () => {
-  const { openCompetitionDetail, showToast } = useApp();
+  const { openCompetitionDetail } = useApp();
   
   const [competitionsList] = useState<UserRegisteredCompetition[]>(initialRegisteredCompetitions);
 
@@ -111,42 +85,45 @@ export const WorkspaceCompetitions: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  // 动态计算每个赛事的实时状态
+  const itemsWithComputedStatus = useMemo(() => {
+    return competitionsList.map(item => ({
+      ...item,
+      computedStatus: getCompetitionStatusByTime(item.startTime, item.endTime)
+    }));
+  }, [competitionsList]);
+
   // Filtered
-  const filteredList = competitionsList.filter((comp) => {
-    // Status
-    if (statusFilter !== 'all' && comp.status !== statusFilter) return false;
+  const filteredList = useMemo(() => {
+    return itemsWithComputedStatus.filter((comp) => {
+      // 赛事状态筛选
+      if (statusFilter !== 'all' && comp.computedStatus !== statusFilter) return false;
 
-    // Type
-    if (typeFilter !== 'all') {
-      if (typeFilter === 'AI挑战赛' && !['AI挑战赛', 'AI安全挑战赛'].includes(comp.typeTag)) return false;
-      if (typeFilter === '数据科学赛' && !['数据科学赛', 'AI数据科学赛'].includes(comp.typeTag)) return false;
-      if (typeFilter === 'AIGC生成赛' && comp.typeTag !== 'AIGC生成赛') return false;
-      if (typeFilter === 'AI产品创新赛' && !['AI产品创新赛', 'AI产品应用赛'].includes(comp.typeTag)) return false;
-    }
+      // 赛事模式筛选 (支持包含多个模式标签)
+      if (typeFilter !== 'all') {
+        const matchMode = comp.typeTags.some(tag => tag.includes(typeFilter) || typeFilter.includes(tag));
+        if (!matchMode) return false;
+      }
 
-    // Search
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const match = comp.title.toLowerCase().includes(q) || comp.organizer.toLowerCase().includes(q);
-      if (!match) return false;
-    }
+      // 搜索筛选
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchTitle = comp.title.toLowerCase().includes(q);
+        const matchOrg = comp.organizer.toLowerCase().includes(q);
+        const matchTags = comp.typeTags.some(t => t.toLowerCase().includes(q));
+        if (!matchTitle && !matchOrg && !matchTags) return false;
+      }
 
-    return true;
-  });
+      return true;
+    });
+  }, [itemsWithComputedStatus, statusFilter, typeFilter, searchQuery]);
 
-  // Stats
-  const registeredTotal = competitionsList.length;
-  const unstartedTotal = competitionsList.filter(c => c.status === 'unstarted').length;
-  const ongoingTotal = competitionsList.filter(c => c.status === 'ongoing').length;
-  const endedTotal = competitionsList.filter(c => c.status === 'ended').length;
+  // 各状态计数
+  const unstartedTotal = useMemo(() => itemsWithComputedStatus.filter(c => c.computedStatus === 'unstarted').length, [itemsWithComputedStatus]);
+  const ongoingTotal = useMemo(() => itemsWithComputedStatus.filter(c => c.computedStatus === 'ongoing').length, [itemsWithComputedStatus]);
+  const endedTotal = useMemo(() => itemsWithComputedStatus.filter(c => c.computedStatus === 'ended').length, [itemsWithComputedStatus]);
 
-  const handleEnterCompetition = (comp: UserRegisteredCompetition) => {
-    const url = getCompetitionEnterUrl(comp.typeTag, comp.title);
-    showToast(`正在跳转进入【${comp.title}】比赛系统...`);
-    window.open(url, '_blank', 'noopener,noreferrer');
-  };
-
-  const getStatusBadge = (status: UserRegisteredCompetition['status']) => {
+  const getStatusBadge = (status: 'unstarted' | 'ongoing' | 'ended') => {
     switch (status) {
       case 'unstarted':
         return (
@@ -172,21 +149,19 @@ export const WorkspaceCompetitions: React.FC = () => {
   };
 
   const getTypeTagStyle = (tag: string) => {
-    switch (tag) {
-      case 'AI数据科学赛':
-      case '数据科学赛':
-        return 'bg-cyan-50 text-cyan-700 border-cyan-200';
-      case 'AI安全挑战赛':
-      case 'AI挑战赛':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'AIGC生成赛':
-        return 'bg-purple-50 text-purple-700 border-purple-200';
-      case 'AI产品应用赛':
-      case 'AI产品创新赛':
-        return 'bg-indigo-50 text-indigo-700 border-indigo-200';
-      default:
-        return 'bg-slate-50 text-slate-700 border-slate-200';
+    if (tag.includes('数据科学')) {
+      return 'bg-cyan-50 text-cyan-700 border-cyan-200';
     }
+    if (tag.includes('安全') || tag.includes('挑战')) {
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    }
+    if (tag.includes('AIGC') || tag.includes('生成')) {
+      return 'bg-purple-50 text-purple-700 border-purple-200';
+    }
+    if (tag.includes('产品') || tag.includes('创新') || tag.includes('应用')) {
+      return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+    }
+    return 'bg-slate-50 text-slate-700 border-slate-200';
   };
 
   return (
@@ -196,7 +171,7 @@ export const WorkspaceCompetitions: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-purple-600" />
+            <Trophy className="w-5 h-5 text-indigo-600" />
             我的赛事
           </h2>
           <p className="text-xs text-slate-500 mt-1">
@@ -205,61 +180,13 @@ export const WorkspaceCompetitions: React.FC = () => {
         </div>
       </div>
 
-      {/* 1. 统计卡片 */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs flex items-center justify-between">
-          <div className="space-y-1">
-            <div className="text-xs text-slate-500 font-bold">已报名赛事</div>
-            <div className="text-2xl font-black text-indigo-600 font-mono">
-              {registeredTotal} <span className="text-xs text-slate-400 font-normal">项</span>
-            </div>
-            <div className="text-[11px] text-slate-400 font-medium">
-              国家级与权威学会认证
-            </div>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
-            <Trophy className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs flex items-center justify-between">
-          <div className="space-y-1">
-            <div className="text-xs text-slate-500 font-bold">进行中赛事</div>
-            <div className="text-2xl font-black text-emerald-600 font-mono">
-              {ongoingTotal} <span className="text-xs text-slate-400 font-normal">项</span>
-            </div>
-            <div className="text-[11px] text-emerald-600/80 font-medium">
-              实时角逐中
-            </div>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
-            <Clock className="w-6 h-6 animate-pulse" />
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs flex items-center justify-between">
-          <div className="space-y-1">
-            <div className="text-xs text-slate-500 font-bold">已结束赛事</div>
-            <div className="text-2xl font-black text-slate-600 font-mono">
-              {endedTotal} <span className="text-xs text-slate-400 font-normal">项</span>
-            </div>
-            <div className="text-[11px] text-slate-400 font-medium">
-              已完赛归档
-            </div>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-600 flex items-center justify-center border border-slate-200">
-            <Sparkles className="w-6 h-6" />
-          </div>
-        </div>
-      </div>
-
-      {/* 2. 筛选栏 */}
+      {/* 筛选与检索栏 */}
       <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs space-y-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           
-          {/* 状态筛选 */}
+          {/* 赛事状态筛选 */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs text-slate-400 font-bold mr-1">比赛状态:</span>
+            <span className="text-xs text-slate-400 font-bold mr-1">赛事状态:</span>
             {[
               { id: 'all', label: '全部' },
               { id: 'unstarted', label: `未开始 (${unstartedTotal})` },
@@ -271,7 +198,7 @@ export const WorkspaceCompetitions: React.FC = () => {
                 onClick={() => setStatusFilter(tab.id as any)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
                   statusFilter === tab.id
-                    ? 'bg-purple-600 text-white shadow-xs'
+                    ? 'bg-indigo-600 text-white shadow-xs'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
                 }`}
               >
@@ -280,31 +207,31 @@ export const WorkspaceCompetitions: React.FC = () => {
             ))}
           </div>
 
-          {/* 赛事类型 & 搜索 */}
+          {/* 赛事模式 & 搜索 */}
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 font-bold">赛事类型:</span>
+              <span className="text-xs text-slate-400 font-bold">赛事模式:</span>
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-purple-500 cursor-pointer"
+                className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 cursor-pointer"
               >
-                <option value="all">全部赛事类型</option>
-                <option value="AI挑战赛">AI挑战赛</option>
-                <option value="数据科学赛">数据科学赛</option>
+                <option value="all">全部赛事模式</option>
+                <option value="AI数据科学赛">AI数据科学赛</option>
                 <option value="AIGC生成赛">AIGC生成赛</option>
                 <option value="AI产品创新赛">AI产品创新赛</option>
+                <option value="AI安全挑战赛">AI安全挑战赛</option>
               </select>
             </div>
 
-            <div className="relative min-w-[200px]">
+            <div className="relative min-w-[220px]">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="按赛事名称/主办方搜索..."
+                placeholder="搜索赛事名称、主办方或模式..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 bg-slate-100 rounded-xl text-xs text-slate-800 placeholder-slate-400 border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-purple-500 font-medium"
+                className="w-full pl-8 pr-3 py-1.5 bg-slate-100 rounded-xl text-xs text-slate-800 placeholder-slate-400 border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-medium"
               />
             </div>
           </div>
@@ -312,7 +239,7 @@ export const WorkspaceCompetitions: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. 赛事列表 */}
+      {/* 赛事列表 */}
       <div className="bg-white border border-slate-200/80 rounded-2xl shadow-2xs overflow-hidden">
         {filteredList.length === 0 ? (
           <div className="text-center py-16 px-4 space-y-3">
@@ -329,88 +256,93 @@ export const WorkspaceCompetitions: React.FC = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-black text-slate-400 uppercase tracking-wider">
-                  <th className="py-3.5 px-4">赛事名称 / 主办单位</th>
-                  <th className="py-3.5 px-4">赛事类型</th>
-                  <th className="py-3.5 px-4">报名时间</th>
-                  <th className="py-3.5 px-4">比赛状态</th>
-                  <th className="py-3.5 px-4">参赛模式</th>
-                  <th className="py-3.5 px-4 text-right">操作</th>
+                  <th className="py-3.5 px-4 min-w-[200px]">赛事名称</th>
+                  <th className="py-3.5 px-4 min-w-[150px]">主办单位</th>
+                  <th className="py-3.5 px-4 min-w-[160px]">赛事模式</th>
+                  <th className="py-3.5 px-4 min-w-[170px]">赛事时间</th>
+                  <th className="py-3.5 px-4 min-w-[100px]">赛事状态</th>
+                  <th className="py-3.5 px-4 min-w-[100px]">参赛模式</th>
+                  <th className="py-3.5 px-4 text-right min-w-[100px]">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
                 {filteredList.map((item) => {
+                  const startDateOnly = item.startTime.split(' ')[0];
+                  const endDateOnly = item.endTime.split(' ')[0];
+
                   return (
                     <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
-                      {/* 赛事名称 */}
+                      
+                      {/* 1. 赛事名称 (已移除“国家一级学会”等所有标签) */}
                       <td className="py-3.5 px-4">
-                        <div className="space-y-1">
-                          <div className="font-extrabold text-slate-900 flex items-center gap-2">
-                            <span>{item.title}</span>
-                            {item.organizerBadge && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-100">
-                                {item.organizerBadge}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-[11px] text-slate-400 flex items-center gap-1">
-                            <Building2 className="w-3 h-3" />
-                            <span>{item.organizer}</span>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* 赛事类型 */}
-                      <td className="py-3.5 px-4">
-                        <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${getTypeTagStyle(item.typeTag)}`}>
-                          {item.typeTag}
+                        <span className="font-extrabold text-slate-900 leading-snug">
+                          {item.title}
                         </span>
                       </td>
 
-                      {/* 报名时间 */}
-                      <td className="py-3.5 px-4 text-slate-500 font-mono text-[11px]">
-                        {item.registeredAt}
+                      {/* 2. 主办单位 (独立一列展示) */}
+                      <td className="py-3.5 px-4">
+                        <div className="text-slate-600 flex items-center gap-1.5 font-medium">
+                          <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span>{item.organizer}</span>
+                        </div>
                       </td>
 
-                      {/* 比赛状态 (未开始 / 进行中 / 已结束) */}
+                      {/* 3. 赛事模式 (支持展示多个模式标签) */}
                       <td className="py-3.5 px-4">
-                        {getStatusBadge(item.status)}
+                        <div className="flex flex-wrap gap-1.5">
+                          {item.typeTags.map((tag) => (
+                            <span 
+                              key={tag} 
+                              className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${getTypeTagStyle(tag)}`}
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                       </td>
 
-                      {/* 参赛模式 */}
+                      {/* 4. 赛事时间 (赛事开始时间到截止时间的时间段) */}
+                      <td className="py-3.5 px-4 text-slate-600 font-mono text-[11px]">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                          <span>{startDateOnly} ~ {endDateOnly}</span>
+                        </div>
+                      </td>
+
+                      {/* 5. 赛事状态 (根据时间动态判断) */}
                       <td className="py-3.5 px-4">
-                        <div className="text-slate-600">
-                          <span className="font-bold">{item.teamType}</span>
-                          {item.teamName && (
-                            <div className="text-[10px] text-slate-400">{item.teamName}</div>
+                        {getStatusBadge(item.computedStatus)}
+                      </td>
+
+                      {/* 6. 参赛模式 (仅区分 团队参赛 / 个人参赛) */}
+                      <td className="py-3.5 px-4">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold ${
+                          item.teamType === '团队参赛'
+                            ? 'bg-purple-50 text-purple-700 border border-purple-100'
+                            : 'bg-slate-100 text-slate-700 border border-slate-200/70'
+                        }`}>
+                          {item.teamType === '团队参赛' ? (
+                            <Users className="w-3 h-3 text-purple-500" />
+                          ) : (
+                            <User className="w-3 h-3 text-slate-500" />
                           )}
-                        </div>
+                          <span>{item.teamType}</span>
+                        </span>
                       </td>
 
-                      {/* 操作 (只有 赛事详情 和 进入比赛 两个按钮) */}
+                      {/* 7. 操作栏 (仅保留 赛事详情 按钮) */}
                       <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          
-                          {/* 赛事详情 */}
-                          <button
-                            id={`view-detail-${item.id}`}
-                            onClick={() => openCompetitionDetail(item.competitionId)}
-                            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs transition cursor-pointer"
-                          >
-                            赛事详情
-                          </button>
-
-                          {/* 进入比赛 */}
-                          <button
-                            id={`enter-match-${item.id}`}
-                            onClick={() => handleEnterCompetition(item)}
-                            className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs transition shadow-2xs flex items-center gap-1 cursor-pointer"
-                          >
-                            <span>进入比赛</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </button>
-
-                        </div>
+                        <button
+                          id={`view-detail-${item.id}`}
+                          onClick={() => openCompetitionDetail(item.competitionId)}
+                          className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-indigo-600 text-slate-700 hover:text-white font-extrabold text-xs transition-all shadow-2xs inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <span>赛事详情</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
                       </td>
+
                     </tr>
                   );
                 })}
@@ -423,4 +355,5 @@ export const WorkspaceCompetitions: React.FC = () => {
     </div>
   );
 };
+
 

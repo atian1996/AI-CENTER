@@ -229,12 +229,6 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
               </div>
             </div>
 
-            <div className="shrink-0 flex items-center gap-3">
-              <div className="px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-right">
-                <div className="text-[10px] text-slate-300 font-mono">绑定赛道</div>
-                <div className="text-xl font-black text-white">{competition.tracks.length} <span className="text-xs font-normal text-slate-300">个赛道</span></div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -278,164 +272,129 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
         </div>
       </div>
 
-      {/* TAB 内容展示区 */}
-      <div className="transition-all">
+      {/* TAB 内容展示与全局同级侧栏 (大赛时间节点) */}
+      <div className="flex flex-col lg:flex-row items-start gap-6">
         
-        {/* ========================================================================= */}
-        {/* 1. 赛事介绍 TAB 固定内容                                                  */}
-        {/* ========================================================================= */}
-        {activeTabId === 'intro' && (
-          <div id="tab-content-intro" className="space-y-6">
-            
-            {/* 赛事简介 */}
-            <div className="p-7 bg-white rounded-3xl border border-slate-200/90 shadow-2xs space-y-4">
-              <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
-                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center font-bold">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <h3 className="text-base font-black text-slate-900">赛事简介</h3>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal text-justify">
-                {competition.introduction.summary}
-              </p>
-            </div>
-
-            {/* 赛事流程与阶段 */}
-            <div className="p-7 bg-white rounded-3xl border border-slate-200/90 shadow-2xs space-y-5">
-              <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
-                <div className="w-8 h-8 rounded-xl bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center font-bold">
-                  <Clock className="w-4 h-4" />
-                </div>
-                <h3 className="text-base font-black text-slate-900">赛事日程与流程规划</h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {competition.introduction.schedule.map((item, idx) => (
-                  <div 
-                    key={idx} 
-                    className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-2 relative overflow-hidden group hover:bg-indigo-50/40 hover:border-indigo-200 transition"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-700">
-                        阶段 0{idx + 1}
-                      </span>
-                      <span className="text-[11px] font-mono text-slate-400 font-bold">
-                        {item.time.split(' ~ ')[0].split(' ')[0]}
-                      </span>
-                    </div>
-
-                    <h4 className="text-sm font-black text-slate-900 group-hover:text-indigo-600 transition-colors">
-                      {item.stage}
-                    </h4>
-
-                    <div className="text-[11px] font-mono text-indigo-600 font-bold">
-                      {item.time}
-                    </div>
-
-                    <p className="text-xs text-slate-600 leading-relaxed pt-1">
-                      {item.desc}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 奖项设置 */}
-            <div className="p-7 bg-white rounded-3xl border border-slate-200/90 shadow-2xs space-y-5">
-              <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
-                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center font-bold">
-                  <Award className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900">奖项与激励设置</h3>
-                  <p className="text-xs text-slate-500 font-medium">总奖池超 20 万元现金奖励、算力补贴与大厂推优直通车</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {competition.introduction.awards.map((award, idx) => (
-                  <div 
-                    key={idx}
-                    className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-3 hover:shadow-md hover:-translate-y-0.5 transition-all relative overflow-hidden"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className={`w-9 h-9 rounded-xl bg-gradient-to-tr ${award.iconBg || 'from-amber-400 to-amber-600'} text-white flex items-center justify-center font-black shadow-xs`}>
-                        <Trophy className="w-4 h-4" />
-                      </div>
-                      <span className="text-[11px] font-extrabold text-slate-500">
-                        {award.quota}
-                      </span>
-                    </div>
-
-                    <div>
-                      <div className="text-xs font-bold text-slate-500">{award.rank}</div>
-                      <div className="text-sm font-black text-amber-600 mt-1 leading-snug">
-                        {award.reward}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 评审标准与组委会 + 大赛时间节点 */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 左侧主要 TAB 视图内容 (随 TAB 切换变化) */}
+        <div className="flex-1 min-w-0 space-y-6 w-full">
+          
+          {/* ========================================================================= */}
+          {/* 1. 赛事介绍 TAB 固定内容                                                  */}
+          {/* ========================================================================= */}
+          {activeTabId === 'intro' && (
+            <div id="tab-content-intro" className="space-y-6">
               
-              {/* 评审标准 */}
-              <div className="lg:col-span-2 p-7 bg-white rounded-3xl border border-slate-200/90 shadow-2xs space-y-4">
+              {/* 赛事简介 */}
+              <div className="p-7 bg-white rounded-3xl border border-slate-200/90 shadow-2xs space-y-4">
                 <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center font-bold">
-                    <FileCheck className="w-4 h-4" />
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center font-bold">
+                    <FileText className="w-4 h-4" />
                   </div>
-                  <h3 className="text-base font-black text-slate-900">评审标准与评分维度</h3>
+                  <h3 className="text-base font-black text-slate-900">赛事简介</h3>
                 </div>
-
-                <ul className="space-y-3">
-                  {competition.introduction.evaluationStandards.map((std, idx) => (
-                    <li key={idx} className="flex items-start gap-2.5 text-xs text-slate-700 leading-relaxed">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span>{std}</span>
-                    </li>
-                  ))}
-                </ul>
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal text-justify">
+                  {competition.introduction.summary}
+                </p>
               </div>
 
-              {/* 右侧：大赛时间节点 + 组织机构 */}
-              <div className="space-y-6">
-                {/* 大赛时间节点 (完全参考用户上传设计图样式) */}
-                <div id="intro-competition-timeline-nodes-card" className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs overflow-hidden">
-                  <div className="px-5 py-3.5 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-slate-800 tracking-tight">
-                      大赛时间节点
-                    </h3>
+              {/* 赛事流程与阶段 */}
+              <div className="p-7 bg-white rounded-3xl border border-slate-200/90 shadow-2xs space-y-5">
+                <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
+                  <div className="w-8 h-8 rounded-xl bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center font-bold">
+                    <Clock className="w-4 h-4" />
                   </div>
+                  <h3 className="text-base font-black text-slate-900">赛事日程与流程规划</h3>
+                </div>
 
-                  <div className="p-5 space-y-0">
-                    {timelineNodes.map((node, index) => {
-                      const isLast = index === timelineNodes.length - 1;
-                      return (
-                        <div key={index} className="relative flex items-start gap-3 pb-5 last:pb-1">
-                          {/* 垂直连接线 */}
-                          {!isLast && (
-                            <div className="absolute left-[4.5px] top-[14px] bottom-0 w-[1.5px] bg-slate-200" />
-                          )}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {competition.introduction.schedule.map((item, idx) => (
+                    <div 
+                      key={idx} 
+                      className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-2 relative overflow-hidden group hover:bg-indigo-50/40 hover:border-indigo-200 transition"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-700">
+                          阶段 0{idx + 1}
+                        </span>
+                        <span className="text-[11px] font-mono text-slate-400 font-bold">
+                          {item.time.split(' ~ ')[0].split(' ')[0]}
+                        </span>
+                      </div>
 
-                          {/* 蓝色圆点 */}
-                          <div className="relative z-10 w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-blue-50 shrink-0 mt-1" />
+                      <h4 className="text-sm font-black text-slate-900 group-hover:text-indigo-600 transition-colors">
+                        {item.stage}
+                      </h4>
 
-                          {/* 节点名称与时间 */}
-                          <div className="space-y-0.5">
-                            <h4 className="text-xs sm:text-sm font-semibold text-slate-800">
-                              {node.name}
-                            </h4>
-                            <div className="text-[11px] sm:text-xs text-slate-400 font-mono tracking-tight">
-                              {node.time}
-                            </div>
-                          </div>
+                      <div className="text-[11px] font-mono text-indigo-600 font-bold">
+                        {item.time}
+                      </div>
+
+                      <p className="text-xs text-slate-600 leading-relaxed pt-1">
+                        {item.desc}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 奖项设置 */}
+              <div className="p-7 bg-white rounded-3xl border border-slate-200/90 shadow-2xs space-y-5">
+                <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
+                  <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center font-bold">
+                    <Award className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900">奖项与激励设置</h3>
+                    <p className="text-xs text-slate-500 font-medium">总奖池超 20 万元现金奖励、算力补贴与大厂推优直通车</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  {competition.introduction.awards.map((award, idx) => (
+                    <div 
+                      key={idx}
+                      className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-3 hover:shadow-md hover:-translate-y-0.5 transition-all relative overflow-hidden"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className={`w-9 h-9 rounded-xl bg-gradient-to-tr ${award.iconBg || 'from-amber-400 to-amber-600'} text-white flex items-center justify-center font-black shadow-xs`}>
+                          <Trophy className="w-4 h-4" />
                         </div>
-                      );
-                    })}
+                        <span className="text-[11px] font-extrabold text-slate-500">
+                          {award.quota}
+                        </span>
+                      </div>
+
+                      <div>
+                        <div className="text-xs font-bold text-slate-500">{award.rank}</div>
+                        <div className="text-sm font-black text-amber-600 mt-1 leading-snug">
+                          {award.reward}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 评审标准与组委会信息 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* 评审标准 */}
+                <div className="p-7 bg-white rounded-3xl border border-slate-200/90 shadow-2xs space-y-4">
+                  <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center font-bold">
+                      <FileCheck className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-base font-black text-slate-900">评审标准与评分维度</h3>
                   </div>
+
+                  <ul className="space-y-3">
+                    {competition.introduction.evaluationStandards.map((std, idx) => (
+                      <li key={idx} className="flex items-start gap-2.5 text-xs text-slate-700 leading-relaxed">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <span>{std}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
                 {/* 组委会信息 */}
@@ -449,104 +408,100 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
 
                   <div className="space-y-3">
                     {competition.introduction.organizingCommittee.map((org, idx) => (
-                      <div key={idx} className="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                      <div key={idx} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/60">
                         <div className="text-[11px] text-slate-400 font-medium">{org.role}</div>
                         <div className="text-xs font-bold text-slate-800 mt-0.5">{org.name}</div>
                       </div>
                     ))}
                   </div>
                 </div>
+
               </div>
 
             </div>
+          )}
 
-          </div>
-        )}
-
-        {/* ========================================================================= */}
-        {/* 2. 比赛赛道 TAB 页内容 (顶部栏 + 比赛介绍 + 赛题/数据/指标 + 作品阅览)      */}
-        {/* ========================================================================= */}
-        {activeTrack && (
-          <div id={`tab-content-track-${activeTrack.id}`} className="space-y-6">
-            
-            {/* 比赛 TAB 顶部栏 */}
-            <div className="p-6 bg-white rounded-3xl border border-slate-200/90 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          {/* ========================================================================= */}
+          {/* 2. 比赛赛道 TAB 页内容 (顶部栏 + 比赛介绍 + 赛题/数据/指标 + 作品阅览)      */}
+          {/* ========================================================================= */}
+          {activeTrack && (
+            <div id={`tab-content-track-${activeTrack.id}`} className="space-y-6">
               
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-                {/* 比赛封面小图 */}
-                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border border-slate-200 shrink-0 shadow-2xs relative">
-                  <img 
-                    src={activeTrack.coverImage} 
-                    alt={activeTrack.name} 
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-1.5 left-1.5">
-                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border shadow-2xs ${getTypeTagStyle(activeTrack.typeTag)}`}>
-                      {activeTrack.typeTag}
-                    </span>
+              {/* 比赛 TAB 顶部栏 */}
+              <div className="p-6 bg-white rounded-3xl border border-slate-200/90 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+                  {/* 比赛封面小图 */}
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border border-slate-200 shrink-0 shadow-2xs relative">
+                    <img 
+                      src={activeTrack.coverImage} 
+                      alt={activeTrack.name} 
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-1.5 left-1.5">
+                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border shadow-2xs ${getTypeTagStyle(activeTrack.typeTag)}`}>
+                        {activeTrack.typeTag}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 比赛名称与元信息 */}
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-xl font-black text-slate-900">
+                        {activeTrack.name}
+                      </h2>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs text-slate-500 font-mono">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <span>比赛周期：<strong className="text-slate-800 font-bold">{activeTrack.timeRange}</strong></span>
+                    </div>
+
+                    <div className="flex items-center gap-4 text-[11px] text-slate-500">
+                      <span>👥 已报名参赛: <strong className="text-indigo-600 font-bold">{activeTrack.participantsCount || 300}</strong> 人</span>
+                      <span>📤 累计提交次数: <strong className="text-slate-800 font-bold">{activeTrack.submissionsCount || 500}</strong> 次</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* 比赛名称与元信息 */}
-                <div className="space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-xl font-black text-slate-900">
-                      {activeTrack.name}
-                    </h2>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-xs text-slate-500 font-mono">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    <span>比赛周期：<strong className="text-slate-800 font-bold">{activeTrack.timeRange}</strong></span>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-[11px] text-slate-500">
-                    <span>👥 已报名参赛: <strong className="text-indigo-600 font-bold">{activeTrack.participantsCount || 300}</strong> 人</span>
-                    <span>📤 累计提交次数: <strong className="text-slate-800 font-bold">{activeTrack.submissionsCount || 500}</strong> 次</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 操作按钮区 */}
-              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
-                {/* 所有比赛都有【进入比赛】按钮 */}
-                <button
-                  id={`enter-match-btn-${activeTrack.id}`}
-                  onClick={() => handleEnterMatch(activeTrack)}
-                  className="flex-1 md:flex-initial px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-black shadow-md shadow-indigo-200 flex items-center justify-center gap-2 cursor-pointer transition transform active:scale-95"
-                >
-                  <Play className="w-4 h-4 fill-white" />
-                  <span>进入比赛</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </button>
-
-                {/* AIGC生成赛和AI产品创新赛额外增加【作品阅览】按钮 */}
-                {(activeTrack.typeTag === 'AIGC生成赛' || activeTrack.typeTag === 'AI产品创新赛') && (
+                {/* 操作按钮区 */}
+                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
+                  {/* 所有比赛都有【进入比赛】按钮 */}
                   <button
-                    id={`view-works-btn-${activeTrack.id}`}
-                    onClick={() => {
-                      const el = document.getElementById('match-featured-works-section');
-                      if (el) {
-                        el.scrollIntoView({ behavior: 'smooth' });
-                      } else {
-                        showToast('正在加载当前赛道作品阅览库...');
-                      }
-                    }}
-                    className="flex-1 md:flex-initial px-5 py-2.5 rounded-xl bg-white border border-purple-200 hover:border-purple-400 hover:bg-purple-50 text-purple-700 text-xs font-bold shadow-2xs flex items-center justify-center gap-2 cursor-pointer transition"
+                    id={`enter-match-btn-${activeTrack.id}`}
+                    onClick={() => handleEnterMatch(activeTrack)}
+                    className="flex-1 md:flex-initial px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-black shadow-md shadow-indigo-200 flex items-center justify-center gap-2 cursor-pointer transition transform active:scale-95"
                   >
-                    <Eye className="w-4 h-4 text-purple-600" />
-                    <span>作品阅览 ({activeTrack.featuredWorks?.length || 0})</span>
+                    <Play className="w-4 h-4 fill-white" />
+                    <span>进入比赛</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
                   </button>
-                )}
+
+                  {/* AIGC生成赛和AI产品创新赛额外增加【作品阅览】按钮 */}
+                  {(activeTrack.typeTag === 'AIGC生成赛' || activeTrack.typeTag === 'AI产品创新赛') && (
+                    <button
+                      id={`view-works-btn-${activeTrack.id}`}
+                      onClick={() => {
+                        const el = document.getElementById('match-featured-works-section');
+                        if (el) {
+                          el.scrollIntoView({ behavior: 'smooth' });
+                        } else {
+                          showToast('正在加载当前赛道作品阅览库...');
+                        }
+                      }}
+                      className="flex-1 md:flex-initial px-5 py-2.5 rounded-xl bg-white border border-purple-200 hover:border-purple-400 hover:bg-purple-50 text-purple-700 text-xs font-bold shadow-2xs flex items-center justify-center gap-2 cursor-pointer transition"
+                    >
+                      <Eye className="w-4 h-4 text-purple-600" />
+                      <span>作品阅览 ({activeTrack.featuredWorks?.length || 0})</span>
+                    </button>
+                  )}
+                </div>
+
               </div>
 
-            </div>
-
-            {/* 比赛介绍内容区 */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
-              {/* 左侧主要介绍与赛题 */}
-              <div className="lg:col-span-2 space-y-6">
+              {/* 比赛介绍内容区 */}
+              <div className="space-y-6">
                 
                 {/* 赛道概述 */}
                 <div className="p-7 bg-white rounded-3xl border border-slate-200/90 shadow-2xs space-y-3">
@@ -592,70 +547,32 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
                   </div>
                 )}
 
-              </div>
-
-              {/* 右侧评估指标与比赛规则 */}
-              <div className="space-y-6">
-                
-                {/* 大赛时间节点 (完全参考用户上传设计图样式) */}
-                <div id="track-competition-timeline-nodes-card" className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs overflow-hidden">
-                  <div className="px-5 py-3.5 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-slate-800 tracking-tight">
-                      大赛时间节点
-                    </h3>
-                  </div>
-
-                  <div className="p-5 space-y-0">
-                    {timelineNodes.map((node, index) => {
-                      const isLast = index === timelineNodes.length - 1;
-                      return (
-                        <div key={index} className="relative flex items-start gap-3 pb-5 last:pb-1">
-                          {/* 垂直连接线 */}
-                          {!isLast && (
-                            <div className="absolute left-[4.5px] top-[14px] bottom-0 w-[1.5px] bg-slate-200" />
-                          )}
-
-                          {/* 蓝色圆点 */}
-                          <div className="relative z-10 w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-blue-50 shrink-0 mt-1" />
-
-                          {/* 节点名称与时间 */}
-                          <div className="space-y-0.5">
-                            <h4 className="text-xs sm:text-sm font-semibold text-slate-800">
-                              {node.name}
-                            </h4>
-                            <div className="text-[11px] sm:text-xs text-slate-400 font-mono tracking-tight">
-                              {node.time}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 评估指标 */}
-                <div className="p-6 bg-white rounded-3xl border border-slate-200/90 shadow-2xs space-y-3">
-                  <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-indigo-600" />
-                    <span>评估指标与排榜依据</span>
-                  </h3>
-                  <div className="p-3.5 rounded-2xl bg-indigo-50/50 border border-indigo-100 text-xs text-indigo-950 leading-relaxed font-medium">
-                    {activeTrack.evaluationMetrics}
-                  </div>
-                </div>
-
-                {/* 规则说明 */}
-                {activeTrack.ruleDescription && (
+                {/* 评估指标与规则说明 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* 评估指标 */}
                   <div className="p-6 bg-white rounded-3xl border border-slate-200/90 shadow-2xs space-y-3">
                     <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                      <ShieldAlert className="w-4 h-4 text-amber-600" />
-                      <span>提交规则与合规要求</span>
+                      <TrendingUp className="w-4 h-4 text-indigo-600" />
+                      <span>评估指标与排榜依据</span>
                     </h3>
-                    <p className="text-xs text-slate-600 leading-relaxed">
-                      {activeTrack.ruleDescription}
-                    </p>
+                    <div className="p-3.5 rounded-2xl bg-indigo-50/50 border border-indigo-100 text-xs text-indigo-950 leading-relaxed font-medium">
+                      {activeTrack.evaluationMetrics}
+                    </div>
                   </div>
-                )}
+
+                  {/* 规则说明 */}
+                  {activeTrack.ruleDescription && (
+                    <div className="p-6 bg-white rounded-3xl border border-slate-200/90 shadow-2xs space-y-3">
+                      <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                        <ShieldAlert className="w-4 h-4 text-amber-600" />
+                        <span>提交规则与合规要求</span>
+                      </h3>
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        {activeTrack.ruleDescription}
+                      </p>
+                    </div>
+                  )}
+                </div>
 
                 {/* 算力与环境推荐 */}
                 <div className="p-6 bg-gradient-to-br from-slate-900 to-indigo-950 rounded-3xl text-white shadow-md space-y-3">
@@ -668,7 +585,7 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
                   </p>
                   <button
                     onClick={() => handleEnterMatch(activeTrack)}
-                    className="w-full py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-black shadow-xs cursor-pointer transition"
+                    className="w-full sm:w-auto px-6 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-black shadow-xs cursor-pointer transition"
                   >
                     立即进入参赛平台
                   </button>
@@ -676,86 +593,125 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
 
               </div>
 
+              {/* 作品阅览板块 (仅针对 AIGC生成赛与 AI产品创新赛) */}
+              {(activeTrack.typeTag === 'AIGC生成赛' || activeTrack.typeTag === 'AI产品创新赛') && activeTrack.featuredWorks && activeTrack.featuredWorks.length > 0 && (
+                <div id="match-featured-works-section" className="p-7 bg-white rounded-3xl border border-slate-200/90 shadow-2xs space-y-5">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center font-bold">
+                        <Eye className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-black text-slate-900">精选参赛作品阅览</h3>
+                        <p className="text-xs text-slate-500 font-medium">浏览当前赛道选手提交的 AIGC 视觉与 AI 产品创新成果</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-slate-400 font-mono">
+                      共 {activeTrack.featuredWorks.length} 个作品
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {activeTrack.featuredWorks.map((work) => {
+                      const isLiked = !!likedWorks[work.id];
+                      return (
+                        <div 
+                          key={work.id}
+                          className="rounded-2xl border border-slate-200/80 overflow-hidden bg-slate-50/50 hover:shadow-md hover:border-purple-200 transition-all flex flex-col justify-between"
+                        >
+                          <div className="relative h-48 overflow-hidden group cursor-pointer" onClick={() => setPreviewWork(work)}>
+                            <img 
+                              src={work.image} 
+                              alt={work.title} 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-80" />
+                            
+                            {work.score && (
+                              <div className="absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-500 text-white shadow-xs">
+                                🏆 初赛评测：{work.score}
+                              </div>
+                            )}
+
+                            <div className="absolute bottom-3 left-4 right-4 text-white">
+                              <h4 className="text-sm font-black drop-shadow-sm">{work.title}</h4>
+                            </div>
+                          </div>
+
+                          <div className="p-4 space-y-3">
+                            <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">
+                              {work.description}
+                            </p>
+
+                            <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                              <div className="flex items-center gap-2">
+                                <img src={work.avatar} alt={work.author} className="w-5 h-5 rounded-full object-cover" />
+                                <span className="text-xs font-bold text-slate-700">{work.author}</span>
+                              </div>
+
+                              <button
+                                onClick={() => handleToggleLike(work.id)}
+                                className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition ${
+                                  isLiked
+                                    ? 'bg-rose-50 text-rose-600 border border-rose-200'
+                                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                                }`}
+                              >
+                                <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}`} />
+                                <span>{work.likes + (isLiked ? 1 : 0)}</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          )}
+
+        </div>
+
+        {/* 右侧全局常驻侧栏：大赛时间节点 (与所有 TAB 处于同等层级，切换 TAB 不受影响) */}
+        <div className="w-full lg:w-80 xl:w-96 shrink-0 space-y-6 lg:sticky lg:top-6">
+          <div id="global-competition-timeline-nodes-card" className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs overflow-hidden">
+            <div className="px-5 py-3.5 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-800 tracking-tight flex items-center gap-2">
+                <Clock className="w-4 h-4 text-indigo-600" />
+                <span>大赛时间节点</span>
+              </h3>
             </div>
 
-            {/* 作品阅览板块 (仅针对 AIGC生成赛与 AI产品创新赛) */}
-            {(activeTrack.typeTag === 'AIGC生成赛' || activeTrack.typeTag === 'AI产品创新赛') && activeTrack.featuredWorks && activeTrack.featuredWorks.length > 0 && (
-              <div id="match-featured-works-section" className="p-7 bg-white rounded-3xl border border-slate-200/90 shadow-2xs space-y-5">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center font-bold">
-                      <Eye className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-black text-slate-900">精选参赛作品阅览</h3>
-                      <p className="text-xs text-slate-500 font-medium">浏览当前赛道选手提交的 AIGC 视觉与 AI 产品创新成果</p>
+            <div className="p-5 space-y-0">
+              {timelineNodes.map((node, index) => {
+                const isLast = index === timelineNodes.length - 1;
+                return (
+                  <div key={index} className="relative flex items-start gap-3 pb-5 last:pb-1">
+                    {/* 垂直连接线 */}
+                    {!isLast && (
+                      <div className="absolute left-[4.5px] top-[14px] bottom-0 w-[1.5px] bg-slate-200" />
+                    )}
+
+                    {/* 蓝色圆点 */}
+                    <div className="relative z-10 w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-blue-50 shrink-0 mt-1" />
+
+                    {/* 节点名称与时间 */}
+                    <div className="space-y-0.5">
+                      <h4 className="text-xs sm:text-sm font-semibold text-slate-800">
+                        {node.name}
+                      </h4>
+                      <div className="text-[11px] sm:text-xs text-slate-400 font-mono tracking-tight">
+                        {node.time}
+                      </div>
                     </div>
                   </div>
-                  <span className="text-xs font-bold text-slate-400 font-mono">
-                    共 {activeTrack.featuredWorks.length} 个作品
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {activeTrack.featuredWorks.map((work) => {
-                    const isLiked = !!likedWorks[work.id];
-                    return (
-                      <div 
-                        key={work.id}
-                        className="rounded-2xl border border-slate-200/80 overflow-hidden bg-slate-50/50 hover:shadow-md hover:border-purple-200 transition-all flex flex-col justify-between"
-                      >
-                        <div className="relative h-48 overflow-hidden group cursor-pointer" onClick={() => setPreviewWork(work)}>
-                          <img 
-                            src={work.image} 
-                            alt={work.title} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-80" />
-                          
-                          {work.score && (
-                            <div className="absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-500 text-white shadow-xs">
-                              🏆 初赛评测：{work.score}
-                            </div>
-                          )}
-
-                          <div className="absolute bottom-3 left-4 right-4 text-white">
-                            <h4 className="text-sm font-black drop-shadow-sm">{work.title}</h4>
-                          </div>
-                        </div>
-
-                        <div className="p-4 space-y-3">
-                          <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">
-                            {work.description}
-                          </p>
-
-                          <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
-                            <div className="flex items-center gap-2">
-                              <img src={work.avatar} alt={work.author} className="w-5 h-5 rounded-full object-cover" />
-                              <span className="text-xs font-bold text-slate-700">{work.author}</span>
-                            </div>
-
-                            <button
-                              onClick={() => handleToggleLike(work.id)}
-                              className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition ${
-                                isLiked
-                                  ? 'bg-rose-50 text-rose-600 border border-rose-200'
-                                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-                              }`}
-                            >
-                              <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}`} />
-                              <span>{work.likes + (isLiked ? 1 : 0)}</span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
+                );
+              })}
+            </div>
           </div>
-        )}
+        </div>
 
       </div>
 
