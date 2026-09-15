@@ -3780,7 +3780,7 @@ export const mockCompetitions: CompetitionItem[] = [
       {
         id: 'track-01-1',
         name: 'AI数据科学赛',
-        shortName: '数据科学赛',
+        shortName: 'AI数据科学赛',
         coverImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=80',
         timeRange: '2026-09-01 00:00:00 ~ 2026-10-15 23:59:59',
         typeTag: 'AI数据科学赛',
@@ -3796,7 +3796,7 @@ export const mockCompetitions: CompetitionItem[] = [
       {
         id: 'track-01-2',
         name: 'AI安全挑战赛',
-        shortName: '安全挑战赛',
+        shortName: 'AI安全挑战赛',
         coverImage: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600&auto=format&fit=crop&q=80',
         timeRange: '2026-09-01 00:00:00 ~ 2026-10-20 23:59:59',
         typeTag: 'AI安全挑战赛',
@@ -3811,8 +3811,8 @@ export const mockCompetitions: CompetitionItem[] = [
       },
       {
         id: 'track-01-3',
-        name: 'AIGC多模态创作赛',
-        shortName: 'AIGC创作赛',
+        name: 'AIGC生成赛',
+        shortName: 'AIGC生成赛',
         coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
         timeRange: '2026-09-01 00:00:00 ~ 2026-10-25 23:59:59',
         typeTag: 'AIGC生成赛',
@@ -3916,7 +3916,7 @@ export const mockCompetitions: CompetitionItem[] = [
       {
         id: 'track-02-1',
         name: '工业时序数据科学建模赛',
-        shortName: '数据科学赛',
+        shortName: 'AI数据科学赛',
         coverImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=80',
         timeRange: '2026-09-01 00:00:00 ~ 2026-12-15 23:59:59',
         typeTag: 'AI数据科学赛',
@@ -3967,7 +3967,7 @@ export const mockCompetitions: CompetitionItem[] = [
       {
         id: 'track-03-1',
         name: 'AI大模型安全攻防赛',
-        shortName: '安全挑战赛',
+        shortName: 'AI安全挑战赛',
         coverImage: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600&auto=format&fit=crop&q=80',
         timeRange: '2026-06-01 00:00:00 ~ 2026-07-31 23:59:59',
         typeTag: 'AI安全挑战赛',
@@ -4021,7 +4021,7 @@ export const mockCompetitions: CompetitionItem[] = [
       {
         id: 'track-04-1',
         name: 'AIGC智能营销与内容生成赛',
-        shortName: 'AIGC创作赛',
+        shortName: 'AIGC生成赛',
         coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
         timeRange: '2026-08-15 00:00:00 ~ 2026-11-15 23:59:59',
         typeTag: 'AIGC生成赛',
@@ -4100,7 +4100,7 @@ export const mockCompetitions: CompetitionItem[] = [
       {
         id: 'track-internal-01-1',
         name: '信贷交易反欺诈多模态二分类算法赛',
-        shortName: '数据科学赛',
+        shortName: 'AI数据科学赛',
         coverImage: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=600&auto=format&fit=crop&q=80',
         timeRange: '2026-09-01 00:00:00 ~ 2026-10-20 23:59:59',
         typeTag: 'AI数据科学赛',
@@ -4150,7 +4150,7 @@ export const mockCompetitions: CompetitionItem[] = [
       {
         id: 'track-internal-02-1',
         name: '微米级表面缺陷高精二分类检测赛',
-        shortName: '数据科学赛',
+        shortName: 'AI数据科学赛',
         coverImage: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&auto=format&fit=crop&q=80',
         timeRange: '2026-09-15 00:00:00 ~ 2026-11-15 23:59:59',
         typeTag: 'AI数据科学赛',

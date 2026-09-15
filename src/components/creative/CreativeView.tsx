@@ -143,17 +143,6 @@ export const CreativeView: React.FC = () => {
             </p>
           </div>
         </div>
-
-        <div className="shrink-0 flex items-center gap-3">
-          <div className="px-4 py-2 rounded-2xl bg-indigo-50/70 border border-indigo-100 text-center">
-            <div className="text-[10px] text-slate-500 font-medium">累计总奖池</div>
-            <div className="text-sm font-black text-indigo-700 font-mono">¥500,000+</div>
-          </div>
-          <div className="px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200/80 text-center">
-            <div className="text-[10px] text-slate-500 font-medium">参赛极客</div>
-            <div className="text-sm font-black text-slate-800 font-mono">3,800+</div>
-          </div>
-        </div>
       </div>
 
       {/* 筛选与检索控制中心 */}

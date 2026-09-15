@@ -90,14 +90,11 @@ export const CompetitionDetailView: React.FC<CompetitionDetailViewProps> = ({ co
   const getTypeTagStyle = (tag: string) => {
     switch (tag) {
       case 'AI数据科学赛':
-      case '数据科学赛':
         return 'bg-cyan-50 text-cyan-700 border-cyan-200';
       case 'AI安全挑战赛':
-      case 'AI挑战赛':
         return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       case 'AIGC生成赛':
         return 'bg-purple-50 text-purple-700 border-purple-200';
-      case 'AI产品应用赛':
       case 'AI产品创新赛':
         return 'bg-indigo-50 text-indigo-700 border-indigo-200';
       default:

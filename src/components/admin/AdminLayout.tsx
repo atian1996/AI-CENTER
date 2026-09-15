@@ -445,7 +445,7 @@ export const AdminLayout: React.FC = () => {
       case 'competition_admin':
         return {
           title: '赛事活动管理',
-          subtitle: 'AI 数据科学赛、安全挑战赛、AIGC 生成赛及官方赛道发布、评审标准配置与作品管理',
+          subtitle: 'AI数据科学赛、AI安全挑战赛、AIGC生成赛、AI产品创新赛官方发布、评审标准配置与作品管理',
           category: '生态竞技',
           crumb: ['后台管理', '赛事管理']
         };
