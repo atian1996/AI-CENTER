@@ -1343,17 +1343,6 @@ export const CommunityView: React.FC = () => {
 
       </div>
 
-      {/* Floating Quick Action Button: 我要发帖 */}
-      <div className="fixed bottom-8 right-8 z-40">
-        <button
-          onClick={() => setViewMode('publish')}
-          className="px-5 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-bold text-xs shadow-xl shadow-indigo-600/30 flex items-center gap-2 transition cursor-pointer transform hover:scale-105 active:scale-95 border border-indigo-400/30"
-        >
-          <Plus className="w-4 h-4" />
-          <span>我要发帖</span>
-        </button>
-      </div>
-
     </div>
   );
 };

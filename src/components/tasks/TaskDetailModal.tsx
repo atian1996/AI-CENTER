@@ -21,10 +21,13 @@ interface TaskDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenVerification?: (task: TaskItem) => void;
+  readOnly?: boolean;
 }
 
-export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen, onClose }) => {
+export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen, onClose, readOnly }) => {
   const { tasks, user, takeTask, showToast, isAdminMode } = useApp();
+
+  const isReadOnly = readOnly !== undefined ? readOnly : isAdminMode;
 
   // TAB 切换: 任务介绍 | 接单列表
   const [activeTab, setActiveTab] = useState<'intro' | 'takers'>('intro');
@@ -36,7 +39,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
   const task = tasks.find(t => t.id === taskId);
   if (!task) return null;
 
-  const isPublisher = task.publisher === user.name || user.name.includes(task.publisher) || (user.name === '极客小千' && task.publisher.includes('你'));
+  const isPublisher = !isReadOnly && (task.publisher === user.name || user.name.includes(task.publisher) || (user.name === '极客小千' && task.publisher.includes('你')));
   
   // 判定是否为已结束状态：已验收 / 已结束 / 剩余天数<=0 / 已有 winner
   const isFinished = 
@@ -46,10 +49,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
     task.isAccepted === true ||
     !!task.winner;
 
-  const myTakerRecord = (task.takers || []).find(tk => tk.username === user.name || tk.username.includes('你') || tk.username.includes('极客小千'));
-  const hasTaken = !!myTakerRecord;
-  const mySubmission = (task.submissions || []).find(s => s.username === user.name || s.username.includes('你') || s.username.includes('极客小千'));
-  const hasSubmitted = !!mySubmission || myTakerRecord?.status === '已提交' || myTakerRecord?.status === '已验收';
+  const myTakerRecord = !isReadOnly ? (task.takers || []).find(tk => tk.username === user.name || tk.username.includes('你') || tk.username.includes('极客小千')) : undefined;
+  const hasTaken = !isReadOnly && !!myTakerRecord;
+  const mySubmission = !isReadOnly ? (task.submissions || []).find(s => s.username === user.name || s.username.includes('你') || s.username.includes('极客小千')) : undefined;
+  const hasSubmitted = !isReadOnly && (!!mySubmission || myTakerRecord?.status === '已提交' || myTakerRecord?.status === '已验收');
 
   const takersList = task.takers || [];
   const submissionsList = task.submissions || [];
@@ -326,13 +329,13 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
                         </div>
 
                         {/* 交付成果与关联文件区（如果是本人记录、发布者或管理员，可直接查看与下载） */}
-                        {(isMyRecord || isPublisher || isAdminMode) ? (
+                        {(isMyRecord || isPublisher || isAdminMode || isReadOnly) ? (
                           <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
                             {sub ? (
                               <>
                                 <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
                                   <span>交付成果说明与提交文件：</span>
-                                  {isMyRecord && (
+                                  {isMyRecord && !isReadOnly && (
                                     <span className="text-indigo-600 font-semibold">您可以查看并预览自己提交的文件</span>
                                   )}
                                 </div>
@@ -366,8 +369,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
                               </>
                             ) : (
                               <div className="p-3 bg-amber-50/50 border border-amber-200/60 rounded-xl text-xs text-amber-800 flex items-center justify-between">
-                                <span>当前接单状态为 <b>未提交</b>，请在截止日前提交交付成果。</span>
-                                {isMyRecord && (
+                                <span>当前接单状态为 <b>未提交</b>{isReadOnly ? '。' : '，请在截止日前提交交付成果。'}</span>
+                                {isMyRecord && !isReadOnly && (
                                   <button
                                     onClick={() => setSubmitModalOpen(true)}
                                     className="px-3 py-1 bg-indigo-600 text-white font-extrabold text-[11px] rounded-lg hover:bg-indigo-500 cursor-pointer"
@@ -391,10 +394,14 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
             )}
           </div>
 
-          {/* 底部固定操作区：已移除“资金由平台100%托管...”文本与关闭按钮 */}
+          {/* 底部固定操作区 */}
           <div className="px-7 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
             <div className="text-xs text-slate-500 font-medium">
-              {isFinished ? (
+              {isReadOnly ? (
+                <span className="text-slate-600 font-bold">
+                  后台任务监控查看模式 · 状态：{task.status} · 共 {takersList.length} 位接单人 · {submissionsList.length} 份交付成果
+                </span>
+              ) : isFinished ? (
                 <span className="text-slate-400 font-bold">任务已结束</span>
               ) : isPublisher ? (
                 <span className="text-indigo-600 font-bold">我是发布人 · 共 {takersList.length} 人接单</span>
@@ -406,35 +413,46 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
             </div>
 
             <div className="flex items-center gap-3">
-              {/* 发布人视角：即使任务处于已结束状态，仍可随时进行验收操作（验收不改变已结束状态） */}
-              {isPublisher && submissionsList.length > 0 && (
+              {isReadOnly ? (
                 <button
-                  onClick={() => setVerifyModalOpen(true)}
-                  className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-xs transition active:scale-95 cursor-pointer flex items-center gap-1.5"
+                  onClick={onClose}
+                  className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition cursor-pointer"
                 >
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>去验收成果 ({submissionsList.length})</span>
+                  关闭
                 </button>
-              )}
+              ) : (
+                <>
+                  {/* 发布人视角：即使任务处于已结束状态，仍可随时进行验收操作（验收不改变已结束状态） */}
+                  {isPublisher && submissionsList.length > 0 && (
+                    <button
+                      onClick={() => setVerifyModalOpen(true)}
+                      className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-xs transition active:scale-95 cursor-pointer flex items-center gap-1.5"
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>去验收成果 ({submissionsList.length})</span>
+                    </button>
+                  )}
 
-              {/* 开发者视角：进行中且未接单 -> 立即接单 */}
-              {!isPublisher && !isFinished && !hasTaken && (
-                <button
-                  onClick={handleTake}
-                  className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-xs transition active:scale-95 cursor-pointer"
-                >
-                  立即接单
-                </button>
-              )}
+                  {/* 开发者视角：进行中且未接单 -> 立即接单 */}
+                  {!isPublisher && !isFinished && !hasTaken && (
+                    <button
+                      onClick={handleTake}
+                      className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-xs transition active:scale-95 cursor-pointer"
+                    >
+                      立即接单
+                    </button>
+                  )}
 
-              {/* 开发者视角：已接单且未提交成果 -> 提交成果 */}
-              {!isPublisher && !isFinished && hasTaken && !hasSubmitted && (
-                <button
-                  onClick={() => setSubmitModalOpen(true)}
-                  className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-xs transition active:scale-95 cursor-pointer"
-                >
-                  提交交付成果
-                </button>
+                  {/* 开发者视角：已接单且未提交成果 -> 提交成果 */}
+                  {!isPublisher && !isFinished && hasTaken && !hasSubmitted && (
+                    <button
+                      onClick={() => setSubmitModalOpen(true)}
+                      className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-xs transition active:scale-95 cursor-pointer"
+                    >
+                      提交交付成果
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>

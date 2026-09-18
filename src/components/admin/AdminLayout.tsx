@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { AdminMenuKey, TaskItem } from '../../types';
-import { TaskDetailModal } from '../tasks/TaskDetailModal';
 import { AdminTaskEditModal } from './AdminTaskEditModal';
 import { ComputeSpecAdminView } from './compute/ComputeSpecAdminView';
 import { ComputeImageAdminView } from './compute/ComputeImageAdminView';
@@ -801,7 +800,7 @@ const PublishAuditAdminView: React.FC = () => {
   const { tasks, auditTask, showToast } = useApp();
   const [rejectingTaskId, setRejectingTaskId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
-  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
+  const [viewingTask, setViewingTask] = useState<TaskItem | null>(null);
 
   // 综合多维筛选控制台状态
   const [searchQuery, setSearchQuery] = useState<string>(''); // 关键词搜索
@@ -1014,7 +1013,7 @@ const PublishAuditAdminView: React.FC = () => {
                         <td className="py-3.5 px-4 text-center whitespace-nowrap">
                           <div className="flex items-center justify-center gap-2">
                             <button
-                              onClick={() => setDetailTaskId(task.id)}
+                              onClick={() => setViewingTask(task)}
                               className="px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 font-bold text-xs transition cursor-pointer"
                             >
                               查看详情
@@ -1079,11 +1078,12 @@ const PublishAuditAdminView: React.FC = () => {
         )}
       </div>
 
-      {/* 详情弹窗 */}
-      <TaskDetailModal
-        taskId={detailTaskId}
-        isOpen={!!detailTaskId}
-        onClose={() => setDetailTaskId(null)}
+      {/* 详情查看弹窗（与编辑任务字段完全一致，只读模式） */}
+      <AdminTaskEditModal
+        task={viewingTask}
+        isOpen={!!viewingTask}
+        onClose={() => setViewingTask(null)}
+        readOnly={true}
       />
     </div>
   );
@@ -1094,7 +1094,7 @@ const PublishAuditAdminView: React.FC = () => {
 // ==========================================
 const TaskMonitorAdminView: React.FC = () => {
   const { tasks } = useApp();
-  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
+  const [viewingTask, setViewingTask] = useState<TaskItem | null>(null);
   const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
 
   // 筛选控制台状态
@@ -1297,7 +1297,7 @@ const TaskMonitorAdminView: React.FC = () => {
                             <span>编辑</span>
                           </button>
                           <button
-                            onClick={() => setDetailTaskId(task.id)}
+                            onClick={() => setViewingTask(task)}
                             className="px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-300 hover:bg-slate-800 font-bold transition cursor-pointer"
                           >
                             查看详情
@@ -1313,11 +1313,12 @@ const TaskMonitorAdminView: React.FC = () => {
         )}
       </div>
 
-      {/* 详情弹窗 */}
-      <TaskDetailModal
-        taskId={detailTaskId}
-        isOpen={!!detailTaskId}
-        onClose={() => setDetailTaskId(null)}
+      {/* 详情查看弹窗（与编辑任务字段完全一致，只读模式） */}
+      <AdminTaskEditModal
+        task={viewingTask}
+        isOpen={!!viewingTask}
+        onClose={() => setViewingTask(null)}
+        readOnly={true}
       />
 
       {/* 编辑弹窗 */}
@@ -1325,6 +1326,7 @@ const TaskMonitorAdminView: React.FC = () => {
         task={editingTask}
         isOpen={!!editingTask}
         onClose={() => setEditingTask(null)}
+        readOnly={false}
       />
     </div>
   );

@@ -43,9 +43,10 @@ import { TaskVerificationModal } from './TaskVerificationModal';
 interface TaskDetailSubPageProps {
   taskId: string;
   onBack: () => void;
+  readOnly?: boolean;
 }
 
-export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, onBack }) => {
+export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, onBack, readOnly }) => {
   const { 
     tasks, 
     user, 
@@ -60,6 +61,8 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
     openModelDetail,
     setCreateComputeModalOpen
   } = useApp();
+
+  const isReadOnly = readOnly !== undefined ? readOnly : isAdminMode;
 
   // TAB 切换: 任务介绍 | 推荐平台资源 | 接单列表
   const [activeTab, setActiveTab] = useState<'intro' | 'recommended' | 'takers'>('intro');
@@ -84,7 +87,7 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
     );
   }
 
-  const isPublisher = task.publisher === user.name || user.name.includes(task.publisher) || (user.name === '极客小千' && task.publisher.includes('你'));
+  const isPublisher = !isReadOnly && (task.publisher === user.name || user.name.includes(task.publisher) || (user.name === '极客小千' && task.publisher.includes('你')));
 
   // 判定是否为已结束状态：已验收 / 已结束 / 剩余天数<=0 / 已有 winner
   const isFinished = 
@@ -95,10 +98,10 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
     !!task.winner ||
     (task.submissions || []).some(s => s.status === '已通过');
 
-  const myTakerRecord = (task.takers || []).find(tk => tk.username === user.name || tk.username.includes('你') || tk.username.includes('极客小千'));
-  const hasTaken = !!myTakerRecord;
-  const mySubmission = (task.submissions || []).find(s => s.username === user.name || s.username.includes('你') || s.username.includes('极客小千'));
-  const hasSubmitted = !!mySubmission || myTakerRecord?.status === '已提交' || myTakerRecord?.status === '已验收';
+  const myTakerRecord = !isReadOnly ? (task.takers || []).find(tk => tk.username === user.name || tk.username.includes('你') || tk.username.includes('极客小千')) : undefined;
+  const hasTaken = !isReadOnly && !!myTakerRecord;
+  const mySubmission = !isReadOnly ? (task.submissions || []).find(s => s.username === user.name || s.username.includes('你') || s.username.includes('极客小千')) : undefined;
+  const hasSubmitted = !isReadOnly && (!!mySubmission || myTakerRecord?.status === '已提交' || myTakerRecord?.status === '已验收');
 
   const takersList = task.takers || [];
   const submissionsList = task.submissions || [];
@@ -262,42 +265,52 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
 
             {/* 顶栏操作按钮 */}
             <div className="pt-2 border-t border-indigo-100/80 space-y-2">
-              {/* 发布人视角 */}
-              {isPublisher && submissionsList.length > 0 && (
-                <button
-                  onClick={() => setVerifyModalOpen(true)}
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs rounded-xl shadow-md shadow-indigo-600/20 transition active:scale-95 cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>去验收交付成果 ({submissionsList.length})</span>
-                </button>
-              )}
+              {isReadOnly ? (
+                <div className="w-full py-2 bg-slate-100 text-slate-600 font-bold text-xs rounded-xl text-center border border-slate-200">
+                  后台任务监控模式 · 仅供查阅
+                </div>
+              ) : (
+                <>
+                  {/* 发布人视角 */}
+                  {isPublisher && submissionsList.length > 0 && (
+                    <button
+                      onClick={() => setVerifyModalOpen(true)}
+                      className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs rounded-xl shadow-md shadow-indigo-600/20 transition active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>去验收交付成果 ({submissionsList.length})</span>
+                    </button>
+                  )}
 
-              {/* 开发者视角：未接单 & 进行中 */}
-              {!isPublisher && !isFinished && !hasTaken && (
-                <button
-                  onClick={handleTake}
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs rounded-xl shadow-md shadow-indigo-600/20 transition active:scale-95 cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>立即接单承接</span>
-                </button>
-              )}
+                  {/* 开发者视角：未接单 & 进行中 */}
+                  {!isPublisher && !isFinished && !hasTaken && (
+                    <button
+                      onClick={handleTake}
+                      className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs rounded-xl shadow-md shadow-indigo-600/20 transition active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <span>立即接单承接</span>
+                    </button>
+                  )}
 
-              {/* 开发者视角：已接单 & 未提交 & 进行中 */}
-              {!isPublisher && !isFinished && hasTaken && !hasSubmitted && (
-                <button
-                  onClick={() => setSubmitModalOpen(true)}
-                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl shadow-md shadow-emerald-600/20 transition active:scale-95 cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <FileCheck className="w-4 h-4" />
-                  <span>提交交付成果</span>
-                </button>
+                  {/* 开发者视角：已接单 & 未提交 & 进行中 */}
+                  {!isPublisher && !isFinished && hasTaken && !hasSubmitted && (
+                    <button
+                      onClick={() => setSubmitModalOpen(true)}
+                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl shadow-md shadow-emerald-600/20 transition active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <FileCheck className="w-4 h-4" />
+                      <span>提交交付成果</span>
+                    </button>
+                  )}
+                </>
               )}
 
               {/* 状态文字 */}
               <div className="text-[11px] text-center text-slate-500 font-medium">
-                {isFinished ? (
+                {isReadOnly ? (
+                  <span className="text-slate-500 font-medium">任务状态：{task.status} · 共有 {takersList.length} 位接单人</span>
+                ) : isFinished ? (
                   <span className="text-slate-400 font-bold">任务已到期截止</span>
                 ) : isPublisher ? (
                   <span className="text-indigo-600 font-bold">已收到 {takersList.length} 位极客接单响应</span>
@@ -865,13 +878,13 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
                     </div>
 
                     {/* 交付成果与关联文件区（如果是本人记录、发布者或管理员，可直接查看与下载） */}
-                    {(isMyRecord || isPublisher || isAdminMode) ? (
+                    {(isMyRecord || isPublisher || isAdminMode || isReadOnly) ? (
                       <div className="pt-3 border-t border-slate-200/80 space-y-2.5">
                         {sub ? (
                           <>
                             <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
                               <span>交付成果说明与提交文件：</span>
-                              {isMyRecord && (
+                              {isMyRecord && !isReadOnly && (
                                 <span className="text-indigo-600 font-semibold">您可以查看并预览自己提交的文件</span>
                               )}
                             </div>
@@ -905,8 +918,8 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
                           </>
                         ) : (
                           <div className="p-4 bg-amber-50/50 border border-amber-200/60 rounded-xl text-xs text-amber-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                            <span>当前接单状态为 <b>未提交</b>，请在截止日前尽快提交交付成果。</span>
-                            {isMyRecord && !isFinished && (
+                            <span>当前接单状态为 <b>未提交</b>{isReadOnly ? '。' : '，请在截止日前尽快提交交付成果。'}</span>
+                            {isMyRecord && !isFinished && !isReadOnly && (
                               <button
                                 onClick={() => setSubmitModalOpen(true)}
                                 className="px-4 py-1.5 bg-indigo-600 text-white font-extrabold text-xs rounded-xl hover:bg-indigo-500 cursor-pointer shadow-xs transition active:scale-95"
