@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
-import { AdminMenuKey } from '../../types';
+import { AdminMenuKey, TaskItem } from '../../types';
 import { TaskDetailModal } from '../tasks/TaskDetailModal';
+import { AdminTaskEditModal } from './AdminTaskEditModal';
 import { ComputeSpecAdminView } from './compute/ComputeSpecAdminView';
 import { ComputeImageAdminView } from './compute/ComputeImageAdminView';
 import { ComputePoolAdminView } from './compute/ComputePoolAdminView';
@@ -58,7 +59,8 @@ import {
   Coins,
   Receipt,
   Bot,
-  Puzzle
+  Puzzle,
+  Edit3
 } from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {
@@ -1093,6 +1095,7 @@ const PublishAuditAdminView: React.FC = () => {
 const TaskMonitorAdminView: React.FC = () => {
   const { tasks } = useApp();
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
+  const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
 
   // 筛选控制台状态
   const [searchQuery, setSearchQuery] = useState<string>(''); // 关键词搜索
@@ -1208,7 +1211,7 @@ const TaskMonitorAdminView: React.FC = () => {
                   <th className="py-3 px-3 text-right">赏金预算</th>
                   <th className="py-3 px-3">截止时间</th>
                   <th className="py-3 px-3">运行状态</th>
-                  <th className="py-3 px-4 text-center">操作列</th>
+                  <th className="py-3 px-4 text-center">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 text-slate-300">
@@ -1285,12 +1288,21 @@ const TaskMonitorAdminView: React.FC = () => {
 
                       {/* 7. 集中操作列 */}
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                        <button
-                          onClick={() => setDetailTaskId(task.id)}
-                          className="px-3.5 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-300 hover:bg-slate-800 font-bold transition cursor-pointer"
-                        >
-                          查看详情
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => setEditingTask(task)}
+                            className="px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 text-xs font-bold transition cursor-pointer flex items-center gap-1 shadow-xs"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                            <span>编辑</span>
+                          </button>
+                          <button
+                            onClick={() => setDetailTaskId(task.id)}
+                            className="px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-300 hover:bg-slate-800 font-bold transition cursor-pointer"
+                          >
+                            查看详情
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1301,10 +1313,18 @@ const TaskMonitorAdminView: React.FC = () => {
         )}
       </div>
 
+      {/* 详情弹窗 */}
       <TaskDetailModal
         taskId={detailTaskId}
         isOpen={!!detailTaskId}
         onClose={() => setDetailTaskId(null)}
+      />
+
+      {/* 编辑弹窗 */}
+      <AdminTaskEditModal
+        task={editingTask}
+        isOpen={!!editingTask}
+        onClose={() => setEditingTask(null)}
       />
     </div>
   );

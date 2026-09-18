@@ -114,6 +114,7 @@ interface AppContextType {
   favorites: AgentItem[];
   toggleFavoriteAgent: (agentId: string) => void;
   tasks: TaskItem[];
+  setTasks: React.Dispatch<React.SetStateAction<TaskItem[]>>;
   courses: CourseItem[];
   gpuInstances: GPUInstance[];
   posts: FeedPost[];
@@ -212,6 +213,7 @@ interface AppContextType {
   submitTaskResult: (taskId: string, notes: string, files: { name: string; size: string }[]) => void;
   verifyTaskSubmission: (taskId: string, submissionId: string, approved: boolean, rejectReason?: string) => void;
   updateTask: (task: TaskItem) => void;
+  adminUpdateTask: (id: string, updates: Partial<TaskItem>) => void;
   submitTaskBid: (taskId: string, proposal: string, quoteAmount: number, estimatedDays: number, attachments?: string[]) => void;
   submitTaskDeliverable: (taskId: string, fileName: string, fileSize: string, summary: string, demoUrl?: string) => void;
   acceptTaskSubmission: (taskId: string, submissionId: string, comment?: string) => void;
@@ -2583,6 +2585,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast(`任务【${updatedTask.title}】已修改并重新提交审核！`);
   };
 
+  const adminUpdateTask = (id: string, updates: Partial<TaskItem>) => {
+    setTasks(prev => prev.map(t => {
+      if (t.id === id) {
+        return {
+          ...t,
+          ...updates,
+          totalCashReward: updates.cashReward !== undefined ? updates.cashReward : t.totalCashReward,
+          totalPointsReward: updates.pointsReward !== undefined ? updates.pointsReward : t.totalPointsReward,
+        };
+      }
+      return t;
+    }));
+    showToast(`任务【${updates.title || '内容'}】已成功更新保存！`);
+  };
+
   const submitTaskBid = (taskId: string, proposal: string, quoteAmount: number, estimatedDays: number, attachments?: string[]) => {
     showToast('交付方案已提交！');
   };
@@ -2820,6 +2837,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       favorites,
       toggleFavoriteAgent,
       tasks,
+      setTasks,
       courses,
       gpuInstances,
       // 充值中心
@@ -2895,6 +2913,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       submitTaskResult,
       verifyTaskSubmission,
       updateTask,
+      adminUpdateTask,
       submitTaskBid,
       submitTaskDeliverable,
       acceptTaskSubmission,

@@ -36,8 +36,8 @@ export const WorkspaceTasks: React.FC = () => {
   // 我发布的任务 状态过滤: 全部 | 审核中 | 进行中 | 已驳回 | 已结束
   const [publishedFilter, setPublishedFilter] = useState<string>('全部');
 
-  // 我接单的任务 状态过滤: 进行中 | 已结束 (只有两个状态)
-  const [undertakenFilter, setUndertakenFilter] = useState<string>('进行中');
+  // 我接单的任务 状态过滤: 全部 | 进行中 | 已结束
+  const [undertakenFilter, setUndertakenFilter] = useState<string>('全部');
 
   // 二级页面与弹窗控制
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
@@ -84,6 +84,7 @@ export const WorkspaceTasks: React.FC = () => {
   const filteredUndertakenTasks = useMemo(() => {
     return myUndertakenTasks.filter(t => {
       const isFinished = t.status === '已结束' || t.status === '已验收' || (t.endTime && new Date(t.endTime) < new Date());
+      if (undertakenFilter === '全部') return true;
       if (undertakenFilter === '进行中') {
         return !isFinished;
       }
@@ -95,7 +96,7 @@ export const WorkspaceTasks: React.FC = () => {
   }, [myUndertakenTasks, undertakenFilter]);
 
   const publishedFilterList = ['全部', '审核中', '进行中', '已驳回', '已结束'];
-  const undertakenFilterList = ['进行中', '已结束'];
+  const undertakenFilterList = ['全部', '进行中', '已结束'];
 
   // If publishing or editing task, render UserTaskPublishForm
   if (isCreatingTask || editingTask) {
@@ -274,6 +275,42 @@ export const WorkspaceTasks: React.FC = () => {
                       </div>
                     )}
 
+                    {/* 接单极客团队/列表 */}
+                    {(task.takers || []).length > 0 && (
+                      <div className="p-3 bg-slate-50/80 border border-slate-100 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-500 font-bold flex items-center gap-1">
+                            <Users className="w-3.5 h-3.5 text-indigo-500" />
+                            接单极客 ({(task.takers || []).length}人):
+                          </span>
+                          <div className="flex items-center -space-x-1.5 overflow-hidden">
+                            {(task.takers || []).map((tk, idx) => (
+                              <img
+                                key={tk.id || idx}
+                                src={tk.userAvatar}
+                                alt={tk.username}
+                                title={`${tk.username} (${tk.status})`}
+                                className="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover shadow-2xs"
+                                referrerPolicy="no-referrer"
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {(task.takers || []).map((tk, idx) => (
+                            <span key={tk.id || idx} className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 text-[11px] font-medium flex items-center gap-1">
+                              <span>{tk.username}</span>
+                              <span className={`text-[10px] font-bold ${
+                                tk.status === '已验收' ? 'text-emerald-600' :
+                                tk.status === '已提交' ? 'text-indigo-600' :
+                                tk.status === '已驳回' ? 'text-rose-500' : 'text-slate-400'
+                              }`}>({tk.status})</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* 底部操作行 */}
                     <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
                       <div className="flex items-center gap-4 text-slate-500 font-medium">
@@ -438,6 +475,47 @@ export const WorkspaceTasks: React.FC = () => {
                         )}
                       </div>
                     </div>
+
+                    {/* 其他接单极客与竞标状态 */}
+                    {(task.takers || []).length > 0 && (
+                      <div className="p-3 bg-slate-50/80 border border-slate-100 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-500 font-bold flex items-center gap-1">
+                            <Users className="w-3.5 h-3.5 text-indigo-500" />
+                            接单极客团队 ({(task.takers || []).length}人):
+                          </span>
+                          <div className="flex items-center -space-x-1.5 overflow-hidden">
+                            {(task.takers || []).map((tk, idx) => (
+                              <img
+                                key={tk.id || idx}
+                                src={tk.userAvatar}
+                                alt={tk.username}
+                                title={`${tk.username} (${tk.status})`}
+                                className="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover shadow-2xs"
+                                referrerPolicy="no-referrer"
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {(task.takers || []).map((tk, idx) => {
+                            const isMe = tk.username === user.name || tk.username.includes('你') || tk.username.includes('极客小千');
+                            return (
+                              <span key={tk.id || idx} className={`px-2 py-0.5 rounded-md text-[11px] font-medium flex items-center gap-1 ${
+                                isMe ? 'bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold' : 'bg-white border border-slate-200 text-slate-700'
+                              }`}>
+                                <span>{tk.username}</span>
+                                <span className={`text-[10px] font-bold ${
+                                  tk.status === '已验收' ? 'text-emerald-600' :
+                                  tk.status === '已提交' ? 'text-indigo-600' :
+                                  tk.status === '已驳回' ? 'text-rose-500' : 'text-slate-400'
+                                }`}>({tk.status})</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
 
                     {/* 雇主与接单基础信息 */}
                     <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
