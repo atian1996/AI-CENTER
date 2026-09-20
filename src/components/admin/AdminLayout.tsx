@@ -936,12 +936,15 @@ const PublishAuditAdminView: React.FC = () => {
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-slate-800 bg-slate-950/60 text-slate-400 font-bold uppercase text-[11px]">
-                  <th className="py-3 px-4 min-w-[220px]">任务标题 / 属性</th>
-                  <th className="py-3 px-4 min-w-[160px]">发布人</th>
-                  <th className="py-3 px-3 text-right">赏金预算</th>
-                  <th className="py-3 px-3">截止时间</th>
-                  <th className="py-3 px-3">审核状态</th>
-                  <th className="py-3 px-4 text-center min-w-[180px]">操作列</th>
+                  <th className="py-3 px-4 min-w-[200px]">任务标题</th>
+                  <th className="py-3 px-3 min-w-[100px]">所属领域</th>
+                  <th className="py-3 px-3 min-w-[80px]">难度</th>
+                  <th className="py-3 px-4 min-w-[120px]">发布人</th>
+                  <th className="py-3 px-3 min-w-[130px]">发布时间</th>
+                  <th className="py-3 px-3 text-right min-w-[100px]">赏金预算</th>
+                  <th className="py-3 px-3 min-w-[130px]">截止时间</th>
+                  <th className="py-3 px-3 min-w-[90px]">审核状态</th>
+                  <th className="py-3 px-4 text-center min-w-[180px]">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 text-slate-300">
@@ -952,51 +955,60 @@ const PublishAuditAdminView: React.FC = () => {
                   return (
                     <React.Fragment key={task.id}>
                       <tr className="hover:bg-slate-800/40 transition">
-                        {/* 1. 任务标题与属性 */}
+                        {/* 1. 任务标题（单字段，无多余混合标签） */}
                         <td className="py-3.5 px-4">
-                          <div className="font-extrabold text-white text-sm line-clamp-1">{task.title}</div>
-                          <div className="flex items-center gap-1.5 mt-1 text-[10px]">
-                            <span className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 border border-slate-700">
-                              {task.domain}
-                            </span>
-                            <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                              {task.difficulty}难度
-                            </span>
-                            <span className="text-slate-500 font-mono">ID: {task.id}</span>
+                          <div className="font-extrabold text-white text-xs line-clamp-2" title={task.title}>
+                            {task.title}
                           </div>
                         </td>
 
-                        {/* 2. 发布人 */}
-                        <td className="py-3.5 px-4">
+                        {/* 2. 所属领域 */}
+                        <td className="py-3.5 px-3 whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded bg-slate-800 text-indigo-300 border border-slate-700 font-medium text-[11px]">
+                            {task.domain}
+                          </span>
+                        </td>
+
+                        {/* 3. 难度 */}
+                        <td className="py-3.5 px-3 whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-medium text-[11px]">
+                            {task.difficulty}
+                          </span>
+                        </td>
+
+                        {/* 4. 发布人 */}
+                        <td className="py-3.5 px-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <img
                               src={task.publisherAvatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80'}
                               alt={task.publisher}
-                              className="w-6 h-6 rounded-full object-cover border border-slate-700"
+                              className="w-5 h-5 rounded-full object-cover border border-slate-700"
                             />
-                            <div>
-                              <div className="font-bold text-slate-200 text-xs">{task.publisher}</div>
-                              <div className="text-[10px] text-slate-500 font-mono">{task.publishTime}</div>
-                            </div>
+                            <span className="font-bold text-slate-200 text-xs">{task.publisher}</span>
                           </div>
                         </td>
 
-                        {/* 3. 赏金预算 */}
-                        <td className="py-3.5 px-3 text-right">
-                          <div className="font-black font-mono text-emerald-400 text-sm">
+                        {/* 5. 发布时间 */}
+                        <td className="py-3.5 px-3 font-mono text-[11px] text-slate-400 whitespace-nowrap">
+                          {task.publishTime || '-'}
+                        </td>
+
+                        {/* 6. 赏金预算 */}
+                        <td className="py-3.5 px-3 text-right whitespace-nowrap">
+                          <div className="font-black font-mono text-emerald-400 text-xs">
                             ¥{(task.cashReward || 0).toLocaleString()}
                           </div>
                           {(task.pointsReward || 0) > 0 && (
-                            <div className="text-[10px] text-amber-400 font-mono">+ {task.pointsReward} 积分</div>
+                            <div className="text-[10px] text-amber-400 font-mono">+{task.pointsReward} 积分</div>
                           )}
                         </td>
 
-                        {/* 4. 截止时间 */}
+                        {/* 7. 截止时间 */}
                         <td className="py-3.5 px-3 font-mono text-[11px] text-slate-300 whitespace-nowrap">
-                          {task.endTime}
+                          {task.endTime || task.deadline || '-'}
                         </td>
 
-                        {/* 5. 审核状态 */}
+                        {/* 8. 审核状态 */}
                         <td className="py-3.5 px-3 whitespace-nowrap">
                           <span className={`px-2.5 py-1 rounded-lg text-[11px] font-black ${
                             isAuditing
@@ -1009,12 +1021,12 @@ const PublishAuditAdminView: React.FC = () => {
                           </span>
                         </td>
 
-                        {/* 6. 集中操作列 */}
+                        {/* 9. 集中操作列 */}
                         <td className="py-3.5 px-4 text-center whitespace-nowrap">
                           <div className="flex items-center justify-center gap-2">
                             <button
                               onClick={() => setViewingTask(task)}
-                              className="px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 font-bold text-xs transition cursor-pointer"
+                              className="px-2.5 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 font-bold text-xs transition cursor-pointer"
                             >
                               查看详情
                             </button>
@@ -1023,14 +1035,14 @@ const PublishAuditAdminView: React.FC = () => {
                               <>
                                 <button
                                   onClick={() => handlePass(task.id, task.title)}
-                                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs transition cursor-pointer flex items-center gap-1 shadow-xs"
+                                  className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs transition cursor-pointer flex items-center gap-1 shadow-xs"
                                 >
                                   <Check className="w-3.5 h-3.5" />
                                   <span>通过</span>
                                 </button>
                                 <button
                                   onClick={() => handleOpenReject(task.id)}
-                                  className="px-3 py-1.5 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 font-bold text-xs transition cursor-pointer"
+                                  className="px-2.5 py-1.5 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 font-bold text-xs transition cursor-pointer"
                                 >
                                   驳回
                                 </button>
@@ -1043,7 +1055,7 @@ const PublishAuditAdminView: React.FC = () => {
                       {/* 展开的驳回原因填写行 */}
                       {rejectingTaskId === task.id && (
                         <tr className="bg-red-950/30 border-b border-red-900/50">
-                          <td colSpan={6} className="p-4">
+                          <td colSpan={9} className="p-4">
                             <div className="flex items-center gap-3">
                               <span className="text-xs font-bold text-red-300 shrink-0">驳回说明：</span>
                               <input
@@ -1205,13 +1217,17 @@ const TaskMonitorAdminView: React.FC = () => {
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-slate-800 bg-slate-950/60 text-slate-400 font-bold uppercase text-[11px]">
-                  <th className="py-3 px-4 min-w-[220px]">任务标题 / 领域</th>
-                  <th className="py-3 px-4 min-w-[150px]">发布雇主</th>
-                  <th className="py-3 px-4">接单与成果提交履约</th>
-                  <th className="py-3 px-3 text-right">赏金预算</th>
-                  <th className="py-3 px-3">截止时间</th>
-                  <th className="py-3 px-3">运行状态</th>
-                  <th className="py-3 px-4 text-center">操作</th>
+                  <th className="py-3 px-4 min-w-[200px]">任务标题</th>
+                  <th className="py-3 px-3 min-w-[100px]">所属领域</th>
+                  <th className="py-3 px-3 min-w-[80px]">难度</th>
+                  <th className="py-3 px-4 min-w-[120px]">发布雇主</th>
+                  <th className="py-3 px-3 min-w-[130px]">发布时间</th>
+                  <th className="py-3 px-3 min-w-[90px]">接单人数</th>
+                  <th className="py-3 px-3 min-w-[90px]">提交成果</th>
+                  <th className="py-3 px-3 text-right min-w-[100px]">赏金预算</th>
+                  <th className="py-3 px-3 min-w-[130px]">截止时间</th>
+                  <th className="py-3 px-3 min-w-[90px]">运行状态</th>
+                  <th className="py-3 px-4 text-center min-w-[160px]">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 text-slate-300">
@@ -1222,83 +1238,93 @@ const TaskMonitorAdminView: React.FC = () => {
 
                   return (
                     <tr key={task.id} className="hover:bg-slate-800/40 transition">
-                      {/* 1. 标题与领域 */}
+                      {/* 1. 任务标题（单字段） */}
                       <td className="py-3.5 px-4">
-                        <div className="font-extrabold text-white text-sm line-clamp-1">{task.title}</div>
-                        <div className="flex items-center gap-1.5 mt-1 text-[10px]">
-                          <span className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 border border-slate-700">
-                            {task.domain}
-                          </span>
-                          <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                            {task.difficulty}难度
-                          </span>
+                        <div className="font-extrabold text-white text-xs line-clamp-2" title={task.title}>
+                          {task.title}
                         </div>
                       </td>
 
-                      {/* 2. 发布雇主 */}
-                      <td className="py-3.5 px-4">
-                        <div className="font-bold text-slate-200 text-xs">{task.publisher}</div>
-                        <div className="text-[10px] text-slate-500 font-mono">{task.publishTime}</div>
+                      {/* 2. 所属领域 */}
+                      <td className="py-3.5 px-3 whitespace-nowrap">
+                        <span className="px-2 py-0.5 rounded bg-slate-800 text-indigo-300 border border-slate-700 font-medium text-[11px]">
+                          {task.domain}
+                        </span>
                       </td>
 
-                      {/* 3. 接单与成果履约 */}
-                      <td className="py-3.5 px-4">
-                        <div className="text-xs font-bold text-slate-300">
-                          {`接单: ${takers.length}人 · 已提交: ${submissions.length}份`}
+                      {/* 3. 难度 */}
+                      <td className="py-3.5 px-3 whitespace-nowrap">
+                        <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-medium text-[11px]">
+                          {task.difficulty}
+                        </span>
+                      </td>
+
+                      {/* 4. 发布雇主 */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={task.publisherAvatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80'}
+                            alt={task.publisher}
+                            className="w-5 h-5 rounded-full object-cover border border-slate-700"
+                          />
+                          <span className="font-bold text-slate-200 text-xs">{task.publisher}</span>
                         </div>
-                        {takers.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {takers.slice(0, 3).map(tk => (
-                              <span key={tk.id} className="px-1.5 py-0.5 bg-slate-950 rounded text-[10px] text-slate-400 border border-slate-800">
-                                {tk.username}
-                              </span>
-                            ))}
-                            {takers.length > 3 && (
-                              <span className="text-[10px] text-slate-500">+{takers.length - 3}</span>
-                            )}
-                          </div>
-                        )}
                       </td>
 
-                      {/* 4. 赏金预算 */}
+                      {/* 5. 发布时间 */}
+                      <td className="py-3.5 px-3 font-mono text-[11px] text-slate-400 whitespace-nowrap">
+                        {task.publishTime || '-'}
+                      </td>
+
+                      {/* 6. 接单人数 */}
+                      <td className="py-3.5 px-3 whitespace-nowrap font-mono text-xs text-slate-300">
+                        {takers.length} 人
+                      </td>
+
+                      {/* 7. 提交成果 */}
+                      <td className="py-3.5 px-3 whitespace-nowrap font-mono text-xs text-slate-300">
+                        {submissions.length} 份
+                      </td>
+
+                      {/* 8. 赏金预算 */}
                       <td className="py-3.5 px-3 text-right whitespace-nowrap">
-                        <div className="font-black font-mono text-emerald-400 text-sm">
+                        <div className="font-black font-mono text-emerald-400 text-xs">
                           ¥{(task.cashReward || 0).toLocaleString()}
                         </div>
                         {(task.pointsReward || 0) > 0 && (
-                          <div className="text-[10px] text-amber-400 font-mono">+ {task.pointsReward} 积分</div>
+                          <div className="text-[10px] text-amber-400 font-mono">+{task.pointsReward} 积分</div>
                         )}
                       </td>
 
-                      {/* 5. 截止时间 */}
+                      {/* 9. 截止时间 */}
                       <td className="py-3.5 px-3 font-mono text-[11px] text-slate-300 whitespace-nowrap">
-                        {task.endTime}
+                        {task.endTime || task.deadline || '-'}
                       </td>
 
-                      {/* 6. 运行状态 */}
+                      {/* 10. 运行状态 */}
                       <td className="py-3.5 px-3 whitespace-nowrap">
                         <span className={`px-2.5 py-1 rounded-lg text-[11px] font-bold ${
                           isFinished
                             ? 'bg-slate-800 text-slate-400 border border-slate-700'
-                            : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse'
+                            : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                         }`}>
                           {isFinished ? '已结束' : '进行中'}
                         </span>
                       </td>
 
-                      {/* 7. 集中操作列 */}
+                      {/* 11. 集中操作列 */}
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => setEditingTask(task)}
-                            className="px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 text-xs font-bold transition cursor-pointer flex items-center gap-1 shadow-xs"
+                            className="px-2.5 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 text-xs font-bold transition cursor-pointer flex items-center gap-1 shadow-xs"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                             <span>编辑</span>
                           </button>
                           <button
                             onClick={() => setViewingTask(task)}
-                            className="px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-300 hover:bg-slate-800 font-bold transition cursor-pointer"
+                            className="px-2.5 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-300 hover:bg-slate-800 font-bold transition cursor-pointer"
                           >
                             查看详情
                           </button>
