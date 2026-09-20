@@ -1,10 +1,9 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Markdown from 'react-markdown';
 import { useApp } from '../../../context/AppContext';
-import { AgentItem, AgentOrderItem } from '../../../types';
+import { AgentItem, AgentCallRecord } from '../../../types';
 import {
   Bot,
-  Receipt,
   Activity,
   Layers,
   Search,
@@ -36,7 +35,17 @@ import {
   X,
   ChevronDown,
   Sparkles,
-  Image as ImageIcon
+  Image as ImageIcon,
+  History,
+  Copy,
+  Clock,
+  Zap,
+  CheckCircle2,
+  AlertTriangle,
+  Calendar,
+  Users,
+  Coins,
+  RefreshCw
 } from 'lucide-react';
 import {
   BarChart,
@@ -57,106 +66,6 @@ import {
 // ============================================================================
 // MOCK DATA SEEDING
 // ============================================================================
-
-// Initial Mock Agent Orders
-const initialAgentOrders: AgentOrderItem[] = [
-  {
-    id: 'ORD-AG-20260819-001',
-    userName: 'AI探险家-李大明',
-    userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
-    agentId: 'ag_01',
-    agentName: '法律智友 (Drafting Assistant)',
-    orderType: '月卡',
-    orderAmount: 99.00,
-    tokenAmount: 200, // 200万 Token
-    status: '已生效',
-    createdAt: '2026-08-19 14:20:00',
-    payTime: '2026-08-19 14:20:15',
-    startTime: '2026-08-19 14:20:15',
-    expireTime: '2026-09-18 23:59:59',
-    usedTokens: 12.5
-  },
-  {
-    id: 'ORD-AG-20260818-012',
-    userName: '小雅Code',
-    userAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
-    agentId: 'ag_03',
-    agentName: 'SQL 智能分析专家',
-    orderType: '年卡',
-    orderAmount: 899.00,
-    tokenAmount: 2500, // 2500万 Token
-    status: '已生效',
-    createdAt: '2026-08-18 09:15:33',
-    payTime: '2026-08-18 09:16:00',
-    startTime: '2026-08-18 09:16:00',
-    expireTime: '2027-08-17 23:59:59',
-    usedTokens: 145.2
-  },
-  {
-    id: 'ORD-AG-20260817-045',
-    userName: '金融老金',
-    userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-    agentId: 'ag_02',
-    agentName: '研报深度解析沙箱',
-    orderType: '免费领取',
-    orderAmount: 0.00,
-    tokenAmount: 30, // 30万 Token
-    status: '已生效',
-    createdAt: '2026-08-17 18:40:12',
-    payTime: '2026-08-17 18:40:12',
-    startTime: '2026-08-17 18:40:12',
-    expireTime: '2026-08-24 18:40:12',
-    usedTokens: 14.8
-  },
-  {
-    id: 'ORD-AG-20260815-089',
-    userName: '内容制作者-张薇',
-    userAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=80',
-    agentId: 'ag_01',
-    agentName: '法律智友 (Drafting Assistant)',
-    orderType: '按Token订阅',
-    orderAmount: 45.00,
-    tokenAmount: 100, // 100万 Token
-    status: '已用完',
-    createdAt: '2026-08-15 11:05:00',
-    payTime: '2026-08-15 11:05:40',
-    startTime: '2026-08-15 11:05:40',
-    expireTime: '2026-09-14 23:59:59',
-    usedTokens: 100.0
-  },
-  {
-    id: 'ORD-AG-20260812-112',
-    userName: '政务云联-小陈',
-    userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
-    agentId: 'ag_05',
-    agentName: '政务公文秒批系统',
-    orderType: '季卡',
-    orderAmount: 269.00,
-    tokenAmount: 600,
-    status: '已过期',
-    createdAt: '2026-05-10 10:00:00',
-    payTime: '2026-05-10 10:01:15',
-    startTime: '2026-05-10 10:01:15',
-    expireTime: '2026-08-10 23:59:59',
-    usedTokens: 489.3
-  },
-  {
-    id: 'ORD-AG-20260810-098',
-    userName: '小极客2026',
-    userAvatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&auto=format&fit=crop&q=80',
-    agentId: 'ag_04',
-    agentName: 'Python 贪吃蛇与经典游戏智能生成器',
-    orderType: '周卡',
-    orderAmount: 29.00,
-    tokenAmount: 50,
-    status: '已生效',
-    createdAt: '2026-08-15 16:30:00',
-    payTime: '2026-08-15 16:30:45',
-    startTime: '2026-08-15 16:30:45',
-    expireTime: '2026-08-22 16:30:45',
-    usedTokens: 8.4
-  }
-];
 
 // Initial Categories Mock State
 const initialTechForms = ['Chatbot', 'Agent', '对话流', '工作流', '文本生成'];
@@ -189,14 +98,11 @@ export const AgentAdminViews: React.FC<{ activeSubMenu: string }> = ({ activeSub
   const [appScenarios, setAppScenarios] = useState<string[]>(initialAppScenarios);
   const [industries, setIndustries] = useState<string[]>(initialIndustries);
 
-  // Agent Orders local state
-  const [orders, setOrders] = useState<AgentOrderItem[]>(initialAgentOrders);
-
   switch (activeSubMenu) {
     case 'agent_list':
       return <AgentListAdminView techForms={techForms} appScenarios={appScenarios} industries={industries} />;
-    case 'agent_orders':
-      return <AgentOrdersAdminView orders={orders} setOrders={setOrders} />;
+    case 'agent_calls':
+      return <AgentCallsAdminView />;
     case 'agent_stats':
       return <AgentStatsAdminView techForms={techForms} appScenarios={appScenarios} />;
     default:
@@ -745,8 +651,6 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
   // Multi-select help state for form
   const [formAppScenarios, setFormAppScenarios] = useState<string[]>([]);
   const [formIndustries, setFormIndustries] = useState<string[]>([]);
-  // Base model source: is platform model (true) or custom/external text input (false)
-  const [isPlatformModel, setIsPlatformModel] = useState<boolean>(true);
   // Launch status toggle (default: false / 关闭)
   const [isPublishedToggle, setIsPublishedToggle] = useState<boolean>(false);
 
@@ -757,13 +661,15 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
         ag.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (ag.slogan || '').toLowerCase().includes(searchQuery.toLowerCase());
       const matchForm = techFormFilter === '全部' || ag.techForm === techFormFilter || ag.appType === techFormFilter;
-      const matchStatus = statusFilter === '全部' || ag.status === statusFilter;
+      const isPublished = ag.status === '已上架';
+      const matchStatus = statusFilter === '全部' || (statusFilter === '已上架' ? isPublished : !isPublished);
       return matchSearch && matchForm && matchStatus;
     });
   }, [agents, searchQuery, techFormFilter, statusFilter]);
 
-  // Open creation form (默认上架状态为关闭/草稿)
+  // Open creation form (默认上架状态为关闭/未上架)
   const handleOpenCreate = () => {
+    const defaultModel = models[0] || { id: 'm1', name: 'DeepSeek-V3' };
     setEditingAgent({
       name: '',
       avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80',
@@ -772,23 +678,16 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
       description: '',
       useGuide: '',
       techDocs: '',
-      freeTrialCount: 3,
-      weekCardPrice: undefined,
-      weekCardTokens: undefined,
-      monthCardPrice: undefined,
-      monthCardTokens: undefined,
-      quarterCardPrice: undefined,
-      quarterCardTokens: undefined,
-      yearCardPrice: undefined,
-      yearCardTokens: undefined,
+      freeTokenQuota: 10,
       apiAddress: 'https://api.qianji.ai/v1/agent/invoke',
-      status: '草稿',
-      linkedModel: 'DeepSeek-R1'
+      status: '未上架',
+      baseModelId: defaultModel.id,
+      baseModel: defaultModel.name,
+      linkedModel: defaultModel.name
     });
     setFormAppScenarios([]);
     setFormIndustries([]);
-    setIsPlatformModel(true);
-    setIsPublishedToggle(false); // 默认为关闭
+    setIsPublishedToggle(false); // 默认为关闭 (未上架)
     setIsEditing(true);
   };
 
@@ -803,8 +702,6 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
       : ag.industry ? [ag.industry] : ['通用'];
     setFormAppScenarios(initialScenarios);
     setFormIndustries(initialInds);
-    const isPlatform = models.some(m => m.id === ag.baseModelId || m.name === ag.linkedModel || m.name === ag.baseModel);
-    setIsPlatformModel(isPlatform);
     setIsPublishedToggle(ag.status === '已上架');
     setIsEditing(true);
   };
@@ -830,6 +727,10 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
       showToast('一句话简介限30字以内');
       return;
     }
+    if (!editingAgent.baseModelId && !editingAgent.linkedModel) {
+      showToast('请选择关联平台已有基座模型');
+      return;
+    }
     if (formAppScenarios.length === 0) {
       showToast('请至少选择一个应用场景（最多3个）');
       return;
@@ -843,21 +744,12 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
       return;
     }
 
-    // 检查包周期会员卡套餐设定中至少必填一种
-    const hasValidWeekCard = !!(editingAgent.weekCardPrice && editingAgent.weekCardPrice > 0 && editingAgent.weekCardTokens && editingAgent.weekCardTokens > 0);
-    const hasValidMonthCard = !!(editingAgent.monthCardPrice && editingAgent.monthCardPrice > 0 && editingAgent.monthCardTokens && editingAgent.monthCardTokens > 0);
-    const hasValidQuarterCard = !!(editingAgent.quarterCardPrice && editingAgent.quarterCardPrice > 0 && editingAgent.quarterCardTokens && editingAgent.quarterCardTokens > 0);
-    const hasValidYearCard = !!(editingAgent.yearCardPrice && editingAgent.yearCardPrice > 0 && editingAgent.yearCardTokens && editingAgent.yearCardTokens > 0);
-
-    if (!hasValidWeekCard && !hasValidMonthCard && !hasValidQuarterCard && !hasValidYearCard) {
-      showToast('⚠️ 包周期会员卡套餐设定中至少需完整填写一种套餐（周卡/月卡/季卡/年卡）的价格和包含Token量！');
-      return;
-    }
-
     const isNew = !editingAgent.id;
     const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
     const targetId = editingAgent.id || `ag_${Date.now()}`;
+    const selectedModel = models.find(m => m.id === editingAgent.baseModelId) || models.find(m => m.name === editingAgent.linkedModel) || models[0];
+
     const finalizedAgent: AgentItem = {
       id: targetId,
       name: editingAgent.name,
@@ -875,25 +767,20 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
       priceValue: 0,
       tags: editingAgent.tags || ['官方', '新上'],
       apiAddress: editingAgent.apiAddress || 'https://api.qianji.ai/v1/agent/invoke',
-      pricePerTenThousandTokens: 0,
-      freeTrialCount: editingAgent.freeTrialCount !== undefined ? Math.max(0, editingAgent.freeTrialCount) : 3,
-      hasTrialQuota: (editingAgent.freeTrialCount || 0) > 0,
-      trialQuotaVal: 0,
-      trialQuotaValidityDays: 7,
-      weekCardPrice: editingAgent.weekCardPrice,
-      weekCardTokens: editingAgent.weekCardTokens,
-      monthCardPrice: editingAgent.monthCardPrice,
-      monthCardTokens: editingAgent.monthCardTokens,
-      quarterCardPrice: editingAgent.quarterCardPrice,
-      quarterCardTokens: editingAgent.quarterCardTokens,
-      yearCardPrice: editingAgent.yearCardPrice,
-      yearCardTokens: editingAgent.yearCardTokens,
-      status: isPublishedToggle ? '已上架' : '草稿',
-      linkedModel: editingAgent.linkedModel || 'DeepSeek-R1',
-      rating: editingAgent.rating || 4.8,
+      pricePerTenThousandTokens: 0.05,
+      freeTokenQuota: editingAgent.freeTokenQuota !== undefined ? Math.max(0, editingAgent.freeTokenQuota) : 10,
+      hasTrialQuota: (editingAgent.freeTokenQuota || 0) > 0,
+      trialQuotaVal: (editingAgent.freeTokenQuota || 10) * 10000,
+      trialQuotaValidityDays: 30,
+      status: isPublishedToggle ? '已上架' : '未上架',
+      baseModelId: selectedModel?.id || editingAgent.baseModelId,
+      baseModel: selectedModel?.name || editingAgent.baseModel || 'DeepSeek-V3',
+      linkedModel: selectedModel?.name || editingAgent.linkedModel || 'DeepSeek-V3',
+      rating: editingAgent.rating || 4.9,
       ratingCount: editingAgent.ratingCount || 12,
       usageCount: editingAgent.usageCount || 1250,
-      subscribersCount: editingAgent.subscribersCount || 88,
+      subscribersCount: editingAgent.subscribersCount || editingAgent.callUsersCount || 88,
+      callUsersCount: editingAgent.callUsersCount || editingAgent.subscribersCount || 88,
       createdAt: editingAgent.createdAt || nowStr,
       author: editingAgent.author || 'AI运营中心官方研发',
       useGuide: editingAgent.useGuide || '',
@@ -914,14 +801,8 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
 
   // Toggle Publish Status
   const togglePublishStatus = (ag: AgentItem) => {
-    let nextStatus: AgentItem['status'] = '已上架';
-    if (ag.status === '已上架') {
-      nextStatus = '已停止新订阅';
-    } else if (ag.status === '已停止新订阅') {
-      nextStatus = '已上架';
-    } else if (ag.status === '已下架' || ag.status === '草稿') {
-      nextStatus = '已上架';
-    }
+    const isCurrentlyPublished = ag.status === '已上架';
+    const nextStatus: AgentItem['status'] = isCurrentlyPublished ? '未上架' : '已上架';
 
     setAgents(prev => prev.map(a => a.id === ag.id ? { ...a, status: nextStatus } : a));
     showToast(`Agent【${ag.name}】的状态已变更为【${nextStatus}】`);
@@ -980,7 +861,7 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                   <h4 className="text-base font-bold text-white">{detailAgent.name}</h4>
                   <p className="text-xs text-slate-400 mt-0.5">{detailAgent.slogan}</p>
                   <span className="inline-block mt-2 px-2 py-0.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-mono font-bold rounded border border-indigo-500/20">
-                    {detailAgent.linkedModel || '默认基座'}
+                    {detailAgent.linkedModel || detailAgent.baseModel || 'DeepSeek-V3'}
                   </span>
                 </div>
               </div>
@@ -992,19 +873,23 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">上架状态</span>
-                  <span className="text-emerald-400 font-bold">{detailAgent.status}</span>
+                  <span className={`font-bold ${detailAgent.status === '已上架' ? 'text-emerald-400' : 'text-slate-400'}`}>
+                    {detailAgent.status === '已上架' ? '已上架' : '未上架'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">免费体验次数</span>
-                  <span className="text-amber-400 font-mono font-bold">{detailAgent.freeTrialCount !== undefined ? detailAgent.freeTrialCount : 3} 次</span>
+                  <span className="text-slate-500">免费Token额度</span>
+                  <span className="text-amber-400 font-mono font-bold">
+                    {detailAgent.freeTokenQuota !== undefined ? `${detailAgent.freeTokenQuota} 万Token` : (detailAgent.freeTrialCount ? `${detailAgent.freeTrialCount * 2} 万Token` : '10 万Token')}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">累计调用量</span>
                   <span className="text-indigo-400 font-mono font-bold">{(detailAgent.usageCount || 0).toLocaleString()} 次</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">订阅用户数</span>
-                  <span className="text-teal-400 font-mono font-bold">{(detailAgent.subscribersCount || 0).toLocaleString()} 人</span>
+                  <span className="text-slate-500">调用用户数</span>
+                  <span className="text-teal-400 font-mono font-bold">{(detailAgent.callUsersCount || detailAgent.subscribersCount || 0).toLocaleString()} 人</span>
                 </div>
               </div>
             </div>
@@ -1044,7 +929,7 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
               </button>
               <div>
                 <h3 className="text-base font-black text-white">{editingAgent.id ? '编辑 Agent 属性' : '上架全新智能体'}</h3>
-                <p className="text-xs text-slate-400">请准确填写各项元数据与套餐配置，这会同步影响前台的用户订阅体验</p>
+                <p className="text-xs text-slate-400">请准确填写各项元数据与Token计费额度配置，系统将自动关联平台模型管理</p>
               </div>
             </div>
             <button
@@ -1102,7 +987,7 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
               onChange={(url) => setEditingAgent({ ...editingAgent, avatar: url })}
             />
 
-            {/* 技术形态 */}
+            {/* 技术形态 & 关联基座模型 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className="text-xs font-bold text-slate-300 block mb-1">
@@ -1119,97 +1004,34 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                 </select>
               </div>
 
-              {/* 关联基座模型 */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300 block">
-                  关联基座模型 <span className="text-slate-500 font-normal">(底层驱动大模型)</span>
+              {/* 关联基座模型 (只允许选择平台模型管理中已有模型) */}
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">
+                  关联基座模型 <span className="text-red-500">*</span>
+                  <span className="text-[10px] text-slate-500 font-normal ml-2">(仅限关联平台模型管理中已有模型)</span>
                 </label>
-
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2.5">
-                  {/* 选择是否平台模型 */}
-                  <div className="flex items-center gap-4 text-xs font-bold">
-                    <span className="text-slate-400 text-[11px]">是否平台模型:</span>
-                    <label className="inline-flex items-center gap-1.5 cursor-pointer text-slate-200 hover:text-white">
-                      <input
-                        type="radio"
-                        name="isPlatformModel"
-                        checked={isPlatformModel}
-                        onChange={() => {
-                          setIsPlatformModel(true);
-                          const defaultModel = models.find(m => m.name === editingAgent.linkedModel || m.name === editingAgent.baseModel) || models[0];
-                          if (defaultModel) {
-                            setEditingAgent({
-                              ...editingAgent,
-                              baseModelId: defaultModel.id,
-                              baseModel: defaultModel.name,
-                              linkedModel: defaultModel.name
-                            });
-                          }
-                        }}
-                        className="text-indigo-600 focus:ring-indigo-500 rounded-full cursor-pointer"
-                      />
-                      <span>是 (平台模型)</span>
-                    </label>
-                    <label className="inline-flex items-center gap-1.5 cursor-pointer text-slate-200 hover:text-white">
-                      <input
-                        type="radio"
-                        name="isPlatformModel"
-                        checked={!isPlatformModel}
-                        onChange={() => {
-                          setIsPlatformModel(false);
-                          setEditingAgent({
-                            ...editingAgent,
-                            baseModelId: '',
-                          });
-                        }}
-                        className="text-indigo-600 focus:ring-indigo-500 rounded-full cursor-pointer"
-                      />
-                      <span>否 (外部/自定义模型)</span>
-                    </label>
-                  </div>
-
-                  {/* 如果是平台模型：下拉框 */}
-                  {isPlatformModel ? (
-                    <select
-                      value={editingAgent.baseModelId || (models.find(m => m.name === editingAgent.linkedModel || m.name === editingAgent.baseModel)?.id || '')}
-                      onChange={e => {
-                        const selectedId = e.target.value;
-                        const matchedModel = models.find(m => m.id === selectedId);
-                        setEditingAgent({
-                          ...editingAgent,
-                          baseModelId: selectedId,
-                          baseModel: matchedModel ? matchedModel.name : (editingAgent.baseModel || matchedModel?.name),
-                          linkedModel: matchedModel ? matchedModel.name : editingAgent.linkedModel
-                        });
-                      }}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:border-indigo-500 outline-none transition font-bold cursor-pointer"
-                    >
-                      <option value="">-- 请选择平台已有模型 --</option>
-                      {models.map(m => (
-                        <option key={m.id} value={m.id}>
-                          {m.name} ({m.vendor || 'AI底座'})
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    /* 如果否：文本框输入模型名称 */
-                    <input
-                      type="text"
-                      placeholder="请输入模型名称，例如 Claude 3.5 Sonnet / GPT-4o / 自建私有大模型"
-                      value={editingAgent.linkedModel || editingAgent.baseModel || ''}
-                      onChange={e => {
-                        const val = e.target.value;
-                        setEditingAgent({
-                          ...editingAgent,
-                          baseModelId: '',
-                          baseModel: val,
-                          linkedModel: val
-                        });
-                      }}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder:text-slate-600 focus:border-indigo-500 outline-none transition"
-                    />
-                  )}
-                </div>
+                <select
+                  required
+                  value={editingAgent.baseModelId || (models.find(m => m.name === editingAgent.linkedModel || m.name === editingAgent.baseModel)?.id || (models[0]?.id || ''))}
+                  onChange={e => {
+                    const selectedId = e.target.value;
+                    const matchedModel = models.find(m => m.id === selectedId);
+                    setEditingAgent({
+                      ...editingAgent,
+                      baseModelId: selectedId,
+                      baseModel: matchedModel ? matchedModel.name : (editingAgent.baseModel || ''),
+                      linkedModel: matchedModel ? matchedModel.name : editingAgent.linkedModel
+                    });
+                  }}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:border-indigo-500 outline-none transition font-bold cursor-pointer"
+                >
+                  <option value="">-- 请选择平台模型管理已有模型 --</option>
+                  {models.map(m => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} ({m.vendor || '官方底座'}) · {m.typeTag || '通用LLM'}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -1287,33 +1109,33 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
             </div>
           </div>
 
-          {/* PART 3: PRICING & TIERS */}
+          {/* PART 3: TOKEN BILLING & FREE TOKEN QUOTA */}
           <div className="space-y-5">
             <div className="text-xs font-black text-indigo-400 uppercase tracking-widest border-l-2 border-indigo-500 pl-2">
-              第三部分：包周期套餐与免费试用设置
+              第三部分：Token计费与免费Token额度设置
             </div>
 
-            {/* 免费试用次数设置 */}
-            <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+            {/* 免费Token额度设置 */}
+            <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>免费试用次数设置</span>
-                  <span className="text-[10px] text-slate-500 font-normal">（新用户在未购买套餐前可免费发起调用的次数）</span>
+                  <span>免费Token额度设置</span>
+                  <span className="text-[10px] text-slate-500 font-normal">（新用户在未充值前可免费用于发起智能体调用的Token配额）</span>
                 </label>
                 <div className="flex items-center gap-2">
-                  {[0, 3, 5, 10].map(cnt => (
+                  {[0, 5, 10, 20, 50].map(cnt => (
                     <button
                       type="button"
                       key={cnt}
-                      onClick={() => setEditingAgent({ ...editingAgent, freeTrialCount: cnt })}
+                      onClick={() => setEditingAgent({ ...editingAgent, freeTokenQuota: cnt })}
                       className={`px-2 py-0.5 rounded text-[11px] font-bold border transition cursor-pointer ${
-                        editingAgent.freeTrialCount === cnt
+                        (editingAgent.freeTokenQuota === cnt || (cnt === 10 && editingAgent.freeTokenQuota === undefined))
                           ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                           : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
                       }`}
                     >
-                      {cnt === 0 ? '不提供试用' : `${cnt} 次`}
+                      {cnt === 0 ? '不赠送' : `${cnt} 万Token`}
                     </button>
                   ))}
                 </div>
@@ -1323,174 +1145,12 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                   type="number"
                   min={0}
                   step={1}
-                  placeholder="如：3"
-                  value={editingAgent.freeTrialCount !== undefined ? editingAgent.freeTrialCount : 3}
-                  onChange={e => setEditingAgent({ ...editingAgent, freeTrialCount: Math.max(0, parseInt(e.target.value) || 0) })}
+                  placeholder="如：10"
+                  value={editingAgent.freeTokenQuota !== undefined ? editingAgent.freeTokenQuota : 10}
+                  onChange={e => setEditingAgent({ ...editingAgent, freeTokenQuota: Math.max(0, parseInt(e.target.value) || 0) })}
                   className="w-40 px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:border-indigo-500 outline-none transition font-mono font-bold"
                 />
-                <span className="text-xs text-slate-400">次免费调用（填 0 表示不赠送免费试用额度）</span>
-              </div>
-            </div>
-
-            {/* 包周期会员卡套餐设定 (至少必填一种) */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-200">
-                  包周期会员卡套餐设定 <span className="text-red-500">*</span>
-                </label>
-                <span className="text-[11px] text-indigo-400 font-medium">
-                  (周卡 / 月卡 / 季卡 / 年卡中至少需完整填写 1 种套餐的价格与包含Token量)
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {/* 周卡 */}
-                <div className={`p-3.5 rounded-xl bg-slate-950 border transition space-y-2.5 ${
-                  editingAgent.weekCardPrice && editingAgent.weekCardTokens ? 'border-indigo-500/50 shadow-md shadow-indigo-500/10' : 'border-slate-800'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-black text-indigo-400">⚡ 周卡套餐 (7天)</span>
-                    {editingAgent.weekCardPrice && editingAgent.weekCardTokens ? (
-                      <span className="text-[9px] px-1.5 py-0.2 bg-emerald-500/10 text-emerald-400 rounded border border-emerald-500/20 font-bold">已启用</span>
-                    ) : (
-                      <span className="text-[9px] text-slate-600">未启用</span>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-slate-400 block mb-1">套餐售价 (元)</label>
-                    <input
-                      type="number"
-                      step={0.1}
-                      min={0.1}
-                      placeholder="如: 49"
-                      value={editingAgent.weekCardPrice || ''}
-                      onChange={e => setEditingAgent({ ...editingAgent, weekCardPrice: parseFloat(e.target.value) || undefined })}
-                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:border-indigo-500 outline-none font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-slate-400 block mb-1">包含额度 (万Token)</label>
-                    <input
-                      type="number"
-                      min={1}
-                      placeholder="如: 200"
-                      value={editingAgent.weekCardTokens || ''}
-                      onChange={e => setEditingAgent({ ...editingAgent, weekCardTokens: parseInt(e.target.value) || undefined })}
-                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:border-indigo-500 outline-none font-mono"
-                    />
-                  </div>
-                </div>
-
-                {/* 月卡 */}
-                <div className={`p-3.5 rounded-xl bg-slate-950 border transition space-y-2.5 ${
-                  editingAgent.monthCardPrice && editingAgent.monthCardTokens ? 'border-indigo-500/50 shadow-md shadow-indigo-500/10' : 'border-slate-800'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-black text-indigo-400">⚡ 月卡套餐 (30天)</span>
-                    {editingAgent.monthCardPrice && editingAgent.monthCardTokens ? (
-                      <span className="text-[9px] px-1.5 py-0.2 bg-emerald-500/10 text-emerald-400 rounded border border-emerald-500/20 font-bold">已启用</span>
-                    ) : (
-                      <span className="text-[9px] text-slate-600">未启用</span>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-slate-400 block mb-1">套餐售价 (元)</label>
-                    <input
-                      type="number"
-                      step={0.1}
-                      min={0.1}
-                      placeholder="如: 169"
-                      value={editingAgent.monthCardPrice || ''}
-                      onChange={e => setEditingAgent({ ...editingAgent, monthCardPrice: parseFloat(e.target.value) || undefined })}
-                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:border-indigo-500 outline-none font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-slate-400 block mb-1">包含额度 (万Token)</label>
-                    <input
-                      type="number"
-                      min={1}
-                      placeholder="如: 1000"
-                      value={editingAgent.monthCardTokens || ''}
-                      onChange={e => setEditingAgent({ ...editingAgent, monthCardTokens: parseInt(e.target.value) || undefined })}
-                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:border-indigo-500 outline-none font-mono"
-                    />
-                  </div>
-                </div>
-
-                {/* 季卡 */}
-                <div className={`p-3.5 rounded-xl bg-slate-950 border transition space-y-2.5 ${
-                  editingAgent.quarterCardPrice && editingAgent.quarterCardTokens ? 'border-indigo-500/50 shadow-md shadow-indigo-500/10' : 'border-slate-800'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-black text-indigo-400">⚡ 季卡套餐 (90天)</span>
-                    {editingAgent.quarterCardPrice && editingAgent.quarterCardTokens ? (
-                      <span className="text-[9px] px-1.5 py-0.2 bg-emerald-500/10 text-emerald-400 rounded border border-emerald-500/20 font-bold">已启用</span>
-                    ) : (
-                      <span className="text-[9px] text-slate-600">未启用</span>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-slate-400 block mb-1">套餐售价 (元)</label>
-                    <input
-                      type="number"
-                      step={0.1}
-                      min={0.1}
-                      placeholder="如: 459"
-                      value={editingAgent.quarterCardPrice || ''}
-                      onChange={e => setEditingAgent({ ...editingAgent, quarterCardPrice: parseFloat(e.target.value) || undefined })}
-                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:border-indigo-500 outline-none font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-slate-400 block mb-1">包含额度 (万Token)</label>
-                    <input
-                      type="number"
-                      min={1}
-                      placeholder="如: 3500"
-                      value={editingAgent.quarterCardTokens || ''}
-                      onChange={e => setEditingAgent({ ...editingAgent, quarterCardTokens: parseInt(e.target.value) || undefined })}
-                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:border-indigo-500 outline-none font-mono"
-                    />
-                  </div>
-                </div>
-
-                {/* 年卡 */}
-                <div className={`p-3.5 rounded-xl bg-slate-950 border transition space-y-2.5 ${
-                  editingAgent.yearCardPrice && editingAgent.yearCardTokens ? 'border-indigo-500/50 shadow-md shadow-indigo-500/10' : 'border-slate-800'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-black text-indigo-400">⚡ 年卡套餐 (365天)</span>
-                    {editingAgent.yearCardPrice && editingAgent.yearCardTokens ? (
-                      <span className="text-[9px] px-1.5 py-0.2 bg-emerald-500/10 text-emerald-400 rounded border border-emerald-500/20 font-bold">已启用</span>
-                    ) : (
-                      <span className="text-[9px] text-slate-600">未启用</span>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-slate-400 block mb-1">套餐售价 (元)</label>
-                    <input
-                      type="number"
-                      step={0.1}
-                      min={0.1}
-                      placeholder="如: 1499"
-                      value={editingAgent.yearCardPrice || ''}
-                      onChange={e => setEditingAgent({ ...editingAgent, yearCardPrice: parseFloat(e.target.value) || undefined })}
-                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:border-indigo-500 outline-none font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-slate-400 block mb-1">包含额度 (万Token)</label>
-                    <input
-                      type="number"
-                      min={1}
-                      placeholder="如: 15000"
-                      value={editingAgent.yearCardTokens || ''}
-                      onChange={e => setEditingAgent({ ...editingAgent, yearCardTokens: parseInt(e.target.value) || undefined })}
-                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:border-indigo-500 outline-none font-mono"
-                    />
-                  </div>
-                </div>
+                <span className="text-xs text-slate-400">万Token 免费体验额度（填 0 表示不赠送免费额度，直接按关联模型的 Token 价格计费）</span>
               </div>
             </div>
           </div>
@@ -1505,8 +1165,8 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
               label="是否上架至前台商店"
               checked={isPublishedToggle}
               onChange={(checked) => setIsPublishedToggle(checked)}
-              activeText="已开启上架：保存后将在前台 AI Agent 商店公开发布，用户可浏览、体验试用及购买会员订阅"
-              inactiveText="已关闭上架（草稿状态）：仅在后台管理端可见与调试，前台普通用户不可见"
+              activeText="已开启上架：保存后将在前台 AI Agent 商店公开发布，用户可浏览、立即体验及按Token计费调用"
+              inactiveText="已关闭上架（未上架状态）：仅在后台管理端可见与调试，前台普通用户不可见"
             />
           </div>
 
@@ -1559,7 +1219,7 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                 </select>
               </div>
 
-              {/* Status filter */}
+              {/* Status filter: 只有已上架和未上架 */}
               <div className="w-full md:w-40">
                 <select
                   value={statusFilter}
@@ -1568,9 +1228,7 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                 >
                   <option value="全部">全部上架状态</option>
                   <option value="已上架">已上架</option>
-                  <option value="草稿">草稿</option>
-                  <option value="已停止新订阅">已停止新订阅</option>
-                  <option value="已下架">已下架</option>
+                  <option value="未上架">未上架</option>
                 </select>
               </div>
             </div>
@@ -1612,17 +1270,19 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                       <th className="py-3 px-3">关联模型</th>
                       <th className="py-3 px-3">技术形态</th>
                       <th className="py-3 px-3">应用场景</th>
-                      <th className="py-3 px-3">最低套餐价</th>
-                      <th className="py-3 px-3">免费试用</th>
+                      <th className="py-3 px-3">免费Token额度</th>
                       <th className="py-3 px-3 text-right">调用量</th>
-                      <th className="py-3 px-3 text-right">订阅用户</th>
+                      <th className="py-3 px-3 text-right">调用用户数</th>
                       <th className="py-3 px-3">上架状态</th>
                       <th className="py-3 px-4 text-center">操作</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/50 text-slate-300">
                     {filteredAgents.map(ag => {
-                      const minPrice = ag.weekCardPrice || ag.monthCardPrice || ag.quarterCardPrice || ag.yearCardPrice;
+                      const isPublished = ag.status === '已上架';
+                      const freeTokens = ag.freeTokenQuota !== undefined ? `${ag.freeTokenQuota} 万Token` : (ag.freeTrialCount ? `${ag.freeTrialCount * 2} 万Token` : '10 万Token');
+                      const callUsers = ag.callUsersCount || ag.subscribersCount || 0;
+
                       return (
                         <tr key={ag.id} className="hover:bg-slate-800/30 transition">
                           {/* Logo */}
@@ -1646,9 +1306,9 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
 
                           {/* Linked Model */}
                           <td className="py-3.5 px-3">
-                            {ag.linkedModel ? (
+                            {ag.linkedModel || ag.baseModel ? (
                               <span className="text-[10px] px-2 py-0.5 bg-indigo-500/10 text-indigo-400 rounded-md border border-indigo-500/20 font-mono font-bold whitespace-nowrap">
-                                {ag.linkedModel}
+                                {ag.linkedModel || ag.baseModel}
                               </span>
                             ) : (
                               <span className="text-slate-600 text-[10px]">-</span>
@@ -1673,22 +1333,11 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                             </div>
                           </td>
 
-                          {/* Min Price */}
+                          {/* Free Token Quota */}
                           <td className="py-3.5 px-3 whitespace-nowrap">
-                            {minPrice ? (
-                              <div className="text-amber-400 font-mono font-bold text-xs">
-                                ¥{minPrice} 起
-                              </div>
-                            ) : (
-                              <div className="text-slate-500 text-xs">未配置</div>
-                            )}
-                          </td>
-
-                          {/* Free Trial */}
-                          <td className="py-3.5 px-3 text-center whitespace-nowrap">
-                            <span className="text-emerald-400 font-bold font-mono text-xs">
-                              {ag.freeTrialCount !== undefined ? ag.freeTrialCount : 3}
-                            </span> <span className="text-slate-500 text-[10px]">次</span>
+                            <span className="text-amber-400 font-mono font-bold text-xs">
+                              {freeTokens}
+                            </span>
                           </td>
 
                           {/* Calls Count */}
@@ -1696,43 +1345,33 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                             {(ag.usageCount || 0).toLocaleString()} 次
                           </td>
 
-                          {/* Subscribers Count */}
-                          <td className="py-3.5 px-3 text-right font-mono font-bold text-slate-200 whitespace-nowrap">
-                            {(ag.subscribersCount || 0).toLocaleString()} 人
+                          {/* Call Users Count (调用用户数) */}
+                          <td className="py-3.5 px-3 text-right font-mono font-bold text-teal-400 whitespace-nowrap">
+                            {callUsers.toLocaleString()} 人
                           </td>
 
-                          {/* Status */}
+                          {/* Status: 只有已上架和未上架 */}
                           <td className="py-3.5 px-3 whitespace-nowrap">
-                            {ag.status === '已上架' ? (
-                              <span className="flex items-center gap-1 text-emerald-400 text-[11px] font-bold">
+                            {isPublished ? (
+                              <span className="flex items-center gap-1.5 text-emerald-400 text-[11px] font-bold">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                                 已上架
                               </span>
-                            ) : ag.status === '已停止新订阅' ? (
-                              <span className="flex items-center gap-1 text-amber-400 text-[11px] font-bold">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                停止新订阅
-                              </span>
-                            ) : ag.status === '已下架' ? (
-                              <span className="flex items-center gap-1 text-red-400 text-[11px] font-bold">
-                                <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                                已下架
-                              </span>
                             ) : (
-                              <span className="flex items-center gap-1 text-slate-500 text-[11px] font-bold">
+                              <span className="flex items-center gap-1.5 text-slate-500 text-[11px] font-bold">
                                 <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
-                                草稿
+                                未上架
                               </span>
                             )}
                           </td>
 
-                          {/* Actions column */}
+                          {/* Actions column: 保留详情、编辑、上架/下架、删除 */}
                           <td className="py-3.5 px-4 text-center whitespace-nowrap">
                             <div className="flex items-center justify-center gap-2">
                               {/* View details */}
                               <button
                                 onClick={() => setDetailAgent(ag)}
-                                className="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-indigo-400 hover:text-indigo-300 border border-slate-700 transition"
+                                className="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-indigo-400 hover:text-indigo-300 border border-slate-700 transition cursor-pointer"
                                 title="查看详情"
                               >
                                 <Eye className="w-3.5 h-3.5" />
@@ -1741,21 +1380,21 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                               {/* Edit */}
                               <button
                                 onClick={() => handleOpenEdit(ag)}
-                                className="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-teal-400 hover:text-teal-300 border border-slate-700 transition"
+                                className="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-teal-400 hover:text-teal-300 border border-slate-700 transition cursor-pointer"
                                 title="编辑配置"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
 
-                              {/* Toggle publish status */}
+                              {/* Toggle publish status (上架/下架) */}
                               <button
                                 onClick={() => togglePublishStatus(ag)}
-                                className={`p-1.5 rounded border transition ${
-                                  ag.status === '已上架'
+                                className={`p-1.5 rounded border transition cursor-pointer ${
+                                  isPublished
                                     ? 'bg-amber-500/10 border-amber-500/20 text-amber-400 hover:bg-amber-500/20'
                                     : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'
                                 }`}
-                                title={ag.status === '已上架' ? '停止新订阅' : '重新上架'}
+                                title={isPublished ? '下架' : '上架'}
                               >
                                 <Power className="w-3.5 h-3.5" />
                               </button>
@@ -1763,8 +1402,8 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                               {/* Delete */}
                               <button
                                 onClick={() => handleDeleteAgent(ag.id, ag.name)}
-                                className="p-1.5 rounded bg-slate-800 hover:bg-red-900 hover:text-red-300 text-red-400 border border-slate-700 transition"
-                                title="物理删除"
+                                className="p-1.5 rounded bg-slate-800 hover:bg-red-900 hover:text-red-300 text-red-400 border border-slate-700 transition cursor-pointer"
+                                title="删除"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -1785,244 +1424,554 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
 };
 
 // ============================================================================
-// SUBVIEW 2: AGENT ORDERS MANAGEMENT
+// SUBVIEW 2: AGENT CALL RECORDS (Agent调用记录)
 // ============================================================================
-interface OrdersProps {
-  orders: AgentOrderItem[];
-  setOrders: React.Dispatch<React.SetStateAction<AgentOrderItem[]>>;
-}
+const AgentCallsAdminView: React.FC = () => {
+  const { modelCallRecords, models, agents } = useApp();
 
-const AgentOrdersAdminView: React.FC<OrdersProps> = ({ orders, setOrders }) => {
-  // Query Filters State
+  // Filter States
+  const [timeRange, setTimeRange] = useState<'all' | 'today' | '7days' | 'month' | 'custom'>('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  const [selectedAgentFilter, setSelectedAgentFilter] = useState('全部');
+  const [selectedModelFilter, setSelectedModelFilter] = useState('全部');
   const [statusFilter, setStatusFilter] = useState('全部');
-  const [typeFilter, setTypeFilter] = useState('全部');
-  const [searchWord, setSearchWord] = useState('');
-  const [dateFilter, setDateFilter] = useState(''); // Simple filter YYYY-MM-DD
+  const [searchKeyword, setSearchKeyword] = useState('');
 
-  // Selected Order for Detail View
-  const [selectedOrder, setSelectedOrder] = useState<AgentOrderItem | null>(null);
+  // Sorting
+  const [sortField, setSortField] = useState<'callTime' | 'cost' | 'inputTokens' | 'outputTokens' | 'latencyMs'>('callTime');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  // Filtered Orders calculation
-  const filteredOrders = useMemo(() => {
-    return orders.filter(ord => {
-      // 1. Status Filter
-      if (statusFilter !== '全部' && ord.status !== statusFilter) return false;
-      // 2. Type Filter
-      if (typeFilter !== '全部' && ord.orderType !== typeFilter) return false;
-      // 3. Search word (Order No, User name, Agent Name)
-      if (searchWord.trim()) {
-        const sw = searchWord.toLowerCase();
-        const matchesNo = ord.id.toLowerCase().includes(sw);
-        const matchesUser = ord.userName.toLowerCase().includes(sw);
-        const matchesAgent = ord.agentName.toLowerCase().includes(sw);
-        if (!matchesNo && !matchesUser && !matchesAgent) return false;
+  // Copy Feedback
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Selected Call for Detail View
+  const [selectedCall, setSelectedCall] = useState<AgentCallRecord | null>(null);
+
+  // Extract all unified Agent Call records from shared modelCallRecords
+  const agentCalls = useMemo<AgentCallRecord[]>(() => {
+    // Filter records initiated by agents or matching agent records
+    const records = modelCallRecords.filter(r => r.callSource === 'agent' || r.agentName || r.agentId);
+
+    return records.map(r => {
+      const matchedAgent = agents.find(a => a.id === r.agentId || a.name === r.agentName);
+      const matchedModel = models.find(m => m.id === r.modelId || m.name === r.modelName);
+
+      const inputToks = r.inputCount ?? (parseInt(r.inputAmount?.replace(/[^0-9]/g, '') || '0', 10) || 1200);
+      const outputToks = r.outputCount ?? (parseInt(r.outputAmount?.replace(/[^0-9]/g, '') || '0', 10) || 680);
+
+      return {
+        id: r.id,
+        userId: r.userId || 'U892301',
+        userName: r.userName || '未知用户',
+        userAvatar: r.userAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+        agentId: r.agentId || matchedAgent?.id || 'ag_default',
+        agentName: r.agentName || matchedAgent?.name || '智能助手',
+        baseModelId: r.modelId || matchedModel?.id || 'deepseek-v3',
+        baseModelName: r.modelName || matchedModel?.name || (matchedAgent as any)?.baseModelName || 'DeepSeek-V3',
+        inputTokens: inputToks,
+        outputTokens: outputToks,
+        priceInput: matchedModel?.priceInput || '¥0.002 / 1k tokens',
+        priceOutput: matchedModel?.priceOutput || '¥0.004 / 1k tokens',
+        cost: r.cost,
+        callTime: r.callTime,
+        status: r.status,
+        failReason: r.failReason,
+        requestSummary: r.requestParamsSummary || '【用户提问】请基于最新行业数据生成一份关于AI智能体在金融领域的深度分析框架...',
+        responseSummary: r.responseSummary || '【Agent输出】已成功检索知识库并调用模型生成结构化研报框架，包含5个核心章节与风险测算指标。',
+        latencyMs: r.latencyMs || 360,
+        callType: (r.callType as any) || '在线体验'
+      };
+    });
+  }, [modelCallRecords, models, agents]);
+
+  // List of unique agents that appear in records or system agents
+  const availableAgentNames = useMemo(() => {
+    const names = new Set<string>();
+    agents.forEach(a => {
+      if (a.name) names.add(a.name);
+    });
+    agentCalls.forEach(c => {
+      if (c.agentName) names.add(c.agentName);
+    });
+    return Array.from(names);
+  }, [agents, agentCalls]);
+
+  // List of unique models
+  const availableModelNames = useMemo(() => {
+    const names = new Set<string>();
+    models.forEach(m => {
+      if (m.name) names.add(m.name);
+    });
+    agentCalls.forEach(c => {
+      if (c.baseModelName) names.add(c.baseModelName);
+    });
+    return Array.from(names);
+  }, [models, agentCalls]);
+
+  // Filtering Logic
+  const filteredCalls = useMemo(() => {
+    return agentCalls.filter(call => {
+      // 1. Time range filter
+      if (timeRange === 'today') {
+        const todayStr = '2026-09-19'; // Today reference
+        if (!call.callTime.startsWith(todayStr)) return false;
+      } else if (timeRange === '7days') {
+        // 近7天
+        if (call.callTime < '2026-09-12') return false;
+      } else if (timeRange === 'month') {
+        // 本月
+        if (!call.callTime.startsWith('2026-09')) return false;
+      } else if (timeRange === 'custom') {
+        if (customStartDate && call.callTime < customStartDate) return false;
+        if (customEndDate && call.callTime > customEndDate + ' 23:59:59') return false;
       }
-      // 4. Simple Date filter
-      if (dateFilter && !ord.createdAt.startsWith(dateFilter)) return false;
+
+      // 2. Agent Name filter
+      if (selectedAgentFilter !== '全部' && call.agentName !== selectedAgentFilter) {
+        return false;
+      }
+
+      // 3. Bound Model filter
+      if (selectedModelFilter !== '全部' && call.baseModelName !== selectedModelFilter) {
+        return false;
+      }
+
+      // 4. Status filter
+      if (statusFilter !== '全部' && call.status !== statusFilter) {
+        return false;
+      }
+
+      // 5. Search Keyword (User name, UID, Call ID, Agent name)
+      if (searchKeyword.trim()) {
+        const kw = searchKeyword.toLowerCase();
+        const matchId = call.id.toLowerCase().includes(kw);
+        const matchUser = call.userName.toLowerCase().includes(kw);
+        const matchUid = call.userId.toLowerCase().includes(kw);
+        const matchAgent = call.agentName.toLowerCase().includes(kw);
+        if (!matchId && !matchUser && !matchUid && !matchAgent) return false;
+      }
 
       return true;
+    }).sort((a, b) => {
+      let valA = a[sortField];
+      let valB = b[sortField];
+
+      if (typeof valA === 'string') {
+        return sortOrder === 'asc' ? valA.localeCompare(valB as string) : (valB as string).localeCompare(valA);
+      }
+      return sortOrder === 'asc' ? (valA as number) - (valB as number) : (valB as number) - (valA as number);
     });
-  }, [orders, statusFilter, typeFilter, searchWord, dateFilter]);
+  }, [agentCalls, timeRange, customStartDate, customEndDate, selectedAgentFilter, selectedModelFilter, statusFilter, searchKeyword, sortField, sortOrder]);
+
+  // Quick stats calculation for filtered items
+  const stats = useMemo(() => {
+    const totalCalls = filteredCalls.length;
+    const totalTokens = filteredCalls.reduce((acc, curr) => acc + curr.inputTokens + curr.outputTokens, 0);
+    const totalCost = filteredCalls.reduce((acc, curr) => acc + curr.cost, 0);
+    const successCalls = filteredCalls.filter(c => c.status === '成功').length;
+    const successRate = totalCalls > 0 ? ((successCalls / totalCalls) * 100).toFixed(1) : '100.0';
+    const avgLatency = totalCalls > 0 ? (filteredCalls.reduce((acc, curr) => acc + (curr.latencyMs || 0), 0) / totalCalls).toFixed(0) : '0';
+
+    return { totalCalls, totalTokens, totalCost, successRate, avgLatency };
+  }, [filteredCalls]);
+
+  const handleCopy = (text: string, id: string) => {
+    navigator.clipboard?.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleToggleSort = (field: 'callTime' | 'cost' | 'inputTokens' | 'outputTokens' | 'latencyMs') => {
+    if (sortField === field) {
+      setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortOrder('desc');
+    }
+  };
+
+  const handleResetFilters = () => {
+    setTimeRange('all');
+    setCustomStartDate('');
+    setCustomEndDate('');
+    setSelectedAgentFilter('全部');
+    setSelectedModelFilter('全部');
+    setStatusFilter('全部');
+    setSearchKeyword('');
+  };
 
   return (
     <div className="space-y-6">
-      {/* Search and Filters panel */}
-      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-        <div className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-400" />
-          <span>订单检索控制中心</span>
+      {/* 1. TOP STATS BAR */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Total Calls */}
+        <div className="bg-slate-900/80 border border-slate-800 p-4.5 rounded-2xl shadow-xs space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-400">Agent 调用总量</span>
+            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              <Bot className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="text-xl font-black font-mono text-slate-100">
+            {stats.totalCalls.toLocaleString()} <span className="text-xs text-slate-500 font-normal">次</span>
+          </div>
+          <p className="text-[10px] text-slate-500">全站智能体 API 与交互调用</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* Text search */}
+        {/* Total Tokens */}
+        <div className="bg-slate-900/80 border border-slate-800 p-4.5 rounded-2xl shadow-xs space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-400">Token 消耗总计</span>
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              <Zap className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="text-xl font-black font-mono text-slate-100">
+            {stats.totalTokens.toLocaleString()} <span className="text-xs text-slate-500 font-normal">Tokens</span>
+          </div>
+          <p className="text-[10px] text-slate-500">输入与输出 Token 汇总</p>
+        </div>
+
+        {/* Total Cost */}
+        <div className="bg-slate-900/80 border border-slate-800 p-4.5 rounded-2xl shadow-xs space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-400">模型结算总费用</span>
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <Coins className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="text-xl font-black font-mono text-emerald-400">
+            ¥{stats.totalCost.toFixed(4)}
+          </div>
+          <p className="text-[10px] text-slate-500">按底座基座模型费率结算</p>
+        </div>
+
+        {/* Success Rate */}
+        <div className="bg-slate-900/80 border border-slate-800 p-4.5 rounded-2xl shadow-xs space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-400">调用成功率</span>
+            <div className="p-2 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="text-xl font-black font-mono text-teal-400">
+            {stats.successRate}%
+          </div>
+          <p className="text-[10px] text-slate-500">服务网关稳定率指标</p>
+        </div>
+
+        {/* Avg Latency */}
+        <div className="bg-slate-900/80 border border-slate-800 p-4.5 rounded-2xl shadow-xs space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-400">平均响应耗时</span>
+            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+              <Clock className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="text-xl font-black font-mono text-purple-400">
+            {stats.avgLatency} <span className="text-xs text-slate-500 font-normal">ms</span>
+          </div>
+          <p className="text-[10px] text-slate-500">Agent 推理执行耗时</p>
+        </div>
+      </div>
+
+      {/* 2. SEARCH & FILTER CONTROL PANEL */}
+      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div className="text-xs font-black text-slate-300 uppercase tracking-wider flex items-center gap-2">
+            <SlidersHorizontal className="w-4 h-4 text-indigo-400" />
+            <span>Agent 调用明细筛选控制台</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleResetFilters}
+              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium border border-slate-700 transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>重置所有筛选</span>
+            </button>
+            <span className="text-[11px] px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-400 font-mono border border-indigo-500/20">
+              命中 {filteredCalls.length} 条记录
+            </span>
+          </div>
+        </div>
+
+        {/* Filter Inputs Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 text-xs">
+          {/* 1. Keyword Search */}
           <div>
-            <label className="text-[11px] font-bold text-slate-400 block mb-1">综合检索 (订单号、用户名、智能体)</label>
+            <label className="text-[11px] font-bold text-slate-400 block mb-1.5">搜索用户 / UID / 调用ID</label>
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="输入关键信息..."
-                value={searchWord}
-                onChange={e => setSearchWord(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-indigo-500"
+                placeholder="搜索用户名、UID或调用ID..."
+                value={searchKeyword}
+                onChange={e => setSearchKeyword(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500 transition"
               />
             </div>
           </div>
 
-          {/* Status filter */}
+          {/* 2. Time Range */}
           <div>
-            <label className="text-[11px] font-bold text-slate-400 block mb-1">订单生效状态</label>
+            <label className="text-[11px] font-bold text-slate-400 block mb-1.5">时间范围</label>
+            <select
+              value={timeRange}
+              onChange={e => setTimeRange(e.target.value as any)}
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-indigo-500 font-medium"
+            >
+              <option value="all">全部时间</option>
+              <option value="today">今日</option>
+              <option value="7days">近7天</option>
+              <option value="month">本月</option>
+              <option value="custom">自定义日期范围</option>
+            </select>
+          </div>
+
+          {/* 3. Agent Filter */}
+          <div>
+            <label className="text-[11px] font-bold text-slate-400 block mb-1.5">Agent 名称</label>
+            <select
+              value={selectedAgentFilter}
+              onChange={e => setSelectedAgentFilter(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-indigo-500 font-medium"
+            >
+              <option value="全部">全部已上架 Agent ({availableAgentNames.length})</option>
+              {availableAgentNames.map(name => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 4. Bound Model Filter */}
+          <div>
+            <label className="text-[11px] font-bold text-slate-400 block mb-1.5">绑定基座模型</label>
+            <select
+              value={selectedModelFilter}
+              onChange={e => setSelectedModelFilter(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-indigo-500 font-medium"
+            >
+              <option value="全部">全部已配置模型 ({availableModelNames.length})</option>
+              {availableModelNames.map(name => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 5. Status Filter */}
+          <div>
+            <label className="text-[11px] font-bold text-slate-400 block mb-1.5">调用状态</label>
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-indigo-500 font-bold"
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-indigo-500 font-medium"
             >
               <option value="全部">全部状态</option>
-              <option value="已生效">已生效 (运行中)</option>
-              <option value="已用完">已用完</option>
-              <option value="已过期">已过期</option>
+              <option value="成功">成功 (200 OK)</option>
+              <option value="失败">失败 (异常/超时)</option>
             </select>
-          </div>
-
-          {/* Type filter */}
-          <div>
-            <label className="text-[11px] font-bold text-slate-400 block mb-1">订单付费类型</label>
-            <select
-              value={typeFilter}
-              onChange={e => setTypeFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-indigo-500 font-bold"
-            >
-              <option value="全部">全部付费方式</option>
-              <option value="免费领取">免费领取</option>
-              <option value="按Token订阅">按Token订阅</option>
-              <option value="周卡">周卡</option>
-              <option value="月卡">月卡</option>
-              <option value="季卡">季卡</option>
-              <option value="年卡">年卡</option>
-            </select>
-          </div>
-
-          {/* Date Picker (Simple) */}
-          <div>
-            <label className="text-[11px] font-bold text-slate-400 block mb-1">下单时间筛选</label>
-            <input
-              type="date"
-              value={dateFilter}
-              onChange={e => setDateFilter(e.target.value)}
-              className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-indigo-500 font-bold uppercase"
-            />
           </div>
         </div>
+
+        {/* Custom Date Range Row (Conditional) */}
+        {timeRange === 'custom' && (
+          <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center gap-3">
+            <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-indigo-400" />
+              自定义起始日期:
+            </span>
+            <input
+              type="date"
+              value={customStartDate}
+              onChange={e => setCustomStartDate(e.target.value)}
+              className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-indigo-500 font-mono"
+            />
+            <span className="text-slate-500 text-xs">至</span>
+            <input
+              type="date"
+              value={customEndDate}
+              onChange={e => setCustomEndDate(e.target.value)}
+              className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-indigo-500 font-mono"
+            />
+          </div>
+        )}
       </div>
 
-      {/* Main Table */}
+      {/* 3. MAIN TABLE VIEW */}
       <div className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden shadow-xs">
         <div className="p-4 border-b border-slate-800 bg-slate-900 flex items-center justify-between">
-          <div className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <Receipt className="w-4 h-4 text-emerald-400" />
-            <span>Agent 订阅与结算账单流水</span>
+          <div className="text-xs font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
+            <History className="w-4 h-4 text-indigo-400" />
+            <span>Agent 调用明细日志</span>
+            <span className="text-[10px] text-slate-500 font-normal lowercase">（与模型调用同源数据·Agent视角）</span>
           </div>
-          <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-mono border border-emerald-500/20">
-            共查询到 {filteredOrders.length} 个订单记录
+          <span className="text-xs text-slate-400">
+            当前展示 <span className="font-mono text-white font-bold">{filteredCalls.length}</span> 条日志
           </span>
         </div>
 
-        {filteredOrders.length === 0 ? (
-          <div className="py-20 text-center text-slate-500 space-y-2">
-            <Receipt className="w-10 h-10 mx-auto text-emerald-400 opacity-50 animate-pulse" />
-            <h4 className="text-sm font-bold text-slate-300">没有查找到对应的订单数据</h4>
-            <p className="text-xs">您可以调整上方的日期范围、订单状态、或关键字进行重试</p>
+        {filteredCalls.length === 0 ? (
+          <div className="py-20 text-center text-slate-500 space-y-3">
+            <Bot className="w-12 h-12 mx-auto text-slate-600 opacity-60 animate-pulse" />
+            <h4 className="text-sm font-bold text-slate-300">没有查找到符合条件的 Agent 调用记录</h4>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              您可以尝试调整时间范围、更换 Agent / 模型筛选项，或清除搜索关键词后重新查询。
+            </p>
+            <button
+              onClick={handleResetFilters}
+              className="px-4 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold transition cursor-pointer"
+            >
+              清空筛选条件
+            </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-slate-950/60 text-slate-400 uppercase text-[10px] font-black border-b border-slate-800">
-                  <th className="py-3 px-4">唯一订单号</th>
-                  <th className="py-3 px-3">下单用户</th>
-                  <th className="py-3 px-3">订购 Agent</th>
-                  <th className="py-3 px-3">套餐类型</th>
-                  <th className="py-3 px-3 text-right">实付金额</th>
-                  <th className="py-3 px-3 text-right">所含Token量</th>
-                  <th className="py-3 px-3 text-right">已消耗/剩余</th>
-                  <th className="py-3 px-3">状态</th>
-                  <th className="py-3 px-3">创建时间</th>
-                  <th className="py-3 px-4 text-center">操作</th>
+                  <th className="py-3.5 px-4 cursor-pointer hover:text-slate-200" onClick={() => handleToggleSort('callTime')}>
+                    <div className="flex items-center gap-1">
+                      <span>调用ID / 时间</span>
+                      <ArrowUpDown className="w-3 h-3" />
+                    </div>
+                  </th>
+                  <th className="py-3.5 px-3">调用用户</th>
+                  <th className="py-3.5 px-3">被调 Agent</th>
+                  <th className="py-3.5 px-3">绑定模型</th>
+                  <th className="py-3.5 px-3 text-right cursor-pointer hover:text-slate-200" onClick={() => handleToggleSort('inputTokens')}>
+                    <div className="flex items-center justify-end gap-1">
+                      <span>输入Token</span>
+                      <ArrowUpDown className="w-3 h-3" />
+                    </div>
+                  </th>
+                  <th className="py-3.5 px-3 text-right cursor-pointer hover:text-slate-200" onClick={() => handleToggleSort('outputTokens')}>
+                    <div className="flex items-center justify-end gap-1">
+                      <span>输出Token</span>
+                      <ArrowUpDown className="w-3 h-3" />
+                    </div>
+                  </th>
+                  <th className="py-3.5 px-3 text-right cursor-pointer hover:text-slate-200" onClick={() => handleToggleSort('cost')}>
+                    <div className="flex items-center justify-end gap-1">
+                      <span>费用</span>
+                      <ArrowUpDown className="w-3 h-3" />
+                    </div>
+                  </th>
+                  <th className="py-3.5 px-3 text-center cursor-pointer hover:text-slate-200" onClick={() => handleToggleSort('latencyMs')}>
+                    <div className="flex items-center justify-center gap-1">
+                      <span>耗时</span>
+                      <ArrowUpDown className="w-3 h-3" />
+                    </div>
+                  </th>
+                  <th className="py-3.5 px-3 text-center">状态</th>
+                  <th className="py-3.5 px-4 text-center">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/50 text-slate-300">
-                {filteredOrders.map(ord => {
-                  const isFree = ord.orderAmount === 0;
+                {filteredCalls.map(call => {
+                  const isSuccess = call.status === '成功';
                   return (
-                    <tr key={ord.id} className="hover:bg-slate-800/30 transition">
-                      {/* Order No */}
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-200">
-                        {ord.id}
+                    <tr key={call.id} className="hover:bg-slate-800/30 transition group">
+                      {/* Call ID & Time */}
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-bold text-slate-200 text-[11px]">{call.id}</span>
+                          <button
+                            onClick={() => handleCopy(call.id, call.id)}
+                            title="点击复制调用ID"
+                            className="p-1 rounded text-slate-500 hover:text-indigo-400 hover:bg-slate-800 transition cursor-pointer"
+                          >
+                            {copiedId === call.id ? (
+                              <Check className="w-3 h-3 text-emerald-400" />
+                            ) : (
+                              <Copy className="w-3 h-3" />
+                            )}
+                          </button>
+                        </div>
+                        <div className="text-[10px] text-slate-500 font-mono mt-0.5">{call.callTime}</div>
                       </td>
 
                       {/* User */}
-                      <td className="py-3.5 px-3">
+                      <td className="py-3 px-3">
                         <div className="flex items-center gap-2">
                           <img
-                            src={ord.userAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=50&auto=format&fit=crop&q=80'}
-                            alt={ord.userName}
+                            src={call.userAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
+                            alt={call.userName}
                             className="w-6 h-6 rounded-full object-cover border border-slate-800 shrink-0"
                           />
-                          <span className="font-bold text-slate-200">{ord.userName}</span>
+                          <div>
+                            <div className="font-bold text-slate-200 text-xs">{call.userName}</div>
+                            <div className="text-[10px] font-mono text-slate-500">{call.userId}</div>
+                          </div>
                         </div>
                       </td>
 
                       {/* Agent Name */}
-                      <td className="py-3.5 px-3 font-extrabold text-white text-xs">
-                        {ord.agentName}
+                      <td className="py-3 px-3">
+                        <div className="flex items-center gap-1.5 font-bold text-white text-xs">
+                          <Bot className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                          <span className="truncate max-w-[150px]" title={call.agentName}>{call.agentName}</span>
+                        </div>
                       </td>
 
-                      {/* Order Type */}
-                      <td className="py-3.5 px-3">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          ord.orderType === '免费领取'
-                            ? 'bg-slate-800 text-slate-400 border border-slate-700'
-                            : ord.orderType.includes('卡')
-                            ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
-                            : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                        }`}>
-                          {ord.orderType}
+                      {/* Bound Model */}
+                      <td className="py-3 px-3">
+                        <span className="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 font-mono text-[11px] font-bold border border-indigo-500/20 whitespace-nowrap">
+                          {call.baseModelName}
                         </span>
                       </td>
 
-                      {/* Amount */}
-                      <td className="py-3.5 px-3 text-right font-black font-mono">
-                        {isFree ? (
-                          <span className="text-emerald-400 text-xs">免费</span>
-                        ) : (
-                          <span className="text-white text-xs">¥{ord.orderAmount.toFixed(2)}</span>
-                        )}
+                      {/* Input Tokens */}
+                      <td className="py-3 px-3 text-right font-mono text-slate-300 font-medium">
+                        {call.inputTokens.toLocaleString()}
                       </td>
 
-                      {/* Token Quant */}
-                      <td className="py-3.5 px-3 text-right font-bold font-mono text-slate-200">
-                        {ord.tokenAmount} 万Token
+                      {/* Output Tokens */}
+                      <td className="py-3 px-3 text-right font-mono text-slate-300 font-medium">
+                        {call.outputTokens.toLocaleString()}
                       </td>
 
-                      {/* Used and remaining */}
-                      <td className="py-3.5 px-3 text-right font-mono text-[11px]">
-                        <div className="text-slate-300">
-                          已用: <span className="text-slate-400">{ord.usedTokens.toFixed(1)}万</span>
-                        </div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">
-                          剩: <span className="text-indigo-400">{(ord.tokenAmount - ord.usedTokens).toFixed(1)}万</span>
-                        </div>
+                      {/* Cost */}
+                      <td className="py-3 px-3 text-right font-mono font-bold text-emerald-400 text-xs">
+                        ¥{call.cost.toFixed(4)}
+                      </td>
+
+                      {/* Latency */}
+                      <td className="py-3 px-3 text-center font-mono text-[11px] text-slate-400">
+                        {call.latencyMs} ms
                       </td>
 
                       {/* Status */}
-                      <td className="py-3.5 px-3">
-                        {ord.status === '已生效' ? (
-                          <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] border border-emerald-500/20 font-bold">
-                            已生效
-                          </span>
-                        ) : ord.status === '已用完' ? (
-                          <span className="px-2 py-0.5 rounded bg-yellow-500/10 text-yellow-400 text-[10px] border border-yellow-500/20 font-bold">
-                            已用完
+                      <td className="py-3 px-3 text-center">
+                        {isSuccess ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] border border-emerald-500/20 font-bold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            成功
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-400 text-[10px] border border-red-500/20 font-bold">
-                            已过期
+                          <span
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/10 text-red-400 text-[10px] border border-red-500/20 font-bold"
+                            title={call.failReason || '调用失败'}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                            失败
                           </span>
                         )}
                       </td>
 
-                      {/* Created time */}
-                      <td className="py-3.5 px-3 text-slate-500 font-mono text-[11px] whitespace-nowrap">
-                        {ord.createdAt}
-                      </td>
-
                       {/* Action */}
-                      <td className="py-3.5 px-4 text-center">
+                      <td className="py-3 px-4 text-center">
                         <button
-                          onClick={() => setSelectedOrder(ord)}
-                          className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition text-[11px] font-bold cursor-pointer"
+                          onClick={() => setSelectedCall(call)}
+                          className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white transition text-[11px] font-bold cursor-pointer inline-flex items-center gap-1"
                         >
-                          查看详情
+                          <Eye className="w-3 h-3 text-indigo-400" />
+                          <span>查看详情</span>
                         </button>
                       </td>
                     </tr>
@@ -2034,119 +1983,201 @@ const AgentOrdersAdminView: React.FC<OrdersProps> = ({ orders, setOrders }) => {
         )}
       </div>
 
-      {/* SECONDARY PAGE: ORDER DETAIL */}
-      {selectedOrder ? (
-        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-6 text-slate-100">
-          {/* Page Header */}
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>返回订阅订单列表</span>
-              </button>
-              <div>
-                <h4 className="text-sm font-black text-white">Agent 账单流向详情档案</h4>
-                <p className="text-xs text-slate-400">系统唯一订单号: {selectedOrder.id}</p>
-              </div>
-            </div>
-            <span className="text-xs font-mono font-bold px-3 py-1 bg-slate-800 text-indigo-400 rounded-lg border border-slate-700">
-              {selectedOrder.status}
-            </span>
-          </div>
-
-          {/* Details Grid */}
-          <div className="space-y-6">
-            {/* Basic Info grid */}
-            <div className="space-y-3">
-              <h5 className="text-xs font-black text-slate-400 uppercase tracking-wider border-l-2 border-indigo-500 pl-2">
-                1. 账期基础档案信息
-              </h5>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs">
-                <div>
-                  <span className="text-slate-500 block">系统唯一订单号</span>
-                  <span className="font-mono text-slate-200 font-bold mt-0.5 block">{selectedOrder.id}</span>
+      {/* 4. DETAIL MODAL DIALOG */}
+      {selectedCall && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                  <Bot className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-slate-500 block">订购客户姓名</span>
-                  <span className="text-slate-200 font-bold mt-0.5 block">{selectedOrder.userName}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block">订购智能体 (Agent)</span>
-                  <span className="text-slate-200 font-bold mt-0.5 block">{selectedOrder.agentName}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block">订单付费套餐类别</span>
-                  <span className="text-slate-200 font-bold mt-0.5 block">{selectedOrder.orderType}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block">结算订单状态</span>
-                  <span className="mt-0.5 block">
-                    {selectedOrder.status === '已生效' ? (
-                      <span className="text-emerald-400 font-bold">● 已生效 (正常运行)</span>
-                    ) : selectedOrder.status === '已用完' ? (
-                      <span className="text-yellow-400 font-bold">● 已用完</span>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-white">Agent 调用详情档案</h3>
+                    {selectedCall.status === '成功' ? (
+                      <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] border border-emerald-500/20 font-bold">
+                        调用成功 (200 OK)
+                      </span>
                     ) : (
-                      <span className="text-red-400 font-bold">● 已过期</span>
+                      <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-400 text-[10px] border border-red-500/20 font-bold">
+                        调用失败 (异常)
+                      </span>
                     )}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+                    <span className="font-mono text-slate-300">ID: {selectedCall.id}</span>
+                    <button
+                      onClick={() => handleCopy(selectedCall.id, 'modal_id')}
+                      className="text-slate-500 hover:text-indigo-400 text-[11px] inline-flex items-center gap-1 transition"
+                    >
+                      {copiedId === 'modal_id' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedId === 'modal_id' ? '已复制' : '复制ID'}</span>
+                    </button>
+                    <span>·</span>
+                    <span className="text-slate-500">{selectedCall.callTime}</span>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedCall(null)}
+                className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-140px)] text-xs">
+              {/* If Failure, show diagnosis banner */}
+              {selectedCall.status === '失败' && (
+                <div className="p-4 rounded-xl bg-red-950/40 border border-red-800/60 text-red-300 space-y-1">
+                  <div className="flex items-center gap-2 font-bold text-red-200 text-xs">
+                    <AlertTriangle className="w-4 h-4 text-red-400" />
+                    <span>调用异常诊断与报错原因</span>
+                  </div>
+                  <p className="text-xs text-red-300/90 font-mono">
+                    {selectedCall.failReason || '上游基座模型接口限流 429 Too Many Requests: 并发调用量超过配额上限，系统已触发安全熔断。'}
+                  </p>
+                </div>
+              )}
+
+              {/* 4 Info Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 1. User & Agent Card */}
+                <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-3">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-800/80 pb-2">
+                    <Users className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>调用主体与智能体信息</span>
+                  </div>
+                  <div className="space-y-2 text-slate-300">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">调用用户:</span>
+                      <span className="font-bold text-white">{selectedCall.userName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">用户 UID:</span>
+                      <span className="font-mono text-slate-200">{selectedCall.userId}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">被调用 Agent:</span>
+                      <span className="font-bold text-indigo-400">{selectedCall.agentName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Agent ID:</span>
+                      <span className="font-mono text-slate-400">{selectedCall.agentId}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Model & Cost Card */}
+                <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-3">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-800/80 pb-2">
+                    <Coins className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>底座模型与计费明细</span>
+                  </div>
+                  <div className="space-y-2 text-slate-300">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">绑定基座模型:</span>
+                      <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-mono font-bold border border-indigo-500/20">
+                        {selectedCall.baseModelName}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">命中计费单价:</span>
+                      <span className="font-mono text-slate-300">{selectedCall.priceInput} / {selectedCall.priceOutput}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">本次结算扣费:</span>
+                      <span className="font-mono font-black text-emerald-400 text-sm">¥{selectedCall.cost.toFixed(4)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">端到端响应耗时:</span>
+                      <span className="font-mono text-purple-400 font-bold">{selectedCall.latencyMs} ms</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Token Metric Grid */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-center">
+                  <span className="text-[10px] text-slate-500 block">输入 Token 消耗</span>
+                  <span className="text-sm font-black text-slate-200 font-mono mt-1 block">
+                    {selectedCall.inputTokens.toLocaleString()} Tokens
                   </span>
                 </div>
-                <div>
-                  <span className="text-slate-500 block">账期创建时序</span>
-                  <span className="font-mono text-slate-300 mt-0.5 block">{selectedOrder.createdAt}</span>
+                <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-center">
+                  <span className="text-[10px] text-slate-500 block">输出 Token 消耗</span>
+                  <span className="text-sm font-black text-indigo-400 font-mono mt-1 block">
+                    {selectedCall.outputTokens.toLocaleString()} Tokens
+                  </span>
                 </div>
-                <div>
-                  <span className="text-slate-500 block">支付时效</span>
-                  <span className="font-mono text-slate-300 mt-0.5 block">{selectedOrder.payTime}</span>
+                <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-center">
+                  <span className="text-[10px] text-slate-500 block">合计总消耗</span>
+                  <span className="text-sm font-black text-teal-400 font-mono mt-1 block">
+                    {(selectedCall.inputTokens + selectedCall.outputTokens).toLocaleString()} Tokens
+                  </span>
                 </div>
-                <div>
-                  <span className="text-slate-500 block">起算生效期</span>
-                  <span className="font-mono text-slate-300 mt-0.5 block">{selectedOrder.startTime}</span>
+              </div>
+
+              {/* Request Summary */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>请求内容 / 提示词摘要 (Request Prompt)</span>
+                  </span>
+                  <button
+                    onClick={() => handleCopy(selectedCall.requestSummary || '', 'req_sum')}
+                    className="text-slate-500 hover:text-indigo-400 text-[11px] inline-flex items-center gap-1"
+                  >
+                    {copiedId === 'req_sum' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedId === 'req_sum' ? '已复制' : '复制输入'}</span>
+                  </button>
                 </div>
-                <div>
-                  <span className="text-slate-500 block">到期释放时间</span>
-                  <span className="font-mono text-slate-300 mt-0.5 block">{selectedOrder.expireTime}</span>
+                <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-xl font-mono text-slate-300 text-xs leading-relaxed whitespace-pre-wrap">
+                  {selectedCall.requestSummary || '【输入参数】无详细输入记录'}
+                </div>
+              </div>
+
+              {/* Response Summary */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Agent 响应内容 / 生成结果 (Response Output)</span>
+                  </span>
+                  <button
+                    onClick={() => handleCopy(selectedCall.responseSummary || '', 'res_sum')}
+                    className="text-slate-500 hover:text-indigo-400 text-[11px] inline-flex items-center gap-1"
+                  >
+                    {copiedId === 'res_sum' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedId === 'res_sum' ? '已复制' : '复制输出'}</span>
+                  </button>
+                </div>
+                <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-xl font-mono text-slate-300 text-xs leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">
+                  {selectedCall.responseSummary || '【输出结果】无详细输出记录'}
                 </div>
               </div>
             </div>
 
-            {/* Order Breakdown Grid */}
-            <div className="space-y-3">
-              <h5 className="text-xs font-black text-slate-400 uppercase tracking-wider border-l-2 border-indigo-500 pl-2">
-                2. 资源配额与结算扣减明细
-              </h5>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl text-center">
-                  <span className="text-[10px] text-slate-500 block">应付/实付金额</span>
-                  <span className="text-base font-black text-emerald-400 font-mono mt-1 block">
-                    ¥{selectedOrder.orderAmount.toFixed(2)}
-                  </span>
-                </div>
-                <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl text-center">
-                  <span className="text-[10px] text-slate-500 block">套餐包容量</span>
-                  <span className="text-base font-black text-indigo-400 font-mono mt-1 block">
-                    {selectedOrder.tokenAmount} 万
-                  </span>
-                </div>
-                <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl text-center">
-                  <span className="text-[10px] text-slate-500 block">已累计消耗量</span>
-                  <span className="text-base font-black text-slate-300 font-mono mt-1 block">
-                    {selectedOrder.usedTokens.toFixed(2)} 万
-                  </span>
-                </div>
-                <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl text-center">
-                  <span className="text-[10px] text-slate-500 block">可用剩余存量</span>
-                  <span className="text-base font-black text-teal-400 font-mono mt-1 block">
-                    {(selectedOrder.tokenAmount - selectedOrder.usedTokens).toFixed(2)} 万
-                  </span>
-                </div>
-              </div>
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between">
+              <span className="text-[11px] text-slate-500">
+                数据视角：通过 Agent 发起的调用，底层对应模型调用记录 {selectedCall.id}
+              </span>
+              <button
+                onClick={() => setSelectedCall(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition cursor-pointer"
+              >
+                关闭
+              </button>
             </div>
           </div>
         </div>
-      ) : null}
+      )}
     </div>
   );
 };
@@ -2172,8 +2203,8 @@ const AgentStatsAdminView: React.FC<StatsProps> = ({ techForms, appScenarios }) 
   const totalRevenue = useMemo(() => {
     return (
       agents.reduce((sum, item) => {
-        const subscribers = item.subscribersCount || 0;
-        const avgPrice = item.pricePerTenThousandTokens ? 45 : 0; // average card price if not free
+        const subscribers = item.callUsersCount || item.subscribersCount || 0;
+        const avgPrice = item.pricePerTenThousandTokens ? 45 : 0; // average token cost
         return sum + subscribers * avgPrice;
       }, 0) + 124500
     );
@@ -2187,7 +2218,7 @@ const AgentStatsAdminView: React.FC<StatsProps> = ({ techForms, appScenarios }) 
       .map(item => ({
         name: item.name.length > 8 ? item.name.substring(0, 8) + '...' : item.name,
         '调用次数': item.usageCount || 0,
-        '订阅数': item.subscribersCount || 0
+        '调用用户数': item.callUsersCount || item.subscribersCount || 0
       }));
   }, [agents]);
 
@@ -2438,7 +2469,7 @@ const AgentStatsAdminView: React.FC<StatsProps> = ({ techForms, appScenarios }) 
                 <th className="py-3 px-3">技术架构形态</th>
                 <th className="py-3 px-3 text-right">累计调用次数</th>
                 <th className="py-3 px-3 text-right">消耗Token估算</th>
-                <th className="py-3 px-3 text-right">当前订阅用户数</th>
+                <th className="py-3 px-3 text-right">调用用户数</th>
                 <th className="py-3 px-4 text-right">累计总营收</th>
               </tr>
             </thead>
@@ -2446,7 +2477,8 @@ const AgentStatsAdminView: React.FC<StatsProps> = ({ techForms, appScenarios }) 
               {agents.map(ag => {
                 const calls = ag.usageCount || 0;
                 const tokensEst = (calls * 1.45).toFixed(1); // Mock token multiplier
-                const revenueEst = (ag.subscribersCount || 0) * (ag.pricePerTenThousandTokens ? 149 : 0);
+                const callUsers = ag.callUsersCount || ag.subscribersCount || 0;
+                const revenueEst = callUsers * (ag.pricePerTenThousandTokens ? 149 : 0);
                 return (
                   <tr key={ag.id} className="hover:bg-slate-800/30 transition">
                     <td className="py-3 px-4 font-bold text-white">{ag.name}</td>
@@ -2459,10 +2491,10 @@ const AgentStatsAdminView: React.FC<StatsProps> = ({ techForms, appScenarios }) 
                       {calls.toLocaleString()} 次
                     </td>
                     <td className="py-3 px-3 text-right font-mono text-slate-300">
-                      {tokensEst} 万
+                      {tokensEst} 万Token
                     </td>
-                    <td className="py-3 px-3 text-right font-mono text-slate-200">
-                      {(ag.subscribersCount || 0).toLocaleString()} 人
+                    <td className="py-3 px-3 text-right font-mono text-teal-400 font-bold">
+                      {callUsers.toLocaleString()} 人
                     </td>
                     <td className="py-3 px-4 text-right font-mono font-bold text-emerald-400">
                       ¥{revenueEst.toLocaleString()}

@@ -27,18 +27,15 @@ interface AgentDetailSubPageProps {
   agent: AgentItem;
   onBack: () => void;
   userSubscription?: AgentSubscriptionItem;
-  isPayPerTokenMode: boolean;
-  trialCountLeft: number;
+  isPayPerTokenMode?: boolean;
+  trialCountLeft?: number;
 }
 
 export const AgentDetailSubPage: React.FC<AgentDetailSubPageProps> = ({
   agent,
-  onBack,
-  userSubscription,
-  isPayPerTokenMode,
-  trialCountLeft
+  onBack
 }) => {
-  const { openAgentSubscribe, showToast, user, models, openModelDetail } = useApp();
+  const { showToast, user, models, openModelDetail } = useApp();
   const [activeTab, setActiveTab] = useState<'intro' | 'docs' | 'guide' | 'reviews'>('intro');
 
   // 判断是否为平台已有模型
@@ -71,10 +68,6 @@ export const AgentDetailSubPage: React.FC<AgentDetailSubPageProps> = ({
     }
     const trialUrl = `${window.location.origin}${window.location.pathname}?trial=${agent.id}`;
     window.open(trialUrl, '_blank');
-  };
-
-  const handleSubscribe = () => {
-    openAgentSubscribe(agent);
   };
 
   // Submit comment handler
@@ -115,6 +108,8 @@ export const AgentDetailSubPage: React.FC<AgentDetailSubPageProps> = ({
       ? agent.industryTags 
       : (agent.industry ? [agent.industry] : ['通用']);
 
+  const freeQuota = agent.freeTokenQuota ?? 50000;
+
   return (
     <div className="space-y-6 select-none animate-fade-in max-w-7xl mx-auto pb-12">
       
@@ -141,32 +136,11 @@ export const AgentDetailSubPage: React.FC<AgentDetailSubPageProps> = ({
           </button>
           <button
             onClick={handleLaunchTrial}
-            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer shadow-xs ${
-              userSubscription
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-800'
-            }`}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-md shadow-indigo-200 transition-all cursor-pointer hover:scale-[1.02] active:scale-95"
           >
-            <Play className={`w-4 h-4 fill-current ${userSubscription ? 'text-emerald-600' : 'text-indigo-600'}`} />
-            <span>{userSubscription ? '立即使用 (新窗口)' : '免费试用 (新窗口)'}</span>
+            <Play className="w-4 h-4 fill-white" />
+            <span>立即体验 (新窗口打开)</span>
           </button>
-          {userSubscription ? (
-            <button
-              onClick={handleSubscribe}
-              className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow-xs transition-all cursor-pointer"
-            >
-              <ShieldCheck className="w-4 h-4 text-white" />
-              <span>已订阅 (管理套餐)</span>
-            </button>
-          ) : (
-            <button
-              onClick={handleSubscribe}
-              className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-xs transition-all cursor-pointer hover:scale-[1.02] active:scale-95"
-            >
-              <Zap className="w-4 h-4 text-white fill-current animate-pulse" />
-              <span>立即订阅套餐</span>
-            </button>
-          )}
         </div>
       </div>
 
@@ -183,12 +157,6 @@ export const AgentDetailSubPage: React.FC<AgentDetailSubPageProps> = ({
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-3">
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{agent.name}</h2>
-              {userSubscription && (
-                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-xs font-bold px-2.5 py-0.5 rounded-lg flex items-center gap-1 shrink-0">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>已订阅</span>
-                </span>
-              )}
               <div className="flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-lg">
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                 <span>{(agent.rating ?? 5.0).toFixed(1)}</span>
@@ -216,7 +184,7 @@ export const AgentDetailSubPage: React.FC<AgentDetailSubPageProps> = ({
               <span className="text-slate-300">•</span>
               <span className="text-slate-500 font-medium">开发者：<strong className="text-slate-800">{agent.developer || agent.author || 'AI 平台官方'}</strong></span>
               <span className="text-slate-300">•</span>
-              <span className="text-slate-500 font-medium">订阅用户：<strong className="text-indigo-600 font-extrabold">{(agent.subscribersCount ?? 128).toLocaleString()} 人</strong></span>
+              <span className="text-slate-500 font-medium">调用用户：<strong className="text-indigo-600 font-extrabold">{(agent.callUsersCount ?? agent.subscribersCount ?? 128).toLocaleString()} 人</strong></span>
             </div>
 
             {/* Slogan */}
@@ -226,26 +194,20 @@ export const AgentDetailSubPage: React.FC<AgentDetailSubPageProps> = ({
           </div>
         </div>
 
-        {/* Clean Subscription & Service Status Box */}
-        <div className="bg-slate-50 border border-slate-200/80 px-6 py-4 rounded-2xl flex flex-col justify-center min-w-[220px]">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">订阅与服务状态</span>
-          <div className="mt-1.5 flex items-center gap-2">
-            {userSubscription ? (
-              <span className="text-xs font-extrabold text-emerald-700 flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>已激活 ({userSubscription.tierName})</span>
+        {/* Clean Token Billing Status Box */}
+        <div className="bg-slate-50 border border-slate-200/80 px-6 py-4 rounded-2xl flex flex-col justify-center min-w-[240px]">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">计费模式与额度</span>
+          <div className="mt-1.5 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black text-indigo-700 flex items-center gap-1.5 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200">
+                <Coins className="w-3.5 h-3.5 text-indigo-600" />
+                <span>按 Token 消耗计费</span>
               </span>
-            ) : isPayPerTokenMode ? (
-              <span className="text-xs font-extrabold text-amber-700 flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
-                <Coins className="w-4 h-4 text-amber-600" />
-                <span>按 Token 扣费模式</span>
-              </span>
-            ) : (
-              <span className="text-xs font-extrabold text-indigo-700 flex items-center gap-1.5 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200">
-                <Sparkles className="w-4 h-4 text-indigo-600" />
-                <span>免费试用 (剩 {trialCountLeft}/30 次)</span>
-              </span>
-            )}
+            </div>
+            <div className="text-[11px] text-slate-500 font-medium flex items-center justify-between">
+              <span>免费赠送额度:</span>
+              <span className="font-extrabold text-slate-900">{freeQuota.toLocaleString()} Tokens</span>
+            </div>
           </div>
         </div>
       </div>

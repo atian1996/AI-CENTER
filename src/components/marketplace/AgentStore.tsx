@@ -23,10 +23,7 @@ import {
 export const AgentStore: React.FC = () => {
   const { 
     agents, 
-    subscriptions, 
     payPerTokenAgents, 
-    trialCountLeft,
-    openAgentSubscribe,
     showToast
   } = useApp();
 
@@ -162,9 +159,6 @@ export const AgentStore: React.FC = () => {
       <AgentDetailSubPage
         agent={selectedAgentForDetail}
         onBack={() => setSelectedAgentForDetail(null)}
-        userSubscription={subscriptions[selectedAgentForDetail.id]}
-        isPayPerTokenMode={!!payPerTokenAgents[selectedAgentForDetail.id]}
-        trialCountLeft={trialCountLeft}
       />
     );
   }
@@ -393,8 +387,6 @@ export const AgentStore: React.FC = () => {
         {/* Agent Cards Grid Matrix */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4.5">
           {filteredAgents.map(ag => {
-            const isSubscribed = !!subscriptions[ag.id];
-
             // Compute exact scenarios and industries to display
             const displayScenarios: string[] = 
               ag.categoryTags && ag.categoryTags.length > 0 
@@ -405,6 +397,10 @@ export const AgentStore: React.FC = () => {
               ag.industryTags && ag.industryTags.length > 0 
                 ? ag.industryTags 
                 : (ag.industry ? [ag.industry] : []);
+
+            const freeTokensText = ag.freeTokenQuota 
+              ? `${(ag.freeTokenQuota >= 10000 ? (ag.freeTokenQuota / 10000) + '万' : (ag.freeTokenQuota / 1000) + 'k')} Token 免费额度`
+              : '5万 Token 免费额度';
 
             return (
               <div
@@ -426,12 +422,10 @@ export const AgentStore: React.FC = () => {
                       <div className="min-w-0">
                         <h3 className="text-sm font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors truncate flex items-center gap-1.5">
                           <span className="truncate">{ag.name}</span>
-                          {isSubscribed && (
-                            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[10px] font-extrabold px-1.5 py-0.5 rounded-md shrink-0 flex items-center gap-0.5 shadow-2xs">
-                              <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
-                              已订阅
-                            </span>
-                          )}
+                          <span className="bg-indigo-50 text-indigo-700 border border-indigo-200/80 text-[10px] font-extrabold px-1.5 py-0.5 rounded-md shrink-0 flex items-center gap-0.5 shadow-2xs">
+                            <Sparkles className="w-3 h-3 text-indigo-600" />
+                            {freeTokensText}
+                          </span>
                         </h3>
                         <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-[11px] mt-0.5">
                           <div className="flex items-center gap-0.5 text-amber-500 font-bold">
@@ -441,7 +435,7 @@ export const AgentStore: React.FC = () => {
                           <span className="text-slate-300 font-normal">•</span>
                           <span className="text-slate-400 font-normal">({ag.ratingCount ?? 120})</span>
                           <span className="text-slate-300 font-normal">•</span>
-                          <span className="text-indigo-600 font-extrabold">{(ag.subscribersCount ?? 128).toLocaleString()}人使用</span>
+                          <span className="text-indigo-600 font-extrabold">{(ag.callUsersCount ?? ag.subscribersCount ?? 128).toLocaleString()}人调用</span>
                         </div>
                       </div>
                     </div>
@@ -477,18 +471,14 @@ export const AgentStore: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Action Buttons: [ 免费试用 / 立即使用 ] 和 [ Agent详情 ] */}
+                {/* Action Buttons: [ 立即体验 ] 和 [ Agent详情 ] */}
                 <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
                   <button
                     onClick={(e) => handleFreeTrialClick(ag, e)}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                      isSubscribed 
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80 hover:bg-emerald-100 shadow-2xs' 
-                        : 'bg-slate-100 hover:bg-slate-200 text-slate-800'
-                    }`}
+                    className="flex-1 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
                   >
-                    <Play className={`w-3.5 h-3.5 fill-current ${isSubscribed ? 'text-emerald-600' : 'text-indigo-600'}`} />
-                    <span>{isSubscribed ? '立即使用' : '免费试用'}</span>
+                    <Play className="w-3.5 h-3.5 fill-current text-indigo-600" />
+                    <span>立即体验</span>
                   </button>
                   
                   <button

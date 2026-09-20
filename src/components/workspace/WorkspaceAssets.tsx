@@ -39,6 +39,7 @@ import {
   UploadCloud,
   LayoutGrid,
   Building2,
+  Coins,
   FileCode,
   HardDrive,
   Copy,
@@ -639,7 +640,7 @@ export const WorkspaceAssets: React.FC = () => {
       {activeAssetTab === 'agents' && (
         <div className="space-y-6">
           
-          {/* Sub-level Tabs: 我创建的 / 我订阅的 */}
+          {/* Sub-level Tabs: 我创建的 / 我调用的 */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <div className="flex items-center gap-2 bg-slate-100/80 p-1 rounded-xl">
               <button
@@ -668,7 +669,7 @@ export const WorkspaceAssets: React.FC = () => {
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <span>我订阅的</span>
+                <span>我调用的</span>
                 <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
                   agentScopeTab === 'subscribed' ? 'bg-blue-50 text-blue-600' : 'bg-slate-200/70 text-slate-500'
                 }`}>
@@ -682,7 +683,7 @@ export const WorkspaceAssets: React.FC = () => {
                 onClick={() => setSelectedMainTab('marketplace')}
                 className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1 cursor-pointer"
               >
-                <span>前往 Agent 商店订阅更多 →</span>
+                <span>前往 Agent 商店体验更多 →</span>
               </button>
             )}
           </div>
@@ -843,12 +844,12 @@ export const WorkspaceAssets: React.FC = () => {
             <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center space-y-3">
               <Bot className="w-10 h-10 text-slate-300 mx-auto" />
               <h4 className="text-sm font-bold text-slate-700">
-                {agentScopeTab === 'created' ? '暂未创建任何 Agent' : '暂未订阅任何 Agent'}
+                {agentScopeTab === 'created' ? '暂未创建任何 Agent' : '暂未调用任何 Agent'}
               </h4>
               <p className="text-xs text-slate-400 max-w-md mx-auto">
                 {agentScopeTab === 'created' 
                   ? '点击页面右上方的“创建 Agent”按钮，即可快速创建专属工作流、智能体与助手应用。' 
-                  : '前往 Agent 商店浏览丰富多样的场景化智能体，一键订阅即刻体验！'}
+                  : '前往 Agent 商店浏览丰富多样的场景化智能体，一键极速体验调用！'}
               </p>
               {agentScopeTab === 'subscribed' && (
                 <button
@@ -864,8 +865,7 @@ export const WorkspaceAssets: React.FC = () => {
               {currentDisplayAgents.map((ag) => {
                 const sceneTag = ag.scene || (ag.categoryTags && ag.categoryTags[0]) || (ag.category === 'coding' ? '编程开发' : ag.category === 'data' ? '数据分析' : ag.category === 'image' ? '内容创作' : '办公助理');
                 const industryTag = ag.industry || (ag.industryTags && ag.industryTags[0]) || '通用';
-                const sub = subscriptions[ag.id];
-                const expireDateText = sub?.expireDate || (payPerTokenAgents[ag.id] ? '按量计费 (永久有效)' : '2026/09/24');
+                const quotaText = `${(ag.freeTokenQuota ?? 50000).toLocaleString()} Tokens`;
 
                 return (
                   <div
@@ -879,7 +879,7 @@ export const WorkspaceAssets: React.FC = () => {
                       }
                     }}
                     className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all cursor-pointer flex flex-col justify-between group min-h-[190px]"
-                    title={agentScopeTab === 'created' ? '点击进入应用编排界面' : '点击在独立标签页立即使用该 Agent'}
+                    title={agentScopeTab === 'created' ? '点击进入应用编排界面' : '点击在独立标签页立即体验该 Agent'}
                   >
                     
                     <div className="space-y-2.5">
@@ -935,11 +935,11 @@ export const WorkspaceAssets: React.FC = () => {
                     <div className="pt-2.5 mt-2.5 border-t border-slate-100 space-y-2">
                       
                       {agentScopeTab === 'subscribed' ? (
-                        <div className="flex items-center justify-between text-[10px] bg-amber-50/80 border border-amber-200/60 rounded-lg p-1.5">
-                          <div className="flex items-center gap-1 text-amber-800 font-bold truncate">
-                            <Clock className="w-3 h-3 text-amber-600 shrink-0" />
-                            <span className="shrink-0">到期时间:</span>
-                            <span className="font-extrabold text-amber-900 truncate">{expireDateText}</span>
+                        <div className="flex items-center justify-between text-[10px] bg-indigo-50/70 border border-indigo-200/60 rounded-lg p-1.5">
+                          <div className="flex items-center gap-1 text-indigo-800 font-bold truncate">
+                            <Coins className="w-3 h-3 text-indigo-600 shrink-0" />
+                            <span className="shrink-0">免费额度:</span>
+                            <span className="font-extrabold text-indigo-900 truncate">{quotaText}</span>
                           </div>
                           <button
                             type="button"
@@ -950,7 +950,7 @@ export const WorkspaceAssets: React.FC = () => {
                             }}
                             className="text-[10px] font-bold px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md transition cursor-pointer shrink-0 ml-1 shadow-2xs"
                           >
-                            立即使用
+                            立即体验
                           </button>
                         </div>
                       ) : (

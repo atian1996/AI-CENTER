@@ -190,9 +190,11 @@ export interface AgentItem {
   pricePerTenThousandTokens?: number;
   linkedModel?: string;
   subscribersCount?: number;
+  callUsersCount?: number; // 调用用户数 (当前使用该Agent的用户数量)
   hasTrialQuota?: boolean;
   trialQuotaVal?: number;
   trialQuotaValidityDays?: number;
+  freeTokenQuota?: number; // 免费Token额度 (万Token)
   weekCardPrice?: number;
   weekCardTokens?: number;
   monthCardPrice?: number;
@@ -202,8 +204,8 @@ export interface AgentItem {
   yearCardPrice?: number;
   yearCardTokens?: number;
   apiAddress?: string;
-  status?: '已上架' | '已停止新订阅' | '已下架' | '草稿';
-  freeTrialCount?: number; // 免费试用次数
+  status?: '已上架' | '未上架' | '已停止新订阅' | '已下架' | '草稿';
+  freeTrialCount?: number; // 兼容旧字段
   trialUrl?: string; // 外部免费试用或独立体验页面URL
   categoryTags?: string[];
   industryTags?: string[];
@@ -315,6 +317,9 @@ export interface ModelCallRecord {
   userPhone?: string;
   modelId: string; // 模型ID
   modelName: string; // 模型名称
+  agentId?: string; // 如果是通过Agent调用，关联的Agent ID
+  agentName?: string; // 如果是通过Agent调用，关联的Agent名称
+  callSource?: 'agent' | 'direct'; // 调用来源
   callType: 'API' | '在线体验'; // 调用方式
   inputAmount: string; // 如 “1,234 tokens” 或 “5张” 或 “120秒”
   inputCount: number;
@@ -329,6 +334,30 @@ export interface ModelCallRecord {
   matchedBillingRule?: string; // 命中的计费规则（适用模态+计费方向+计价单位）
   latencyMs?: number; // 耗时
   apiKeyPrefix?: string; // 调用的API Key来源
+}
+
+// Agent调用明细记录 (与模型调用记录同源，从Agent视角查看)
+export interface AgentCallRecord {
+  id: string; // 调用ID（系统生成，唯一标识）
+  userId: string; // 用户UID，如 'U892301'
+  userName: string; // 用户名，如 '李明华'
+  userAvatar?: string;
+  agentId: string; // 被调用的 Agent
+  agentName: string; // 被调用的 Agent 名称
+  baseModelId?: string; // 绑定的模型 ID
+  baseModelName: string; // 该 Agent 绑定的模型名称
+  inputTokens: number; // 本次调用消耗的输入Token数
+  outputTokens: number; // 本次调用消耗的输出Token数
+  priceInput?: string; // 命中模型的输入单价
+  priceOutput?: string; // 命中模型的输出单价
+  cost: number; // 按绑定模型单价计算的费用
+  callTime: string; // 调用时间 (YYYY-MM-DD HH:mm:ss)
+  status: '成功' | '失败';
+  failReason?: string; // 如失败则显示
+  requestSummary: string; // 输入内容摘要
+  responseSummary: string; // 输出内容摘要
+  latencyMs?: number; // 耗时
+  callType?: '在线体验' | 'API调用';
 }
 
 // 用户模型消费汇总
@@ -1168,7 +1197,7 @@ export type AdminMenuKey =
   | 'competition_admin'   // 赛事管理
   | 'system_admin'        // 系统管理
   | 'agent_list'          // Agent管理 - 列表及配置
-  | 'agent_orders'        // Agent管理 - 订单管理
+  | 'agent_calls'         // Agent管理 - Agent调用记录
   | 'agent_stats'         // Agent管理 - 用量统计
   | 'dataset_list'        // 数据集管理 - 数据集列表及配置
   | 'dataset_audit'       // 数据集管理 - 数据集审核
@@ -1189,9 +1218,9 @@ export interface AgentOrderItem {
   userAvatar?: string;
   agentId: string;
   agentName: string;
-  orderType: '免费领取' | '按Token订阅' | '周卡' | '月卡' | '季卡' | '年卡';
+  orderType: '免费试用包' | 'Token充值包' | '按Token计费' | '企业Token包' | '免费领取' | '按Token订阅' | string;
   orderAmount: number; // 实付金额
-  tokenAmount: number; // 包含的Token数
+  tokenAmount: number; // 包含的Token数 (万Token)
   status: '已生效' | '已用完' | '已过期';
   createdAt: string;
   payTime: string;

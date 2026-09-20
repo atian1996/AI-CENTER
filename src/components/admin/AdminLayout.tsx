@@ -58,6 +58,7 @@ import {
   Coins,
   Receipt,
   Bot,
+  History,
   Puzzle,
   Edit3
 } from 'lucide-react';
@@ -100,7 +101,7 @@ export const AdminLayout: React.FC = () => {
 
   const isTaskSubMenu = activeAdminMenu === 'publish_audit' || activeAdminMenu === 'task_monitor';
   const isComputeSubMenu = activeAdminMenu.startsWith('compute_');
-  const isAgentSubMenu = ['agent_list', 'agent_orders', 'agent_stats'].includes(activeAdminMenu);
+  const isAgentSubMenu = ['agent_list', 'agent_calls', 'agent_stats'].includes(activeAdminMenu);
   const isDatasetSubMenu = ['dataset_list', 'dataset_audit', 'dataset_stats'].includes(activeAdminMenu);
   const isModelSubMenu = ['model_list', 'model_calls', 'model_stats'].includes(activeAdminMenu);
   const isSkillSubMenu = ['skill_list', 'skill_audit'].includes(activeAdminMenu);
@@ -124,9 +125,9 @@ export const AdminLayout: React.FC = () => {
           icon: <Bot className="w-3.5 h-3.5" />
         },
         {
-          id: 'agent_orders' as AdminMenuKey,
-          label: 'Agent订单管理',
-          icon: <Receipt className="w-3.5 h-3.5" />
+          id: 'agent_calls' as AdminMenuKey,
+          label: '调用记录',
+          icon: <History className="w-3.5 h-3.5" />
         },
         {
           id: 'agent_stats' as AdminMenuKey,
@@ -317,12 +318,12 @@ export const AdminLayout: React.FC = () => {
           category: '智能体管理',
           crumb: ['后台管理', 'Agent管理', '列表及配置']
         };
-      case 'agent_orders':
+      case 'agent_calls':
         return {
-          title: 'Agent 订单管理',
-          subtitle: '追踪用户订购套餐流水、流式计费消耗流水、周期会员卡开通及结算日志',
+          title: 'Agent 调用记录',
+          subtitle: '查看全站用户对各智能体的在线体验与 API 调用明细日志、Token 吞吐、底座模型消耗与费用分摊',
           category: '智能体管理',
-          crumb: ['后台管理', 'Agent管理', '订单管理']
+          crumb: ['后台管理', 'Agent管理', '调用记录']
         };
       case 'agent_stats':
         return {
@@ -748,7 +749,7 @@ export const AdminLayout: React.FC = () => {
             {activeAdminMenu === 'task_monitor' && <TaskMonitorAdminView />}
             
             {/* Agent管理 3 大核心子视图 */}
-            {['agent_list', 'agent_orders', 'agent_stats'].includes(activeAdminMenu) && (
+            {['agent_list', 'agent_calls', 'agent_stats'].includes(activeAdminMenu) && (
               <AgentAdminViews activeSubMenu={activeAdminMenu} />
             )}
 
