@@ -11,7 +11,8 @@ import {
   Download,
   AlertCircle,
   ShieldCheck,
-  Award
+  Award,
+  RotateCcw
 } from 'lucide-react';
 import { SubmitResultModal } from './SubmitResultModal';
 import { TaskVerificationModal } from './TaskVerificationModal';
@@ -52,7 +53,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
   const myTakerRecord = !isReadOnly ? (task.takers || []).find(tk => tk.username === user.name || tk.username.includes('你') || tk.username.includes('极客小千')) : undefined;
   const hasTaken = !isReadOnly && !!myTakerRecord;
   const mySubmission = !isReadOnly ? (task.submissions || []).find(s => s.username === user.name || s.username.includes('你') || s.username.includes('极客小千')) : undefined;
-  const hasSubmitted = !isReadOnly && (!!mySubmission || myTakerRecord?.status === '已提交' || myTakerRecord?.status === '已验收');
+  const isRejected = !isFinished && (mySubmission?.status === '已驳回' || myTakerRecord?.status === '已驳回');
+  const hasSubmitted = !isReadOnly && (mySubmission?.status === '待验收' || mySubmission?.status === '已通过' || myTakerRecord?.status === '已提交' || myTakerRecord?.status === '已验收');
 
   const takersList = task.takers || [];
   const submissionsList = task.submissions || [];
@@ -122,7 +124,11 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
                 {task.difficulty}难度
               </span>
 
-              {isFinished ? (
+              {task.refunded ? (
+                <span className="px-2.5 py-0.5 rounded-md font-black bg-amber-100 text-amber-900 border border-amber-300">
+                  已退款结束
+                </span>
+              ) : isFinished ? (
                 <span className="px-2.5 py-0.5 rounded-md font-bold bg-slate-200 text-slate-600">
                   已结束
                 </span>
@@ -422,14 +428,34 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
                 </button>
               ) : (
                 <>
-                  {/* 发布人视角：即使任务处于已结束状态，仍可随时进行验收操作（验收不改变已结束状态） */}
-                  {isPublisher && submissionsList.length > 0 && (
+                  {/* 发布人视角 */}
+                  {isPublisher && (submissionsList.length > 0 || task.refunded) && (
                     <button
                       onClick={() => setVerifyModalOpen(true)}
-                      className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-xs transition active:scale-95 cursor-pointer flex items-center gap-1.5"
+                      className={`px-6 py-2 text-white font-extrabold text-xs rounded-xl shadow-xs transition active:scale-95 cursor-pointer flex items-center gap-1.5 ${
+                        task.refunded
+                          ? 'bg-amber-500 hover:bg-amber-600'
+                          : task.winner
+                          ? 'bg-emerald-600 hover:bg-emerald-500'
+                          : 'bg-indigo-600 hover:bg-indigo-500'
+                      }`}
                     >
-                      <ShieldCheck className="w-4 h-4" />
-                      <span>去验收成果 ({submissionsList.length})</span>
+                      {task.refunded ? (
+                        <>
+                          <RotateCcw className="w-4 h-4" />
+                          <span>{submissionsList.length > 0 ? '查看驳回与退款详情' : '查看退款详情'}</span>
+                        </>
+                      ) : task.winner ? (
+                        <>
+                          <Award className="w-4 h-4" />
+                          <span>查看验收结果</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldCheck className="w-4 h-4" />
+                          <span>去验收成果 ({submissionsList.length})</span>
+                        </>
+                      )}
                     </button>
                   )}
 
@@ -443,8 +469,19 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
                     </button>
                   )}
 
-                  {/* 开发者视角：已接单且未提交成果 -> 提交成果 */}
-                  {!isPublisher && !isFinished && hasTaken && !hasSubmitted && (
+                  {/* 开发者视角：被驳回且进行中 -> 修改并重新提交 */}
+                  {!isPublisher && !isFinished && hasTaken && isRejected && (
+                    <button
+                      onClick={() => setSubmitModalOpen(true)}
+                      className="px-6 py-2 bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs rounded-xl shadow-xs transition active:scale-95 cursor-pointer flex items-center gap-1.5"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      <span>修改成果重新提交</span>
+                    </button>
+                  )}
+
+                  {/* 开发者视角：已接单且未提交成果且未被驳回 -> 提交成果 */}
+                  {!isPublisher && !isFinished && hasTaken && !hasSubmitted && !isRejected && (
                     <button
                       onClick={() => setSubmitModalOpen(true)}
                       className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-xs transition active:scale-95 cursor-pointer"
@@ -462,6 +499,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, isOpen
             task={task}
             isOpen={submitModalOpen}
             onClose={() => setSubmitModalOpen(false)}
+            existingSubmission={isRejected ? mySubmission : undefined}
           />
 
           <TaskVerificationModal

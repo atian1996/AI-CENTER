@@ -42,8 +42,10 @@ export const WorkspaceTasks: React.FC = () => {
   // 二级页面与弹窗控制
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
   const [isCreatingTask, setIsCreatingTask] = useState<boolean>(false);
-  const [verifyTask, setVerifyTask] = useState<TaskItem | null>(null);
+  const [verifyTaskId, setVerifyTaskId] = useState<string | null>(null);
+  const verifyTask = useMemo(() => tasks.find(t => t.id === verifyTaskId) || null, [tasks, verifyTaskId]);
   const [submitTask, setSubmitTask] = useState<TaskItem | null>(null);
+  const [resubmitSub, setResubmitSub] = useState<TaskSubmissionRecord | null>(null);
   const [mySubmissionTask, setMySubmissionTask] = useState<TaskItem | null>(null);
   const [mySubmissionRecord, setMySubmissionRecord] = useState<TaskSubmissionRecord | null>(null);
   const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
@@ -84,25 +86,33 @@ export const WorkspaceTasks: React.FC = () => {
   const filteredUndertakenTasks = useMemo(() => {
     return myUndertakenTasks.filter(t => {
       const isFinished = t.status === '已结束' || t.status === '已验收' || (t.endTime && new Date(t.endTime) < new Date());
+      const myRecord = (t.takers || []).find(tk => tk.username === user.name || tk.username.includes('你') || tk.username.includes('极客小千'));
+      const mySub = (t.submissions || []).find(s => s.username === user.name || s.username.includes('你') || s.username.includes('极客小千'));
+      const isRejected = !isFinished && (mySub?.status === '已驳回' || myRecord?.status === '已驳回');
+
       if (undertakenFilter === '全部') return true;
       if (undertakenFilter === '进行中') {
         return !isFinished;
+      }
+      if (undertakenFilter === '已驳回') {
+        return isRejected;
       }
       if (undertakenFilter === '已结束') {
         return isFinished;
       }
       return true;
     });
-  }, [myUndertakenTasks, undertakenFilter]);
+  }, [myUndertakenTasks, undertakenFilter, user.name]);
 
   const publishedFilterList = ['全部', '审核中', '进行中', '已驳回', '已结束'];
-  const undertakenFilterList = ['全部', '进行中', '已结束'];
+  const undertakenFilterList = ['全部', '进行中', '已驳回', '已结束'];
 
   // If publishing or editing task, render UserTaskPublishForm
   if (isCreatingTask || editingTask) {
     return (
       <UserTaskPublishForm
         initialTask={editingTask}
+        fromTitle="我的已发布任务"
         onBack={() => {
           setIsCreatingTask(false);
           setEditingTask(null);
@@ -116,6 +126,7 @@ export const WorkspaceTasks: React.FC = () => {
     return (
       <TaskDetailSubPage
         taskId={detailTaskId}
+        fromTitle={activeTab === 'published' ? '我的已发布任务' : '我接单的任务'}
         onBack={() => setDetailTaskId(null)}
       />
     );
@@ -221,13 +232,34 @@ export const WorkspaceTasks: React.FC = () => {
                                 ? 'bg-amber-100 text-amber-800'
                                 : isRejected
                                 ? 'bg-red-100 text-red-700'
+                                : task.refunded
+                                ? 'bg-amber-100 text-amber-900 border border-amber-300'
                                 : isFinished
                                 ? 'bg-slate-200 text-slate-600'
                                 : 'bg-emerald-100 text-emerald-800'
                             }`}
                           >
-                            {isFinished ? '已结束' : task.status}
+                            {task.refunded ? '已退款结束' : isFinished ? '已结束' : task.status}
                           </span>
+
+                          {/* 详细到期退款分类标记 */}
+                          {task.refunded && (task.takers || []).length === 0 && (
+                            <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                              无人接单到期
+                            </span>
+                          )}
+
+                          {task.refunded && (task.takers || []).length > 0 && (task.submissions || []).length === 0 && (
+                            <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-orange-50 text-orange-700 border border-orange-200">
+                              接单超时未提交
+                            </span>
+                          )}
+
+                          {task.refunded && (task.submissions || []).length > 0 && (
+                            <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                              成果全驳回到期
+                            </span>
+                          )}
 
                           {pendingCount > 0 && !isFinished && (
                             <span className="px-2.5 py-0.5 rounded-md text-[11px] font-extrabold bg-red-500 text-white animate-pulse">
@@ -275,8 +307,21 @@ export const WorkspaceTasks: React.FC = () => {
                       </div>
                     )}
 
+                    {/* 到期全部驳回全额退款信息 */}
+                    {isFinished && task.refunded && (
+                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <RotateCcw className="w-4 h-4 text-amber-600 shrink-0" />
+                          <span>{task.refundReason || '任务已到期结束，发布人已驳回所有交付成果，任务预付金额和积分已全额退还至发布人账户。'}</span>
+                        </div>
+                        <span className="px-2.5 py-0.5 rounded-full bg-amber-200/90 text-amber-950 text-[10px] font-black shrink-0">
+                          已全额退款
+                        </span>
+                      </div>
+                    )}
+
                     {/* 接单极客团队/列表 */}
-                    {(task.takers || []).length > 0 && (
+                    {(task.takers || []).length > 0 ? (
                       <div className="p-3 bg-slate-50/80 border border-slate-100 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs">
                         <div className="flex items-center gap-2">
                           <span className="text-slate-500 font-bold flex items-center gap-1">
@@ -309,7 +354,12 @@ export const WorkspaceTasks: React.FC = () => {
                           ))}
                         </div>
                       </div>
-                    )}
+                    ) : task.refunded ? (
+                      <div className="p-3 bg-slate-50/80 border border-slate-200/80 rounded-xl text-xs text-slate-500 flex items-center gap-2 font-medium">
+                        <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span>接单情况：该任务公示周期内无人接单，已到期结束并全额退款。</span>
+                      </div>
+                    ) : null}
 
                     {/* 底部操作行 */}
                     <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
@@ -328,14 +378,34 @@ export const WorkspaceTasks: React.FC = () => {
                           查看详情
                         </button>
 
-                        {/* 2. 去验收 */}
-                        {!isFinished && ((task.submissions || []).length > 0 || (task.takers || []).length > 0) && (
+                        {/* 2. 去验收 / 到期验收评审 / 查看退款详情 / 查看验收结果 */}
+                        {!task.winner && !task.refunded && ((task.submissions || []).length > 0 || (task.takers || []).length > 0) && (
                           <button
-                            onClick={() => setVerifyTask(task)}
+                            onClick={() => setVerifyTaskId(task.id)}
                             className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold shadow-2xs transition flex items-center gap-1 cursor-pointer"
                           >
                             <ShieldCheck className="w-3.5 h-3.5" />
-                            <span>去验收 ({pendingCount})</span>
+                            <span>{isFinished ? '到期验收评审' : '去验收'} ({pendingCount})</span>
+                          </button>
+                        )}
+
+                        {task.refunded && (
+                          <button
+                            onClick={() => setVerifyTaskId(task.id)}
+                            className="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold shadow-2xs transition flex items-center gap-1 cursor-pointer"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>{(task.submissions || []).length > 0 ? '查看驳回与退款详情' : '查看退款详情'}</span>
+                          </button>
+                        )}
+
+                        {task.winner && (
+                          <button
+                            onClick={() => setVerifyTaskId(task.id)}
+                            className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-2xs transition flex items-center gap-1 cursor-pointer"
+                          >
+                            <Award className="w-3.5 h-3.5" />
+                            <span>查看验收结果</span>
                           </button>
                         )}
 
@@ -350,21 +420,7 @@ export const WorkspaceTasks: React.FC = () => {
                           </button>
                         )}
 
-                        {/* 4. 撤回任务 (针对审核中任务) */}
-                        {isAuditing && (
-                          <button
-                            onClick={() => {
-                              if (window.confirm(`确定要撤回任务【${task.title}】吗？撤回后预付资金将全额退回账户。`)) {
-                                withdrawTask(task.id);
-                              }
-                            }}
-                            className="px-3.5 py-1.5 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 font-bold transition cursor-pointer"
-                          >
-                            撤回任务
-                          </button>
-                        )}
-
-                        {/* 5. 删除任务 (针对审核中和被驳回任务，删除后后台同步删除) */}
+                        {/* 4. 删除任务 (针对审核中和被驳回任务，删除后后台同步删除) */}
                         {(isAuditing || isRejected) && (
                           <button
                             onClick={() => {
@@ -418,11 +474,12 @@ export const WorkspaceTasks: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {filteredUndertakenTasks.map(task => {
-                const myRecord = (task.takers || []).find(tk => tk.username === user.name || tk.username.includes('你'));
-                const mySub = (task.submissions || []).find(s => s.username === user.name || s.username.includes('你'));
+                const myRecord = (task.takers || []).find(tk => tk.username === user.name || tk.username.includes('你') || tk.username.includes('极客小千'));
+                const mySub = (task.submissions || []).find(s => s.username === user.name || s.username.includes('你') || s.username.includes('极客小千'));
                 const isFinished = task.status === '已结束' || task.status === '已验收' || (task.endTime && new Date(task.endTime) < new Date());
                 const isWinner = task.winner?.username === myRecord?.username || task.winner?.username === user.name || mySub?.status === '已通过' || myRecord?.status === '已验收';
-                const hasSubmitted = !!mySub || myRecord?.status === '已提交' || myRecord?.status === '已验收';
+                const isRejected = !isFinished && (mySub?.status === '已驳回' || myRecord?.status === '已驳回');
+                const hasSubmitted = !!mySub || myRecord?.status === '已提交' || myRecord?.status === '已验收' || myRecord?.status === '已驳回';
 
                 return (
                   <div
@@ -430,6 +487,8 @@ export const WorkspaceTasks: React.FC = () => {
                     className={`bg-white rounded-2xl p-6 border shadow-2xs space-y-4 transition ${
                       isFinished && isWinner
                         ? 'border-emerald-300 bg-emerald-50/20'
+                        : isRejected
+                        ? 'border-rose-200 hover:border-rose-300'
                         : 'border-slate-200 hover:border-slate-300'
                     }`}
                   >
@@ -440,7 +499,7 @@ export const WorkspaceTasks: React.FC = () => {
                             {task.domain}
                           </span>
 
-                          {/* 列表项中的 通过验收 / 未通过验收 显著标记 */}
+                          {/* 列表项中的 通过验收 / 未通过验收 / 被驳回重提 / 进行中 显著标记 */}
                           {isFinished ? (
                             isWinner ? (
                               <span className="px-3 py-0.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 shadow-2xs">
@@ -453,6 +512,11 @@ export const WorkspaceTasks: React.FC = () => {
                                 <span>未通过验收</span>
                               </span>
                             )
+                          ) : isRejected ? (
+                            <span className="px-3 py-0.5 rounded-full text-xs font-black bg-rose-100 text-rose-700 border border-rose-200 flex items-center gap-1 shadow-2xs">
+                              <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+                              <span>成果被驳回 (待修改重提)</span>
+                            </span>
                           ) : (
                             <span className="px-2.5 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-500 text-white shadow-2xs">
                               进行中
@@ -475,6 +539,24 @@ export const WorkspaceTasks: React.FC = () => {
                         )}
                       </div>
                     </div>
+
+                    {/* 被驳回状态：展示驳回意见与重提引导提示栏 */}
+                    {isRejected && (
+                      <div className="p-4 bg-rose-50/90 border border-rose-200 rounded-2xl space-y-2 text-xs">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-rose-800 font-black">
+                            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                            <span>雇主验收驳回意见：</span>
+                          </div>
+                          <span className="text-[11px] font-bold text-rose-600 bg-rose-100/80 px-2.5 py-0.5 rounded-md">
+                            任务未验收 · 支持修改后重新提交
+                          </span>
+                        </div>
+                        <p className="text-rose-700 leading-relaxed font-medium pl-6 bg-white/80 p-2.5 rounded-xl border border-rose-100">
+                          {mySub?.rejectReason || '成果未完全达到验收指标要求，请根据需求规范调整修改后重新提交。'}
+                        </p>
+                      </div>
+                    )}
 
                     {/* 其他接单极客与竞标状态 */}
                     {(task.takers || []).length > 0 && (
@@ -533,7 +615,7 @@ export const WorkspaceTasks: React.FC = () => {
                           查看详情
                         </button>
 
-                        {/* 查看我的成果 (若已提交) */}
+                        {/* 查看我的成果 (若曾提交过) */}
                         {hasSubmitted && (
                           <button
                             onClick={() => {
@@ -552,7 +634,8 @@ export const WorkspaceTasks: React.FC = () => {
                                 submitTime: '近期',
                                 notes: '已提交项目源码包、测试文档与环境交付配置说明。',
                                 files: [{ id: `f_${task.id}`, name: `${task.title}_交付源码.zip`, size: '8.5 MB' }],
-                                status: isWinner ? '已通过' : '待验收'
+                                status: isWinner ? '已通过' : isRejected ? '已驳回' : '待验收',
+                                rejectReason: mySub?.rejectReason
                               });
                             }}
                             className="px-3.5 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 font-bold transition flex items-center gap-1 cursor-pointer"
@@ -562,10 +645,27 @@ export const WorkspaceTasks: React.FC = () => {
                           </button>
                         )}
 
-                        {/* 提交交付成果 (若进行中且未提交) */}
-                        {!isFinished && !hasSubmitted && (
+                        {/* 被驳回后：修改成果重新提交 */}
+                        {!isFinished && isRejected && (
                           <button
-                            onClick={() => setSubmitTask(task)}
+                            onClick={() => {
+                              setResubmitSub(mySub || null);
+                              setSubmitTask(task);
+                            }}
+                            className="px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold shadow-2xs transition flex items-center gap-1 cursor-pointer"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>修改重新提交</span>
+                          </button>
+                        )}
+
+                        {/* 首次提交交付成果 (若进行中且未提交且未被驳回) */}
+                        {!isFinished && !hasSubmitted && !isRejected && (
+                          <button
+                            onClick={() => {
+                              setResubmitSub(null);
+                              setSubmitTask(task);
+                            }}
                             className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold shadow-2xs transition flex items-center gap-1 cursor-pointer"
                           >
                             <Send className="w-3.5 h-3.5" />
@@ -586,13 +686,17 @@ export const WorkspaceTasks: React.FC = () => {
       <TaskVerificationModal
         task={verifyTask}
         isOpen={!!verifyTask}
-        onClose={() => setVerifyTask(null)}
+        onClose={() => setVerifyTaskId(null)}
       />
 
       <SubmitResultModal
         task={submitTask}
         isOpen={!!submitTask}
-        onClose={() => setSubmitTask(null)}
+        onClose={() => {
+          setSubmitTask(null);
+          setResubmitSub(null);
+        }}
+        existingSubmission={resubmitSub}
       />
 
       <MySubmissionModal
@@ -605,9 +709,11 @@ export const WorkspaceTasks: React.FC = () => {
         }}
         onResubmit={() => {
           const targetTask = mySubmissionTask;
+          const targetSub = mySubmissionRecord;
           setMySubmissionTask(null);
           setMySubmissionRecord(null);
           if (targetTask) {
+            setResubmitSub(targetSub);
             setSubmitTask(targetTask);
           }
         }}

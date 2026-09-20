@@ -30,9 +30,11 @@ import {
 interface DatasetDetailProps {
   dataset: DatasetItem;
   onBack: () => void;
+  fromTitle?: string;
 }
 
-export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack }) => {
+export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack, fromTitle }) => {
+  const effectiveFromTitle = fromTitle || '数据集广场';
   const { showToast, downloadDataset } = useApp();
 
   // Active Tab: overview | files | comments
@@ -153,11 +155,11 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack })
           className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white border border-slate-200/80 text-xs font-bold text-slate-700 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50/50 shadow-2xs transition cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>返回数据集广场</span>
+          <span>返回{effectiveFromTitle}</span>
         </button>
 
         <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
-          <span>数据集广场</span>
+          <span className="cursor-pointer hover:text-indigo-600" onClick={onBack}>{effectiveFromTitle}</span>
           <ChevronRight className="w-3.5 h-3.5" />
           <span className="text-slate-700 font-bold truncate max-w-xs">{dataset.name}</span>
         </div>

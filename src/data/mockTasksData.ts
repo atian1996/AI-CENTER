@@ -550,6 +550,244 @@ export const mockRichTasks: TaskItem[] = [
     bountyUnit: '¥'
   },
 
+  // =========================================================================
+  // 我接单的任务 - 进行中 - 成果被驳回 (支持修改后重新提交)
+  // =========================================================================
+  {
+    id: 'tsk_und_rej_asr_quant',
+    title: '工业端侧语音识别模型 INT8 动态量化与推理加速',
+    taskType: '接单任务',
+    brief: '针对 Whisper-Small 模型进行 ONNX/NCNN 算子融合与量化，端侧解码延迟控制在 60ms 内',
+    domain: 'AI模型与数据',
+    difficulty: '中等',
+    description: `<h3>【任务目标】</h3><p>将中文工业语音识别模型（基于 Whisper-Small 架构）转换为 INT8 量化格式，针对嵌入式边缘计算板卡（RK3588）完成推理优化与精度校验。</p><h3>【交付范围】</h3><ul><li>导出 ONNX 模型与 INT8 动态量化权重；</li><li>提供 C++/Python 运行时推理 Benchmark 测试套件；</li><li>在开源工业语音数据集上提供 WER（词错误率）损失评测报告。</li></ul>`,
+    acceptanceCriteria: `<h3>【验收考核标准】</h3><ol><li>RK3588 单核实测单句解码延迟 ≤ 60ms；</li><li>量化后相比 FP16 模型，相对词错误率（WER）增加幅度不超过 1.5%；</li><li>包含一键启动 Docker 环境与完整的编译运行文档。</li></ol>`,
+    cashReward: 5800,
+    pointsReward: 400,
+    totalCashReward: 5800,
+    totalPointsReward: 400,
+    startTime: '2026-08-14 00:00:00',
+    endTime: '2026-09-25 23:59:59',
+    remainingDays: 7,
+    publisher: '商汤端侧计算联合实验室',
+    publisherAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80',
+    publishTime: '2026-08-14 10:00:00',
+    status: '进行中',
+    acceptedCount: 3,
+    submittedCount: 2,
+    verifiedCount: 0,
+    takers: [
+      {
+        id: 'tk_rej_asr_1',
+        taskId: 'tsk_und_rej_asr_quant',
+        username: '极客小千 (你)',
+        userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-14 11:30:00',
+        status: '已驳回',
+        submissionId: 'sub_rej_asr_mine'
+      },
+      {
+        id: 'tk_rej_asr_2',
+        taskId: 'tsk_und_rej_asr_quant',
+        username: '边缘计算极客喵',
+        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-15 09:00:00',
+        status: '已提交',
+        submissionId: 'sub_rej_asr_2'
+      },
+      {
+        id: 'tk_rej_asr_3',
+        taskId: 'tsk_und_rej_asr_quant',
+        username: 'NPU架构师小周',
+        userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-16 14:20:00',
+        status: '已接单'
+      }
+    ],
+    submissions: [
+      {
+        id: 'sub_rej_asr_mine',
+        taskId: 'tsk_und_rej_asr_quant',
+        username: '极客小千 (你)',
+        userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+        submitTime: '2026-08-17 18:30:00',
+        notes: '基于 Optimum-Intel 完成了 Whisper-Small 的 INT8 动态量化，交付了模型 ONNX 权重文件与 Python 推理测试脚本。在 RK3588 样机测试平均单句耗时 82ms。',
+        files: [
+          { id: 'f_asr_m1', name: 'Whisper_Small_INT8_RK3588.zip', size: '118.6 MB' },
+          { id: 'f_asr_m2', name: 'Benchmark_Latency_Report.pdf', size: '2.4 MB' }
+        ],
+        status: '已驳回',
+        rejectReason: '【雇主验收驳回意见】实测在 RK3588 开发板上的单句解码延迟为 82ms，未达指标要求的 60ms 阈值红线；且交付附件中缺失 C++ Runtime 部署接入示例。请调整算子融合策略并补充 C++ 验证工程后重新提交。',
+        verifiedTime: '2026-08-18 11:20:00'
+      },
+      {
+        id: 'sub_rej_asr_2',
+        taskId: 'tsk_und_rej_asr_quant',
+        username: '边缘计算极客喵',
+        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        submitTime: '2026-08-18 16:00:00',
+        notes: '提供 NCNN 量化工程与 C++ 推理测试样例。',
+        files: [{ id: 'f_asr_2', name: 'ncnn_whisper_engine.tar.gz', size: '94.2 MB' }],
+        status: '待验收'
+      }
+    ],
+    bounty: 5800,
+    bountyUnit: '¥'
+  },
+
+  {
+    id: 'tsk_und_rej_rag_rerank',
+    title: '跨语种法律合同 RAG 智能重排序与高并发检索中间件',
+    taskType: '接单任务',
+    brief: '设计支持中英双语的 BGE-Reranker-v2 批处理服务，实现向量+全文混合检索并支持 200 QPS 并发',
+    domain: '技术开发',
+    difficulty: '困难',
+    description: `<h3>【任务目标】</h3><p>构建面向司法与商业合同检索的专用 Cross-Encoder 语义重排序中间件，整合 Milvus 向量检索与 Elasticsearch BM25 结果并进行倒排融合打分。</p><h3>【核心考核项】</h3><ul><li>支持中英文合同条款语义交叉打分；</li><li>支持动态 Batching，显卡显存占用稳定，支持弹性并发扩展；</li><li>提供完整的 RESTful API 与 Python/Node.js SDK。</li></ul>`,
+    acceptanceCriteria: `<h3>【验收考核标准】</h3><ol><li>在 200 QPS 持续并发压力下，P99 延迟 ≤ 150ms，且无显存泄露（OOM）；</li><li>在公开 Legal-Bench 评测集上 MRR@10 指标提升 ≥ 12%；</li><li>提供 Docker Compose 一键启动集成环境与 Locust 压测脚本。</li></ol>`,
+    cashReward: 7600,
+    pointsReward: 550,
+    totalCashReward: 7600,
+    totalPointsReward: 550,
+    startTime: '2026-08-15 00:00:00',
+    endTime: '2026-09-24 23:59:59',
+    remainingDays: 5,
+    publisher: '华宇元典法律智能科技',
+    publisherAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80',
+    publishTime: '2026-08-15 14:00:00',
+    status: '进行中',
+    acceptedCount: 4,
+    submittedCount: 2,
+    verifiedCount: 0,
+    takers: [
+      {
+        id: 'tk_rej_rag_1',
+        taskId: 'tsk_und_rej_rag_rerank',
+        username: '极客小千 (你)',
+        userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-15 16:00:00',
+        status: '已驳回',
+        submissionId: 'sub_rej_rag_mine'
+      },
+      {
+        id: 'tk_rej_rag_2',
+        taskId: 'tsk_und_rej_rag_rerank',
+        username: '大模型系统工程师老李',
+        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-16 10:00:00',
+        status: '已提交',
+        submissionId: 'sub_rej_rag_2'
+      },
+      {
+        id: 'tk_rej_rag_3',
+        taskId: 'tsk_und_rej_rag_rerank',
+        username: 'NLP算法先锋团队',
+        userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-16 11:30:00',
+        status: '已接单'
+      }
+    ],
+    submissions: [
+      {
+        id: 'sub_rej_rag_mine',
+        taskId: 'tsk_und_rej_rag_rerank',
+        username: '极客小千 (你)',
+        userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+        submitTime: '2026-08-18 20:00:00',
+        notes: '交付了基于 FastAPI + PyTorch 的 BGE-Reranker-Large 双语重排服务，封装了 RRF（倒排互惠排名）融合算法，附带 Locust 压测脚本。',
+        files: [
+          { id: 'f_rag_m1', name: 'Legal_Reranker_Service_v1.tar.gz', size: '42.8 MB' },
+          { id: 'f_rag_m2', name: 'Locust_Benchmark_Report.html', size: '3.1 MB' }
+        ],
+        status: '已驳回',
+        rejectReason: '【雇主验收驳回意见】在持续 120 QPS 压测 5 分钟后触发 PyTorch 显存泄露 OOM 崩溃；长文本超过 512 Token 时滑动窗口截断逻辑存在乱码。请排查 Batching 显存释放机制与分词编码，修复后支持重新提交验收。',
+        verifiedTime: '2026-08-19 09:30:00'
+      },
+      {
+        id: 'sub_rej_rag_2',
+        taskId: 'tsk_und_rej_rag_rerank',
+        username: '大模型系统工程师老李',
+        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        submitTime: '2026-08-19 14:00:00',
+        notes: '采用 ONNX Runtime C++ 构建的高并发 Rerank 服务，支持动态 batching。',
+        files: [{ id: 'f_rag_2', name: 'onnx_reranker_runtime.zip', size: '38.5 MB' }],
+        status: '待验收'
+      }
+    ],
+    bounty: 7600,
+    bountyUnit: '¥'
+  },
+
+  {
+    id: 'tsk_und_rej_vision_defect',
+    title: '光伏电池片表面微裂纹缺陷检测 YOLOv10 微调与 Web 演示系统',
+    taskType: '接单任务',
+    brief: '在 5000 张高精度 EL 图像上训练微小暗裂纹检测模型，mAP@0.5 需达到 0.92 以上',
+    domain: 'AI模型与数据',
+    difficulty: '中等',
+    description: `<h3>【任务目标】</h3><p>针对光伏组件产线 EL（电致发光）红外检测图像中的黑斑、隐裂、碎片和微裂纹等 6 类缺陷，微调高精度轻量化目标检测网络。</p><h3>【交付清单】</h3><ul><li>PyTorch 训练源码、权重文件（.pt）及 ONNX 导出文件；</li><li>包含数据增强（MixUp/Copy-Paste）与难例挖掘脚本；</li><li>基于 Streamlit 或 Gradio 的产线微裂纹可视化检测演示 Web 界面。</li></ul>`,
+    acceptanceCriteria: `<h3>【验收考核标准】</h3><ol><li>测试集综合 mAP@0.5 ≥ 0.92，其中微裂纹细分类别 Recall ≥ 85%；</li><li>单图推理耗时在 RTX 4090 下 ≤ 15ms；</li><li>包含完整的 Dockerfile 与一键复现 README 指南。</li></ol>`,
+    cashReward: 4500,
+    pointsReward: 350,
+    totalCashReward: 4500,
+    totalPointsReward: 350,
+    startTime: '2026-08-16 00:00:00',
+    endTime: '2026-09-28 23:59:59',
+    remainingDays: 9,
+    publisher: '协鑫光伏智能制造检测中心',
+    publisherAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80',
+    publishTime: '2026-08-16 11:00:00',
+    status: '进行中',
+    acceptedCount: 3,
+    submittedCount: 1,
+    verifiedCount: 0,
+    takers: [
+      {
+        id: 'tk_rej_pv_1',
+        taskId: 'tsk_und_rej_vision_defect',
+        username: '极客小千 (你)',
+        userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-16 15:30:00',
+        status: '已驳回',
+        submissionId: 'sub_rej_pv_mine'
+      },
+      {
+        id: 'tk_rej_pv_2',
+        taskId: 'tsk_und_rej_vision_defect',
+        username: '机器视觉研习社',
+        userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-17 10:00:00',
+        status: '已接单'
+      },
+      {
+        id: 'tk_rej_pv_3',
+        taskId: 'tsk_und_rej_vision_defect',
+        username: 'CV算法工程师小吴',
+        userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-18 09:20:00',
+        status: '已接单'
+      }
+    ],
+    submissions: [
+      {
+        id: 'sub_rej_pv_mine',
+        taskId: 'tsk_und_rej_vision_defect',
+        username: '极客小千 (你)',
+        userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+        submitTime: '2026-08-19 16:40:00',
+        notes: '完成了 YOLOv10-M 的微调训练，包含 Streamlit 前端交互展示界面，测试集 mAP@0.5 达到了 0.84。',
+        files: [
+          { id: 'f_pv_m1', name: 'YOLOv10_Solar_Microcrack_Model.zip', size: '76.4 MB' },
+          { id: 'f_pv_m2', name: 'Streamlit_Defect_Demo.zip', size: '12.8 MB' }
+        ],
+        status: '已驳回',
+        rejectReason: '【雇主验收驳回意见】核心考核微裂纹类别召回率仅 73.5%（综合 mAP 仅 0.84，未达到 0.92 验收及格线），且压缩包内未包含 Dockerfile。请进行难例 Focal Loss 重新微调并补充容器化配置后重新提交。',
+        verifiedTime: '2026-08-20 10:00:00'
+      }
+    ],
+    bounty: 4500,
+    bountyUnit: '¥'
+  },
+
   // [我接单 - 已结束 - 通过验收获胜 1]
   {
     id: 'tsk_my_und_fcfs_win',
@@ -1380,6 +1618,425 @@ export const mockRichTasks: TaskItem[] = [
       }
     ],
     bounty: 6500,
+    bountyUnit: '¥'
+  },
+
+  // [我发布 - 已到期结束 - 待验收（部分已驳回，支持测试驳回不可选 & 到期全驳回全额退款）]
+  {
+    id: 'tsk_my_pub_exp_pending',
+    title: '高并发金融行情推流 WebSocket 代理网关与反压调度',
+    taskType: '接单任务',
+    brief: '50万长连接实时推送、环形缓冲区队列优化与基于水位线的动态背压调度中间件',
+    domain: '技术开发',
+    difficulty: '困难',
+    description: `<h3>【项目背景】</h3><p>为了支撑百万级散户实时盘口数据低延迟推送，需开发基于高效 I/O 多路复用的 WebSocket 网关，支持客户端慢消费时的自适应反压熔断调度。</p><h3>【核心交付要求】</h3><ul><li>支持 50 万并发连接稳定维持，单机内存消耗 ≤ 16GB；</li><li>具备精确的水位线队列缓冲与丢包预警监控；</li><li>提供完整的 Rust / C++ 源码、压测工具与部署文档。</li></ul>`,
+    acceptanceCriteria: `<h3>【验收考核标准】</h3><ol><li>在 50 万并发连接突发写入下，P99 延迟 ≤ 20ms，无内存泄露与崩溃；</li><li>客户端慢速接收时，动态反压保护生效，保证服务端稳定运行；</li><li>包含详尽的 Locust / wrk 压测复现报告与自动化测试用例。</li></ol>`,
+    cashReward: 5800,
+    pointsReward: 350,
+    totalCashReward: 5800,
+    totalPointsReward: 350,
+    startTime: '2026-08-01 00:00:00',
+    endTime: '2026-08-20 23:59:59',
+    remainingDays: 0,
+    publisher: '极客小千 (你)',
+    publisherAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    publishTime: '2026-08-01 09:00:00',
+    status: '已结束',
+    acceptedCount: 3,
+    submittedCount: 2,
+    verifiedCount: 0,
+    takers: [
+      {
+        id: 'tk_exp_p1',
+        taskId: 'tsk_my_pub_exp_pending',
+        username: '极客小明',
+        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-02 10:00:00',
+        status: '已驳回',
+        submissionId: 'sub_exp_p1'
+      },
+      {
+        id: 'tk_exp_p2',
+        taskId: 'tsk_my_pub_exp_pending',
+        username: 'Rust异步专家',
+        userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-03 14:30:00',
+        status: '已提交',
+        submissionId: 'sub_exp_p2'
+      },
+      {
+        id: 'tk_exp_p3',
+        taskId: 'tsk_my_pub_exp_pending',
+        username: '网络攻坚组',
+        userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-08-04 16:00:00',
+        status: '已接单'
+      }
+    ],
+    submissions: [
+      {
+        id: 'sub_exp_p1',
+        taskId: 'tsk_my_pub_exp_pending',
+        username: '极客小明',
+        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        submitTime: '2026-08-15 17:30:00',
+        notes: '交付了基于 Go Gorilla WebSocket 的代理中间件，附带简要测试脚本。',
+        files: [{ id: 'f_exp1', name: 'Go_WebSocket_Gateway.zip', size: '15.4 MB' }],
+        status: '已驳回',
+        rejectReason: '【发布人验收驳回意见】实测在 50 万并发连接突发写入时内存反压机制失效，导致代理进程 OOM 异常退出；未能达到验收指标要求的 0 丢包标准。发布人已确认驳回该方案。',
+        verifiedTime: '2026-08-17 11:00:00'
+      },
+      {
+        id: 'sub_exp_p2',
+        taskId: 'tsk_my_pub_exp_pending',
+        username: 'Rust异步专家',
+        userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+        submitTime: '2026-08-19 20:00:00',
+        notes: '基于 Rust Tokio + epoll 实现的高性能 WebSocket 推流网关，支持动态背压调节与 RingBuffer 环形缓冲。附带 50 万压测报告。',
+        files: [
+          { id: 'f_exp2_1', name: 'Rust_Tokio_Gateway_v2.tar.gz', size: '28.6 MB' },
+          { id: 'f_exp2_2', name: 'Benchmark_Report_500k.pdf', size: '3.8 MB' }
+        ],
+        status: '待验收'
+      }
+    ],
+    bounty: 5800,
+    bountyUnit: '¥'
+  },
+
+  // [我发布 - 已到期结束 - 全部成果已驳回并已全额退还发布人]
+  {
+    id: 'tsk_my_pub_exp_refunded',
+    title: '端侧轻量化实时目标追踪 ByteTrack 模型 NPU 移植与量化',
+    taskType: '接单任务',
+    brief: '针对 RK3588 NPU 移植 ByteTrack 多目标追踪算法，多路 1080P 达到 30fps',
+    domain: 'AI模型与数据',
+    difficulty: '中等',
+    description: `<h3>【项目需求】</h3><p>将 YOLOv8-ByteTrack 多目标跟踪算法部署至嵌入式边缘设备 RK3588，实现 4 路 1080P 视频流实时行人/车辆轨迹跟踪。</p><h3>【验收考核】</h3><p>在 NPU 占用率 ≤ 80% 下稳定 30fps，ID Switch 频率需低于基线 10%。</p>`,
+    acceptanceCriteria: `<ol><li>支持 4 路 1080P 30fps 实时运行；</li><li>量化精度损失 ≤ 1.5%；</li><li>提供完整的 C++ 测试工程与开发板部署固件。</li></ol>`,
+    cashReward: 4800,
+    pointsReward: 300,
+    totalCashReward: 4800,
+    totalPointsReward: 300,
+    startTime: '2026-07-20 00:00:00',
+    endTime: '2026-08-15 23:59:59',
+    remainingDays: 0,
+    publisher: '极客小千 (你)',
+    publisherAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    publishTime: '2026-07-20 10:00:00',
+    status: '已结束',
+    refunded: true,
+    refundCash: 4800,
+    refundPoints: 300,
+    refundTime: '2026-08-18 16:30:00',
+    refundReason: '任务已到期结束，所有接单极客提交的成果均未达到嵌入式 NPU 帧率与精度考核红线，经发布人全面评审后已全部驳回。任务预付托管金额 ¥4,800 及 300 平台积分已全额退还至发布人账户。',
+    acceptedCount: 2,
+    submittedCount: 2,
+    verifiedCount: 0,
+    takers: [
+      {
+        id: 'tk_rf_1',
+        taskId: 'tsk_my_pub_exp_refunded',
+        username: '嵌入式小李',
+        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-07-22 11:00:00',
+        status: '已驳回',
+        submissionId: 'sub_rf_1'
+      },
+      {
+        id: 'tk_rf_2',
+        taskId: 'tsk_my_pub_exp_refunded',
+        username: 'NPU探索者',
+        userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-07-23 15:30:00',
+        status: '已驳回',
+        submissionId: 'sub_rf_2'
+      }
+    ],
+    submissions: [
+      {
+        id: 'sub_rf_1',
+        taskId: 'tsk_my_pub_exp_refunded',
+        username: '嵌入式小李',
+        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        submitTime: '2026-08-10 16:00:00',
+        notes: '交付了 RKNN 量化权重文件与 Python 推理脚本，实测 4 路 22fps。',
+        files: [{ id: 'f_rf1', name: 'bytetrack_rknn_weights.zip', size: '24.2 MB' }],
+        status: '已驳回',
+        rejectReason: '【发布人验收驳回意见】帧率仅达到 22fps，未能满足 30fps 实时性红线，且长时间运行偶发内存泄漏。',
+        verifiedTime: '2026-08-16 10:00:00'
+      },
+      {
+        id: 'sub_rf_2',
+        taskId: 'tsk_my_pub_exp_refunded',
+        username: 'NPU探索者',
+        userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+        submitTime: '2026-08-12 18:00:00',
+        notes: '优化了后处理算子，提供 C++ 测试程序。',
+        files: [{ id: 'f_rf2', name: 'bytetrack_npu_cpp.tar.gz', size: '36.5 MB' }],
+        status: '已驳回',
+        rejectReason: '【发布人验收驳回意见】多目标 ID Switch 频繁跳变，精度评测损失高达 8.2%，远超 1.5% 容忍度要求。',
+        verifiedTime: '2026-08-17 14:00:00'
+      }
+    ],
+    bounty: 4800,
+    bountyUnit: '¥'
+  },
+
+  // -------------------------------------------------------------------------
+  // [我发布 - 到期结束类型 A：无人接单到期结束]
+  // -------------------------------------------------------------------------
+  {
+    id: 'tsk_my_pub_exp_no_takers_1',
+    title: '基于 WebGPU 的医学 DICOM 3D 体绘制与光线投射渲染引擎',
+    taskType: '接单任务',
+    brief: '纯浏览器端 WebGPU 加速的医学 CT/MRI 三维体绘制，实现 60fps 实时光线投射与传输函数动态调节',
+    domain: '技术开发',
+    difficulty: '困难',
+    description: `<h3>【项目背景】</h3><p>为了在 Web 端实现轻量级远程医疗影像三维重建，急需开发基于标准 WebGPU API 的三维体绘制（Volume Rendering）引擎。</p><h3>【核心要求】</h3><ul><li>支持标准 DICOM/NIfTI 体素数据加载与三维纹理重组；</li><li>纯 WGSL 着色器实现实时光线投射（Ray Marching）与梯度阴影计算；</li><li>在 M1 Mac / RTX 3060 浏览器环境下维持 60fps 流畅交互。</li></ul>`,
+    acceptanceCriteria: `<h3>【验收标准】</h3><ol><li>512×512×512 体素数据集旋转与剖切达到 60fps 无掉帧；</li><li>支持一维/二维传递函数（Transfer Function）实时调色板编辑；</li><li>提供完整的 TypeScript + WGSL 源码与沙盒示例工程。</li></ol>`,
+    cashReward: 6200,
+    pointsReward: 400,
+    totalCashReward: 6200,
+    totalPointsReward: 400,
+    startTime: '2026-06-01 00:00:00',
+    endTime: '2026-06-30 23:59:59',
+    remainingDays: 0,
+    publisher: '极客小千 (你)',
+    publisherAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    publishTime: '2026-06-01 09:30:00',
+    status: '已结束',
+    refunded: true,
+    refundCash: 6200,
+    refundPoints: 400,
+    refundTime: '2026-07-01 00:05:00',
+    refundReason: '任务已到达截止时间，公示周期内无开发者接单承接。任务预付托管赏金 ¥6,200 及 400 平台积分已自动全额退还至发布人账户。',
+    acceptedCount: 0,
+    submittedCount: 0,
+    verifiedCount: 0,
+    takers: [],
+    submissions: [],
+    bounty: 6200,
+    bountyUnit: '¥'
+  },
+  {
+    id: 'tsk_my_pub_exp_no_takers_2',
+    title: '分布式时序数据库倒排索引压缩与 SIMD-BP128 算子加速',
+    taskType: '接单任务',
+    brief: '针对物联网海量时间序列 Tag 倒排列表，基于 SIMD BP128/RoaringBitmap 实现纳秒级交并集查询',
+    domain: '技术开发',
+    difficulty: '困难',
+    description: `<h3>【项目需求】</h3><p>面向工业传感器监控场景，优化自研 TSDB 的倒排索引存储密度与过滤检索性能。需利用 AVX-512/NEON 指令集完成 BitPacking-128 压缩算子研发。</p><h3>【交付范围】</h3><ul><li>C++/Rust 编写的高性能 SIMD 解压与求交集内核；</li><li>相比标准 RoaringBitmap 提升 3x 以上查询吞吐。</li></ul>`,
+    acceptanceCriteria: `<ol><li>千万级 Tag 检索延迟 P99 ≤ 50μs；</li><li>无内存泄露并通过 AddressSanitizer 压力检验；</li><li>包含详尽的 Google Benchmark 性能对比测试集。</li></ol>`,
+    cashReward: 8500,
+    pointsReward: 500,
+    totalCashReward: 8500,
+    totalPointsReward: 500,
+    startTime: '2026-06-15 00:00:00',
+    endTime: '2026-07-15 23:59:59',
+    remainingDays: 0,
+    publisher: '极客小千 (你)',
+    publisherAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    publishTime: '2026-06-15 11:00:00',
+    status: '已结束',
+    refunded: true,
+    refundCash: 8500,
+    refundPoints: 500,
+    refundTime: '2026-07-16 00:05:00',
+    refundReason: '任务技术要求与算子优化门槛较高，任务公示期内无开发者接单。预付托管资金 ¥8,500 及 500 平台积分已自动全额原路退还至发布人账户。',
+    acceptedCount: 0,
+    submittedCount: 0,
+    verifiedCount: 0,
+    takers: [],
+    submissions: [],
+    bounty: 8500,
+    bountyUnit: '¥'
+  },
+  {
+    id: 'tsk_my_pub_exp_no_takers_3',
+    title: '小语种（斯瓦希里语/豪萨语）语音识别 ASR 音素对齐数据集构建',
+    taskType: '接单任务',
+    brief: '非洲本土常用小语种 200 小时母语发音采集、音素标注与 Montreal Forced Aligner 强制对齐',
+    domain: 'AI模型与数据',
+    difficulty: '困难',
+    description: `<h3>【项目背景】</h3><p>为拓展多语言大模型的多语种语音理解能力，需搜集并精细标注 200 小时斯瓦希里语及豪萨语自然语流音频及词级时间戳。</p>`,
+    acceptanceCriteria: `<ol><li>音频采样率 16kHz 16-bit 单声道，信噪比 ≥ 25dB；</li><li>音素对齐时间戳误差 ≤ 20ms，标注准确率 ≥ 96%；</li><li>提交符合 Kaldi/HuggingFace 格式规范的数据集包。</li></ol>`,
+    cashReward: 3600,
+    pointsReward: 200,
+    totalCashReward: 3600,
+    totalPointsReward: 200,
+    startTime: '2026-07-01 00:00:00',
+    endTime: '2026-07-25 23:59:59',
+    remainingDays: 0,
+    publisher: '极客小千 (你)',
+    publisherAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    publishTime: '2026-07-01 10:00:00',
+    status: '已结束',
+    refunded: true,
+    refundCash: 3600,
+    refundPoints: 200,
+    refundTime: '2026-07-26 00:05:00',
+    refundReason: '任务已到达截止时间，公示周期内无开发者接单承接。预付托管赏金 ¥3,600 与 200 平台积分已全额返还至发布人账户。',
+    acceptedCount: 0,
+    submittedCount: 0,
+    verifiedCount: 0,
+    takers: [],
+    submissions: [],
+    bounty: 3600,
+    bountyUnit: '¥'
+  },
+
+  // -------------------------------------------------------------------------
+  // [我发布 - 到期结束类型 B：有人接单但是无人提交然后到期结束]
+  // -------------------------------------------------------------------------
+  {
+    id: 'tsk_my_pub_exp_no_sub_1',
+    title: '跨平台 Flutter 渲染引擎低延迟虚拟声卡驱动与混音插件',
+    taskType: '接单任务',
+    brief: '开发 Windows/macOS 双端虚拟音频环回输入输出驱动，支持 DAW 级低延迟混音与采集',
+    domain: '技术开发',
+    difficulty: '中等',
+    description: `<h3>【需求描述】</h3><p>需要针对 Flutter 桌面端提供 CoreAudio (macOS) 与 WASAPI Exclusive (Windows) 底层环回驱动，解决跨平台在线协作直播中的伴奏混音与降噪问题。</p>`,
+    acceptanceCriteria: `<ol><li>端到端音频缓冲延迟 ≤ 15ms；</li><li>支持动态采样率重采样与多路音频流混音；</li><li>提供完整的 Dart FFI 接口与桌面端演示 Demo。</li></ol>`,
+    cashReward: 4200,
+    pointsReward: 250,
+    totalCashReward: 4200,
+    totalPointsReward: 250,
+    startTime: '2026-07-05 00:00:00',
+    endTime: '2026-08-05 23:59:59',
+    remainingDays: 0,
+    publisher: '极客小千 (你)',
+    publisherAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    publishTime: '2026-07-05 14:00:00',
+    status: '已结束',
+    refunded: true,
+    refundCash: 4200,
+    refundPoints: 250,
+    refundTime: '2026-08-06 00:05:00',
+    refundReason: '任务已到期截止。共有 2 位开发者接单，但接单人在截止时间前均未提交验收成果。任务预付托管金额 ¥4,200 及 250 平台积分已自动全额退还至发布人账户。',
+    acceptedCount: 2,
+    submittedCount: 0,
+    verifiedCount: 0,
+    takers: [
+      {
+        id: 'tk_ns1_1',
+        taskId: 'tsk_my_pub_exp_no_sub_1',
+        username: '移动端老兵',
+        userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-07-08 14:20:00',
+        status: '已接单'
+      },
+      {
+        id: 'tk_ns1_2',
+        taskId: 'tsk_my_pub_exp_no_sub_1',
+        username: '音频算法狂人',
+        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-07-10 16:30:00',
+        status: '已接单'
+      }
+    ],
+    submissions: [],
+    bounty: 4200,
+    bountyUnit: '¥'
+  },
+  {
+    id: 'tsk_my_pub_exp_no_sub_2',
+    title: '三维工业零件 CAD STEP 文件轻量化 glTF 拓扑减面转换工具',
+    taskType: '接单任务',
+    brief: '基于 OpenCASCADE 内核开发命令行与 WebAssembly 工具，将 GB 级 STEP 转换为轻量 glTF 并保持装配体层级',
+    domain: '工具与自动化',
+    difficulty: '困难',
+    description: `<h3>【需求描述】</h3><p>将工业 CAD 交换格式（STEP/IGES）自动三角剖分转换至适用于 Web 渲染的 glTF 2.0，需具备高质量几何特征边保形减面与材质分离能力。</p>`,
+    acceptanceCriteria: `<ol><li>减面率达 70% 时曲率边界偏差 ≤ 0.2mm；</li><li>保留完整的层级树状装配体（Assembly Tree）与构件元属性；</li><li>支持多线程批量转换与内存上限控制。</li></ol>`,
+    cashReward: 5200,
+    pointsReward: 300,
+    totalCashReward: 5200,
+    totalPointsReward: 300,
+    startTime: '2026-07-15 00:00:00',
+    endTime: '2026-08-10 23:59:59',
+    remainingDays: 0,
+    publisher: '极客小千 (你)',
+    publisherAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    publishTime: '2026-07-15 15:30:00',
+    status: '已结束',
+    refunded: true,
+    refundCash: 5200,
+    refundPoints: 300,
+    refundTime: '2026-08-11 00:05:00',
+    refundReason: '任务已到达截止时间。共有 3 位极客接单，但由于 CAD 拓扑减面算法难度大，接单人在截止期前未提交验收成果。任务预付托管资金 ¥5,200 与 300 平台积分已全额退还至发布人账户。',
+    acceptedCount: 3,
+    submittedCount: 0,
+    verifiedCount: 0,
+    takers: [
+      {
+        id: 'tk_ns2_1',
+        taskId: 'tsk_my_pub_exp_no_sub_2',
+        username: 'CAD拓扑研究员',
+        userAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-07-16 11:20:00',
+        status: '已接单'
+      },
+      {
+        id: 'tk_ns2_2',
+        taskId: 'tsk_my_pub_exp_no_sub_2',
+        username: '几何算法老王',
+        userAvatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-07-17 09:40:00',
+        status: '已接单'
+      },
+      {
+        id: 'tk_ns2_3',
+        taskId: 'tsk_my_pub_exp_no_sub_2',
+        username: '图形渲染客',
+        userAvatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-07-18 15:00:00',
+        status: '已接单'
+      }
+    ],
+    submissions: [],
+    bounty: 5200,
+    bountyUnit: '¥'
+  },
+  {
+    id: 'tsk_my_pub_exp_no_sub_3',
+    title: '基于 eBPF 的云原生 K8s 服务间拓扑依赖与流量损耗实时侦测 Agent',
+    taskType: '接单任务',
+    brief: '零侵入侦测 Pod 间 TCP 往返时延（RTT）、重传率与 HTTP/gRPC 调用链路拓扑',
+    domain: '技术开发',
+    difficulty: '困难',
+    description: `<h3>【项目背景】</h3><p>为了免除业务侧手动注入链路追踪 SDK 的痛点，基于 Linux eBPF 内核探测点实现零代码侵入的服务网格流量拓扑与损耗监控 DaemonSet。</p>`,
+    acceptanceCriteria: `<ol><li>Agent 单节点 CPU 占用率 ≤ 1.5%，内存消耗 ≤ 128MB；</li><li>准确采集 L4/L7 协议延迟，并按 10s 粒度聚合推流至 Prometheus；</li><li>包含完整的 Helm Chart 与测试集群部署脚本。</li></ol>`,
+    cashReward: 6000,
+    pointsReward: 350,
+    totalCashReward: 6000,
+    totalPointsReward: 350,
+    startTime: '2026-07-18 00:00:00',
+    endTime: '2026-08-12 23:59:59',
+    remainingDays: 0,
+    publisher: '极客小千 (你)',
+    publisherAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    publishTime: '2026-07-18 10:20:00',
+    status: '已结束',
+    refunded: true,
+    refundCash: 6000,
+    refundPoints: 350,
+    refundTime: '2026-08-13 00:05:00',
+    refundReason: '任务已到期截止，接单开发者在截止日前未能按期提交验收成果。任务托管预付资金 ¥6,000 及 350 积分已全额退还至发布人账户。',
+    acceptedCount: 1,
+    submittedCount: 0,
+    verifiedCount: 0,
+    takers: [
+      {
+        id: 'tk_ns3_1',
+        taskId: 'tsk_my_pub_exp_no_sub_3',
+        username: '内核运维极客',
+        userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-07-20 10:15:00',
+        status: '已接单'
+      }
+    ],
+    submissions: [],
+    bounty: 6000,
     bountyUnit: '¥'
   },
 

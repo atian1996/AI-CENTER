@@ -391,6 +391,141 @@ const MultiSelectDropdown: React.FC<{
   );
 };
 
+/** 关联基座模型多选下拉组件 */
+const ModelMultiSelectDropdown: React.FC<{
+  label: string;
+  required?: boolean;
+  models: any[];
+  selectedModelIds: string[];
+  onChange: (ids: string[]) => void;
+  placeholder?: string;
+}> = ({
+  label,
+  required = false,
+  models,
+  selectedModelIds,
+  onChange,
+  placeholder = '请下拉选择关联平台基座模型（支持多选）...'
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const toggleModel = (id: string) => {
+    if (selectedModelIds.includes(id)) {
+      if (selectedModelIds.length <= 1) {
+        return; // 至少保留一个模型
+      }
+      onChange(selectedModelIds.filter(v => v !== id));
+    } else {
+      onChange([...selectedModelIds, id]);
+    }
+  };
+
+  const selectedModelObjs = models.filter(m => selectedModelIds.includes(m.id));
+
+  return (
+    <div className="space-y-1.5 relative" ref={containerRef}>
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-bold text-slate-300 block">
+          {label} {required && <span className="text-red-500">*</span>}
+          <span className="text-[10px] text-slate-500 font-normal ml-2">(支持多选关联多个基座模型，前台用户可自由切换模型)</span>
+        </label>
+        <span className="text-[11px] font-mono text-slate-400">
+          已关联 <span className="text-indigo-400 font-bold">{selectedModelIds.length}</span> 个基座模型
+        </span>
+      </div>
+
+      {/* Trigger Box */}
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        className="min-h-[44px] px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between cursor-pointer hover:border-slate-700 transition focus-within:border-indigo-500"
+      >
+        <div className="flex flex-wrap gap-1.5 items-center flex-1">
+          {selectedModelObjs.length === 0 ? (
+            <span className="text-xs text-slate-600 select-none">{placeholder}</span>
+          ) : (
+            selectedModelObjs.map(m => (
+              <span
+                key={m.id}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border bg-indigo-950/90 text-indigo-300 border-indigo-700/60 shadow-xs"
+              >
+                <span>{m.name}</span>
+                <span className="text-[10px] text-indigo-400 font-mono">({m.vendor || '官方'} · ¥{(m.pricePerTenThousandTokens || 0.04).toFixed(2)}/万Token)</span>
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleModel(m.id);
+                  }}
+                  className="hover:text-red-400 transition ml-1 p-0.5 cursor-pointer"
+                  title="移除此模型"
+                >
+                  <X className="w-3 h-3" />
+                </span>
+              </span>
+            ))
+          )}
+        </div>
+        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ml-2 shrink-0 ${isOpen ? 'rotate-180 text-indigo-400' : ''}`} />
+      </div>
+
+      {/* Dropdown Options */}
+      {isOpen && (
+        <div className="absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-30 max-h-60 overflow-y-auto p-2 space-y-1">
+          <div className="px-2 py-1 text-[10px] text-slate-500 font-bold border-b border-slate-800/80 mb-1 flex items-center justify-between">
+            <span>平台已有基座模型列表（点击勾选/取消勾选，至少保留1个）</span>
+            <span className="text-indigo-400 font-mono">不同模型 Token 计费费率不同</span>
+          </div>
+          {models.map(m => {
+            const isSelected = selectedModelIds.includes(m.id);
+            return (
+              <div
+                key={m.id}
+                onClick={() => toggleModel(m.id)}
+                className={`px-3 py-2 rounded-lg text-xs flex items-center justify-between cursor-pointer transition ${
+                  isSelected
+                    ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 font-bold'
+                    : 'text-slate-300 hover:bg-slate-800/80 hover:text-white border border-transparent'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center text-[10px] shrink-0 ${
+                    isSelected ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-slate-700 bg-slate-950'
+                  }`}>
+                    {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                  </div>
+                  <div>
+                    <span className="font-bold text-white mr-2">{m.name}</span>
+                    <span className="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-mono">
+                      {m.vendor || '官方'} · {m.typeTag || '通用LLM'}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-[11px] font-mono text-amber-400 font-bold">
+                    ¥{(m.pricePerTenThousandTokens || 0.04).toFixed(2)} / 万Token
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 /** Markdown 编辑器组件 (支持工具栏与实时渲染预览) */
 const MarkdownEditorField: React.FC<{
   label: string;
@@ -651,6 +786,7 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
   // Multi-select help state for form
   const [formAppScenarios, setFormAppScenarios] = useState<string[]>([]);
   const [formIndustries, setFormIndustries] = useState<string[]>([]);
+  const [formSelectedModelIds, setFormSelectedModelIds] = useState<string[]>([]);
   // Launch status toggle (default: false / 关闭)
   const [isPublishedToggle, setIsPublishedToggle] = useState<boolean>(false);
 
@@ -678,6 +814,7 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
       description: '',
       useGuide: '',
       techDocs: '',
+      freeQuotaAmount: 5.0,
       freeTokenQuota: 10,
       apiAddress: 'https://api.qianji.ai/v1/agent/invoke',
       status: '未上架',
@@ -685,6 +822,7 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
       baseModel: defaultModel.name,
       linkedModel: defaultModel.name
     });
+    setFormSelectedModelIds([defaultModel.id]);
     setFormAppScenarios([]);
     setFormIndustries([]);
     setIsPublishedToggle(false); // 默认为关闭 (未上架)
@@ -702,6 +840,18 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
       : ag.industry ? [ag.industry] : ['通用'];
     setFormAppScenarios(initialScenarios);
     setFormIndustries(initialInds);
+
+    let initModelIds: string[] = [];
+    if (ag.baseModelIds && ag.baseModelIds.length > 0) {
+      initModelIds = ag.baseModelIds;
+    } else if (ag.baseModelId) {
+      initModelIds = [ag.baseModelId];
+    } else {
+      const m = models.find(mod => mod.name === ag.baseModel || mod.name === ag.linkedModel);
+      initModelIds = [m ? m.id : (models[0]?.id || 'm1')];
+    }
+    setFormSelectedModelIds(initModelIds);
+
     setIsPublishedToggle(ag.status === '已上架');
     setIsEditing(true);
   };
@@ -727,8 +877,8 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
       showToast('一句话简介限30字以内');
       return;
     }
-    if (!editingAgent.baseModelId && !editingAgent.linkedModel) {
-      showToast('请选择关联平台已有基座模型');
+    if (formSelectedModelIds.length === 0) {
+      showToast('请至少选择一个关联平台已有基座模型');
       return;
     }
     if (formAppScenarios.length === 0) {
@@ -748,7 +898,11 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
     const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
     const targetId = editingAgent.id || `ag_${Date.now()}`;
-    const selectedModel = models.find(m => m.id === editingAgent.baseModelId) || models.find(m => m.name === editingAgent.linkedModel) || models[0];
+    const selectedModelObjects = models.filter(m => formSelectedModelIds.includes(m.id));
+    const primaryModel = selectedModelObjects[0] || models[0];
+    const freeAmt = editingAgent.freeQuotaAmount !== undefined 
+      ? Math.max(0, editingAgent.freeQuotaAmount) 
+      : (editingAgent.freeTokenQuota ? editingAgent.freeTokenQuota * 0.5 : 5.0);
 
     const finalizedAgent: AgentItem = {
       id: targetId,
@@ -767,15 +921,18 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
       priceValue: 0,
       tags: editingAgent.tags || ['官方', '新上'],
       apiAddress: editingAgent.apiAddress || 'https://api.qianji.ai/v1/agent/invoke',
-      pricePerTenThousandTokens: 0.05,
-      freeTokenQuota: editingAgent.freeTokenQuota !== undefined ? Math.max(0, editingAgent.freeTokenQuota) : 10,
-      hasTrialQuota: (editingAgent.freeTokenQuota || 0) > 0,
-      trialQuotaVal: (editingAgent.freeTokenQuota || 10) * 10000,
+      pricePerTenThousandTokens: primaryModel?.pricePerTenThousandTokens || 0.05,
+      freeQuotaAmount: freeAmt,
+      freeTokenQuota: Math.round(freeAmt * 2),
+      hasTrialQuota: freeAmt > 0,
+      trialQuotaVal: freeAmt,
       trialQuotaValidityDays: 30,
       status: isPublishedToggle ? '已上架' : '未上架',
-      baseModelId: selectedModel?.id || editingAgent.baseModelId,
-      baseModel: selectedModel?.name || editingAgent.baseModel || 'DeepSeek-V3',
-      linkedModel: selectedModel?.name || editingAgent.linkedModel || 'DeepSeek-V3',
+      baseModelIds: formSelectedModelIds,
+      baseModels: selectedModelObjects.map(m => m.name),
+      baseModelId: primaryModel?.id || editingAgent.baseModelId,
+      baseModel: primaryModel?.name || editingAgent.baseModel || 'DeepSeek-V3',
+      linkedModel: primaryModel?.name || editingAgent.linkedModel || 'DeepSeek-V3',
       rating: editingAgent.rating || 4.9,
       ratingCount: editingAgent.ratingCount || 12,
       usageCount: editingAgent.usageCount || 1250,
@@ -860,9 +1017,19 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                 <div>
                   <h4 className="text-base font-bold text-white">{detailAgent.name}</h4>
                   <p className="text-xs text-slate-400 mt-0.5">{detailAgent.slogan}</p>
-                  <span className="inline-block mt-2 px-2 py-0.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-mono font-bold rounded border border-indigo-500/20">
-                    {detailAgent.linkedModel || detailAgent.baseModel || 'DeepSeek-V3'}
-                  </span>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {(detailAgent.baseModels && detailAgent.baseModels.length > 0) ? (
+                      detailAgent.baseModels.map((bm, i) => (
+                        <span key={i} className="inline-block px-2 py-0.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-mono font-bold rounded border border-indigo-500/20">
+                          {bm}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="inline-block px-2 py-0.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-mono font-bold rounded border border-indigo-500/20">
+                        {detailAgent.linkedModel || detailAgent.baseModel || 'DeepSeek-V3'}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -878,9 +1045,9 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">免费Token额度</span>
+                  <span className="text-slate-500">免费体验额度</span>
                   <span className="text-amber-400 font-mono font-bold">
-                    {detailAgent.freeTokenQuota !== undefined ? `${detailAgent.freeTokenQuota} 万Token` : (detailAgent.freeTrialCount ? `${detailAgent.freeTrialCount * 2} 万Token` : '10 万Token')}
+                    ¥{(detailAgent.freeQuotaAmount !== undefined ? detailAgent.freeQuotaAmount : (detailAgent.freeTokenQuota ? detailAgent.freeTokenQuota * 0.5 : 5)).toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -1004,34 +1171,15 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                 </select>
               </div>
 
-              {/* 关联基座模型 (只允许选择平台模型管理中已有模型) */}
-              <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">
-                  关联基座模型 <span className="text-red-500">*</span>
-                  <span className="text-[10px] text-slate-500 font-normal ml-2">(仅限关联平台模型管理中已有模型)</span>
-                </label>
-                <select
+              {/* 关联基座模型 (多选) */}
+              <div className="md:col-span-2">
+                <ModelMultiSelectDropdown
+                  label="关联基座模型"
                   required
-                  value={editingAgent.baseModelId || (models.find(m => m.name === editingAgent.linkedModel || m.name === editingAgent.baseModel)?.id || (models[0]?.id || ''))}
-                  onChange={e => {
-                    const selectedId = e.target.value;
-                    const matchedModel = models.find(m => m.id === selectedId);
-                    setEditingAgent({
-                      ...editingAgent,
-                      baseModelId: selectedId,
-                      baseModel: matchedModel ? matchedModel.name : (editingAgent.baseModel || ''),
-                      linkedModel: matchedModel ? matchedModel.name : editingAgent.linkedModel
-                    });
-                  }}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:border-indigo-500 outline-none transition font-bold cursor-pointer"
-                >
-                  <option value="">-- 请选择平台模型管理已有模型 --</option>
-                  {models.map(m => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} ({m.vendor || '官方底座'}) · {m.typeTag || '通用LLM'}
-                    </option>
-                  ))}
-                </select>
+                  models={models}
+                  selectedModelIds={formSelectedModelIds}
+                  onChange={(ids) => setFormSelectedModelIds(ids)}
+                />
               </div>
             </div>
 
@@ -1109,48 +1257,51 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
             </div>
           </div>
 
-          {/* PART 3: TOKEN BILLING & FREE TOKEN QUOTA */}
+          {/* PART 3: TOKEN BILLING & FREE QUOTA */}
           <div className="space-y-5">
             <div className="text-xs font-black text-indigo-400 uppercase tracking-widest border-l-2 border-indigo-500 pl-2">
-              第三部分：Token计费与免费Token额度设置
+              第三部分：Token计费与免费额度设置
             </div>
 
-            {/* 免费Token额度设置 */}
+            {/* 免费额度设置 */}
             <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>免费Token额度设置</span>
-                  <span className="text-[10px] text-slate-500 font-normal">（新用户在未充值前可免费用于发起智能体调用的Token配额）</span>
+                  <span>免费额度设置</span>
+                  <span className="text-[10px] text-slate-500 font-normal">（新用户在未充值前可免费用于发起智能体调用的体验额度，单位：元）</span>
                 </label>
                 <div className="flex items-center gap-2">
-                  {[0, 5, 10, 20, 50].map(cnt => (
+                  {[0, 2, 5, 10, 20].map(cnt => (
                     <button
                       type="button"
                       key={cnt}
-                      onClick={() => setEditingAgent({ ...editingAgent, freeTokenQuota: cnt })}
+                      onClick={() => setEditingAgent({ ...editingAgent, freeQuotaAmount: cnt })}
                       className={`px-2 py-0.5 rounded text-[11px] font-bold border transition cursor-pointer ${
-                        (editingAgent.freeTokenQuota === cnt || (cnt === 10 && editingAgent.freeTokenQuota === undefined))
+                        (editingAgent.freeQuotaAmount === cnt || (cnt === 5 && editingAgent.freeQuotaAmount === undefined && editingAgent.freeTokenQuota === undefined))
                           ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                           : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
                       }`}
                     >
-                      {cnt === 0 ? '不赠送' : `${cnt} 万Token`}
+                      {cnt === 0 ? '不赠送' : `¥${cnt.toFixed(2)}`}
                     </button>
                   ))}
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <input
-                  type="number"
-                  min={0}
-                  step={1}
-                  placeholder="如：10"
-                  value={editingAgent.freeTokenQuota !== undefined ? editingAgent.freeTokenQuota : 10}
-                  onChange={e => setEditingAgent({ ...editingAgent, freeTokenQuota: Math.max(0, parseInt(e.target.value) || 0) })}
-                  className="w-40 px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:border-indigo-500 outline-none transition font-mono font-bold"
-                />
-                <span className="text-xs text-slate-400">万Token 免费体验额度（填 0 表示不赠送免费额度，直接按关联模型的 Token 价格计费）</span>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold font-mono">¥</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    placeholder="如：5.00"
+                    value={editingAgent.freeQuotaAmount !== undefined ? editingAgent.freeQuotaAmount : (editingAgent.freeTokenQuota ? editingAgent.freeTokenQuota * 0.5 : 5)}
+                    onChange={e => setEditingAgent({ ...editingAgent, freeQuotaAmount: Math.max(0, parseFloat(e.target.value) || 0) })}
+                    className="w-40 pl-7 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:border-indigo-500 outline-none transition font-mono font-bold"
+                  />
+                </div>
+                <span className="text-xs text-slate-400">元 免费体验额度（填 0 表示不赠送免费额度；不同基座模型 Token 价格不同，统一以元按量扣减）</span>
               </div>
             </div>
           </div>
@@ -1270,7 +1421,7 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                       <th className="py-3 px-3">关联模型</th>
                       <th className="py-3 px-3">技术形态</th>
                       <th className="py-3 px-3">应用场景</th>
-                      <th className="py-3 px-3">免费Token额度</th>
+                      <th className="py-3 px-3">免费额度</th>
                       <th className="py-3 px-3 text-right">调用量</th>
                       <th className="py-3 px-3 text-right">调用用户数</th>
                       <th className="py-3 px-3">上架状态</th>
@@ -1306,7 +1457,15 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
 
                           {/* Linked Model */}
                           <td className="py-3.5 px-3">
-                            {ag.linkedModel || ag.baseModel ? (
+                            {ag.baseModels && ag.baseModels.length > 0 ? (
+                              <div className="flex flex-wrap gap-1 max-w-[150px]">
+                                {ag.baseModels.map((bm, i) => (
+                                  <span key={i} className="text-[10px] px-1.5 py-0.5 bg-indigo-500/10 text-indigo-400 rounded border border-indigo-500/20 font-mono font-bold whitespace-nowrap">
+                                    {bm}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (ag.linkedModel || ag.baseModel) ? (
                               <span className="text-[10px] px-2 py-0.5 bg-indigo-500/10 text-indigo-400 rounded-md border border-indigo-500/20 font-mono font-bold whitespace-nowrap">
                                 {ag.linkedModel || ag.baseModel}
                               </span>
@@ -1333,10 +1492,10 @@ const AgentListAdminView: React.FC<ListProps> = ({ techForms, appScenarios, indu
                             </div>
                           </td>
 
-                          {/* Free Token Quota */}
+                          {/* Free Quota (in Yuan) */}
                           <td className="py-3.5 px-3 whitespace-nowrap">
                             <span className="text-amber-400 font-mono font-bold text-xs">
-                              {freeTokens}
+                              ¥{(ag.freeQuotaAmount !== undefined ? ag.freeQuotaAmount : (ag.freeTokenQuota ? ag.freeTokenQuota * 0.5 : 5)).toFixed(2)}
                             </span>
                           </td>
 

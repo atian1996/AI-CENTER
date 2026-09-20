@@ -25,14 +25,21 @@ import {
   Server,
   Coins,
   CheckCircle2,
-  Clock
+  Clock,
+  Download,
+  Paperclip,
+  Award,
+  XCircle
 } from 'lucide-react';
+
+export type AdminTaskModalMode = 'audit_detail' | 'monitor_edit' | 'monitor_detail';
 
 interface AdminTaskEditModalProps {
   task: TaskItem | null;
   isOpen: boolean;
   onClose: () => void;
   readOnly?: boolean;
+  mode?: AdminTaskModalMode;
 }
 
 const DOMAIN_OPTIONS: { value: TaskDomainType; label: string }[] = [
@@ -75,7 +82,8 @@ export const AdminTaskEditModal: React.FC<AdminTaskEditModalProps> = ({
   task,
   isOpen,
   onClose,
-  readOnly = false
+  readOnly = false,
+  mode
 }) => {
   const { adminUpdateTask, showToast, agents, models, datasets, skills } = useApp();
 
@@ -305,14 +313,22 @@ export const AdminTaskEditModal: React.FC<AdminTaskEditModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-black text-white">
-                  {readOnly ? '任务需求详情查看' : '编辑任务需求规范'}
+                  {mode === 'audit_detail'
+                    ? '任务发布审核详情查看'
+                    : mode === 'monitor_detail'
+                    ? '任务运行与接单监控详情'
+                    : mode === 'monitor_edit'
+                    ? '编辑任务需求规范'
+                    : readOnly
+                    ? '任务需求详情查看'
+                    : '编辑任务需求规范'}
                 </h2>
                 <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 font-mono border border-slate-700">
                   ID: {task.id}
                 </span>
                 {readOnly && (
                   <span className="text-[11px] px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-300 font-bold border border-blue-500/30">
-                    只读监控模式
+                    {mode === 'audit_detail' ? '审核只读' : '只读监控'}
                   </span>
                 )}
               </div>
@@ -934,102 +950,220 @@ export const AdminTaskEditModal: React.FC<AdminTaskEditModalProps> = ({
 
           {/* ============================================================== */}
           {/* 第四个区域：4. 平台运行状态与接单监控 */}
+          {/* 需求约束：发布审核详情页面中删除；任务监控编辑页面中删除；仅任务监控详情页面保留并展示接单人详情、提交成果时间、成果附件下载与验收标记 */}
           {/* ============================================================== */}
-          <div className="rounded-2xl bg-slate-950/60 border border-slate-800 p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                <h3 className="text-sm font-black text-white">4. 平台运行状态与接单监控</h3>
+          {mode === 'monitor_detail' && (
+            <div className="rounded-2xl bg-slate-950/60 border border-slate-800 p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                  <h3 className="text-sm font-black text-white">4. 平台运行状态与接单监控</h3>
+                </div>
+                <span className="text-[11px] font-mono text-slate-500">接单流水与交付详情监控</span>
               </div>
-              <span className="text-[11px] font-mono text-slate-500">系统生命周期控制</span>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* 任务运行状态 */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300">
-                  任务运行状态
-                </label>
-                {readOnly ? (
-                  <div className="pt-1">
-                    <span className={`inline-block px-3 py-1.5 rounded-xl text-xs font-bold border ${
-                      STATUS_OPTIONS.find(s => s.value === status)?.color || 'bg-slate-800 text-slate-300 border-slate-700'
-                    }`}>
-                      {status}
+              {/* 任务宏观运行状态与关键指标 */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800 space-y-1">
+                  <span className="text-[10px] text-slate-400 font-bold block">任务当前状态</span>
+                  <span className={`inline-block px-2.5 py-0.5 rounded-lg text-xs font-bold border ${
+                    STATUS_OPTIONS.find(s => s.value === status)?.color || 'bg-slate-800 text-slate-300 border-slate-700'
+                  }`}>
+                    {status}
+                  </span>
+                </div>
+                <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800 space-y-1">
+                  <span className="text-[10px] text-slate-400 font-bold block">已接单极客</span>
+                  <span className="text-sm font-black text-white font-mono">{takersList.length} 人</span>
+                </div>
+                <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800 space-y-1">
+                  <span className="text-[10px] text-slate-400 font-bold block">已提交交付成果</span>
+                  <span className="text-sm font-black text-indigo-400 font-mono">{submissionsList.length} 份</span>
+                </div>
+                <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800 space-y-1">
+                  <span className="text-[10px] text-slate-400 font-bold block">发布人验收状态</span>
+                  <span className={`text-xs font-black ${
+                    task.winner || task.isAccepted || status === '已验收' ? 'text-emerald-400 font-bold' : 'text-slate-400 font-medium'
+                  }`}>
+                    {task.winner || task.isAccepted || status === '已验收' ? '已完成验收结算' : '待验收 / 进行中'}
+                  </span>
+                </div>
+              </div>
+
+              {/* 接单详情列表 */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-300">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-indigo-400" />
+                    <span>接单人明细与成果交付记录 (共 {takersList.length} 人)</span>
+                  </div>
+                  {task.winner && (
+                    <span className="text-[11px] text-emerald-400 flex items-center gap-1 font-bold">
+                      <Award className="w-3.5 h-3.5" />
+                      <span>中标获胜者：{task.winner.username}</span>
                     </span>
+                  )}
+                </div>
+
+                {takersList.length === 0 ? (
+                  <div className="text-center py-8 text-xs text-slate-500 bg-slate-900/40 rounded-xl border border-slate-800/80">
+                    暂无极客承接该任务
                   </div>
                 ) : (
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as TaskGlobalStatus)}
-                    className="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-bold focus:border-indigo-500 focus:outline-none transition cursor-pointer"
-                  >
-                    {STATUS_OPTIONS.map((st) => (
-                      <option key={st.value} value={st.value} className="bg-slate-900 text-white">
-                        {st.label}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="space-y-3">
+                    {takersList.map((tk, idx) => {
+                      const sub = submissionsList.find(s => s.username === tk.username || s.id === tk.submissionId);
+                      
+                      // 判断是否为获胜验收者
+                      const isWinner = 
+                        sub?.status === '已通过' || 
+                        tk.status === '已验收' || 
+                        task.winner?.username === tk.username ||
+                        (!!task.winner?.username && (tk.username.includes(task.winner.username) || task.winner.username.includes(tk.username)));
+                      
+                      const isRejected = sub?.status === '已驳回' || tk.status === '已驳回';
+                      const isSubmitted = !!sub || tk.status === '已提交' || isWinner;
+
+                      return (
+                        <div
+                          key={tk.id || idx}
+                          className={`p-4 rounded-xl border transition-all space-y-3 ${
+                            isWinner
+                              ? 'bg-emerald-950/20 border-emerald-500/50 shadow-xs'
+                              : isRejected
+                              ? 'bg-rose-950/15 border-rose-900/40'
+                              : isSubmitted
+                              ? 'bg-slate-900/90 border-slate-700/80'
+                              : 'bg-slate-900/50 border-slate-800/80'
+                          }`}
+                        >
+                          {/* 接单人基础行 */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={tk.userAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
+                                alt={tk.username}
+                                className="w-9 h-9 rounded-full object-cover border border-slate-700 shrink-0"
+                                referrerPolicy="no-referrer"
+                              />
+                              <div>
+                                <div className="font-bold text-white flex items-center gap-2">
+                                  <span>{tk.username}</span>
+                                  {isWinner && (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                                      <Award className="w-3 h-3" />
+                                      <span>发布人已验收通过 (获胜承接方案)</span>
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[11px] text-slate-400 mt-0.5 flex flex-wrap items-center gap-3">
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="w-3 h-3 text-slate-500" />
+                                    <span>接单时间：{tk.takeTime || '2026-08-05 14:20:00'}</span>
+                                  </span>
+                                  {sub?.submitTime && (
+                                    <span className="flex items-center gap-1 text-indigo-300 font-medium">
+                                      <FileText className="w-3 h-3 text-indigo-400" />
+                                      <span>提交成果时间：{sub.submitTime}</span>
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* 右侧状态标签 */}
+                            <div className="shrink-0 flex items-center gap-2">
+                              {isWinner ? (
+                                <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold rounded-lg flex items-center gap-1">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                                  <span>已通过验收</span>
+                                </span>
+                              ) : isRejected ? (
+                                <span className="px-2.5 py-1 bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs font-bold rounded-lg flex items-center gap-1">
+                                  <XCircle className="w-3.5 h-3.5 text-rose-400" />
+                                  <span>成果未通过</span>
+                                </span>
+                              ) : isSubmitted ? (
+                                <span className="px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold rounded-lg flex items-center gap-1">
+                                  <Clock className="w-3.5 h-3.5 text-amber-400" />
+                                  <span>已提交成果 (待验收)</span>
+                                </span>
+                              ) : (
+                                <span className="px-2.5 py-1 bg-slate-800 text-slate-400 border border-slate-700 text-xs font-bold rounded-lg">
+                                  进行中 (尚未提交)
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* 交付成果说明与文件下载 */}
+                          {sub ? (
+                            <div className="pt-2 border-t border-slate-800/80 space-y-2 text-xs">
+                              {sub.notes && (
+                                <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800 text-slate-300 leading-relaxed">
+                                  <span className="text-slate-500 font-bold block text-[11px] mb-1">交付成果说明：</span>
+                                  {sub.notes}
+                                </div>
+                              )}
+
+                              {/* 成果附件列表（支持点击下载） */}
+                              {sub.files && sub.files.length > 0 ? (
+                                <div className="space-y-1.5 pt-1">
+                                  <span className="text-[11px] font-bold text-slate-400 block">成果附件清单 (可直接下载)：</span>
+                                  <div className="flex flex-wrap gap-2">
+                                    {sub.files.map((file) => (
+                                      <button
+                                        key={file.id || file.name}
+                                        type="button"
+                                        onClick={() => showToast(`正在为您下载附件【${file.name}】`)}
+                                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-700 hover:border-indigo-500 text-xs text-slate-200 rounded-xl transition cursor-pointer group"
+                                        title="点击下载成果附件"
+                                      >
+                                        <Paperclip className="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-300" />
+                                        <span className="font-medium text-slate-200">{file.name}</span>
+                                        <span className="text-[10px] text-slate-500 font-mono">({file.size})</span>
+                                        <Download className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-400 ml-1" />
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="text-[11px] text-slate-500 italic">该交付记录未附带文件附件</div>
+                              )}
+
+                              {/* 如果该接单人通过验收，显示发布人验收标记详情与时间 */}
+                              {isWinner && (
+                                <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-emerald-300 space-y-1 text-xs">
+                                  <div className="font-bold flex items-center gap-1.5">
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                    <span>发布人验收标记：已验收该接单人方案为获胜成果</span>
+                                  </div>
+                                  <div className="text-[11px] text-emerald-400/80 flex flex-wrap gap-x-4">
+                                    <span>验收时间：{task.winner?.passTime || sub.verifiedTime || '2026-08-18 16:30:00'}</span>
+                                    <span>验收人：{task.publisher}</span>
+                                  </div>
+                                  {(task.winner?.notes || sub.notes) && (
+                                    <div className="text-[11px] text-emerald-200/90 pt-1 border-t border-emerald-500/20">
+                                      验收备注：{task.winner?.notes || '成果功能完备，性能指标通过验收标准，全额发放悬赏奖励。'}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-[11px] text-slate-500 italic pt-1">
+                              该极客当前正在承接开发中，尚未提交成果交付物。
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
 
-              {/* 驳回原因 (当状态为驳回时显示或编辑) */}
-              {(status === '已驳回' || task.rejectReason) && (
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-red-400">
-                    审核驳回原因说明
-                  </label>
-                  <input
-                    type="text"
-                    disabled={readOnly}
-                    value={rejectReason}
-                    onChange={(e) => setRejectReason(e.target.value)}
-                    placeholder="请输入驳回原因说明..."
-                    className={`w-full px-3 py-2.5 rounded-xl text-xs font-medium transition ${
-                      readOnly
-                        ? 'bg-red-950/20 border border-red-900/50 text-red-300 cursor-default'
-                        : 'bg-slate-900 border border-red-700 text-white focus:border-red-500 focus:outline-none'
-                    }`}
-                  />
-                </div>
-              )}
             </div>
-
-            {/* 接单极客概况展示 */}
-            <div className="pt-3 border-t border-slate-800/80 space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400 font-bold flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>接单极客团队 (共 {takersList.length} 人，已交付 {submissionsList.length} 份)：</span>
-                </span>
-              </div>
-              {takersList.length > 0 ? (
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {takersList.map((tk, idx) => (
-                    <div key={tk.id || idx} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs">
-                      <img
-                        src={tk.userAvatar}
-                        alt={tk.username}
-                        className="w-5 h-5 rounded-full object-cover"
-                        referrerPolicy="no-referrer"
-                      />
-                      <span className="text-slate-200 font-bold">{tk.username}</span>
-                      <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                        tk.status === '已验收' ? 'bg-emerald-500/20 text-emerald-400' :
-                        tk.status === '已提交' ? 'bg-indigo-500/20 text-indigo-400' :
-                        tk.status === '已驳回' ? 'bg-rose-500/20 text-rose-400' : 'bg-slate-800 text-slate-400'
-                      }`}>
-                        {tk.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-xs text-slate-500 italic">暂无极客接单</div>
-              )}
-            </div>
-
-          </div>
+          )}
 
           {/* 底部按钮栏 */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800 sticky bottom-0 bg-slate-950/90 py-2 -mx-6 px-6 -mb-6">

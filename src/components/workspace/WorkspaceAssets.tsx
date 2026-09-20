@@ -424,14 +424,20 @@ export const WorkspaceAssets: React.FC = () => {
   // If in dataset upload subpage, render UserDatasetUploadForm
   if (isUploadingDataset) {
     return (
-      <UserDatasetUploadForm onBack={() => setIsUploadingDataset(false)} />
+      <UserDatasetUploadForm 
+        onBack={() => setIsUploadingDataset(false)} 
+        fromTitle="我的资产"
+      />
     );
   }
 
   // If in skill create subpage, render UserSkillCreateForm
   if (isCreatingSkill) {
     return (
-      <UserSkillCreateForm onBack={() => setIsCreatingSkill(false)} />
+      <UserSkillCreateForm 
+        onBack={() => setIsCreatingSkill(false)} 
+        fromTitle="我的资产"
+      />
     );
   }
 
@@ -451,6 +457,7 @@ export const WorkspaceAssets: React.FC = () => {
       <DatasetDetail 
         dataset={activeDatasetDetail} 
         onBack={() => setActiveDatasetDetail(null)} 
+        fromTitle="我的资产"
       />
     );
   }
@@ -461,6 +468,7 @@ export const WorkspaceAssets: React.FC = () => {
       <SkillDetail 
         skill={activeSkillDetail} 
         onBack={() => setActiveSkillDetail(null)} 
+        fromTitle="我的资产"
       />
     );
   }

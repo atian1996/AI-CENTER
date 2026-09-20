@@ -42,9 +42,11 @@ interface SkillDetailProps {
   skill: SkillPluginItem;
   onBack: () => void;
   initialTab?: 'overview' | 'files' | 'comments';
+  fromTitle?: string;
 }
 
-export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initialTab = 'overview' }) => {
+export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initialTab = 'overview', fromTitle }) => {
+  const effectiveFromTitle = fromTitle || '插件市场';
   const { showToast, downloadSkill } = useApp();
 
   // Active Tab: overview | files | comments
@@ -288,7 +290,7 @@ export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initial
           className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-900 font-medium transition cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>返回插件市场</span>
+          <span>返回{effectiveFromTitle}</span>
         </button>
 
         {/* Top Info Card */}

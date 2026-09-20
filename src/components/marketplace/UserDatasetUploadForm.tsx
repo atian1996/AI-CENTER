@@ -20,9 +20,10 @@ import {
 
 interface UserDatasetUploadFormProps {
   onBack: () => void;
+  fromTitle?: string;
 }
 
-export const UserDatasetUploadForm: React.FC<UserDatasetUploadFormProps> = ({ onBack }) => {
+export const UserDatasetUploadForm: React.FC<UserDatasetUploadFormProps> = ({ onBack, fromTitle }) => {
   const { datasetTagDimensions, submitDatasetForApproval, showToast, user } = useApp();
 
   // Form Fields
@@ -171,7 +172,7 @@ export const UserDatasetUploadForm: React.FC<UserDatasetUploadFormProps> = ({ on
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-400">AI 集市 / 数据集广场</span>
+              <span className="text-xs font-bold text-slate-400">{fromTitle || 'AI 集市 / 数据集广场'}</span>
               <span className="text-xs text-slate-300">/</span>
               <span className="text-xs font-extrabold text-blue-600">上传数据集</span>
             </div>

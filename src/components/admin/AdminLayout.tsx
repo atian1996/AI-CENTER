@@ -1091,12 +1091,13 @@ const PublishAuditAdminView: React.FC = () => {
         )}
       </div>
 
-      {/* 详情查看弹窗（与编辑任务字段完全一致，只读模式） */}
+      {/* 详情查看弹窗（与编辑任务字段完全一致，只读模式，不显示平台运行状态与接单监控） */}
       <AdminTaskEditModal
         task={viewingTask}
         isOpen={!!viewingTask}
         onClose={() => setViewingTask(null)}
         readOnly={true}
+        mode="audit_detail"
       />
     </div>
   );
@@ -1340,20 +1341,22 @@ const TaskMonitorAdminView: React.FC = () => {
         )}
       </div>
 
-      {/* 详情查看弹窗（与编辑任务字段完全一致，只读模式） */}
+      {/* 详情查看弹窗（展示接单监控与交付详情，只读模式） */}
       <AdminTaskEditModal
         task={viewingTask}
         isOpen={!!viewingTask}
         onClose={() => setViewingTask(null)}
         readOnly={true}
+        mode="monitor_detail"
       />
 
-      {/* 编辑弹窗 */}
+      {/* 编辑弹窗（不展示接单监控区，仅编辑任务需求与奖励等） */}
       <AdminTaskEditModal
         task={editingTask}
         isOpen={!!editingTask}
         onClose={() => setEditingTask(null)}
         readOnly={false}
+        mode="monitor_edit"
       />
     </div>
   );

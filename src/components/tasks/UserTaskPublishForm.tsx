@@ -27,10 +27,12 @@ import {
 interface UserTaskPublishFormProps {
   onBack: () => void;
   initialTask?: TaskItem | null;
+  fromTitle?: string;
 }
 
-export const UserTaskPublishForm: React.FC<UserTaskPublishFormProps> = ({ onBack, initialTask }) => {
+export const UserTaskPublishForm: React.FC<UserTaskPublishFormProps> = ({ onBack, initialTask, fromTitle }) => {
   const { addTask, updateTask, showToast, agents, models, datasets, skills } = useApp();
+  const effectiveFromTitle = fromTitle || (initialTask ? '我的已发布任务' : '任务大厅');
 
   // 1. 任务信息区
   const [title, setTitle] = useState('');
@@ -279,11 +281,11 @@ export const UserTaskPublishForm: React.FC<UserTaskPublishFormProps> = ({ onBack
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white border border-slate-200/80 text-xs font-bold text-slate-700 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50/50 shadow-2xs transition cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>返回任务大厅</span>
+            <span>返回{effectiveFromTitle}</span>
           </button>
 
           <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
-            <span className="cursor-pointer hover:text-indigo-600" onClick={onBack}>任务大厅</span>
+            <span className="cursor-pointer hover:text-indigo-600" onClick={onBack}>{effectiveFromTitle}</span>
             <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
             <span className="text-slate-700 font-bold">
               {initialTask ? '修改任务需求' : '发布新需求任务'}

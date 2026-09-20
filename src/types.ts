@@ -176,7 +176,9 @@ export interface AgentItem {
   author: string;
   authorAvatar?: string;
   baseModel?: string;
-  baseModelId?: string; // 关联平台内的模型ID
+  baseModelId?: string; // 关联平台内的模型ID (默认首选)
+  baseModelIds?: string[]; // 关联的基座模型ID列表（支持多选）
+  baseModels?: string[]; // 关联的基座模型名称列表（支持多选）
   version?: string;
   techDocs?: string;
   createdAt?: string;
@@ -194,7 +196,8 @@ export interface AgentItem {
   hasTrialQuota?: boolean;
   trialQuotaVal?: number;
   trialQuotaValidityDays?: number;
-  freeTokenQuota?: number; // 免费Token额度 (万Token)
+  freeTokenQuota?: number; // 兼容旧字段：免费Token额度 (万Token)
+  freeQuotaAmount?: number; // 免费体验额度 (单位：元)
   weekCardPrice?: number;
   weekCardTokens?: number;
   monthCardPrice?: number;
@@ -299,6 +302,7 @@ export interface ModelItem {
   typeTag: ModelTypeTag;
   priceInput: string; // ¥0.002 / 1k tokens
   priceOutput: string;
+  pricePerTenThousandTokens?: number; // 每万tokens价格（单位：元）
   tags: string[]; // ['热门', '国产', '免费额度']
   description: string;
   benchmarks: { name: string; score: number }[];
@@ -743,6 +747,11 @@ export interface TaskItem {
   isAccepted?: boolean;
   rejectReason?: string; // 审核驳回原因
   auditTime?: string;
+  refunded?: boolean; // 到期全部成果驳回后是否已全额退还赏金与积分
+  refundTime?: string;
+  refundReason?: string;
+  refundCash?: number;
+  refundPoints?: number;
   
   // 中标获胜者信息
   winner?: {

@@ -19,9 +19,10 @@ import {
 
 interface UserSkillCreateFormProps {
   onBack: () => void;
+  fromTitle?: string;
 }
 
-export const UserSkillCreateForm: React.FC<UserSkillCreateFormProps> = ({ onBack }) => {
+export const UserSkillCreateForm: React.FC<UserSkillCreateFormProps> = ({ onBack, fromTitle }) => {
   const { submitSkillForApproval, showToast, user } = useApp();
 
   // Form states aligned strictly with SkillAdminView
@@ -185,7 +186,7 @@ export const UserSkillCreateForm: React.FC<UserSkillCreateFormProps> = ({ onBack
           </button>
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
-              <span>AI 集市</span>
+              <span>{fromTitle || 'AI 集市 / Skill 市场'}</span>
               <span>/</span>
               <span className="text-purple-600">创建 Skill</span>
             </div>

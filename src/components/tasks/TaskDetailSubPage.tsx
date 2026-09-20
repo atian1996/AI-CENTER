@@ -35,7 +35,8 @@ import {
   Activity,
   Box,
   FileCode,
-  Server
+  Server,
+  RotateCcw
 } from 'lucide-react';
 import { SubmitResultModal } from './SubmitResultModal';
 import { TaskVerificationModal } from './TaskVerificationModal';
@@ -44,9 +45,11 @@ interface TaskDetailSubPageProps {
   taskId: string;
   onBack: () => void;
   readOnly?: boolean;
+  fromTitle?: string;
 }
 
-export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, onBack, readOnly }) => {
+export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, onBack, readOnly, fromTitle }) => {
+  const effectiveFromTitle = fromTitle || '任务大厅';
   const { 
     tasks, 
     user, 
@@ -101,7 +104,8 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
   const myTakerRecord = !isReadOnly ? (task.takers || []).find(tk => tk.username === user.name || tk.username.includes('你') || tk.username.includes('极客小千')) : undefined;
   const hasTaken = !isReadOnly && !!myTakerRecord;
   const mySubmission = !isReadOnly ? (task.submissions || []).find(s => s.username === user.name || s.username.includes('你') || s.username.includes('极客小千')) : undefined;
-  const hasSubmitted = !isReadOnly && (!!mySubmission || myTakerRecord?.status === '已提交' || myTakerRecord?.status === '已验收');
+  const isRejected = !isFinished && (mySubmission?.status === '已驳回' || myTakerRecord?.status === '已驳回');
+  const hasSubmitted = !isReadOnly && (mySubmission?.status === '待验收' || mySubmission?.status === '已通过' || myTakerRecord?.status === '已提交' || myTakerRecord?.status === '已验收');
 
   const takersList = task.takers || [];
   const submissionsList = task.submissions || [];
@@ -138,11 +142,11 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white border border-slate-200/80 text-xs font-bold text-slate-700 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50/50 shadow-2xs transition cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>返回任务大厅</span>
+            <span>返回{effectiveFromTitle}</span>
           </button>
 
           <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
-            <span className="cursor-pointer hover:text-indigo-600" onClick={onBack}>任务大厅</span>
+            <span className="cursor-pointer hover:text-indigo-600" onClick={onBack}>{effectiveFromTitle}</span>
             <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
             <span className="text-slate-500 font-semibold">{task.domain}</span>
             <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
@@ -272,13 +276,33 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
               ) : (
                 <>
                   {/* 发布人视角 */}
-                  {isPublisher && submissionsList.length > 0 && (
+                  {isPublisher && (submissionsList.length > 0 || task.refunded) && (
                     <button
                       onClick={() => setVerifyModalOpen(true)}
-                      className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs rounded-xl shadow-md shadow-indigo-600/20 transition active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+                      className={`w-full py-2.5 text-white font-black text-xs rounded-xl shadow-md transition active:scale-95 cursor-pointer flex items-center justify-center gap-2 ${
+                        task.refunded
+                          ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20'
+                          : (task.isAccepted || !!task.winner || (task.submissions || []).some(s => s.status === '已通过'))
+                          ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20'
+                          : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/20'
+                      }`}
                     >
-                      <ShieldCheck className="w-4 h-4" />
-                      <span>去验收交付成果 ({submissionsList.length})</span>
+                      {task.refunded ? (
+                        <>
+                          <RotateCcw className="w-4 h-4" />
+                          <span>{submissionsList.length > 0 ? '查看驳回与退款详情' : '查看退款详情'}</span>
+                        </>
+                      ) : (task.isAccepted || !!task.winner || (task.submissions || []).some(s => s.status === '已通过')) ? (
+                        <>
+                          <Award className="w-4 h-4" />
+                          <span>查看验收结果</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldCheck className="w-4 h-4" />
+                          <span>{isFinished ? '到期验收评审' : '去验收交付成果'} ({submissionsList.length})</span>
+                        </>
+                      )}
                     </button>
                   )}
 
@@ -293,8 +317,19 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
                     </button>
                   )}
 
-                  {/* 开发者视角：已接单 & 未提交 & 进行中 */}
-                  {!isPublisher && !isFinished && hasTaken && !hasSubmitted && (
+                  {/* 开发者视角：被驳回 & 进行中 -> 修改交付成果并重提 */}
+                  {!isPublisher && !isFinished && hasTaken && isRejected && (
+                    <button
+                      onClick={() => setSubmitModalOpen(true)}
+                      className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-black text-xs rounded-xl shadow-md shadow-rose-600/20 transition active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      <span>修改交付成果并重新提交</span>
+                    </button>
+                  )}
+
+                  {/* 开发者视角：已接单 & 未提交 & 未被驳回 & 进行中 */}
+                  {!isPublisher && !isFinished && hasTaken && !hasSubmitted && !isRejected && (
                     <button
                       onClick={() => setSubmitModalOpen(true)}
                       className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl shadow-md shadow-emerald-600/20 transition active:scale-95 cursor-pointer flex items-center justify-center gap-2"
@@ -310,10 +345,17 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
               <div className="text-[11px] text-center text-slate-500 font-medium">
                 {isReadOnly ? (
                   <span className="text-slate-500 font-medium">任务状态：{task.status} · 共有 {takersList.length} 位接单人</span>
+                ) : task.refunded ? (
+                  <span className="text-amber-700 font-bold flex items-center justify-center gap-1">
+                    <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
+                    <span>已到期全部驳回 · 资金与积分已全部退回发布人</span>
+                  </span>
                 ) : isFinished ? (
                   <span className="text-slate-400 font-bold">任务已到期截止</span>
                 ) : isPublisher ? (
                   <span className="text-indigo-600 font-bold">已收到 {takersList.length} 位极客接单响应</span>
+                ) : isRejected ? (
+                  <span className="text-rose-600 font-bold">⚠️ 您的成果已被驳回，支持修改后重新提交</span>
                 ) : hasTaken ? (
                   <span className="text-emerald-600 font-bold">✓ 您已于 {myTakerRecord?.takeTime} 接单</span>
                 ) : (
@@ -325,6 +367,37 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
 
         </div>
       </div>
+
+      {/* 退款提示横幅 */}
+      {task.refunded && (
+        <div className="p-4 bg-amber-50 border border-amber-300 rounded-3xl text-xs text-amber-950 flex items-start gap-3.5 shadow-2xs">
+          <div className="w-9 h-9 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 mt-0.5">
+            <RotateCcw className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between gap-2">
+              <h4 className="font-black text-sm text-amber-950">任务已到期结束 · 预付金额与积分已全额退还发布人</h4>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-200 text-amber-900">
+                已全额退款
+              </span>
+            </div>
+            <p className="text-amber-800 text-xs mt-1 leading-relaxed">
+              {task.refundReason || '该任务已到期结束，发布人已将所有交付成果驳回，任务预付金额和积分已全额原路退回至发布人账户。'}
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-1 bg-white border border-amber-200 rounded-lg font-bold text-amber-900">
+                退回金额：<span className="font-mono text-indigo-700 font-black">¥{(task.refundCash ?? task.cashReward ?? task.bounty ?? 0).toLocaleString()}</span>
+              </span>
+              <span className="px-2.5 py-1 bg-white border border-amber-200 rounded-lg font-bold text-amber-900">
+                退回积分：<span className="font-mono text-indigo-700 font-black">{task.refundPoints ?? task.pointsReward ?? 0} 积分</span>
+              </span>
+              {task.refundTime && (
+                <span className="text-slate-400 text-[11px]">退还时间：{task.refundTime}</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 3. 中间 TAB 导航与内容区 */}
       <div className="bg-white rounded-3xl border border-slate-200/80 p-6 md:p-8 shadow-xs space-y-6">
@@ -949,6 +1022,7 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
         task={task}
         isOpen={submitModalOpen}
         onClose={() => setSubmitModalOpen(false)}
+        existingSubmission={isRejected ? mySubmission : undefined}
       />
 
       <TaskVerificationModal
