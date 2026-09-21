@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Markdown from 'react-markdown';
 import { useApp } from '../../context/AppContext';
 import { FeedPost, CommunityBoard } from '../../types';
+import { sortCommunityPosts } from '../../utils/communityScore';
 import { 
   Users, 
   MessageSquare, 
@@ -33,7 +34,9 @@ import {
   Link as LinkIcon,
   CornerDownRight,
   Edit3,
-  Heart
+  Heart,
+  Pin,
+  Layers
 } from 'lucide-react';
 
 interface BoardConfig {
@@ -68,7 +71,7 @@ interface LocalComment {
 }
 
 export const CommunityView: React.FC = () => {
-  const { posts, createPost, user, showToast } = useApp();
+  const { posts, createPost, user, showToast, communityBoards, recordPostView } = useApp();
 
   // Navigation View Mode: 'feed' | 'publish' | 'detail'
   const [viewMode, setViewMode] = useState<'feed' | 'publish' | 'detail'>('feed');
@@ -97,51 +100,63 @@ export const CommunityView: React.FC = () => {
   const [tagInput, setTagInput] = useState('');
   const [editorTab, setEditorTab] = useState<'write' | 'preview'>('write');
 
-  // 6 Official Boards Configuration (Removed position tag & count as requested)
-  const boardConfigs: BoardConfig[] = [
-    {
-      id: 'all',
-      label: '全部板块',
-      desc: '浏览全站 AI 开发者最新实践、经验与问答',
-      icon: <Sparkles className="w-4 h-4 text-indigo-600" />
-    },
-    {
-      id: '干货分享',
-      label: '干货分享',
-      desc: '技术方案、踩坑总结、工具推荐、代码片段、工作流分享',
-      icon: <BookOpen className="w-4 h-4 text-emerald-600" />
-    },
-    {
-      id: '求助答疑',
-      label: '求助答疑',
-      desc: '环境报错、模型调优、算法理解、工具使用问题',
-      icon: <HelpCircle className="w-4 h-4 text-amber-600" />
-    },
-    {
-      id: '前沿观察',
-      label: '前沿观察',
-      desc: '新产品发布、论文解读、技术趋势、行业分析',
-      icon: <Compass className="w-4 h-4 text-indigo-600" />
-    },
-    {
-      id: '赚钱交流',
-      label: '赚钱交流',
-      desc: '接单经验、AI变现路径、副业思路、产品商业化讨论',
-      icon: <TrendingUp className="w-4 h-4 text-rose-600" />
-    },
-    {
-      id: '同行交流',
-      label: '同行交流',
-      desc: '找合作、找学习搭子、线下meetup、创业组队',
-      icon: <Users className="w-4 h-4 text-cyan-600" />
-    },
-    {
-      id: '娱乐灌水',
-      label: '娱乐灌水',
-      desc: 'AI趣事、梗图、日常、非技术闲聊',
-      icon: <Coffee className="w-4 h-4 text-purple-600" />
+  // Helper for dynamic board icons
+  const getBoardIcon = (name: string) => {
+    switch (name) {
+      case '干货分享': return <BookOpen className="w-4 h-4 text-emerald-600" />;
+      case '求助答疑': return <HelpCircle className="w-4 h-4 text-amber-600" />;
+      case '前沿观察': return <Compass className="w-4 h-4 text-indigo-600" />;
+      case '赚钱交流': return <TrendingUp className="w-4 h-4 text-rose-600" />;
+      case '同行交流': return <Users className="w-4 h-4 text-cyan-600" />;
+      case '娱乐灌水': return <Coffee className="w-4 h-4 text-purple-600" />;
+      default: return <Layers className="w-4 h-4 text-slate-600" />;
     }
-  ];
+  };
+
+  // 板块停用后前台社区中应该隐藏此板块，并按后台排序权重展示
+  const enabledBoards = useMemo(() => {
+    return communityBoards
+      .filter(b => b.status === '已启用')
+      .sort((a, b) => a.sortWeight - b.sortWeight);
+  }, [communityBoards]);
+
+  const boardConfigs: BoardConfig[] = useMemo(() => {
+    return [
+      {
+        id: 'all',
+        label: '全部板块',
+        desc: '浏览全站 AI 开发者最新实践、经验与问答',
+        icon: <Sparkles className="w-4 h-4 text-indigo-600" />
+      },
+      ...enabledBoards.map(b => ({
+        id: b.name as CommunityBoard,
+        label: b.name,
+        desc: b.description || '社区开发者讨论与分享',
+        icon: getBoardIcon(b.name)
+      }))
+    ];
+  }, [enabledBoards]);
+
+  // 如果当前选中的板块被后台停用了，自动回退到“全部板块”
+  useEffect(() => {
+    if (activeBoard !== 'all') {
+      const isStillEnabled = enabledBoards.some(b => b.name === activeBoard);
+      if (!isStillEnabled) {
+        setActiveBoard('all');
+      }
+    }
+  }, [activeBoard, enabledBoards]);
+
+  // 如果待发帖板块被停用了，自动切换为第一个有效板块
+  useEffect(() => {
+    const currentBoardObj = communityBoards.find(b => b.name === newPostBoard);
+    if (!currentBoardObj || currentBoardObj.status === '已停用') {
+      const firstEnabled = enabledBoards[0];
+      if (firstEnabled) {
+        setNewPostBoard(firstEnabled.name as CommunityBoard);
+      }
+    }
+  }, [communityBoards, enabledBoards, newPostBoard]);
 
   // Helper to get initial or stored comments for a post
   const getPostComments = (postId: string): LocalComment[] => {
@@ -227,12 +242,21 @@ export const CommunityView: React.FC = () => {
   const filteredPosts = useMemo(() => {
     let list = [...posts];
 
-    // Filter by board
+    // 1. 板块停用后前台社区中应该隐藏此板块的帖子
+    const disabledBoardNames = new Set(
+      communityBoards.filter(b => b.status === '已停用').map(b => b.name)
+    );
+    list = list.filter(p => !disabledBoardNames.has(p.board));
+
+    // 2. 仅展示已审核通过或发布的帖子
+    list = list.filter(p => !p.status || p.status === '已通过' || p.status === '已发布');
+
+    // 3. Filter by board
     if (activeBoard !== 'all') {
       list = list.filter(p => p.board === activeBoard);
     }
 
-    // Filter by search query
+    // 4. Filter by search query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(p => 
@@ -243,16 +267,19 @@ export const CommunityView: React.FC = () => {
       );
     }
 
-    // Filter by top tabs: 'recommend' | 'latest'
-    if (activeFilter === 'recommend') {
-      list.sort((a, b) => (b.likesCount + (b.viewsCount || 0)) - (a.likesCount + (a.viewsCount || 0)));
-    } else {
-      // Sort by latest
-      list.sort((a, b) => b.id.localeCompare(a.id));
-    }
-
-    return list;
-  }, [posts, activeBoard, searchQuery, activeFilter]);
+    // 5. 排序规则：
+    // - 后台帖子的置顶效果在前台可见，最新置顶的靠前 (pinnedAt 倒序)
+    // - 加精只是加个“精华”标签，不影响帖子排序
+    // - 推荐帖子按照公式实时计算：帖子得分 = 加权互动分 ÷ (发帖小时数 + 2) ^ 1.5
+    //   加权互动分 = 评论数×5 + 收藏数×4 + 点赞数×2 + 查看数×0.2
+    //   发帖小时数 = 当前时间 - 发帖时间（小时），向下取整，最小为0
+    // - 最新帖子按发帖时间倒序
+    return sortCommunityPosts(list, activeFilter, {
+      likesMap: postLikesMap,
+      bookmarksMap: collectedPosts,
+      commentsMap: commentsMap
+    });
+  }, [posts, activeBoard, searchQuery, activeFilter, communityBoards, postLikesMap, collectedPosts, commentsMap]);
 
   // Selected post object for detail view
   const currentPost = useMemo(() => {
@@ -313,8 +340,9 @@ export const CommunityView: React.FC = () => {
     return { count: post.likesCount, isLiked: !!post.isLiked };
   };
 
-  // Open Post Detail
+  // Open Post Detail - 支持防刷查看计数（同一用户/IP对同一帖子多次查看只计1次）
   const openPostDetail = (postId: string) => {
+    recordPostView(postId);
     setSelectedPostId(postId);
     setViewMode('detail');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -433,6 +461,11 @@ export const CommunityView: React.FC = () => {
       showToast('请填写动态正文内容');
       return;
     }
+    const targetBoardObj = communityBoards.find(b => b.name === newPostBoard);
+    if (targetBoardObj && targetBoardObj.status === '已停用') {
+      showToast('所选板块已被停用，不可选，请选择其他已启用的板块！');
+      return;
+    }
     createPost(
       newPostContent,
       newPostBoard,
@@ -471,7 +504,19 @@ export const CommunityView: React.FC = () => {
             <span>返回社区大厅</span>
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {(currentPost.isPinned || currentPost.isTop) && (
+              <span className="px-2.5 py-0.5 rounded-lg text-xs font-black bg-rose-50 text-rose-600 border border-rose-200/90 flex items-center gap-1 shadow-2xs">
+                <Pin className="w-3.5 h-3.5 text-rose-600 fill-rose-100" />
+                置顶
+              </span>
+            )}
+            {currentPost.isEssential && (
+              <span className="px-2.5 py-0.5 rounded-lg text-xs font-black bg-amber-50 text-amber-700 border border-amber-200/90 flex items-center gap-1 shadow-2xs">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600 fill-amber-100" />
+                精华
+              </span>
+            )}
             <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold border ${getBoardStyle(currentPost.board)}`}>
               {currentPost.board}
             </span>
@@ -801,21 +846,36 @@ export const CommunityView: React.FC = () => {
                 选择发布板块 <span className="text-rose-500">*</span>
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                {(['干货分享', '求助答疑', '前沿观察', '赚钱交流', '同行交流', '娱乐灌水'] as CommunityBoard[]).map(board => {
-                  const isSelected = newPostBoard === board;
+                {communityBoards.map(board => {
+                  const isSelected = newPostBoard === board.name;
+                  const isDisabled = board.status === '已停用';
                   return (
                     <button
                       type="button"
-                      key={board}
-                      onClick={() => setNewPostBoard(board)}
-                      className={`p-3 rounded-xl border text-xs font-bold transition text-left flex items-center justify-between cursor-pointer ${
-                        isSelected 
-                          ? 'border-indigo-600 bg-indigo-50/80 text-indigo-900 shadow-xs' 
-                          : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700'
+                      key={board.id}
+                      disabled={isDisabled}
+                      onClick={() => {
+                        if (!isDisabled) {
+                          setNewPostBoard(board.name as CommunityBoard);
+                        }
+                      }}
+                      className={`p-3 rounded-xl border text-xs font-bold transition text-left flex items-center justify-between ${
+                        isDisabled
+                          ? 'opacity-50 bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                          : isSelected 
+                            ? 'border-indigo-600 bg-indigo-50/80 text-indigo-900 shadow-xs cursor-pointer' 
+                            : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700 cursor-pointer'
                       }`}
                     >
-                      <span>{board}</span>
-                      {isSelected && <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0" />}
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="truncate">{board.name}</span>
+                        {isDisabled && (
+                          <span className="text-[10px] text-rose-500 font-semibold shrink-0">
+                            (已停用)
+                          </span>
+                        )}
+                      </div>
+                      {isSelected && !isDisabled && <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0" />}
                     </button>
                   );
                 })}
@@ -1234,10 +1294,24 @@ export const CommunityView: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Board Badge Tag */}
-                      <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold border shrink-0 ${boardStyle}`}>
-                        {post.board}
-                      </span>
+                      {/* Tags: 置顶, 精华 & 板块标签 */}
+                      <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+                        {(post.isPinned || post.isTop) && (
+                          <span className="px-2 py-0.5 rounded-lg text-[10px] font-black bg-rose-50 text-rose-600 border border-rose-200/90 flex items-center gap-1 shadow-2xs">
+                            <Pin className="w-3 h-3 text-rose-600 fill-rose-100" />
+                            置顶
+                          </span>
+                        )}
+                        {post.isEssential && (
+                          <span className="px-2 py-0.5 rounded-lg text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200/90 flex items-center gap-1 shadow-2xs">
+                            <Sparkles className="w-3 h-3 text-amber-600 fill-amber-100" />
+                            精华
+                          </span>
+                        )}
+                        <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold border shrink-0 ${boardStyle}`}>
+                          {post.board}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Post Title */}

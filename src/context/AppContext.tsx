@@ -30,7 +30,8 @@ import {
   ComputeSettlementItem,
   MyCustomImage,
   DatasetDownloadRecord,
-  SkillDownloadRecord
+  SkillDownloadRecord,
+  CommunityBoardItem
 } from '../types';
 import { 
   initialUserProfile, 
@@ -230,6 +231,22 @@ interface AppContextType {
   createPost: (content: string, board: FeedPost['board'], images?: string[], title?: string, tags?: string[]) => void;
   likePost: (postId: string) => void;
   setPosts: React.Dispatch<React.SetStateAction<FeedPost[]>>;
+
+  // 社区板块与互动管理
+  communityBoards: CommunityBoardItem[];
+  setCommunityBoards: React.Dispatch<React.SetStateAction<CommunityBoardItem[]>>;
+  addCommunityBoard: (board: Omit<CommunityBoardItem, 'id' | 'postCount'>) => void;
+  updateCommunityBoard: (id: string, updates: Partial<CommunityBoardItem>) => void;
+  toggleCommunityBoardStatus: (id: string) => void;
+  deleteCommunityBoard: (id: string) => boolean;
+
+  // 帖子操作与防刷
+  updatePost: (id: string, updates: Partial<FeedPost>) => void;
+  deletePost: (id: string) => void;
+  togglePinPost: (id: string) => void;
+  toggleEssentialPost: (id: string) => void;
+  recordPostView: (postId: string) => void;
+  hasUserViewedPost: (postId: string) => boolean;
 
   // Toast System
   toast: string | null;
@@ -1135,6 +1152,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
     showToast('镜像详情描述已保存！');
   };
+
+  // 社区板块初始默认数据
+  const defaultInitialBoards: CommunityBoardItem[] = [
+    { id: 'b1', name: '干货分享', description: '技术方案、踩坑总结、工具推荐、代码片段', postCount: 24, sortWeight: 1, status: '已启用' },
+    { id: 'b2', name: '求助答疑', description: '环境报错、模型调优、算法理解', postCount: 18, sortWeight: 2, status: '已启用' },
+    { id: 'b3', name: '前沿观察', description: '新产品发布、论文解读、技术趋势', postCount: 15, sortWeight: 3, status: '已启用' },
+    { id: 'b4', name: '赚钱交流', description: '接单经验、AI变现路径、副业思路', postCount: 12, sortWeight: 4, status: '已启用' },
+    { id: 'b5', name: '同行交流', description: '找合作、找学习搭子、线下meetup', postCount: 9, sortWeight: 5, status: '已启用' },
+    { id: 'b6', name: '娱乐灌水', description: 'AI趣事、梗图、日常、非技术闲聊', postCount: 6, sortWeight: 6, status: '已启用' },
+  ];
+
+  const [communityBoards, setCommunityBoards] = useState<CommunityBoardItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('app_community_boards');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {}
+    return defaultInitialBoards;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('app_community_boards', JSON.stringify(communityBoards));
+    } catch (e) {}
+  }, [communityBoards]);
+
+  // 防刷机制：同一用户/IP对同一帖子的多次查看只计1次
+  const [viewedPostKeys, setViewedPostKeys] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem('app_viewed_posts');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {}
+    return {};
+  });
+
   const [posts, setPosts] = useState<FeedPost[]>(mockFeedPosts);
   const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>(mockApiKeys);
   
@@ -2822,24 +2877,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const toggleGpuInstanceStatus = (id: string) => {
+    let nextStatus = '';
+    let instName = '';
     setGpuInstances(prev => prev.map(inst => {
       if (inst.id === id) {
-        const nextStatus = inst.status === 'running' ? 'stopped' : 'running';
-        showToast(`算力实例 ${inst.name} 已${nextStatus === 'running' ? '启动' : '停止'}`);
-        return { ...inst, status: nextStatus };
+        nextStatus = inst.status === 'running' ? 'stopped' : 'running';
+        instName = inst.name;
+        return { ...inst, status: nextStatus as any };
       }
       return inst;
     }));
+    if (instName) {
+      showToast(`算力实例 ${instName} 已${nextStatus === 'running' ? '启动' : '停止'}`);
+    }
   };
 
   const updateInstanceRemark = (instId: string, remark: string) => {
     setGpuInstances(prev => prev.map(inst => {
       if (inst.id === instId) {
-        showToast('实例备注更新成功');
         return { ...inst, remark };
       }
       return inst;
     }));
+    showToast('实例备注更新成功');
   };
 
   const changeInstanceRentalDuration = (instId: string, durationType: string, autoReturn: boolean) => {
@@ -2847,7 +2907,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const label = labelMap[durationType] || durationType;
     setGpuInstances(prev => prev.map(inst => {
       if (inst.id === instId) {
-        showToast(`实例计费方式已成功变更为【${label}】`);
         return { 
           ...inst, 
           billingType: label, 
@@ -2856,12 +2915,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return inst;
     }));
+    showToast(`实例计费方式已成功变更为【${label}】`);
   };
 
   const createImageFromInstance = (instId: string, autoShutdown: boolean, overwrite: boolean) => {
     setGpuInstances(prev => prev.map(inst => {
       if (inst.id === instId) {
-        showToast('已开始保存实例为镜像，任务完成后将自动停机');
         return { 
           ...inst, 
           status: 'creating_image' 
@@ -2869,16 +2928,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return inst;
     }));
+    showToast('已开始保存实例为镜像，任务完成后将自动停机');
   };
 
   const restartGpuInstance = (id: string) => {
+    let instName = '';
     setGpuInstances(prev => prev.map(inst => {
       if (inst.id === id) {
-        showToast(`算力实例 ${inst.name} 已重新启动`);
+        instName = inst.name;
         return { ...inst, status: 'running' };
       }
       return inst;
     }));
+    if (instName) {
+      showToast(`算力实例 ${instName} 已重新启动`);
+    }
   };
 
   const deleteGpuInstance = (id: string) => {
@@ -2902,7 +2966,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       sharesCount: 0,
       viewsCount: 1,
       time: '刚刚',
-      isLiked: false
+      createdAtTimestamp: Date.now(),
+      isLiked: false,
+      status: '已通过'
     };
     setPosts(prev => [newPost, ...prev]);
     showToast('社区动态发表成功！');
@@ -2915,11 +2981,134 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return {
           ...p,
           isLiked,
-          likesCount: isLiked ? p.likesCount + 1 : p.likesCount - 1
+          likesCount: isLiked ? p.likesCount + 1 : Math.max(0, p.likesCount - 1)
         };
       }
       return p;
     }));
+  };
+
+  // 防刷记录查看数
+  const recordPostView = (postId: string) => {
+    const userKey = `${user.id || user.name || 'current_user'}_${postId}`;
+    if (viewedPostKeys[userKey]) {
+      // 已经查看过，防刷机制生效，不再增加查看数
+      return;
+    }
+
+    // 初次查看，标记已查看，并仅自增1次
+    setViewedPostKeys(prev => {
+      const next = { ...prev, [userKey]: true };
+      try {
+        localStorage.setItem('app_viewed_posts', JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+
+    setPosts(prev => prev.map(p => {
+      if (p.id === postId) {
+        return {
+          ...p,
+          viewsCount: (p.viewsCount || 0) + 1
+        };
+      }
+      return p;
+    }));
+  };
+
+  const hasUserViewedPost = (postId: string): boolean => {
+    const userKey = `${user.id || user.name || 'current_user'}_${postId}`;
+    return !!viewedPostKeys[userKey];
+  };
+
+  // 板块管理方法
+  const addCommunityBoard = (board: Omit<CommunityBoardItem, 'id' | 'postCount'>) => {
+    const newBoard: CommunityBoardItem = {
+      id: `b_${Date.now()}`,
+      name: board.name.trim(),
+      description: board.description.trim(),
+      postCount: 0,
+      sortWeight: board.sortWeight,
+      status: board.status || '已启用'
+    };
+    setCommunityBoards(prev => [...prev, newBoard]);
+    showToast(`板块【${newBoard.name}】已成功添加`);
+  };
+
+  const updateCommunityBoard = (id: string, updates: Partial<CommunityBoardItem>) => {
+    setCommunityBoards(prev => prev.map(b => (b.id === id ? { ...b, ...updates } : b)));
+    showToast('板块信息已成功更新');
+  };
+
+  const toggleCommunityBoardStatus = (id: string) => {
+    const board = communityBoards.find(b => b.id === id);
+    if (!board) return;
+    const nextStatus = board.status === '已启用' ? '已停用' : '已启用';
+    setCommunityBoards(prev => prev.map(b => (b.id === id ? { ...b, status: nextStatus } : b)));
+    showToast(`板块【${board.name}】已${nextStatus}`);
+  };
+
+  const deleteCommunityBoard = (id: string): boolean => {
+    if (communityBoards.length <= 1) {
+      showToast('系统必须至少保留一个板块，无法删除');
+      return false;
+    }
+    const board = communityBoards.find(b => b.id === id);
+    if (!board) return false;
+
+    const countInPosts = posts.filter(p => p.board === board.name).length;
+    if (countInPosts > 0 || board.postCount > 0) {
+      showToast(`该板块下存在 ${countInPosts || board.postCount} 篇帖子，无法删除！请先转移或清理相关帖子。`);
+      return false;
+    }
+
+    setCommunityBoards(prev => prev.filter(b => b.id !== id));
+    showToast(`已彻底删除板块【${board.name}】`);
+    return true;
+  };
+
+  // 帖子修改与管理
+  const updatePost = (id: string, updates: Partial<FeedPost>) => {
+    setPosts(prev => prev.map(p => (p.id === id ? { ...p, ...updates } : p)));
+    showToast('帖子信息已更新');
+  };
+
+  const deletePost = (id: string) => {
+    setPosts(prev => prev.filter(p => p.id !== id));
+    showToast('已彻底删除该帖子');
+  };
+
+  const togglePinPost = (postId: string) => {
+    const post = posts.find(p => p.id === postId);
+    const nextState = !post?.isPinned && !post?.isTop;
+    const nowIso = new Date().toISOString();
+    setPosts(prev => prev.map(p => {
+      if (p.id === postId) {
+        return {
+          ...p,
+          isPinned: nextState,
+          isTop: nextState,
+          pinnedAt: nextState ? nowIso : undefined
+        };
+      }
+      return p;
+    }));
+    showToast(nextState ? '已将该帖子置顶于板块头部' : '已取消该帖子的置顶状态');
+  };
+
+  const toggleEssentialPost = (postId: string) => {
+    const post = posts.find(p => p.id === postId);
+    const nextState = !post?.isEssential;
+    setPosts(prev => prev.map(p => {
+      if (p.id === postId) {
+        return {
+          ...p,
+          isEssential: nextState
+        };
+      }
+      return p;
+    }));
+    showToast(nextState ? '已将该帖子设置为【精华文章】' : '已取消该帖子的精华标志');
   };
 
   return (
@@ -3056,6 +3245,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createPost,
       likePost,
       setPosts,
+      communityBoards,
+      setCommunityBoards,
+      addCommunityBoard,
+      updateCommunityBoard,
+      toggleCommunityBoardStatus,
+      deleteCommunityBoard,
+      updatePost,
+      deletePost,
+      togglePinPost,
+      toggleEssentialPost,
+      recordPostView,
+      hasUserViewedPost,
       toast,
       showToast,
       // 算力工坊后台管理

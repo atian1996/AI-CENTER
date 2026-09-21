@@ -63,7 +63,7 @@ export const CommunityAdminViews: React.FC<CommunityAdminViewsProps> = ({ active
 // 1. 发帖审核 (CommunityAuditAdminView)
 // ==========================================
 export const CommunityAuditAdminView: React.FC = () => {
-  const { posts, setPosts, showToast } = useApp();
+  const { posts, setPosts, showToast, communityBoards } = useApp();
 
   // Filters State
   const [statusFilter, setStatusFilter] = useState<'全部' | '待审核' | '已通过' | '已驳回'>('待审核'); // 默认筛选“待审核”
@@ -205,12 +205,9 @@ export const CommunityAuditAdminView: React.FC = () => {
               className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 outline-none focus:border-indigo-500 font-medium"
             >
               <option value="全部板块">全部板块</option>
-              <option value="干货分享">干货分享</option>
-              <option value="求助答疑">求助答疑</option>
-              <option value="前沿观察">前沿观察</option>
-              <option value="赚钱交流">赚钱交流</option>
-              <option value="同行交流">同行交流</option>
-              <option value="娱乐灌水">娱乐灌水</option>
+              {communityBoards.map(b => (
+                <option key={b.id} value={b.name}>{b.name}</option>
+              ))}
             </select>
 
             <select
@@ -501,7 +498,16 @@ export const CommunityAuditAdminView: React.FC = () => {
 // 2. 帖子管理 (CommunityPostAdminView)
 // ==========================================
 export const CommunityPostAdminView: React.FC = () => {
-  const { posts, setPosts, showToast } = useApp();
+  const { 
+    posts, 
+    setPosts, 
+    showToast, 
+    communityBoards, 
+    addCommunityBoard, 
+    updateCommunityBoard, 
+    toggleCommunityBoardStatus, 
+    deleteCommunityBoard 
+  } = useApp();
 
   // Filters
   const [boardFilter, setBoardFilter] = useState<string>('全部板块');
@@ -517,15 +523,13 @@ export const CommunityPostAdminView: React.FC = () => {
   // Board Management Drawer/Modal State
   const [isBoardModalOpen, setIsBoardModalOpen] = useState(false);
   
-  // Local Boards Config State
-  const [boards, setBoards] = useState<CommunityBoardItem[]>([
-    { id: 'b1', name: '干货分享', description: '技术方案、踩坑总结、工具推荐、代码片段', postCount: 24, sortWeight: 1, status: '已启用' },
-    { id: 'b2', name: '求助答疑', description: '环境报错、模型调优、算法理解', postCount: 18, sortWeight: 2, status: '已启用' },
-    { id: 'b3', name: '前沿观察', description: '新产品发布、论文解读、技术趋势', postCount: 15, sortWeight: 3, status: '已启用' },
-    { id: 'b4', name: '赚钱交流', description: '接单经验、AI变现路径、副业思路', postCount: 12, sortWeight: 4, status: '已启用' },
-    { id: 'b5', name: '同行交流', description: '找合作、找学习搭子、线下meetup', postCount: 9, sortWeight: 5, status: '已启用' },
-    { id: 'b6', name: '娱乐灌水', description: 'AI趣事、梗图、日常、非技术闲聊', postCount: 6, sortWeight: 6, status: '已启用' },
-  ]);
+  // Dynamic Boards with postCount calculated from posts
+  const boards = useMemo(() => {
+    return communityBoards.map(b => ({
+      ...b,
+      postCount: posts.filter(p => p.board === b.name).length
+    })).sort((a, b) => a.sortWeight - b.sortWeight);
+  }, [communityBoards, posts]);
 
   // Board Create / Edit State inside Board Modal
   const [editingBoard, setEditingBoard] = useState<CommunityBoardItem | null>(null);
@@ -576,40 +580,57 @@ export const CommunityPostAdminView: React.FC = () => {
     return list;
   }, [allPosts, boardFilter, statusFilter, pinnedFilter, essentialFilter, searchQuery]);
 
-  // Toggle Pinned (置顶 / 取消置顶)
+  // Toggle Pinned (置顶 / 取消置顶) - 最新置顶的帖子靠前
   const togglePin = (postId: string) => {
+    const post = posts.find(p => p.id === postId);
+    const nextState = !post?.isPinned && !post?.isTop;
+    const nowIso = new Date().toISOString();
     setPosts(prev => prev.map(p => {
       if (p.id === postId) {
-        const nextState = !p.isPinned;
-        showToast(nextState ? '已将该帖子置顶于板块头部' : '已取消该帖子的置顶状态');
-        return { ...p, isPinned: nextState, isTop: nextState };
+        return { 
+          ...p, 
+          isPinned: nextState, 
+          isTop: nextState,
+          pinnedAt: nextState ? nowIso : undefined
+        };
       }
       return p;
     }));
+    setSelectedPost(prev => (prev && prev.id === postId ? { 
+      ...prev, 
+      isPinned: nextState, 
+      isTop: nextState,
+      pinnedAt: nextState ? nowIso : undefined 
+    } : prev));
+    showToast(nextState ? '已将该帖子置顶于板块头部' : '已取消该帖子的置顶状态');
   };
 
   // Toggle Essential (加精 / 取消加精)
   const toggleEssential = (postId: string) => {
+    const post = posts.find(p => p.id === postId);
+    const nextState = !post?.isEssential;
     setPosts(prev => prev.map(p => {
       if (p.id === postId) {
-        const nextState = !p.isEssential;
-        showToast(nextState ? '已将该帖子设置为【精华文章】' : '已取消该帖子的精华标志');
         return { ...p, isEssential: nextState };
       }
       return p;
     }));
+    setSelectedPost(prev => (prev && prev.id === postId ? { ...prev, isEssential: nextState } : prev));
+    showToast(nextState ? '已将该帖子设置为【精华文章】' : '已取消该帖子的精华标志');
   };
 
   // Toggle Lock (锁定 / 解锁)
   const toggleLock = (postId: string) => {
+    const post = posts.find(p => p.id === postId);
+    const nextStatus: '已发布' | '已锁定' = post?.status === '已锁定' ? '已发布' : '已锁定';
     setPosts(prev => prev.map(p => {
       if (p.id === postId) {
-        const nextState = p.status === '已锁定' ? '已发布' : '已锁定';
-        showToast(nextState === '已锁定' ? '已锁定该帖子（锁定后不可回复）' : '已解除该帖子的锁定状态');
-        return { ...p, status: nextState };
+        return { ...p, status: nextStatus };
       }
       return p;
     }));
+    setSelectedPost(prev => (prev && prev.id === postId ? { ...prev, status: nextStatus } : prev));
+    showToast(nextStatus === '已锁定' ? '已锁定该帖子（锁定后不可回复）' : '已解除该帖子的锁定状态');
   };
 
   // Delete Post
@@ -632,24 +653,18 @@ export const CommunityPostAdminView: React.FC = () => {
     }
 
     if (editingBoard) {
-      setBoards(prev => prev.map(b => b.id === editingBoard.id ? {
-        ...b,
+      updateCommunityBoard(editingBoard.id, {
         name: boardNameInput.trim(),
         description: boardDescInput.trim(),
         sortWeight: boardSortInput
-      } : b));
-      showToast('板块信息已成功更新');
+      });
     } else {
-      const newBoard: CommunityBoardItem = {
-        id: `b_${Date.now()}`,
+      addCommunityBoard({
         name: boardNameInput.trim(),
         description: boardDescInput.trim(),
-        postCount: 0,
         sortWeight: boardSortInput,
         status: '已启用'
-      };
-      setBoards(prev => [...prev, newBoard]);
-      showToast('新增板块成功');
+      });
     }
 
     setEditingBoard(null);
@@ -660,33 +675,12 @@ export const CommunityPostAdminView: React.FC = () => {
 
   // Toggle Board Status (启用 / 停用)
   const toggleBoardStatus = (boardId: string) => {
-    setBoards(prev => prev.map(b => {
-      if (b.id === boardId) {
-        const nextStatus = b.status === '已启用' ? '已停用' : '已启用';
-        showToast(`板块【${b.name}】已${nextStatus}`);
-        return { ...b, status: nextStatus };
-      }
-      return b;
-    }));
+    toggleCommunityBoardStatus(boardId);
   };
 
   // Delete Board validation
   const handleDeleteBoard = (board: CommunityBoardItem) => {
-    if (boards.length <= 1) {
-      showToast('系统必须至少保留一个板块，无法删除');
-      return;
-    }
-    // Check if posts exist under this board
-    const countInPosts = posts.filter(p => p.board === board.name).length;
-    if (countInPosts > 0 || board.postCount > 0) {
-      alert(`该板块下存在 ${countInPosts || board.postCount} 篇帖子，无法删除！请先转移或清理相关帖子。`);
-      return;
-    }
-
-    if (confirm(`确认删除板块【${board.name}】吗？`)) {
-      setBoards(prev => prev.filter(b => b.id !== board.id));
-      showToast('已彻底删除该板块');
-    }
+    deleteCommunityBoard(board.id);
   };
 
   return (

@@ -63,7 +63,7 @@ const initialUserPosts: UserPostItem[] = [
     id: 'up-1',
     title: '实战经验：如何用 ComfyUI + SDXL LoRA 搭建高保真工业级视觉生成工作流？',
     content: '在实际产业落地中，LoRA 权重的动态融合与 ControlNet 深度图预处理对于保证生成一致性至关重要。本文详细记录了从环境部署到显存优化的完整步骤...',
-    board: '🤖Agent开发',
+    board: '干货分享',
     status: 'published',
     statusLabel: '已发布',
     likesCount: 68,
@@ -75,7 +75,7 @@ const initialUserPosts: UserPostItem[] = [
     id: 'up-2',
     title: '【开源分享】基于 LangGraph 的多角色 Code Review 自动化审计工具',
     content: '写了一个轻量级的代码审计工作流，支持自动检测 SQL 注入、越权访问并生成带行号的修复 Patch，已部署在平台，欢迎大家体验交流！',
-    board: '💻代码调试',
+    board: '干货分享',
     status: 'published',
     statusLabel: '已发布',
     likesCount: 112,
@@ -87,7 +87,7 @@ const initialUserPosts: UserPostItem[] = [
     id: 'up-3',
     title: '关于大模型 Agent 自主调用外部 Python 沙箱环境时的安全性思考',
     content: '智能体在生成并执行动态代码时，若未做严格的 cgroup 资源配额与网络隔离，可能引发宿主机提权与数据窃取风险。本方案提出了一种新型的轻量级 MicroVM 容器隔离法...',
-    board: '💡创意脑洞',
+    board: '前沿观察',
     status: 'reviewing',
     statusLabel: '审核中',
     likesCount: 0,
@@ -99,7 +99,7 @@ const initialUserPosts: UserPostItem[] = [
     id: 'up-4',
     title: '求助：在 RTX 4090 上对 70B 模型进行 QLoRA 微调时出现 CUDA OOM 报错',
     content: '设置了 batch_size=1, gradient_accumulation_steps=16, 仍然在反向传播第 4 步抛出 CUDA out of memory，请问各位大佬有遇到类似情况吗？',
-    board: '💻代码调试',
+    board: '求助答疑',
     status: 'rejected',
     statusLabel: '已驳回',
     rejectReason: '帖子排版包含较长无格式化报错日志，请使用 Markdown 代码块排版后重新提交审核。',
@@ -116,7 +116,7 @@ const initialUserComments: UserCommentItem[] = [
     content: '这个多Agent路由策略非常优雅！我们在政务知识库检索场景也遇到了类似的多意图分流问题，受教了！',
     postTitle: '【技术深度】万字长文拆解 Enterprise Agent 生产环境架构设计',
     postId: 'post-101',
-    board: '🤖Agent开发',
+    board: '干货分享',
     likesCount: 15,
     createdAt: '2026-08-23 14:20'
   },
@@ -125,7 +125,7 @@ const initialUserComments: UserCommentItem[] = [
     content: '建议将 FlashAttention-2 开启，并在 Deepspeed Zero-3 中配置 CPU offload，显存占用可以再降 35% 左右。',
     postTitle: '求助：Llama-3-70B 全参数微调的最小显存配置建议',
     postId: 'post-102',
-    board: '💻代码调试',
+    board: '求助答疑',
     likesCount: 28,
     createdAt: '2026-08-21 16:45'
   },
@@ -134,7 +134,7 @@ const initialUserComments: UserCommentItem[] = [
     content: '已报名参加今年的 AI 创新巅峰赛，期待与诸位开发者在数据科学赛道切磋交流！',
     postTitle: '🏆 2026 AI 创新巅峰赛正式开赛！¥200,000 奖池等你来战',
     postId: 'post-103',
-    board: '📢官方公告',
+    board: '前沿观察',
     likesCount: 9,
     createdAt: '2026-08-18 10:30'
   }
@@ -147,7 +147,7 @@ const initialUserFavorites: UserFavoriteItem[] = [
     postTitle: '【深度干货】从 0 到 1 构建工业级 RAG 知识图谱增强检索系统',
     authorName: '林教授 @AI研究院',
     authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    board: '🤖Agent开发',
+    board: '干货分享',
     collectedAt: '2026-08-23 20:15',
     likesCount: 245,
     commentsCount: 56
@@ -158,7 +158,7 @@ const initialUserFavorites: UserFavoriteItem[] = [
     postTitle: 'PyTorch 2.4 + vLLM 极致推理吞吐压测对比报告 (A100 vs H100 vs 4090)',
     authorName: '张算力工程师',
     authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    board: '💻代码调试',
+    board: '求助答疑',
     collectedAt: '2026-08-20 18:40',
     likesCount: 189,
     commentsCount: 42
@@ -169,7 +169,7 @@ const initialUserFavorites: UserFavoriteItem[] = [
     postTitle: 'AI运营中心平台 2026 Q3 积分与免费算力激励计划全景指南',
     authorName: '官方运营',
     authorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-    board: '📢官方公告',
+    board: '前沿观察',
     collectedAt: '2026-08-15 09:30',
     likesCount: 520,
     commentsCount: 98
@@ -177,12 +177,29 @@ const initialUserFavorites: UserFavoriteItem[] = [
 ];
 
 export const WorkspaceCommunity: React.FC = () => {
-  const { setActiveTab, showToast } = useApp();
+  const { setActiveTab, showToast, communityBoards, posts: appPosts, user, updatePost, deletePost } = useApp();
 
   const [activeSubTab, setActiveSubTab] = useState<'posts' | 'comments' | 'favorites'>('posts');
   
-  // Data States
-  const [posts, setPosts] = useState<UserPostItem[]>(initialUserPosts);
+  // Data States: combine initial posts with posts created by the user in appPosts
+  const [posts, setPosts] = useState<UserPostItem[]>(() => {
+    const userAppPosts: UserPostItem[] = appPosts
+      .filter(p => p.author === user.name && !initialUserPosts.some(ip => ip.id === p.id))
+      .map(p => ({
+        id: p.id,
+        title: p.title || '（无标题社区动态）',
+        content: p.content,
+        board: p.board,
+        status: (p.status === '待审核' ? 'reviewing' : p.status === '已驳回' ? 'rejected' : 'published') as UserPostItem['status'],
+        statusLabel: p.status === '待审核' ? '审核中' : p.status === '已驳回' ? '已驳回' : '已发布',
+        rejectReason: p.rejectReason,
+        likesCount: p.likesCount,
+        commentsCount: p.commentsCount,
+        collectsCount: p.favoritesCount || 0,
+        createdAt: p.time
+      }));
+    return [...userAppPosts, ...initialUserPosts];
+  });
   const [comments, setComments] = useState<UserCommentItem[]>(initialUserComments);
   const [favorites, setFavorites] = useState<UserFavoriteItem[]>(initialUserFavorites);
 
@@ -193,7 +210,7 @@ export const WorkspaceCommunity: React.FC = () => {
   // Modals
   const [viewPostModal, setViewPostModal] = useState<UserPostItem | null>(null);
   const [editPostModal, setEditPostModal] = useState<UserPostItem | null>(null);
-  const [editForm, setEditForm] = useState({ title: '', content: '', board: '🤖Agent开发' });
+  const [editForm, setEditForm] = useState({ title: '', content: '', board: '干货分享' });
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'post' | 'comment'; id: string } | null>(null);
 
   // Filtered Posts
@@ -233,6 +250,13 @@ export const WorkspaceCommunity: React.FC = () => {
       return;
     }
 
+    // 检查所选板块是否处于停用状态
+    const targetBoard = communityBoards.find(b => b.name === editForm.board);
+    if (targetBoard && targetBoard.status === '已停用') {
+      showToast('所选板块已被停用，不可选，请选择其他正常启用的板块！');
+      return;
+    }
+
     setPosts(prev => prev.map(p => {
       if (p.id === editPostModal.id) {
         return {
@@ -247,6 +271,14 @@ export const WorkspaceCommunity: React.FC = () => {
       return p;
     }));
 
+    // 同步更新全局 AppContext 中的对应帖子（如果存在）
+    updatePost(editPostModal.id, {
+      title: editForm.title,
+      content: editForm.content,
+      board: editForm.board,
+      status: '待审核'
+    });
+
     showToast('帖子修改成功，已提交重新审核');
     setEditPostModal(null);
   };
@@ -255,6 +287,7 @@ export const WorkspaceCommunity: React.FC = () => {
     if (!deleteConfirm) return;
     if (deleteConfirm.type === 'post') {
       setPosts(prev => prev.filter(p => p.id !== deleteConfirm.id));
+      deletePost(deleteConfirm.id);
       showToast('帖子已成功删除');
     } else if (deleteConfirm.type === 'comment') {
       setComments(prev => prev.filter(c => c.id !== deleteConfirm.id));
@@ -433,9 +466,22 @@ export const WorkspaceCommunity: React.FC = () => {
 
                         {/* 所属板块 */}
                         <td className="py-3.5 px-4">
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                            {post.board}
-                          </span>
+                          {(() => {
+                            const boardObj = communityBoards.find(b => b.name === post.board);
+                            const isBoardDisabled = boardObj?.status === '已停用';
+                            return (
+                              <div className="flex flex-col items-start gap-1">
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                  {post.board}
+                                </span>
+                                {isBoardDisabled && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200/80">
+                                    板块已停用
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </td>
 
                         {/* 状态 */}
@@ -803,17 +849,38 @@ export const WorkspaceCommunity: React.FC = () => {
 
             <form onSubmit={handleSaveEdit} className="space-y-4 text-xs">
               <div className="space-y-1">
-                <label className="font-bold text-slate-700">所属板块</label>
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-slate-700">所属板块</label>
+                  {communityBoards.find(b => b.name === editForm.board)?.status === '已停用' && (
+                    <span className="text-[11px] font-bold text-rose-500">
+                      （当前板块已停用，必须更换板块）
+                    </span>
+                  )}
+                </div>
                 <select
                   value={editForm.board}
                   onChange={(e) => setEditForm({ ...editForm, board: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 text-slate-900 font-bold"
                 >
-                  <option value="🤖Agent开发">🤖Agent开发</option>
-                  <option value="💻代码调试">💻代码调试</option>
-                  <option value="💡创意脑洞">💡创意脑洞</option>
-                  <option value="📢官方公告">📢官方公告</option>
+                  {communityBoards.map(b => {
+                    const isDisabled = b.status === '已停用';
+                    return (
+                      <option 
+                        key={b.id} 
+                        value={b.name}
+                        disabled={isDisabled}
+                        className={isDisabled ? "text-slate-400 bg-slate-100 italic" : "text-slate-900 font-semibold"}
+                      >
+                        {b.name}{isDisabled ? ' (已停用 - 不可选)' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
+                {communityBoards.find(b => b.name === editForm.board)?.status === '已停用' && (
+                  <p className="text-[11px] text-amber-600 font-medium">
+                    ⚠️ 当前所属板块已被系统停用，请选择其他已启用的板块后方可提交修改。
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1">

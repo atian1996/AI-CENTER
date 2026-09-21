@@ -954,7 +954,8 @@ export type CommunityBoard =
   | '前沿观察' 
   | '赚钱交流' 
   | '同行交流' 
-  | '娱乐灌水';
+  | '娱乐灌水'
+  | (string & {});
 
 export interface FeedPost {
   id: string;
@@ -971,10 +972,12 @@ export interface FeedPost {
   viewsCount?: number;
   favoritesCount?: number;
   time: string;
+  createdAtTimestamp?: number;
   isLiked?: boolean;
   isCollected?: boolean;
   isTop?: boolean;
   isPinned?: boolean; // 是否置顶
+  pinnedAt?: string; // 最新置顶时间（ISO字符串）
   isEssential?: boolean; // 是否精华
   status?: '待审核' | '已通过' | '已驳回' | '已锁定' | '已发布';
   rejectReason?: string; // 驳回原因
