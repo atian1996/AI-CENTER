@@ -89,7 +89,12 @@ export const CommunityView: React.FC = () => {
   // Comments and Replies Map keyed by postId
   const [commentsMap, setCommentsMap] = useState<Record<string, LocalComment[]>>({});
   const [mainCommentInput, setMainCommentInput] = useState('');
-  const [replyingCommentId, setReplyingCommentId] = useState<string | null>(null);
+  // 评论回复目标：一级评论ID、被回复人姓名、可选的具体回复ID
+  const [replyTarget, setReplyTarget] = useState<{
+    commentId: string;
+    targetAuthor: string;
+    replyId?: string;
+  } | null>(null);
   const [replyInput, setReplyInput] = useState('');
 
   // Publishing State
@@ -183,8 +188,8 @@ export const CommunityView: React.FC = () => {
           content: r.content,
           time: r.time,
           replyToUser: r.replyToUser || c.author,
-          likesCount: Math.floor(Math.random() * 5 + 1),
-          isLiked: false
+          likesCount: r.likesCount !== undefined ? r.likesCount : Math.floor(Math.random() * 5 + 1),
+          isLiked: !!r.isLiked
         })) : [
           {
             id: `r_${c.id}_1`,
@@ -379,21 +384,22 @@ export const CommunityView: React.FC = () => {
     showToast('评论发表成功！');
   };
 
-  // Add Reply to a Comment
-  const handleAddReply = (postId: string, targetComment: LocalComment) => {
+  // Add Reply to a Comment (or to a Reply in the secondary area)
+  // 整个评论区只分两级，评论的回复和评论的回复的回复都按回复时间在二级区域往后排
+  const handleAddReply = (postId: string, commentId: string, targetAuthor: string) => {
     if (!replyInput.trim()) {
       showToast('请输入回复内容');
       return;
     }
 
     const newReply: LocalReply = {
-      id: `r_${Date.now()}`,
+      id: `r_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       author: user.name || '我的账号',
       avatar: user.avatar,
       authorTag: user.identityTag || '社区成员',
       content: replyInput.trim(),
       time: '刚刚',
-      replyToUser: targetComment.author,
+      replyToUser: targetAuthor,
       likesCount: 0,
       isLiked: false
     };
@@ -401,7 +407,7 @@ export const CommunityView: React.FC = () => {
     setCommentsMap(prev => {
       const list = prev[postId] || getPostComments(postId);
       const updatedList = list.map(c => {
-        if (c.id === targetComment.id) {
+        if (c.id === commentId) {
           return {
             ...c,
             replies: [...c.replies, newReply]
@@ -413,7 +419,7 @@ export const CommunityView: React.FC = () => {
     });
 
     setReplyInput('');
-    setReplyingCommentId(null);
+    setReplyTarget(null);
     showToast('回复发表成功！');
   };
 
@@ -426,6 +432,28 @@ export const CommunityView: React.FC = () => {
           const isLiked = !c.isLiked;
           const likesCount = isLiked ? c.likesCount + 1 : Math.max(0, c.likesCount - 1);
           return { ...c, isLiked, likesCount };
+        }
+        return c;
+      });
+      return { ...prev, [postId]: updatedList };
+    });
+  };
+
+  // Toggle Like on Reply (in secondary area)
+  const handleLikeReply = (postId: string, commentId: string, replyId: string) => {
+    setCommentsMap(prev => {
+      const list = prev[postId] || getPostComments(postId);
+      const updatedList = list.map(c => {
+        if (c.id === commentId) {
+          const updatedReplies = c.replies.map(r => {
+            if (r.id === replyId) {
+              const isLiked = !r.isLiked;
+              const likesCount = isLiked ? (r.likesCount || 0) + 1 : Math.max(0, (r.likesCount || 0) - 1);
+              return { ...r, isLiked, likesCount };
+            }
+            return r;
+          });
+          return { ...c, replies: updatedReplies };
         }
         return c;
       });
@@ -716,10 +744,13 @@ export const CommunityView: React.FC = () => {
                     {/* Reply Trigger Button */}
                     <button
                       onClick={() => {
-                        if (replyingCommentId === comment.id) {
-                          setReplyingCommentId(null);
+                        if (replyTarget?.commentId === comment.id && !replyTarget?.replyId) {
+                          setReplyTarget(null);
                         } else {
-                          setReplyingCommentId(comment.id);
+                          setReplyTarget({
+                            commentId: comment.id,
+                            targetAuthor: comment.author
+                          });
                           setReplyInput('');
                         }
                       }}
@@ -736,32 +767,33 @@ export const CommunityView: React.FC = () => {
                   {comment.content}
                 </p>
 
-                {/* Inline Reply Input Box */}
-                {replyingCommentId === comment.id && (
+                {/* Inline Reply Input Box (for replying to root comment) */}
+                {replyTarget?.commentId === comment.id && !replyTarget?.replyId && (
                   <div className="ml-10 pt-2 animate-fade-in space-y-2">
                     <div className="flex gap-2">
                       <input
                         type="text"
+                        autoFocus
                         value={replyInput}
                         onChange={(e) => setReplyInput(e.target.value)}
                         placeholder={`回复 @${comment.author}...`}
-                        className="flex-1 px-3 py-2 bg-white border border-indigo-300 rounded-xl text-xs text-slate-900 outline-none focus:border-indigo-600"
+                        className="flex-1 px-3 py-2 bg-white border border-indigo-300 rounded-xl text-xs text-slate-900 outline-none focus:border-indigo-600 shadow-2xs"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault();
-                            handleAddReply(currentPost.id, comment);
+                            handleAddReply(currentPost.id, comment.id, comment.author);
                           }
                         }}
                       />
                       <button
-                        onClick={() => handleAddReply(currentPost.id, comment)}
-                        className="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl shadow-xs shrink-0 cursor-pointer"
+                        onClick={() => handleAddReply(currentPost.id, comment.id, comment.author)}
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs shrink-0 cursor-pointer active:scale-95 transition"
                       >
                         提交回复
                       </button>
                       <button
-                        onClick={() => setReplyingCommentId(null)}
-                        className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl shrink-0 cursor-pointer"
+                        onClick={() => setReplyTarget(null)}
+                        className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl shrink-0 cursor-pointer transition"
                       >
                         取消
                       </button>
@@ -769,26 +801,106 @@ export const CommunityView: React.FC = () => {
                   </div>
                 )}
 
-                {/* Sub Replies List */}
+                {/* Sub Replies List - 整个评论区只分两级，评论的回复和评论的回复的回复都按回复时间在二级区域往后排 */}
                 {comment.replies && comment.replies.length > 0 && (
                   <div className="ml-10 space-y-2.5 pt-2 border-l-2 border-indigo-200 pl-3">
                     {comment.replies.map((rep) => (
-                      <div key={rep.id} className="p-2.5 rounded-xl bg-white border border-slate-200/80 space-y-1 text-xs">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <img src={rep.avatar} alt={rep.author} className="w-5 h-5 rounded-full object-cover" />
+                      <div key={rep.id} className="p-3 rounded-xl bg-white border border-slate-200/80 space-y-1.5 text-xs shadow-2xs">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <img src={rep.avatar} alt={rep.author} className="w-5 h-5 rounded-full object-cover shrink-0" />
                             <span className="font-bold text-slate-900">{rep.author}</span>
+                            {rep.authorTag && (
+                              <span className="px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 text-[9px] font-medium">
+                                {rep.authorTag}
+                              </span>
+                            )}
                             {rep.replyToUser && (
                               <span className="text-[10px] text-slate-400">
                                 回复 <strong className="text-indigo-600 font-bold">@{rep.replyToUser}</strong>
                               </span>
                             )}
                           </div>
-                          <span className="text-[10px] text-slate-400">{rep.time}</span>
+                          
+                          <div className="flex items-center gap-2.5 shrink-0">
+                            <span className="text-[10px] text-slate-400">{rep.time}</span>
+                            
+                            {/* Reply Like Button (评论的回复像评论一样点赞) */}
+                            <button
+                              type="button"
+                              onClick={() => handleLikeReply(currentPost.id, comment.id, rep.id)}
+                              className={`flex items-center gap-1 text-[11px] font-medium cursor-pointer transition ${
+                                rep.isLiked ? 'text-rose-600 font-bold' : 'text-slate-400 hover:text-slate-700'
+                              }`}
+                              title="赞同该回复"
+                            >
+                              <ThumbsUp className={`w-3 h-3 ${rep.isLiked ? 'fill-rose-500' : ''}`} />
+                              <span>{rep.likesCount || 0}</span>
+                            </button>
+
+                            {/* Reply to Reply Button (评论的回复像评论一样回复) */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (replyTarget?.commentId === comment.id && replyTarget?.replyId === rep.id) {
+                                  setReplyTarget(null);
+                                } else {
+                                  setReplyTarget({
+                                    commentId: comment.id,
+                                    targetAuthor: rep.author,
+                                    replyId: rep.id
+                                  });
+                                  setReplyInput('');
+                                }
+                              }}
+                              className="flex items-center gap-1 text-[11px] text-indigo-600 font-bold hover:text-indigo-700 cursor-pointer"
+                              title="回复该回复"
+                            >
+                              <CornerDownRight className="w-3 h-3" />
+                              <span>回复</span>
+                            </button>
+                          </div>
                         </div>
+
                         <p className="text-slate-700 leading-relaxed font-normal pl-7">
                           {rep.content}
                         </p>
+
+                        {/* Inline Reply Input directly below this reply */}
+                        {replyTarget?.commentId === comment.id && replyTarget?.replyId === rep.id && (
+                          <div className="ml-7 pt-2 animate-fade-in space-y-2">
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                autoFocus
+                                value={replyInput}
+                                onChange={(e) => setReplyInput(e.target.value)}
+                                placeholder={`回复 @${rep.author}...`}
+                                className="flex-1 px-3 py-1.5 bg-slate-50 border border-indigo-300 rounded-xl text-xs text-slate-900 outline-none focus:border-indigo-600 focus:bg-white transition"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAddReply(currentPost.id, comment.id, rep.author);
+                                  }
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleAddReply(currentPost.id, comment.id, rep.author)}
+                                className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs shrink-0 cursor-pointer active:scale-95 transition"
+                              >
+                                提交回复
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setReplyTarget(null)}
+                                className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl shrink-0 cursor-pointer transition"
+                              >
+                                取消
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

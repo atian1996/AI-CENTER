@@ -340,7 +340,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [pointRecords, setPointRecords] = useState<PointRecord[]>(mockPointRecords);
   const [onboardingTasks, setOnboardingTasks] = useState<OnboardingTask[]>(initialOnboardingTasks);
 
-  const [notifications, setNotifications] = useState<AppNotification[]>(initialNotifications);
+  const [notifications, setNotifications] = useState<AppNotification[]>(() => 
+    initialNotifications.filter(n => n.category !== ('system' as any) && n.type !== ('system' as any))
+  );
   
   const [agents, setAgents] = useState<AgentItem[]>(() => 
     mockAgents.map(a => {
@@ -1105,14 +1107,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setMyCustomImages(prev => prev.filter(img => img.id !== id));
     
-    // 下发系统通知给该用户
+    // 下发合规通知给该用户
     const newNotice: AppNotification = {
       id: `n_violation_${Date.now()}`,
       title: '🚨 用户镜像违规强制删除提醒',
       content: `您的自定义镜像【${targetImage.name}】因${reason || '包含违规或安全风险文件'}已被平台系统管理员强制删除并释放存储空间。如有疑问请联系客服申诉。`,
-      category: 'system',
-      subCategory: 'system',
-      type: 'system',
+      category: 'business',
+      subCategory: 'compute',
+      type: 'compute',
       time: '刚刚',
       read: false,
       targetTab: 'compute'

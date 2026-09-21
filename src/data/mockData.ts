@@ -85,16 +85,6 @@ export const initialNotifications: AppNotification[] = [
     actionType: 'link'
   },
   { 
-    id: 'n_sys_01', 
-    title: '📢 系统公告', 
-    content: '平台将于近期上线全新的开发者声誉与权益成长体系，全面赋能AI资产创作者与开源极客，敬请期待！', 
-    category: 'system',
-    subCategory: 'system',
-    type: 'system',
-    time: '20分钟前', 
-    read: false 
-  },
-  { 
     id: 'n_biz_tsk_03', 
     title: '🙋 有人接单了', 
     content: '您发布的「基于 WebGPU 的医学 DICOM 3D 体绘制与光线投射渲染引擎」已有用户接单。', 
@@ -460,16 +450,6 @@ export const initialNotifications: AppNotification[] = [
     targetTab: 'marketplace'
   },
   { 
-    id: 'n_sys_02', 
-    title: '🔧 平台维护通知', 
-    content: '平台将于 2026-09-22 02:00 进行维护，预计持续 2小时，期间部分功能可能不可用。', 
-    category: 'system',
-    subCategory: 'system',
-    type: 'system',
-    time: '前天 22:00', 
-    read: true 
-  },
-  { 
     id: 'n_biz_cpt_03', 
     title: '📤 作品提交成功', 
     content: '您提交的「第二届大模型 Agent 创客大赛」作品已成功提交。', 
@@ -553,16 +533,6 @@ export const initialNotifications: AppNotification[] = [
   },
 
   // 41 ~ 50 (第5页条目)
-  { 
-    id: 'n_sys_03', 
-    title: '🆕 功能更新', 
-    content: '工作台资产中心与通知中心已完成架构升级，支持多分类视图与实时未读同步。', 
-    category: 'system',
-    subCategory: 'system',
-    type: 'system',
-    time: '3天前 14:00', 
-    read: true 
-  },
   { 
     id: 'n_biz_cmp_08', 
     title: '❌ 自动续费失败', 
@@ -3050,7 +3020,20 @@ python3 -m vllm.entrypoints.openai.api_server \\
             authorTag: '楼主',
             content: '我们对 GSM8K 与 HumanEval 进行了专门评测，FP8 产生的 PPL 困惑度漂移在 0.3% 以内，完全不影响逻辑链条输出。',
             time: '45分钟前',
-            replyToUser: '张Dev-算法架构'
+            replyToUser: '张Dev-算法架构',
+            likesCount: 8,
+            isLiked: false
+          },
+          {
+            id: 'r1_2',
+            author: '陈Agent-极客',
+            avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+            authorTag: '极客开发者',
+            content: '非常受用！如果并发请求量大，建议再结合投机采样（Speculative Decoding）降低显存占用。',
+            time: '30分钟前',
+            replyToUser: '王AI-深度架构师',
+            likesCount: 5,
+            isLiked: false
           }
         ]
       },
@@ -3070,7 +3053,9 @@ python3 -m vllm.entrypoints.openai.api_server \\
             authorTag: '楼主',
             content: '好问题！当并发 > 128 时草稿模型确实存在瓶颈，建议设置 `--num-speculative-tokens 3` 降低等待耗时。',
             time: '20分钟前',
-            replyToUser: '李向量-数据专家'
+            replyToUser: '李向量-数据专家',
+            likesCount: 4,
+            isLiked: false
           }
         ]
       }

@@ -108,15 +108,15 @@ export interface OnboardingTask {
   actionKey: string;
 }
 
-export type NotificationTabType = 'all' | 'business' | 'interaction' | 'system';
+export type NotificationTabType = 'all' | 'business' | 'interaction';
 
 export interface AppNotification {
   id: string;
   title: string;
   content: string;
-  category?: 'business' | 'interaction' | 'system';
-  subCategory?: 'agent' | 'model' | 'dataset' | 'skill' | 'task' | 'compute' | 'competition' | 'account' | 'community' | 'system';
-  type?: 'system' | 'interaction' | 'task' | 'points' | 'compute' | 'audit' | 'business';
+  category?: 'business' | 'interaction';
+  subCategory?: 'agent' | 'model' | 'dataset' | 'skill' | 'task' | 'compute' | 'competition' | 'account' | 'community';
+  type?: 'interaction' | 'task' | 'points' | 'compute' | 'audit' | 'business';
   time: string;
   read: boolean;
   targetTab?: MainTabType;
@@ -998,6 +998,8 @@ export interface FeedPost {
       content: string;
       time: string;
       replyToUser?: string;
+      likesCount?: number;
+      isLiked?: boolean;
     }[];
   }[];
 }

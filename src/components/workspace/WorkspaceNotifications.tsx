@@ -5,9 +5,7 @@ import {
   CheckCheck, 
   MessageCircle, 
   Coins, 
-  ExternalLink,
   Cpu,
-  Megaphone,
   Sparkles,
   Bot,
   Database,
@@ -25,10 +23,7 @@ export const WorkspaceNotifications: React.FC = () => {
     notifications, 
     markNotificationAsRead, 
     markNotificationsAsRead,
-    markAllNotificationsRead, 
-    openRechargeModal,
-    setWorkspaceSubTab, 
-    setSelectedMainTab
+    markAllNotificationsRead
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<NotificationTabType>('all');
@@ -36,12 +31,11 @@ export const WorkspaceNotifications: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
 
-  // 4个Tab严格按照要求定义
+  // 3个Tab严格按照要求定义
   const tabs: { key: NotificationTabType; label: string; desc: string }[] = [
     { key: 'all', label: '全部消息', desc: '所有通知汇总，按时间倒序' },
     { key: 'business', label: '业务通知', desc: 'AI集市、任务大厅、算力工坊、赛事中心、账户相关' },
     { key: 'interaction', label: '社区互动', desc: '社区帖子相关的互动通知' },
-    { key: 'system', label: '系统公告', desc: '平台级公告' },
   ];
 
   // 业务子分类映射配置
@@ -99,20 +93,18 @@ export const WorkspaceNotifications: React.FC = () => {
       icon: <MessageCircle className="w-4 h-4 text-teal-600" />,
       badgeClass: 'bg-teal-50 text-teal-700 border-teal-200/80',
       iconBg: 'bg-teal-100/80 text-teal-700'
-    },
-    system: {
-      label: '系统公告',
-      icon: <Megaphone className="w-4 h-4 text-slate-600" />,
-      badgeClass: 'bg-slate-100 text-slate-700 border-slate-200/80',
-      iconBg: 'bg-slate-200/80 text-slate-700'
     }
   };
 
   // 过滤通知列表
   const filtered = useMemo(() => {
     return notifications.filter(n => {
+      // 彻底排除系统公告类通知
+      if (n.category === ('system' as any) || n.type === ('system' as any) || n.subCategory === ('system' as any)) {
+        return false;
+      }
       if (activeTab !== 'all') {
-        const itemCategory = n.category || (n.type === 'interaction' ? 'interaction' : n.type === 'system' ? 'system' : 'business');
+        const itemCategory = n.category || (n.type === 'interaction' ? 'interaction' : 'business');
         if (itemCategory !== activeTab) return false;
       }
       if (onlyUnread && n.read) return false;
@@ -146,42 +138,9 @@ export const WorkspaceNotifications: React.FC = () => {
     }
   }, [currentPageSafe, activeTab, paginatedItems, markNotificationsAsRead]);
 
-  const totalUnreadCount = notifications.filter(n => !n.read).length;
-
-  const handleItemClick = (n: AppNotification) => {
-    markNotificationAsRead(n.id);
-    if (n.targetTab === 'community') {
-      setSelectedMainTab('community');
-    } else if (n.targetTab === 'tasks') {
-      if (n.targetId === 'my-tasks') {
-        setSelectedMainTab('workspace');
-        setWorkspaceSubTab('my-tasks');
-      } else {
-        setSelectedMainTab('tasks');
-      }
-    } else if (n.targetTab === 'compute') {
-      setSelectedMainTab('compute');
-    } else if (n.targetTab === 'marketplace') {
-      setSelectedMainTab('marketplace');
-    } else if (n.targetTab === 'creative') {
-      setSelectedMainTab('creative');
-    } else if (n.targetTab === 'workspace') {
-      setSelectedMainTab('workspace');
-      if (n.targetId) {
-        setWorkspaceSubTab(n.targetId as any);
-      }
-    }
-  };
-
-  const handleActionClick = (e: React.MouseEvent, n: AppNotification) => {
-    e.stopPropagation();
-    markNotificationAsRead(n.id);
-    if (n.actionType === 'recharge') {
-      openRechargeModal(50);
-    } else {
-      handleItemClick(n);
-    }
-  };
+  const totalUnreadCount = notifications.filter(n => 
+    !n.read && n.category !== ('system' as any) && n.type !== ('system' as any) && n.subCategory !== ('system' as any)
+  ).length;
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
@@ -201,7 +160,7 @@ export const WorkspaceNotifications: React.FC = () => {
             )}
           </h2>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            实时接收业务通知（AI集市、任务大厅、算力工坊、赛事中心、账户）、社区互动与系统公告
+            实时接收业务通知（AI集市、任务大厅、算力工坊、赛事中心、账户）与社区互动
           </p>
         </div>
 
@@ -233,18 +192,20 @@ export const WorkspaceNotifications: React.FC = () => {
         </div>
       </div>
 
-      {/* 4 Tabs: 全部消息、业务通知、社区互动、系统公告 */}
+      {/* 3 Tabs: 全部消息、业务通知、社区互动 */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-slate-200 text-xs font-extrabold scrollbar-none">
         {tabs.map(t => {
           const unreadCount = notifications.filter(n => {
+            if (n.category === ('system' as any) || n.type === ('system' as any) || n.subCategory === ('system' as any)) return false;
             if (t.key === 'all') return !n.read;
-            const itemCategory = n.category || (n.type === 'interaction' ? 'interaction' : n.type === 'system' ? 'system' : 'business');
+            const itemCategory = n.category || (n.type === 'interaction' ? 'interaction' : 'business');
             return itemCategory === t.key && !n.read;
           }).length;
 
           const totalCount = notifications.filter(n => {
+            if (n.category === ('system' as any) || n.type === ('system' as any) || n.subCategory === ('system' as any)) return false;
             if (t.key === 'all') return true;
-            const itemCategory = n.category || (n.type === 'interaction' ? 'interaction' : n.type === 'system' ? 'system' : 'business');
+            const itemCategory = n.category || (n.type === 'interaction' ? 'interaction' : 'business');
             return itemCategory === t.key;
           }).length;
 
@@ -296,68 +257,48 @@ export const WorkspaceNotifications: React.FC = () => {
           </div>
         ) : (
           paginatedItems.map((n) => {
-            const subKey = n.subCategory || (n.category === 'interaction' ? 'community' : n.category === 'system' ? 'system' : 'task');
-            const config = SUB_CATEGORY_CONFIG[subKey] || SUB_CATEGORY_CONFIG.system;
+            const subKey = n.subCategory || (n.category === 'interaction' ? 'community' : 'task');
+            const config = SUB_CATEGORY_CONFIG[subKey] || SUB_CATEGORY_CONFIG.task;
 
             return (
               <div
                 key={n.id}
-                onClick={() => handleItemClick(n)}
-                className={`p-4 sm:p-5 rounded-2xl border transition flex flex-col sm:flex-row sm:items-start justify-between gap-4 cursor-pointer group ${
+                onClick={() => {
+                  if (!n.read) {
+                    markNotificationAsRead(n.id);
+                  }
+                }}
+                className={`p-4 sm:p-5 rounded-2xl border transition flex items-start gap-3.5 ${
                   !n.read 
                     ? 'bg-indigo-50/30 border-indigo-200 shadow-2xs' 
-                    : 'bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50'
+                    : 'bg-white border-slate-200/90'
                 }`}
               >
-                <div className="flex items-start gap-3.5">
-                  {/* Category Icon */}
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 mt-0.5 shadow-2xs ${config.iconBg}`}>
-                    {config.icon}
-                  </div>
-
-                  <div className="space-y-1.5 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${config.badgeClass}`}>
-                        {config.label}
-                      </span>
-                      <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 group-hover:text-indigo-600 transition">
-                        {n.title}
-                      </h4>
-                      {!n.read && (
-                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" title="未读消息" />
-                      )}
-                    </div>
-
-                    <p className="text-xs text-slate-600 font-normal leading-relaxed whitespace-pre-line max-w-4xl">
-                      {n.content}
-                    </p>
-
-                    <div className="text-[11px] text-slate-400 font-medium pt-0.5">
-                      {n.time}
-                    </div>
-                  </div>
+                {/* Category Icon */}
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 mt-0.5 shadow-2xs ${config.iconBg}`}>
+                  {config.icon}
                 </div>
 
-                {/* Actions / Link */}
-                <div className="flex items-center sm:self-center gap-2 pl-12 sm:pl-0 shrink-0">
-                  {n.actionLabel ? (
-                    <button
-                      type="button"
-                      onClick={(e) => handleActionClick(e, n)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-2xs active:scale-95 ${
-                        n.actionType === 'recharge'
-                          ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-200'
-                          : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200'
-                      }`}
-                    >
-                      <span>{n.actionLabel}</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
-                  ) : (
-                    <div className="p-2 rounded-xl text-slate-300 group-hover:text-indigo-600 group-hover:bg-indigo-50/80 transition">
-                      <ExternalLink className="w-4 h-4" />
-                    </div>
-                  )}
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${config.badgeClass}`}>
+                      {config.label}
+                    </span>
+                    <h4 className="text-xs sm:text-sm font-extrabold text-slate-900">
+                      {n.title}
+                    </h4>
+                    {!n.read && (
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" title="未读消息" />
+                    )}
+                  </div>
+
+                  <p className="text-xs text-slate-600 font-normal leading-relaxed whitespace-pre-line">
+                    {n.content}
+                  </p>
+
+                  <div className="text-[11px] text-slate-400 font-medium pt-0.5">
+                    {n.time}
+                  </div>
                 </div>
               </div>
             );
