@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { MainTabType } from '../../types';
+import { MainTabType, AppNotification } from '../../types';
 import { 
   Search, 
   Bell, 
@@ -31,6 +31,8 @@ export const Header: React.FC = () => {
     notifications, 
     unreadCount, 
     markAllNotificationsRead,
+    markNotificationAsRead,
+    markNotificationsAsRead,
     openRechargeModal,
     setWorkspaceSubTab,
     enterAdminMode,
@@ -38,7 +40,23 @@ export const Header: React.FC = () => {
   } = useApp();
 
   const [notifOpen, setNotifOpen] = useState(false);
+  const [popupNotifications, setPopupNotifications] = useState<AppNotification[]>([]);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  const handleToggleNotif = () => {
+    if (!notifOpen) {
+      // 获取最多3条最新未读通知（按时间倒序）
+      const unreads = notifications.filter(n => !n.read).slice(0, 3);
+      setPopupNotifications(unreads);
+      
+      // 打开popup后立即标记这最多3条未读通知为已读
+      if (unreads.length > 0) {
+        const unreadIds = unreads.map(n => n.id);
+        markNotificationsAsRead(unreadIds);
+      }
+    }
+    setNotifOpen(prev => !prev);
+  };
 
   const navItems: { id: MainTabType; label: string; icon: React.ReactNode }[] = [
     { id: 'home', label: '首页', icon: <Sparkles className="w-4 h-4" /> },
@@ -113,88 +131,100 @@ export const Header: React.FC = () => {
           {/* Notifications Dropdown (Bell Icon) */}
           <div className="relative">
             <button
-              onClick={() => setNotifOpen(!notifOpen)}
+              onClick={handleToggleNotif}
               className="relative p-2 rounded-xl bg-slate-100/90 hover:bg-slate-200/80 border border-slate-200 text-slate-600 hover:text-slate-900 transition"
+              title="通知中心"
             >
               <Bell className="w-4 h-4" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
-                  {unreadCount}
+                  {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
             </button>
 
             {/* Notification Popover */}
             {notifOpen && (
-              <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden z-50 animate-fade-in">
+              <div 
+                className="absolute right-0 mt-3 w-84 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden z-50 animate-fade-in"
+                onClick={() => {
+                  // 点击popup任意区域保证已标记为已读
+                  const unreadIds = popupNotifications.filter(n => !n.read).map(n => n.id);
+                  if (unreadIds.length > 0) {
+                    markNotificationsAsRead(unreadIds);
+                  }
+                }}
+              >
                 <div className="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
                   <div className="text-xs font-bold text-slate-800 flex items-center gap-2">
                     <Bell className="w-3.5 h-3.5 text-indigo-600" />
-                    消息通知 ({notifications.length})
+                    <span>未读通知提醒 (最多3条)</span>
                   </div>
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={markAllNotificationsRead}
-                      className="text-[11px] text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-bold"
-                    >
-                      <CheckCheck className="w-3 h-3" /> 已读全部
-                    </button>
-                  )}
+                  <span className="text-[11px] text-slate-400 font-medium">
+                    已自动标记已读
+                  </span>
                 </div>
 
-                <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
-                  {notifications.map(n => (
-                    <div
-                      key={n.id}
-                      className={`p-3.5 text-xs transition ${
-                        !n.read ? 'bg-indigo-50/30' : 'hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between text-slate-800 font-bold mb-1">
-                        <span>{n.title}</span>
-                        <span className="text-[10px] text-slate-400 font-normal">{n.time}</span>
-                      </div>
-                      <div className="text-slate-600 leading-relaxed">
-                        {n.content}
-                      </div>
-
-                      {/* 交互行动按钮 (如【立即充值】【查看工坊】) */}
-                      {n.actionLabel && (
-                        <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-end">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (n.actionType === 'recharge') {
-                                openRechargeModal(50);
-                              } else if (n.targetTab) {
-                                setActiveTab(n.targetTab);
-                              }
-                              setNotifOpen(false);
-                            }}
-                            className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
-                              n.actionType === 'recharge'
-                                ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-xs'
-                                : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200'
-                            }`}
-                          >
-                            <span>{n.actionLabel}</span>
-                          </button>
+                <div className="max-h-88 overflow-y-auto divide-y divide-slate-100">
+                  {popupNotifications.length > 0 ? (
+                    popupNotifications.map(n => (
+                      <div
+                        key={n.id}
+                        className="p-3.5 text-xs transition bg-indigo-50/20 hover:bg-slate-50"
+                      >
+                        <div className="flex items-center justify-between text-slate-800 font-bold mb-1">
+                          <span className="truncate pr-2">{n.title}</span>
+                          <span className="text-[10px] text-slate-400 font-normal shrink-0">{n.time}</span>
                         </div>
-                      )}
+                        <div className="text-slate-600 leading-relaxed text-[11px]">
+                          {n.content}
+                        </div>
+
+                        {/* 交互行动按钮 (如【立即充值】【查看工坊】) */}
+                        {n.actionLabel && (
+                          <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-end">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markNotificationAsRead(n.id);
+                                if (n.actionType === 'recharge') {
+                                  openRechargeModal(50);
+                                } else if (n.targetTab) {
+                                  setActiveTab(n.targetTab);
+                                }
+                                setNotifOpen(false);
+                              }}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                                n.actionType === 'recharge'
+                                  ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-xs'
+                                  : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200'
+                              }`}
+                            >
+                              <span>{n.actionLabel}</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-8 text-center text-slate-400 text-xs flex flex-col items-center gap-1.5">
+                      <CheckCheck className="w-6 h-6 text-slate-300" />
+                      <span>暂无新的未读通知</span>
                     </div>
-                  ))}
+                  )}
                 </div>
 
                 <div className="p-2.5 border-t border-slate-100 bg-slate-50 text-center">
                   <button
                     onClick={() => {
-                      setActiveTab('community');
+                      setActiveTab('workspace');
+                      setWorkspaceSubTab('notifications');
                       setNotifOpen(false);
                     }}
-                    className="text-xs text-indigo-600 hover:text-indigo-800 font-bold"
+                    className="text-xs text-indigo-600 hover:text-indigo-800 font-bold flex items-center justify-center gap-1 w-full py-0.5 cursor-pointer"
                   >
-                    查看全部社区通知 →
+                    前往通知中心查看全部 ({notifications.length}) →
                   </button>
                 </div>
               </div>

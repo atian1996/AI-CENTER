@@ -103,6 +103,7 @@ interface AppContextType {
   unreadCount: number;
   markAllNotificationsRead: () => void;
   markNotificationAsRead: (id: string) => void;
+  markNotificationsAsRead: (ids: string[]) => void;
 
   // Data Collections
   agents: AgentItem[];
@@ -1092,6 +1093,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: `n_violation_${Date.now()}`,
       title: '🚨 用户镜像违规强制删除提醒',
       content: `您的自定义镜像【${targetImage.name}】因${reason || '包含违规或安全风险文件'}已被平台系统管理员强制删除并释放存储空间。如有疑问请联系客服申诉。`,
+      category: 'system',
+      subCategory: 'system',
       type: 'system',
       time: '刚刚',
       read: false,
@@ -2128,6 +2131,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   };
 
+  const markNotificationsAsRead = (ids: string[]) => {
+    if (!ids || ids.length === 0) return;
+    const idSet = new Set(ids);
+    setNotifications(prev => prev.map(n => idSet.has(n.id) ? { ...n, read: true } : n));
+  };
+
   const openModal = (modalType: string) => {
     if (modalType === 'createAgent') setCreateAgentModalOpen(true);
     else if (modalType === 'publishTask') setPublishTaskModalOpen(true);
@@ -2944,6 +2953,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       unreadCount,
       markAllNotificationsRead,
       markNotificationAsRead,
+      markNotificationsAsRead,
       agents,
       setAgents,
       userAgents,

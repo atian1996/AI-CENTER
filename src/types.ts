@@ -108,11 +108,15 @@ export interface OnboardingTask {
   actionKey: string;
 }
 
+export type NotificationTabType = 'all' | 'business' | 'interaction' | 'system';
+
 export interface AppNotification {
   id: string;
   title: string;
   content: string;
-  type: 'system' | 'interaction' | 'task' | 'points' | 'compute';
+  category?: 'business' | 'interaction' | 'system';
+  subCategory?: 'agent' | 'model' | 'dataset' | 'skill' | 'task' | 'compute' | 'competition' | 'account' | 'community' | 'system';
+  type?: 'system' | 'interaction' | 'task' | 'points' | 'compute' | 'audit' | 'business';
   time: string;
   read: boolean;
   targetTab?: MainTabType;
