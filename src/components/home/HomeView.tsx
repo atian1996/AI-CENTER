@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
+import { TaskItem } from '../../types';
+import { TaskDetailSubPage } from '../tasks/TaskDetailSubPage';
 import { 
   Bot, 
   Briefcase, 
@@ -153,6 +155,89 @@ export const HomeView: React.FC = () => {
     setSandboxAgent,
     showToast
   } = useApp();
+
+  // 首页任务详情二级页面控制
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
+
+  // 判断是否为当前登录用户（与任务大厅保持一致）
+  const isCurrentUser = (name?: string) => {
+    if (!name) return false;
+    return name === user.name || name.includes('你') || name.includes('极客小千');
+  };
+
+  // 判断任务大状态 进行中 VS 已结束（与任务大厅保持一致）
+  const isTaskFinished = (task: TaskItem) => {
+    return (
+      task.status === '已结束' ||
+      task.status === '已验收' ||
+      (task.remainingDays !== undefined && task.remainingDays <= 0) ||
+      task.isAccepted === true ||
+      !!task.winner ||
+      (task.submissions || []).some(s => s.status === '已通过')
+    );
+  };
+
+  // 领域定义及主题色（与任务大厅保持一致）
+  const getDomainTheme = (domain: string) => {
+    switch (domain) {
+      case '技术开发':
+        return {
+          badge: 'bg-blue-50 text-blue-700 border-blue-200/80',
+          gradientBar: 'from-blue-500 via-indigo-500 to-cyan-500',
+          accentLight: 'bg-gradient-to-br from-blue-50/80 via-indigo-50/40 to-white',
+          borderHover: 'hover:border-blue-400 hover:shadow-blue-500/10',
+          iconColor: 'text-blue-600'
+        };
+      case 'AI模型与数据':
+        return {
+          badge: 'bg-indigo-50 text-indigo-700 border-indigo-200/80',
+          gradientBar: 'from-indigo-500 via-purple-500 to-pink-500',
+          accentLight: 'bg-gradient-to-br from-indigo-50/80 via-purple-50/40 to-white',
+          borderHover: 'hover:border-indigo-400 hover:shadow-indigo-500/10',
+          iconColor: 'text-indigo-600'
+        };
+      case '工具与自动化':
+        return {
+          badge: 'bg-amber-50 text-amber-700 border-amber-200/80',
+          gradientBar: 'from-amber-500 via-orange-500 to-red-500',
+          accentLight: 'bg-gradient-to-br from-amber-50/80 via-orange-50/40 to-white',
+          borderHover: 'hover:border-amber-400 hover:shadow-amber-500/10',
+          iconColor: 'text-amber-600'
+        };
+      case '内容创作':
+        return {
+          badge: 'bg-pink-50 text-pink-700 border-pink-200/80',
+          gradientBar: 'from-pink-500 via-rose-500 to-red-500',
+          accentLight: 'bg-gradient-to-br from-pink-50/80 via-rose-50/40 to-white',
+          borderHover: 'hover:border-pink-400 hover:shadow-pink-500/10',
+          iconColor: 'text-pink-600'
+        };
+      case '咨询与培训':
+        return {
+          badge: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+          gradientBar: 'from-emerald-500 via-teal-500 to-cyan-500',
+          accentLight: 'bg-gradient-to-br from-emerald-50/80 via-teal-50/40 to-white',
+          borderHover: 'hover:border-emerald-400 hover:shadow-emerald-500/10',
+          iconColor: 'text-emerald-600'
+        };
+      default:
+        return {
+          badge: 'bg-slate-50 text-slate-700 border-slate-200/80',
+          gradientBar: 'from-slate-500 to-slate-600',
+          accentLight: 'bg-slate-50',
+          borderHover: 'hover:border-slate-400',
+          iconColor: 'text-slate-600'
+        };
+    }
+  };
+
+  // 最新在架任务列表（与任务大厅排序与展示规则一致：过滤已上架或公开任务，按最新发布时间倒序排列取前 8 个）
+  const latestPublicTasks = React.useMemo(() => {
+    return tasks
+      .filter(t => t.status === '进行中' || t.status === '已结束' || t.status === '已验收' || t.status === '已发布')
+      .sort((a, b) => new Date(b.publishTime || b.startTime || Date.now()).getTime() - new Date(a.publishTime || a.startTime || Date.now()).getTime())
+      .slice(0, 8);
+  }, [tasks]);
 
   // Banner 状态与自动轮播
   const [currentBanner, setCurrentBanner] = useState(0);
@@ -421,7 +506,7 @@ export const HomeView: React.FC = () => {
       date: '剩余12天',
       price: '¥8,000 赏金',
       icon: '📋',
-      onClick: () => setActiveTab('tasks')
+      onClick: () => setDetailTaskId('tsk_101')
     },
     {
       type: 'task',
@@ -434,7 +519,7 @@ export const HomeView: React.FC = () => {
       date: '剩余28天',
       price: '¥35,000 赏金',
       icon: '🩺',
-      onClick: () => setActiveTab('tasks')
+      onClick: () => setDetailTaskId('tsk_102')
     },
     {
       type: 'competition',
@@ -502,6 +587,19 @@ export const HomeView: React.FC = () => {
       }
     }
   ];
+
+  // 若从首页点击任务进入二级详情页（完整承接接单、交付、提交、验收等全套任务流程）
+  if (detailTaskId) {
+    return (
+      <div className="w-full">
+        <TaskDetailSubPage
+          taskId={detailTaskId}
+          onBack={() => setDetailTaskId(null)}
+          fromTitle="首页 · 最新任务"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full space-y-8 animate-fade-in pb-16 select-none text-slate-800">
@@ -1167,60 +1265,195 @@ export const HomeView: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {tasks.concat(tasks).slice(0, 8).map((task, idx) => {
-              const hasTaken = (task.takers || []).some(tk => 
-                tk.username === user.name || 
-                tk.username.includes('你') || 
-                tk.username.includes('极客小千')
-              );
+            {latestPublicTasks.map((task) => {
+              const myTakerRecord = (task.takers || []).find(tk => isCurrentUser(tk.username));
+              const hasTaken = !!myTakerRecord;
+              const isPublisher = isCurrentUser(task.publisher);
+              const acceptedNum = (task.takers || []).length || task.acceptedCount || 0;
+              const submittedNum = (task.submissions || []).length || task.submittedCount || 0;
+              const finished = isTaskFinished(task);
+              const theme = getDomainTheme(task.domain);
+
               return (
                 <div
-                  key={`${task.id}_${idx}`}
-                  onClick={() => setActiveTab('tasks')}
-                  className={`p-5 rounded-2xl border bg-white hover:shadow-xl transition-all flex flex-col justify-between space-y-3 cursor-pointer group ${
+                  key={task.id}
+                  onClick={() => setDetailTaskId(task.id)}
+                  className={`relative bg-white rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden group cursor-pointer shadow-xs ${
                     hasTaken
-                      ? 'border-emerald-300 ring-2 ring-emerald-500/20 bg-gradient-to-b from-emerald-50/20 via-white to-white hover:border-emerald-500 hover:shadow-emerald-500/10'
-                      : 'border-slate-200/80 hover:border-amber-400 hover:shadow-amber-500/5 hover:-translate-y-0.5'
+                      ? 'border-emerald-400/90 ring-2 ring-emerald-500/20 bg-gradient-to-b from-emerald-50/20 via-white to-white hover:border-emerald-500 hover:shadow-xl hover:-translate-y-1'
+                      : isPublisher
+                      ? 'border-amber-300 ring-1 ring-amber-400/20 bg-gradient-to-b from-amber-50/15 via-white to-white hover:border-amber-400 hover:shadow-xl hover:-translate-y-1'
+                      : finished
+                      ? 'border-slate-200 bg-slate-50/60 opacity-85 hover:opacity-100 hover:border-slate-300'
+                      : `border-slate-200/90 ${theme.borderHover} hover:shadow-xl hover:-translate-y-1`
                   }`}
                 >
-                  <div className="space-y-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold border bg-indigo-50 text-indigo-700 border-indigo-200">
-                        {task.domain || '技术开发'}
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        {hasTaken ? (
-                          <span className="text-[10px] font-black text-white bg-emerald-600 px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
-                            <CheckCircle2 className="w-3 h-3" />
-                            <span>我已接单</span>
+                  {/* 顶部色彩渐变条 */}
+                  <div
+                    className={`h-1.5 w-full bg-gradient-to-r ${
+                      hasTaken
+                        ? 'from-emerald-500 via-teal-500 to-cyan-500'
+                        : finished
+                        ? 'from-slate-300 to-slate-400'
+                        : theme.gradientBar
+                    }`}
+                  />
+
+                  <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
+                    <div className="space-y-2.5">
+                      {/* 领域、难度与状态徽章 */}
+                      <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${theme.badge}`}>
+                            {task.domain}
                           </span>
-                        ) : (
-                          <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                            未接单
+                          <span
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                              task.difficulty === '简单'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
+                                : task.difficulty === '中等'
+                                ? 'bg-blue-50 text-blue-700 border-blue-200/80'
+                                : 'bg-purple-50 text-purple-700 border-purple-200/80'
+                            }`}
+                          >
+                            {task.difficulty}难度
                           </span>
-                        )}
-                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                          {task.status || '进行中'}
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          {hasTaken ? (
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs ${
+                                myTakerRecord?.status === '已验收'
+                                  ? 'bg-emerald-600 text-white'
+                                  : myTakerRecord?.status === '已提交'
+                                  ? 'bg-indigo-600 text-white'
+                                  : myTakerRecord?.status === '已驳回'
+                                  ? 'bg-rose-600 text-white'
+                                  : 'bg-emerald-600 text-white'
+                              }`}
+                            >
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>
+                                {myTakerRecord?.status === '已验收'
+                                  ? '已验收'
+                                  : myTakerRecord?.status === '已提交'
+                                  ? '待验收'
+                                  : myTakerRecord?.status === '已驳回'
+                                  ? '需修改'
+                                  : '我已接单'}
+                              </span>
+                            </span>
+                          ) : isPublisher ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-0.5 shadow-2xs">
+                              <UserCheck className="w-3 h-3 text-amber-700" />
+                              <span>我发布的</span>
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                              <span>未接单</span>
+                            </span>
+                          )}
+
+                          {finished ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                              已结束
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                              <span className="relative flex h-1.5 w-1.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                              </span>
+                              进行中
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 标题 */}
+                      <h4 className="text-xs font-black text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1 leading-snug">
+                        {task.title}
+                      </h4>
+
+                      {/* 简述 */}
+                      <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal min-h-[32px]">
+                        {task.brief || task.description.replace(/<[^>]+>/g, '').substring(0, 80)}
+                      </p>
+                    </div>
+
+                    {/* 悬赏金额与接单交付态势 */}
+                    <div className={`p-2.5 rounded-xl border border-slate-100 ${hasTaken ? 'bg-gradient-to-br from-emerald-50/50 via-teal-50/20 to-white' : theme.accentLight} flex items-center justify-between gap-2 shadow-2xs mt-1`}>
+                      <div>
+                        <div className="text-[10px] text-slate-500 font-semibold flex items-center gap-1">
+                          <Coins className="w-3 h-3 text-amber-500" />
+                          <span>悬赏金额</span>
+                        </div>
+                        <div className="text-sm font-black font-mono text-amber-600 leading-tight flex items-baseline gap-0.5 mt-0.5">
+                          <span className="text-[11px] font-sans text-amber-500 font-bold">¥</span>
+                          {(task.cashReward || 0).toLocaleString()}
+                          {(task.pointsReward || 0) > 0 && (
+                            <span className="text-[9px] font-bold text-indigo-600 ml-1 font-sans bg-indigo-50 border border-indigo-100 px-1 py-0.2 rounded">
+                              +{task.pointsReward}积分
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <div className="text-[10px] text-slate-500 font-semibold flex items-center gap-1 justify-end">
+                          <Users className="w-3 h-3 text-indigo-500" />
+                          <span>接单态势</span>
+                        </div>
+                        <div className="text-[11px] font-bold text-slate-700 mt-0.5 font-mono flex items-center gap-1 justify-end">
+                          <span className="text-indigo-600 font-black">{acceptedNum}</span>
+                          <span className="text-slate-400 text-[10px] font-normal">接单</span>
+                          <span className="text-slate-300">/</span>
+                          <span className="text-emerald-600 font-black">{submittedNum}</span>
+                          <span className="text-slate-400 text-[10px] font-normal">交付</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 卡片底栏: 发布者信息与操作按钮 */}
+                  <div className="px-4 py-2.5 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <img
+                        src={task.publisherAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'}
+                        alt={task.publisher}
+                        className="w-5 h-5 rounded-full object-cover border border-slate-200 shrink-0"
+                      />
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-extrabold text-slate-800 truncate max-w-[90px] leading-tight text-[11px]">
+                          {task.publisher}
+                        </span>
+                        <span className="text-[9px] text-slate-400 leading-none mt-0.5">
+                          {finished ? '已结束' : `剩余 ${task.remainingDays || 14} 天`}
                         </span>
                       </div>
                     </div>
 
-                    <h4 className="text-xs font-black text-slate-900 group-hover:text-amber-600 transition-colors line-clamp-1">
-                      {task.title}
-                    </h4>
-
-                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal min-h-[32px]">
-                      {task.description}
-                    </p>
-                  </div>
-
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                    <span className="text-xs font-mono font-black text-rose-600">
-                      {task.bountyUnit || '¥'}{(task.bounty ?? 5000).toLocaleString()} 赏金
-                    </span>
-                    <span className="text-[10px] text-slate-400">
-                      {((task.takers || []).length || task.bidCount || 10)} 人接单
-                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDetailTaskId(task.id);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-white font-bold text-[11px] transition-all cursor-pointer flex items-center gap-1 shadow-xs group/btn ${
+                        hasTaken
+                          ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-100'
+                          : isPublisher
+                          ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-100'
+                          : finished
+                          ? 'bg-slate-600 hover:bg-slate-700'
+                          : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100 active:scale-95'
+                      }`}
+                    >
+                      <span>任务详情</span>
+                      <ArrowRight className="w-3 h-3 group-hover/btn:translate-x-0.5 transition-transform" />
+                    </button>
                   </div>
                 </div>
               );

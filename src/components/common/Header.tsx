@@ -31,7 +31,6 @@ export const Header: React.FC = () => {
     notifications, 
     unreadCount, 
     markAllNotificationsRead,
-    markNotificationAsRead,
     markNotificationsAsRead,
     openRechargeModal,
     setWorkspaceSubTab,
@@ -158,7 +157,7 @@ export const Header: React.FC = () => {
                 <div className="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
                   <div className="text-xs font-bold text-slate-800 flex items-center gap-2">
                     <Bell className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>未读通知提醒 (最多3条)</span>
+                    <span>未读通知提醒</span>
                   </div>
                   <span className="text-[11px] text-slate-400 font-medium">
                     已自动标记已读
@@ -179,32 +178,6 @@ export const Header: React.FC = () => {
                         <div className="text-slate-600 leading-relaxed text-[11px]">
                           {n.content}
                         </div>
-
-                        {/* 交互行动按钮 (如【立即充值】【查看工坊】) */}
-                        {n.actionLabel && (
-                          <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-end">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                markNotificationAsRead(n.id);
-                                if (n.actionType === 'recharge') {
-                                  openRechargeModal(50);
-                                } else if (n.targetTab) {
-                                  setActiveTab(n.targetTab);
-                                }
-                                setNotifOpen(false);
-                              }}
-                              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
-                                n.actionType === 'recharge'
-                                  ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-xs'
-                                  : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200'
-                              }`}
-                            >
-                              <span>{n.actionLabel}</span>
-                            </button>
-                          </div>
-                        )}
                       </div>
                     ))
                   ) : (

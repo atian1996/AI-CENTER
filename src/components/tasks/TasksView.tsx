@@ -32,7 +32,14 @@ import { TaskDetailSubPage } from './TaskDetailSubPage';
 import { UserTaskPublishForm } from './UserTaskPublishForm';
 
 export const TasksView: React.FC = () => {
-  const { tasks, user, publishTaskModalOpen, setPublishTaskModalOpen } = useApp();
+  const { 
+    tasks, 
+    user, 
+    publishTaskModalOpen, 
+    setPublishTaskModalOpen,
+    selectedTaskIdForDetail,
+    setSelectedTaskIdForDetail
+  } = useApp();
 
   // 搜索与过滤状态
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,8 +50,14 @@ export const TasksView: React.FC = () => {
   const [sortBy, setSortBy] = useState<'latest' | 'deadline' | 'reward'>('latest'); // 最新发布 / 即将截止 / 奖励最高
 
   // 二级页面控制
-  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(selectedTaskIdForDetail);
   const [isPublishingTask, setIsPublishingTask] = useState<boolean>(false);
+
+  React.useEffect(() => {
+    if (selectedTaskIdForDetail) {
+      setDetailTaskId(selectedTaskIdForDetail);
+    }
+  }, [selectedTaskIdForDetail]);
 
   // 判断是否为当前登录用户
   const isCurrentUser = (name?: string) => {
@@ -224,7 +237,10 @@ export const TasksView: React.FC = () => {
     return (
       <TaskDetailSubPage
         taskId={detailTaskId}
-        onBack={() => setDetailTaskId(null)}
+        onBack={() => {
+          setDetailTaskId(null);
+          setSelectedTaskIdForDetail(null);
+        }}
       />
     );
   }
