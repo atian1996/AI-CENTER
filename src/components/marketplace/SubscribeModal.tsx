@@ -72,13 +72,12 @@ export const SubscribeModal: React.FC<SubscribeModalProps> = ({
 
   const selectedPkg = SUBSCRIPTION_PACKAGES.find(p => p.id === selectedTierId) || SUBSCRIPTION_PACKAGES[1];
 
-  // 计算积分抵扣: 100积分 = 1元，最多抵扣实付金额的 30%
-  const maxDiscountYuanBy30Percent = Math.floor(selectedPkg.price * 0.3 * 100) / 100;
+  // 计算积分抵扣: 100积分 = 1元
   const userMaxYuanFromPoints = Math.floor((user.points / 100) * 100) / 100;
   
   // 实际抵扣元
   const actualDiscountYuan = usePointsDiscount 
-    ? Math.min(maxDiscountYuanBy30Percent, userMaxYuanFromPoints) 
+    ? Math.min(selectedPkg.price, userMaxYuanFromPoints) 
     : 0;
   const usedPointsCount = Math.round(actualDiscountYuan * 100);
 
@@ -266,7 +265,7 @@ export const SubscribeModal: React.FC<SubscribeModalProps> = ({
                 <span>💳 当前账户余额：<strong className="text-slate-900 font-black">¥{(user?.balance ?? 128).toFixed(2)}</strong></span>
               </div>
               <div className="flex items-center gap-2">
-                <span>🌟 可用积分：<strong className="text-amber-600 font-black">{user.points}</strong>（可抵扣最高30%）</span>
+                <span>🌟 可用积分：<strong className="text-amber-600 font-black">{user.points}</strong></span>
               </div>
             </div>
 

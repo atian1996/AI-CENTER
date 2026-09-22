@@ -272,9 +272,6 @@ export const Header: React.FC = () => {
                       </div>
                       <span className="font-extrabold text-amber-600 text-xs">{user.points.toLocaleString()} 分</span>
                     </div>
-                    <div className="text-[10px] text-amber-700 bg-amber-50/80 p-1.5 rounded-md border border-amber-100 font-medium leading-tight">
-                      💡 当前可用于 Agent商店 订阅抵扣，更多场景陆续开放中
-                    </div>
                   </div>
                 </div>
 

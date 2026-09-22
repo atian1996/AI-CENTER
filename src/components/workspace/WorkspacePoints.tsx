@@ -264,13 +264,10 @@ export const WorkspacePoints: React.FC = () => {
               </div>
 
               {/* 积分规则文案提示 */}
-              <div className="p-3 rounded-xl bg-white/10 backdrop-blur-xs border border-white/10 text-xs text-amber-100/95 space-y-1">
+              <div className="p-3 rounded-xl bg-white/10 backdrop-blur-xs border border-white/10 text-xs text-amber-100/95">
                 <div className="flex items-center gap-2 font-bold text-amber-300 text-xs">
                   <Sparkles className="w-3.5 h-3.5 shrink-0 text-amber-300" />
-                  <span>1积分=¥0.01 · 每笔订单最高抵扣30%</span>
-                </div>
-                <div className="text-[11px] text-amber-200/90 font-medium pl-5 leading-relaxed">
-                  提示：当前仅限Agent商店订阅使用，更多场景陆续开放中
+                  <span>1积分=¥0.01 用于消费抵扣</span>
                 </div>
               </div>
             </div>
@@ -865,13 +862,10 @@ export const WorkspacePoints: React.FC = () => {
             </div>
 
             <div className="text-xs space-y-4 text-slate-600 leading-relaxed font-medium">
-              <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 font-bold space-y-1">
+              <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 font-bold">
                 <div className="flex items-center gap-1.5 text-xs text-amber-900 font-black">
                   <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
                   <span>1 积分 = ¥0.01 元人民币，用于消费抵扣</span>
-                </div>
-                <div className="text-[11px] text-amber-800 font-medium leading-relaxed pl-5">
-                  提示：当前可用于 Agent商店 订阅抵扣，更多场景陆续开放中。每笔支持抵扣的订单最高可抵扣 30%。
                 </div>
               </div>
 
@@ -931,8 +925,7 @@ export const WorkspacePoints: React.FC = () => {
               <div className="space-y-1.5 pt-1 text-slate-600">
                 <div className="font-extrabold text-slate-900 text-xs">使用与抵扣机制说明</div>
                 <ul className="space-y-1.5 list-disc pl-4 text-[11px] text-slate-600">
-                  <li><strong>适用场景：</strong>当前仅限 <strong className="text-amber-800">Agent商店</strong> 订阅使用，更多场景陆续开放中。</li>
-                  <li><strong>抵扣比例：</strong>每笔订单最高抵扣 <strong>30%</strong>。</li>
+                  <li><strong>积分价值：</strong>1 积分等额折算 ¥0.01 元，可直接抵扣消费金额。</li>
                   <li><strong>积分有效期：</strong>平台赠送及赚取的积分长期有效，不设过期时间。</li>
                 </ul>
               </div>
