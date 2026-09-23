@@ -396,17 +396,26 @@ export interface DatasetCommentReply {
   id: string;
   userName: string;
   userAvatar: string;
+  userRole?: string;
   time: string;
+  timestamp?: number;
   content: string;
+  replyToUser?: string;
+  likes?: number;
+  isLiked?: boolean;
 }
 
 export interface DatasetCommentItem {
   id: string;
   userName: string;
   userAvatar: string;
+  userRole?: string;
   time: string;
+  timestamp?: number;
   content: string;
   likes?: number;
+  isLiked?: boolean;
+  images?: string[];
   replies?: DatasetCommentReply[];
 }
 
@@ -505,6 +514,20 @@ export interface SkillFileNode {
   children?: SkillFileNode[];
 }
 
+// Skill 插件二级回复
+export interface SkillCommentReply {
+  id: string;
+  userName: string;
+  userAvatar: string;
+  userRole?: string;
+  time: string;
+  timestamp?: number;
+  content: string;
+  replyToUser?: string;
+  likes: number;
+  isLiked?: boolean;
+}
+
 // Skill 插件评论
 export interface SkillCommentItem {
   id: string;
@@ -513,19 +536,12 @@ export interface SkillCommentItem {
   userRole?: string;
   rating?: number;
   time: string;
+  timestamp?: number;
   content: string;
   likes: number;
   isLiked?: boolean;
-  replies?: {
-    id: string;
-    userName: string;
-    userAvatar: string;
-    userRole?: string;
-    time: string;
-    content: string;
-    likes: number;
-    isLiked?: boolean;
-  }[];
+  images?: string[];
+  replies?: SkillCommentReply[];
 }
 
 // Skill 插件
