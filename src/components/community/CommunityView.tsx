@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Markdown from 'react-markdown';
 import { useApp } from '../../context/AppContext';
 import { FeedPost, CommunityBoard } from '../../types';
@@ -36,7 +36,13 @@ import {
   Edit3,
   Heart,
   Pin,
-  Layers
+  Layers,
+  ChevronDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Flame
 } from 'lucide-react';
 
 interface BoardConfig {
@@ -53,6 +59,7 @@ interface LocalReply {
   authorTag?: string;
   content: string;
   time: string;
+  timestamp?: number;
   replyToUser?: string;
   likesCount: number;
   isLiked?: boolean;
@@ -65,6 +72,7 @@ interface LocalComment {
   authorTag?: string;
   content: string;
   time: string;
+  timestamp?: number;
   likesCount: number;
   isLiked?: boolean;
   replies: LocalReply[];
@@ -96,6 +104,18 @@ export const CommunityView: React.FC = () => {
     replyId?: string;
   } | null>(null);
   const [replyInput, setReplyInput] = useState('');
+
+  // 评论区优化控制状态
+  // 1. 一级评论排序：默认按时间倒序（'latest'），可切换'hot'（按热度/点赞数）
+  const [commentSort, setCommentSort] = useState<'latest' | 'hot'>('latest');
+  // 2. 一级评论分页：首屏展示前20条，每次点击“加载更多评论”追加下一页20条
+  const [topCommentsPage, setTopCommentsPage] = useState<number>(1);
+  // 3. 二级回复折叠与展开状态：commentId -> boolean（默认折叠仅显示前3条）
+  const [expandedRepliesMap, setExpandedRepliesMap] = useState<Record<string, boolean>>({});
+  // 4. 二级回复展开后的分页：commentId -> number（展开后每页20条）
+  const [repliesPageMap, setRepliesPageMap] = useState<Record<string, number>>({});
+  // 5. 评论区锚点 Ref，用于分页切换时平滑回到评论区顶部
+  const commentsSectionRef = useRef<HTMLDivElement>(null);
 
   // Publishing State
   const [newPostBoard, setNewPostBoard] = useState<CommunityBoard>('干货分享');
@@ -168,79 +188,198 @@ export const CommunityView: React.FC = () => {
     if (commentsMap[postId]) {
       return commentsMap[postId];
     }
-    // Default fallback comments if none present
-    const postObj = posts.find(p => p.id === postId);
-    if (postObj?.commentsList && postObj.commentsList.length > 0) {
-      return postObj.commentsList.map(c => ({
-        id: c.id,
-        author: c.author,
-        avatar: c.avatar,
-        authorTag: c.authorTag || '社区贡献者',
-        content: c.content,
-        time: c.time,
-        likesCount: c.likesCount || Math.floor(Math.random() * 8 + 2),
-        isLiked: false,
-        replies: c.replies ? c.replies.map(r => ({
-          id: r.id,
-          author: r.author,
-          avatar: r.avatar,
-          authorTag: r.authorTag || '开发者',
-          content: r.content,
-          time: r.time,
-          replyToUser: r.replyToUser || c.author,
-          likesCount: r.likesCount !== undefined ? r.likesCount : Math.floor(Math.random() * 5 + 1),
-          isLiked: !!r.isLiked
-        })) : [
-          {
-            id: `r_${c.id}_1`,
-            author: 'AI智囊',
-            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-            authorTag: '官方架构师',
-            content: '非常赞同！在实际应用中配合量化剪枝与上下文缓存效果更佳。',
-            time: '30分钟前',
-            replyToUser: c.author,
-            likesCount: 3,
-            isLiked: false
-          }
-        ]
-      }));
-    }
-    return [
+
+    const now = Date.now();
+
+    // 默认提供丰富且真实的多级评论数据：
+    // - 一级评论包含 26 条（首屏展示前20条，可点击“加载更多评论”加载下一页）
+    // - 评论1 包含 8 条二级回复（默认展示前3条，可展开剩余5条）
+    // - 评论2 包含 22 条二级回复（超出20条，支持展开20条后再“加载更多回复”与“收起”）
+    // - 支持“按时间倒序”与“按热度（点赞数）”排序
+    const baseComments: LocalComment[] = [
       {
-        id: 'c_default_1',
-        author: '张Dev',
+        id: 'c_top_1',
+        author: '张Dev-算法架构',
         avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
         authorTag: '高级开发者',
-        content: '非常详实的分享！针对长文本推理时显存优化的实操性很强，已收藏。',
+        content: '干货满满！请问在上下文超过 32k 时，启用 `--kv-cache-dtype fp8` 会不会引起精度下降导致思维链推理中断？',
         time: '1小时前',
-        likesCount: 12,
+        timestamp: now - 3600 * 1000 * 1,
+        likesCount: 28,
         isLiked: false,
+        // 8条二级回复：按时间正序排列（最早在前）
         replies: [
           {
-            id: 'r_default_1',
+            id: 'r_1_1',
+            author: '王AI-深度架构师',
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+            authorTag: '楼主',
+            content: '我们对 GSM8K 与 HumanEval 进行了专门评测，FP8 产生的 PPL 困惑度漂移在 0.3% 以内，完全不影响逻辑链条输出。',
+            time: '50分钟前',
+            timestamp: now - 3000 * 1000,
+            replyToUser: '张Dev-算法架构',
+            likesCount: 12,
+            isLiked: false
+          },
+          {
+            id: 'r_1_2',
+            author: '陈Agent-极客',
+            avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+            authorTag: '极客开发者',
+            content: '非常受用！如果并发请求量大，建议再结合投机采样（Speculative Decoding）降低显存占用。',
+            time: '45分钟前',
+            timestamp: now - 2700 * 1000,
+            replyToUser: '王AI-深度架构师',
+            likesCount: 8,
+            isLiked: false
+          },
+          {
+            id: 'r_1_3',
+            author: '李向量-数据专家',
+            avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+            authorTag: '数据库专家',
+            content: '请教下大家，投机采样用什么草稿模型比较合适？1.5B 还是 0.5B？',
+            time: '40分钟前',
+            timestamp: now - 2400 * 1000,
+            replyToUser: '陈Agent-极客',
+            likesCount: 5,
+            isLiked: false
+          },
+          {
+            id: 'r_1_4',
+            author: '陈Agent-极客',
+            avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+            authorTag: '极客开发者',
+            content: '推荐用 Qwen2.5-Coder-1.5B 作为草稿模型，兼顾语法严谨与解码速度。',
+            time: '35分钟前',
+            timestamp: now - 2100 * 1000,
+            replyToUser: '李向量-数据专家',
+            likesCount: 6,
+            isLiked: false
+          },
+          {
+            id: 'r_1_5',
+            author: 'AI智囊',
+            avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+            authorTag: '官方架构师',
+            content: '投机采样的投机窗口长度建议设置多少？太大是不是会反向减速？',
+            time: '30分钟前',
+            timestamp: now - 1800 * 1000,
+            replyToUser: '陈Agent-极客',
+            likesCount: 4,
+            isLiked: false
+          },
+          {
+            id: 'r_1_6',
             author: '极客小千',
             avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
             authorTag: '全栈极客',
-            content: '同感！在算力工坊 A100 实例上跑了这个配置，首 Token 延迟明显改善。',
-            time: '40分钟前',
-            replyToUser: '张Dev',
-            likesCount: 5,
+            content: '实测设置为 3~5 效益最佳，太长由于接受率衰减反而增加验证延迟。',
+            time: '25分钟前',
+            timestamp: now - 1500 * 1000,
+            replyToUser: 'AI智囊',
+            likesCount: 7,
+            isLiked: false
+          },
+          {
+            id: 'r_1_7',
+            author: '周模型-工程师',
+            avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80',
+            authorTag: '模型工程师',
+            content: '感谢小千分享，明天在集群上实操压测一下！',
+            time: '15分钟前',
+            timestamp: now - 900 * 1000,
+            replyToUser: '极客小千',
+            likesCount: 3,
+            isLiked: false
+          },
+          {
+            id: 'r_1_8',
+            author: '张Dev-算法架构',
+            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+            authorTag: '高级开发者',
+            content: '压测结果如果出来，方便在这条回复下同步下对比数据吗？多谢！',
+            time: '10分钟前',
+            timestamp: now - 600 * 1000,
+            replyToUser: '周模型-工程师',
+            likesCount: 2,
             isLiked: false
           }
         ]
       },
       {
-        id: 'c_default_2',
+        id: 'c_top_2',
         author: '李向量-数据专家',
         avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
-        authorTag: '算法工程师',
-        content: '请问一下中间如果在 RAG 环节加入 Hybrid Rerank，耗时大约会增加多少毫秒？',
+        authorTag: '数据库专家',
+        content: '我们在生产环境压测了 vLLM 的 PagedAttention 算子调度，吞吐量比原生 HuggingFace 提升了 4.2 倍！',
         time: '2小时前',
-        likesCount: 7,
+        timestamp: now - 7200 * 1000,
+        likesCount: 45,
         isLiked: false,
-        replies: []
-      }
+        // 22条二级回复：按时间正序排列（最早在前）
+        replies: Array.from({ length: 22 }, (_, idx) => ({
+          id: `r_2_${idx + 1}`,
+          author: idx % 3 === 0 ? '王AI-深度架构师' : idx % 3 === 1 ? '技术极客' : '算力运维小哥',
+          avatar: `https://images.unsplash.com/photo-${1500000000000 + ((idx * 11111) % 50000000)}?w=100&auto=format&fit=crop&q=80`,
+          authorTag: idx % 2 === 0 ? '系统架构' : '测试工程师',
+          content: idx === 0 
+            ? '请问是在什么 GPU 卡型上测试的？4090 还是 A100？'
+            : idx === 1 
+            ? '在双卡 A100 SXM 80GB 上跑的，批大小设为了 64。'
+            : `测试轮次 #${idx + 1}：针对第 ${idx + 1} 批次 Prompt 长度混合调优，连续运行无内存泄漏。`,
+          time: `${Math.max(1, 60 - idx * 2)}分钟前`,
+          timestamp: now - (60 - idx * 2) * 60 * 1000,
+          replyToUser: idx === 0 ? '李向量-数据专家' : idx % 2 === 1 ? '王AI-深度架构师' : '技术极客',
+          likesCount: Math.floor((22 - idx) / 2) + 1,
+          isLiked: false
+        }))
+      },
+      ...Array.from({ length: 48 }, (_, i) => {
+        const commentId = `c_top_${i + 3}`;
+        const authors = [
+          '刘数据-LLM研究员', '赵云算力-工程师', '孙智能体-创业者', '钱前沿-技术总监', 
+          '吴大模型-实战派', '郑开源-布道师', '冯提示词-调优师', '陈算力-架构师',
+          '楚模型-算法专家', '魏微调-研究员', '蒋工程-技术专家', '沈推理-优化师'
+        ];
+        const topics = [
+          '文章中提到的 chunk 向量切分大小具体是多少？我们用的 512 tokens 召回率还行。',
+          '收藏了，这个配置在我们的 RTX 4090 单卡工作站上也能正常跑起来吗？',
+          '实测确实有效！感谢博主分享，给社区贡献了高价值实践总结！',
+          '对于长文本上下文，有没有做过 needle-in-a-haystack 大海捞针的召回测试？',
+          '请问关于 speculative decoding，在多卡张量并行（TP）下的兼容性如何？',
+          '关注了楼主，期待下一期关于多模态模型部署和量化的深入剖析！'
+        ];
+        const commentLikes = [35, 29, 21, 18, 16, 14, 11, 9, 8, 6, 5, 4, 3, 2, 1][i % 15];
+        return {
+          id: commentId,
+          author: authors[i % authors.length],
+          avatar: `https://images.unsplash.com/photo-${1530000000000 + ((i * 23456) % 50000000)}?w=100&auto=format&fit=crop&q=80`,
+          authorTag: i % 2 === 0 ? '极客认证' : '社区成员',
+          content: `${topics[i % topics.length]} [第 ${i + 3} 楼实践探讨]`,
+          time: `${i + 3}小时前`,
+          timestamp: now - (i + 3) * 3600 * 1000,
+          likesCount: commentLikes,
+          isLiked: false,
+          replies: i % 4 === 0 ? [
+            {
+              id: `r_extra_${i}_1`,
+              author: '王AI-深度架构师',
+              avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+              authorTag: '楼主',
+              content: '感谢反馈！单卡 4090 可以跑 8B 模型的 FP8 量化版本，显存占用约 10GB 左右。',
+              time: `${i + 2}小时前`,
+              timestamp: now - (i + 2) * 3600 * 1000,
+              replyToUser: authors[i % authors.length],
+              likesCount: 3,
+              isLiked: false
+            }
+          ] : []
+        };
+      })
     ];
+
+    return baseComments;
   };
 
   // Filter & Search Logic
@@ -350,6 +489,11 @@ export const CommunityView: React.FC = () => {
     recordPostView(postId);
     setSelectedPostId(postId);
     setViewMode('detail');
+    setTopCommentsPage(1);
+    setCommentSort('latest');
+    setExpandedRepliesMap({});
+    setRepliesPageMap({});
+    setReplyTarget(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -367,6 +511,7 @@ export const CommunityView: React.FC = () => {
       authorTag: user.identityTag || '社区成员',
       content: mainCommentInput.trim(),
       time: '刚刚',
+      timestamp: Date.now(),
       likesCount: 0,
       isLiked: false,
       replies: []
@@ -380,6 +525,7 @@ export const CommunityView: React.FC = () => {
       };
     });
 
+    setTopCommentsPage(1);
     setMainCommentInput('');
     showToast('评论发表成功！');
   };
@@ -399,6 +545,7 @@ export const CommunityView: React.FC = () => {
       authorTag: user.identityTag || '社区成员',
       content: replyInput.trim(),
       time: '刚刚',
+      timestamp: Date.now(),
       replyToUser: targetAuthor,
       likesCount: 0,
       isLiked: false
@@ -417,6 +564,9 @@ export const CommunityView: React.FC = () => {
       });
       return { ...prev, [postId]: updatedList };
     });
+
+    // 自动展开该评论的二级回复，使用户能立即看到新回复
+    setExpandedRepliesMap(prev => ({ ...prev, [commentId]: true }));
 
     setReplyInput('');
     setReplyTarget(null);
@@ -517,7 +667,32 @@ export const CommunityView: React.FC = () => {
     const isCollected = !!collectedPosts[currentPost.id];
     const likesInfo = getPostLikes(currentPost);
     const postComments = getPostComments(currentPost.id);
-    const totalCommentsCount = postComments.reduce((acc, c) => acc + 1 + c.replies.length, 0);
+    const totalCommentsCount = postComments.reduce((acc, c) => acc + 1 + (c.replies ? c.replies.length : 0), 0);
+    const totalRepliesCount = totalCommentsCount - postComments.length;
+
+    // 一级评论排序：'latest' 默认时间倒序，'hot' 按点赞数排序
+    const sortedTopComments = [...postComments].sort((a, b) => {
+      if (commentSort === 'hot') {
+        return (b.likesCount || 0) - (a.likesCount || 0);
+      }
+      return (b.timestamp || 0) - (a.timestamp || 0);
+    });
+
+    // 一级评论分页：每页固定展示20条一级评论
+    const PAGE_SIZE = 20;
+    const totalPages = Math.ceil(sortedTopComments.length / PAGE_SIZE) || 1;
+    const currentPage = Math.min(Math.max(1, topCommentsPage), totalPages);
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const endIndex = Math.min(startIndex + PAGE_SIZE, sortedTopComments.length);
+    const visibleTopComments = sortedTopComments.slice(startIndex, endIndex);
+
+    const handlePageChange = (newPage: number) => {
+      const targetPage = Math.min(Math.max(1, newPage), totalPages);
+      setTopCommentsPage(targetPage);
+      if (commentsSectionRef.current) {
+        commentsSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    };
 
     return (
       <div className="w-full space-y-6 animate-fade-in pb-16 max-w-4xl mx-auto select-none">
@@ -666,14 +841,51 @@ export const CommunityView: React.FC = () => {
         </div>
 
         {/* Comments & Replies Section */}
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-6">
+        <div ref={commentsSectionRef} className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-6">
           
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-indigo-600" />
-              评论与回复 ({totalCommentsCount})
-            </h3>
-            <span className="text-xs text-slate-400 font-medium">遵循社区友好交流公约</span>
+          {/* Header with Total Count and Sort Toggle */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                <MessageSquare className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                  <span>全部评论（{totalCommentsCount}条）</span>
+                </h3>
+                <span className="text-[11px] text-slate-400 font-medium">
+                  共 {postComments.length} 条一级评论（每页 20 条，当前第 {currentPage}/{totalPages} 页） · {totalRepliesCount} 条二级回复
+                </span>
+              </div>
+            </div>
+
+            {/* 排序切换：默认按时间倒序（最新在前），可切换“按热度”（点赞数排序） */}
+            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/80 text-xs font-bold shrink-0 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setCommentSort('latest')}
+                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
+                  commentSort === 'latest'
+                    ? 'bg-white text-indigo-600 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>按时间倒序</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCommentSort('hot')}
+                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
+                  commentSort === 'hot'
+                    ? 'bg-white text-rose-600 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                <Flame className="w-3.5 h-3.5" />
+                <span>按热度排序</span>
+              </button>
+            </div>
           </div>
 
           {/* Top Level Comment Input Box */}
@@ -691,8 +903,10 @@ export const CommunityView: React.FC = () => {
                 placeholder="发表你的见解，与全站开发者探讨交流..."
                 className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-500 transition leading-relaxed"
               />
-              <div className="flex items-center justify-end">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-slate-400 font-medium">遵循社区友好交流公约</span>
                 <button
+                  type="button"
                   onClick={() => handleAddMainComment(currentPost.id)}
                   className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition cursor-pointer active:scale-95"
                 >
@@ -703,211 +917,379 @@ export const CommunityView: React.FC = () => {
             </div>
           </div>
 
-          {/* Comments List */}
+          {/* Comments List (一级评论采用分页展示，每页20条) */}
           <div className="space-y-4 pt-2">
-            {postComments.map((comment) => (
-              <div key={comment.id} className="p-4 rounded-2xl bg-slate-50/60 border border-slate-200/70 space-y-3">
-                
-                {/* Main Comment Header */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <img 
-                      src={comment.avatar} 
-                      alt={comment.author} 
-                      className="w-8 h-8 rounded-full object-cover" 
-                    />
-                    <div>
-                      <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                        <span>{comment.author}</span>
-                        {comment.authorTag && (
-                          <span className="px-1.5 py-0.2 rounded bg-slate-200 text-slate-600 text-[9px] font-medium">
-                            {comment.authorTag}
-                          </span>
-                        )}
+            {visibleTopComments.map((comment) => {
+              // 二级回复按时间正序（最早在前，符合对话逻辑）展示
+              const sortedReplies = [...(comment.replies || [])].sort((a, b) => {
+                const tA = a.timestamp || 0;
+                const tB = b.timestamp || 0;
+                return tA - tB;
+              });
+
+              // 二级回复默认折叠，显示前3条；展开后每页20条
+              const isExpanded = !!expandedRepliesMap[comment.id];
+              const replyPage = repliesPageMap[comment.id] || 1;
+              const maxVisibleReplies = isExpanded ? replyPage * 20 : 3;
+              const visibleReplies = isExpanded ? sortedReplies.slice(0, maxVisibleReplies) : sortedReplies.slice(0, 3);
+              const hasMoreReplies = isExpanded && sortedReplies.length > maxVisibleReplies;
+              const canExpandMore = !isExpanded && sortedReplies.length > 3;
+
+              return (
+                <div key={comment.id} className="p-4 sm:p-5 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-3.5">
+                  
+                  {/* 一级评论头部与主体 */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <img 
+                        src={comment.avatar} 
+                        alt={comment.author} 
+                        className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-slate-200" 
+                      />
+                      <div>
+                        <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                          <span>{comment.author}</span>
+                          {comment.authorTag && (
+                            <span className="px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-600 text-[9px] font-bold border border-indigo-100">
+                              {comment.authorTag}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-medium">{comment.time}</span>
                       </div>
-                      <span className="text-[10px] text-slate-400">{comment.time}</span>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-3">
-                    {/* Comment Like Button */}
-                    <button
-                      onClick={() => handleLikeComment(currentPost.id, comment.id)}
-                      className={`flex items-center gap-1 text-xs font-medium cursor-pointer transition ${
-                        comment.isLiked ? 'text-rose-600 font-bold' : 'text-slate-400 hover:text-slate-700'
-                      }`}
-                    >
-                      <ThumbsUp className={`w-3.5 h-3.5 ${comment.isLiked ? 'fill-rose-500' : ''}`} />
-                      <span>{comment.likesCount}</span>
-                    </button>
+                    <div className="flex items-center gap-3">
+                      {/* 一级评论点赞按钮 */}
+                      <button
+                        type="button"
+                        onClick={() => handleLikeComment(currentPost.id, comment.id)}
+                        className={`flex items-center gap-1 text-xs font-medium cursor-pointer transition px-2 py-1 rounded-lg hover:bg-white ${
+                          comment.isLiked ? 'text-rose-600 font-bold' : 'text-slate-400 hover:text-slate-700'
+                        }`}
+                        title="点赞"
+                      >
+                        <ThumbsUp className={`w-3.5 h-3.5 ${comment.isLiked ? 'fill-rose-500' : ''}`} />
+                        <span>{comment.likesCount}</span>
+                      </button>
 
-                    {/* Reply Trigger Button */}
-                    <button
-                      onClick={() => {
-                        if (replyTarget?.commentId === comment.id && !replyTarget?.replyId) {
-                          setReplyTarget(null);
-                        } else {
-                          setReplyTarget({
-                            commentId: comment.id,
-                            targetAuthor: comment.author
-                          });
-                          setReplyInput('');
-                        }
-                      }}
-                      className="flex items-center gap-1 text-xs text-indigo-600 font-bold hover:text-indigo-700 cursor-pointer"
-                    >
-                      <CornerDownRight className="w-3.5 h-3.5" />
-                      <span>回复</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Main Comment Content */}
-                <p className="text-xs text-slate-700 leading-relaxed font-normal pl-10">
-                  {comment.content}
-                </p>
-
-                {/* Inline Reply Input Box (for replying to root comment) */}
-                {replyTarget?.commentId === comment.id && !replyTarget?.replyId && (
-                  <div className="ml-10 pt-2 animate-fade-in space-y-2">
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        autoFocus
-                        value={replyInput}
-                        onChange={(e) => setReplyInput(e.target.value)}
-                        placeholder={`回复 @${comment.author}...`}
-                        className="flex-1 px-3 py-2 bg-white border border-indigo-300 rounded-xl text-xs text-slate-900 outline-none focus:border-indigo-600 shadow-2xs"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAddReply(currentPost.id, comment.id, comment.author);
+                      {/* 一级评论回复按钮 */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (replyTarget?.commentId === comment.id && !replyTarget?.replyId) {
+                            setReplyTarget(null);
+                          } else {
+                            setReplyTarget({
+                              commentId: comment.id,
+                              targetAuthor: comment.author
+                            });
+                            setReplyInput('');
                           }
                         }}
-                      />
-                      <button
-                        onClick={() => handleAddReply(currentPost.id, comment.id, comment.author)}
-                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs shrink-0 cursor-pointer active:scale-95 transition"
+                        className="flex items-center gap-1 text-xs text-indigo-600 font-bold hover:text-indigo-700 cursor-pointer px-2 py-1 rounded-lg hover:bg-indigo-50 transition"
                       >
-                        提交回复
-                      </button>
-                      <button
-                        onClick={() => setReplyTarget(null)}
-                        className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl shrink-0 cursor-pointer transition"
-                      >
-                        取消
+                        <CornerDownRight className="w-3.5 h-3.5" />
+                        <span>回复</span>
+                        {comment.replies && comment.replies.length > 0 && (
+                          <span className="text-[10px] text-slate-400 font-normal">({comment.replies.length})</span>
+                        )}
                       </button>
                     </div>
                   </div>
-                )}
 
-                {/* Sub Replies List - 整个评论区只分两级，评论的回复和评论的回复的回复都按回复时间在二级区域往后排 */}
-                {comment.replies && comment.replies.length > 0 && (
-                  <div className="ml-10 space-y-2.5 pt-2 border-l-2 border-indigo-200 pl-3">
-                    {comment.replies.map((rep) => (
-                      <div key={rep.id} className="p-3 rounded-xl bg-white border border-slate-200/80 space-y-1.5 text-xs shadow-2xs">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <img src={rep.avatar} alt={rep.author} className="w-5 h-5 rounded-full object-cover shrink-0" />
-                            <span className="font-bold text-slate-900">{rep.author}</span>
-                            {rep.authorTag && (
-                              <span className="px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 text-[9px] font-medium">
-                                {rep.authorTag}
-                              </span>
-                            )}
-                            {rep.replyToUser && (
-                              <span className="text-[10px] text-slate-400">
-                                回复 <strong className="text-indigo-600 font-bold">@{rep.replyToUser}</strong>
-                              </span>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center gap-2.5 shrink-0">
-                            <span className="text-[10px] text-slate-400">{rep.time}</span>
+                  {/* 一级评论正文 */}
+                  <p className="text-xs text-slate-800 leading-relaxed font-normal pl-10">
+                    {comment.content}
+                  </p>
+
+                  {/* 一级评论的行内回复输入框 */}
+                  {replyTarget?.commentId === comment.id && !replyTarget?.replyId && (
+                    <div className="ml-10 pt-1 animate-fade-in space-y-2">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          autoFocus
+                          value={replyInput}
+                          onChange={(e) => setReplyInput(e.target.value)}
+                          placeholder={`回复 @${comment.author}...`}
+                          className="flex-1 px-3 py-2 bg-white border border-indigo-300 rounded-xl text-xs text-slate-900 outline-none focus:border-indigo-600 shadow-2xs"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddReply(currentPost.id, comment.id, comment.author);
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleAddReply(currentPost.id, comment.id, comment.author)}
+                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs shrink-0 cursor-pointer active:scale-95 transition"
+                        >
+                          提交回复
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setReplyTarget(null)}
+                          className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl shrink-0 cursor-pointer transition"
+                        >
+                          取消
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 二级回复区域：回复以及回复的回复都统一归到二级平铺展示，按时间正序排列 */}
+                  {comment.replies && comment.replies.length > 0 && (
+                    <div className="ml-6 sm:ml-10 space-y-2 pt-2 border-l-2 border-indigo-200/80 pl-3">
+                      {visibleReplies.map((rep) => (
+                        <div key={rep.id} className="p-2.5 sm:p-3 rounded-xl bg-white border border-slate-200/80 space-y-1.5 text-xs shadow-2xs">
+                          {/* 头部信息 */}
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-indigo-400 font-mono font-bold select-none text-xs">└─</span>
+                              <img src={rep.avatar} alt={rep.author} className="w-5 h-5 rounded-full object-cover shrink-0" />
+                              <span className="font-bold text-slate-900">{rep.author}</span>
+                              {rep.authorTag && (
+                                <span className="px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 text-[9px] font-medium">
+                                  {rep.authorTag}
+                                </span>
+                              )}
+                              {rep.replyToUser && (
+                                <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                                  <span>回复</span>
+                                  <strong className="text-indigo-600 font-bold bg-indigo-50 px-1 py-0.2 rounded">
+                                    @{rep.replyToUser}
+                                  </strong>
+                                </span>
+                              )}
+                            </div>
                             
-                            {/* Reply Like Button (评论的回复像评论一样点赞) */}
-                            <button
-                              type="button"
-                              onClick={() => handleLikeReply(currentPost.id, comment.id, rep.id)}
-                              className={`flex items-center gap-1 text-[11px] font-medium cursor-pointer transition ${
-                                rep.isLiked ? 'text-rose-600 font-bold' : 'text-slate-400 hover:text-slate-700'
-                              }`}
-                              title="赞同该回复"
-                            >
-                              <ThumbsUp className={`w-3 h-3 ${rep.isLiked ? 'fill-rose-500' : ''}`} />
-                              <span>{rep.likesCount || 0}</span>
-                            </button>
+                            <div className="flex items-center gap-2.5 shrink-0">
+                              <span className="text-[10px] text-slate-400">{rep.time}</span>
+                              
+                              {/* 二级回复点赞 */}
+                              <button
+                                type="button"
+                                onClick={() => handleLikeReply(currentPost.id, comment.id, rep.id)}
+                                className={`flex items-center gap-1 text-[11px] font-medium cursor-pointer transition ${
+                                  rep.isLiked ? 'text-rose-600 font-bold' : 'text-slate-400 hover:text-slate-700'
+                                }`}
+                                title="赞同该回复"
+                              >
+                                <ThumbsUp className={`w-3 h-3 ${rep.isLiked ? 'fill-rose-500' : ''}`} />
+                                <span>{rep.likesCount || 0}</span>
+                              </button>
 
-                            {/* Reply to Reply Button (评论的回复像评论一样回复) */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (replyTarget?.commentId === comment.id && replyTarget?.replyId === rep.id) {
-                                  setReplyTarget(null);
-                                } else {
-                                  setReplyTarget({
-                                    commentId: comment.id,
-                                    targetAuthor: rep.author,
-                                    replyId: rep.id
-                                  });
-                                  setReplyInput('');
-                                }
-                              }}
-                              className="flex items-center gap-1 text-[11px] text-indigo-600 font-bold hover:text-indigo-700 cursor-pointer"
-                              title="回复该回复"
-                            >
-                              <CornerDownRight className="w-3 h-3" />
-                              <span>回复</span>
-                            </button>
-                          </div>
-                        </div>
-
-                        <p className="text-slate-700 leading-relaxed font-normal pl-7">
-                          {rep.content}
-                        </p>
-
-                        {/* Inline Reply Input directly below this reply */}
-                        {replyTarget?.commentId === comment.id && replyTarget?.replyId === rep.id && (
-                          <div className="ml-7 pt-2 animate-fade-in space-y-2">
-                            <div className="flex gap-2">
-                              <input
-                                type="text"
-                                autoFocus
-                                value={replyInput}
-                                onChange={(e) => setReplyInput(e.target.value)}
-                                placeholder={`回复 @${rep.author}...`}
-                                className="flex-1 px-3 py-1.5 bg-slate-50 border border-indigo-300 rounded-xl text-xs text-slate-900 outline-none focus:border-indigo-600 focus:bg-white transition"
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    handleAddReply(currentPost.id, comment.id, rep.author);
+                              {/* 二级回复回复按钮 */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (replyTarget?.commentId === comment.id && replyTarget?.replyId === rep.id) {
+                                    setReplyTarget(null);
+                                  } else {
+                                    setReplyTarget({
+                                      commentId: comment.id,
+                                      targetAuthor: rep.author,
+                                      replyId: rep.id
+                                    });
+                                    setReplyInput('');
                                   }
                                 }}
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleAddReply(currentPost.id, comment.id, rep.author)}
-                                className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs shrink-0 cursor-pointer active:scale-95 transition"
+                                className="flex items-center gap-1 text-[11px] text-indigo-600 font-bold hover:text-indigo-700 cursor-pointer"
+                                title="回复该回复"
                               >
-                                提交回复
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setReplyTarget(null)}
-                                className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl shrink-0 cursor-pointer transition"
-                              >
-                                取消
+                                <CornerDownRight className="w-3 h-3" />
+                                <span>回复</span>
                               </button>
                             </div>
                           </div>
+
+                          {/* 二级回复正文 */}
+                          <p className="text-slate-700 leading-relaxed font-normal pl-6 sm:pl-7">
+                            {rep.content}
+                          </p>
+
+                          {/* 行内回复输入框（回复该二级回复） */}
+                          {replyTarget?.commentId === comment.id && replyTarget?.replyId === rep.id && (
+                            <div className="ml-6 sm:ml-7 pt-2 animate-fade-in space-y-2">
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  autoFocus
+                                  value={replyInput}
+                                  onChange={(e) => setReplyInput(e.target.value)}
+                                  placeholder={`回复 @${rep.author}...`}
+                                  className="flex-1 px-3 py-1.5 bg-slate-50 border border-indigo-300 rounded-xl text-xs text-slate-900 outline-none focus:border-indigo-600 focus:bg-white transition"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleAddReply(currentPost.id, comment.id, rep.author);
+                                    }
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleAddReply(currentPost.id, comment.id, rep.author)}
+                                  className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs shrink-0 cursor-pointer active:scale-95 transition"
+                                >
+                                  提交回复
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setReplyTarget(null)}
+                                  className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl shrink-0 cursor-pointer transition"
+                                >
+                                  取消
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* 二级回复展开/收起/加载更多操作栏 */}
+                      <div className="pt-1.5 flex items-center gap-2 flex-wrap">
+                        {canExpandMore && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setExpandedRepliesMap(prev => ({ ...prev, [comment.id]: true }));
+                              setRepliesPageMap(prev => ({ ...prev, [comment.id]: 1 }));
+                            }}
+                            className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1.5 border border-indigo-200 transition cursor-pointer shadow-2xs group"
+                          >
+                            <span className="font-mono text-indigo-400">└─</span>
+                            <span>展开更多回复（{sortedReplies.length - 3}条）</span>
+                            <ChevronDown className="w-3.5 h-3.5 group-hover:translate-y-0.5 transition-transform" />
+                          </button>
+                        )}
+
+                        {isExpanded && hasMoreReplies && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRepliesPageMap(prev => ({
+                                ...prev,
+                                [comment.id]: (prev[comment.id] || 1) + 1
+                              }));
+                            }}
+                            className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1.5 border border-indigo-200 transition cursor-pointer shadow-2xs"
+                          >
+                            <ChevronDown className="w-3.5 h-3.5" />
+                            <span>加载更多回复（剩余 {sortedReplies.length - maxVisibleReplies} 条）</span>
+                          </button>
+                        )}
+
+                        {isExpanded && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setExpandedRepliesMap(prev => ({ ...prev, [comment.id]: false }));
+                              setRepliesPageMap(prev => ({ ...prev, [comment.id]: 1 }));
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs flex items-center gap-1 transition cursor-pointer"
+                          >
+                            <ChevronUp className="w-3.5 h-3.5" />
+                            <span>收起</span>
+                          </button>
                         )}
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </div>
+                  )}
 
+                </div>
+              );
+            })}
+          </div>
+
+          {/* 一级评论分页控制栏（每页固定展示20条一级评论） */}
+          <div className="pt-6 border-t border-slate-100 space-y-4">
+            {/* 快捷下一页引导（若还有后续页面） */}
+            {currentPage < totalPages && (
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  className="px-6 py-2.5 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-xs shadow-xs flex items-center gap-2 transition cursor-pointer active:scale-95"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                  <span>翻到下一页（第 {currentPage + 1} 页，剩余 {sortedTopComments.length - endIndex} 条）</span>
+                </button>
               </div>
-            ))}
+            )}
+
+            {/* 分页条：统计摘要与页码控制器 */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+              {/* 分页状态与数据摘要 */}
+              <div className="text-xs text-slate-500 font-medium flex items-center gap-2 flex-wrap">
+                <span>显示第 <strong className="text-slate-800 font-bold">{sortedTopComments.length === 0 ? 0 : startIndex + 1} - {endIndex}</strong> 条</span>
+                <span>·</span>
+                <span>共 <strong className="text-indigo-600 font-bold">{sortedTopComments.length}</strong> 条一级评论</span>
+                <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] font-semibold border border-slate-200">
+                  每页 20 条
+                </span>
+                <span className="text-slate-400 text-xs">
+                  (第 {currentPage} / {totalPages} 页)
+                </span>
+              </div>
+
+              {/* 分页翻页器按钮组 */}
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {/* 上一页 */}
+                  <button
+                    type="button"
+                    disabled={currentPage <= 1}
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 transition ${
+                      currentPage <= 1
+                        ? 'opacity-40 cursor-not-allowed bg-slate-50 text-slate-400 border-slate-200'
+                        : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-2xs hover:border-indigo-300 cursor-pointer active:scale-95'
+                    }`}
+                    title="上一页"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>上一页</span>
+                  </button>
+
+                  {/* 页码按钮 */}
+                  {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((pageNum) => {
+                    const isActive = pageNum === currentPage;
+                    return (
+                      <button
+                        key={pageNum}
+                        type="button"
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`min-w-8 h-8 px-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center cursor-pointer ${
+                          isActive
+                            ? 'bg-indigo-600 text-white shadow-xs ring-2 ring-indigo-200 active:scale-95'
+                            : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 active:scale-95'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+
+                  {/* 下一页 */}
+                  <button
+                    type="button"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 transition ${
+                      currentPage >= totalPages
+                        ? 'opacity-40 cursor-not-allowed bg-slate-50 text-slate-400 border-slate-200'
+                        : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-2xs hover:border-indigo-300 cursor-pointer active:scale-95'
+                    }`}
+                    title="下一页"
+                  >
+                    <span>下一页</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
         </div>
