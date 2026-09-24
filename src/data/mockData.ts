@@ -40,7 +40,7 @@ export const initialUserProfile: UserProfile = {
   balance: 25800.00,
   frozenBalance: 3000.00,
   points: 15000,
-  frozenPoints: 0,
+  frozenPoints: 650,
   todayEarnedPoints: 120,
   continuousCheckInDays: 3,
   githubUrl: 'https://github.com/qianji-ai',

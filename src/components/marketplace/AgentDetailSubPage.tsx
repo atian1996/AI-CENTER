@@ -22,6 +22,7 @@ import {
   Share2,
   ChevronRight
 } from 'lucide-react';
+import { validateTextOnlyComment } from '../../utils/commentValidator';
 
 interface AgentDetailSubPageProps {
   agent: AgentItem;
@@ -70,11 +71,13 @@ export const AgentDetailSubPage: React.FC<AgentDetailSubPageProps> = ({
     window.open(trialUrl, '_blank');
   };
 
-  // Submit comment handler
+  // Submit comment handler (纯文字规范：仅限文字，禁止表情和图片)
   const handleSubmitComment = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCommentText.trim()) {
-      showToast('请输入评价内容');
+    const textToSubmit = newCommentText.trim();
+    const validation = validateTextOnlyComment(textToSubmit);
+    if (!validation.valid) {
+      showToast(validation.message?.replace('评论', '评价') || '请输入评价内容');
       return;
     }
 
@@ -85,7 +88,7 @@ export const AgentDetailSubPage: React.FC<AgentDetailSubPageProps> = ({
         userName: user?.name || '平台体验官',
         userAvatar: user?.avatar || '',
         rating: newCommentRating,
-        content: newCommentText.trim(),
+        content: textToSubmit,
         date: new Date().toISOString().slice(0, 10)
       };
 
@@ -93,7 +96,7 @@ export const AgentDetailSubPage: React.FC<AgentDetailSubPageProps> = ({
       setNewCommentText('');
       setNewCommentRating(5);
       setSubmittingComment(false);
-      showToast('🎉 评价发布成功！感谢您的真实反馈');
+      showToast('评价发布成功！感谢您的真实反馈');
     }, 300);
   };
 
@@ -371,13 +374,13 @@ export const AgentDetailSubPage: React.FC<AgentDetailSubPageProps> = ({
                     <textarea
                       value={newCommentText}
                       onChange={(e) => setNewCommentText(e.target.value)}
-                      placeholder="分享您对该 Agent 的使用体验、回复质量或建议..."
+                      placeholder="分享您对该 Agent 的使用体验、回复质量或建议（仅限纯文字，不可发表情与图片）..."
                       rows={3}
                       className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 resize-none transition"
                     />
 
                     <div className="flex items-center justify-between pt-1">
-                      <span className="text-[11px] text-slate-400">已登录为：<strong className="text-slate-700">{user?.name || '体验用户'}</strong></span>
+                      <span className="text-[11px] text-slate-400">仅限纯文字评价 · 已登录为：<strong className="text-slate-700">{user?.name || '体验用户'}</strong></span>
                       <button
                         type="submit"
                         disabled={submittingComment}

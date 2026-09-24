@@ -31,10 +31,9 @@ import {
   ChevronDown,
   ChevronUp,
   ChevronLeft,
-  Smile,
-  Image as ImageIcon,
   X
 } from 'lucide-react';
+import { validateTextOnlyComment } from '../../utils/commentValidator';
 
 interface DatasetDetailProps {
   dataset: DatasetItem;
@@ -73,8 +72,6 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack, f
 
   // Selected File Object
   const currentFile = filesList.find(f => f.id === selectedFileId) || filesList[0];
-
-  const COMMON_EMOJIS = ['👍', '🔥', '🎉', '❤️', '💡', '🚀', '👏', '😊', '💯', '✨'];
 
   // Comments Tab State
   const [commentsList, setCommentsList] = useState<DatasetCommentItem[]>(dataset.comments && dataset.comments.length > 0 ? dataset.comments : [
@@ -165,8 +162,6 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack, f
 
   const [commentSort, setCommentSort] = useState<'hot' | 'latest'>('hot');
   const [newCommentText, setNewCommentText] = useState('');
-  const [commentImages, setCommentImages] = useState<string[]>([]);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [replyTarget, setReplyTarget] = useState<{ commentId: string; targetAuthor: string; replyId?: string } | null>(null);
   const [replyInput, setReplyInput] = useState('');
   const [expandedRepliesMap, setExpandedRepliesMap] = useState<Record<string, boolean>>({});
@@ -187,12 +182,15 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack, f
     }
   };
 
-  // 添加一级评论：添加到最上方，并自动清空输入与图片
+  // 添加一级评论（严格纯文字规范：仅限文字，禁止表情和图片）
   const handleAddComment = () => {
-    if (!newCommentText.trim()) {
-      showToast('请输入讨论内容');
+    const textToSubmit = newCommentText.trim();
+    const validation = validateTextOnlyComment(textToSubmit);
+    if (!validation.valid) {
+      showToast(validation.message || '请输入讨论内容');
       return;
     }
+
     const newComment: DatasetCommentItem = {
       id: `c_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       userName: user.name || '当前用户',
@@ -200,23 +198,22 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack, f
       userRole: user.identityTag || '开发者',
       time: '刚刚',
       timestamp: Date.now(),
-      content: newCommentText.trim(),
+      content: textToSubmit,
       likes: 0,
       isLiked: false,
-      images: commentImages.length > 0 ? [...commentImages] : undefined,
       replies: []
     };
     setCommentsList(prev => [newComment, ...prev]);
     setNewCommentText('');
-    setCommentImages([]);
-    setShowEmojiPicker(false);
     showToast('讨论发布成功！已展示在顶部');
   };
 
-  // 添加二级回复：整个评论区只分两级，回复二级回复也追加在该一级评论名下
+  // 添加二级回复（严格纯文字规范：仅限文字，禁止表情）
   const handleAddReply = (commentId: string, targetAuthor: string) => {
-    if (!replyInput.trim()) {
-      showToast('请输入回复内容');
+    const textToSubmit = replyInput.trim();
+    const validation = validateTextOnlyComment(textToSubmit);
+    if (!validation.valid) {
+      showToast(validation.message?.replace('评论', '回复') || '请输入回复内容');
       return;
     }
 
@@ -227,7 +224,7 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack, f
       userRole: user.identityTag || '开发者',
       time: '刚刚',
       timestamp: Date.now(),
-      content: replyInput.trim(),
+      content: textToSubmit,
       replyToUser: targetAuthor,
       likes: 0,
       isLiked: false
@@ -698,91 +695,16 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack, f
 
               <textarea
                 rows={3}
-                placeholder="分享您对该数据集的使用心得、清洗体验或向发布者反馈（最多500字，支持表情与图片）..."
+                placeholder="分享您对该数据集的使用心得、清洗体验或向发布者反馈（最多500字，仅限纯文字）..."
                 value={newCommentText}
                 onChange={(e) => setNewCommentText(e.target.value.slice(0, 500))}
                 className="w-full p-3.5 rounded-xl bg-slate-50/50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white leading-relaxed resize-none transition"
               />
 
-              {/* 图片预览列表（若添加了图片） */}
-              {commentImages.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {commentImages.map((imgUrl, imgIdx) => (
-                    <div key={imgIdx} className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs">
-                      <img src={imgUrl} alt="附件预览" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => setCommentImages(prev => prev.filter((_, i) => i !== imgIdx))}
-                        className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-rose-600 transition cursor-pointer"
-                        title="移除图片"
-                      >
-                        <X className="w-2.5 h-2.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* 表情快捷选择面板（若展开） */}
-              {showEmojiPicker && (
-                <div className="p-2.5 bg-white border border-indigo-100 rounded-xl shadow-xs flex flex-wrap gap-2 animate-fade-in">
-                  {COMMON_EMOJIS.map(emoji => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => setNewCommentText(prev => (prev + emoji).slice(0, 500))}
-                      className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-indigo-50 text-base transition cursor-pointer active:scale-90"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              )}
-
               <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                <div className="flex items-center gap-2">
-                  {/* 表情按钮 */}
-                  <button
-                    type="button"
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    className={`p-1.5 rounded-lg border transition cursor-pointer flex items-center gap-1 text-xs ${
-                      showEmojiPicker 
-                        ? 'bg-amber-50 text-amber-600 border-amber-200' 
-                        : 'bg-white hover:bg-slate-100 text-slate-500 border-slate-200'
-                    }`}
-                    title="插入表情"
-                  >
-                    <Smile className="w-4 h-4 text-amber-500" />
-                    <span className="text-[11px] font-medium hidden sm:inline">表情</span>
-                  </button>
-
-                  {/* 图片上传按钮 */}
-                  <label className="p-1.5 rounded-lg border bg-white hover:bg-slate-100 text-slate-500 border-slate-200 transition cursor-pointer flex items-center gap-1 text-xs">
-                    <ImageIcon className="w-4 h-4 text-indigo-500" />
-                    <span className="text-[11px] font-medium hidden sm:inline">图片</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (ev) => {
-                            if (ev.target?.result) {
-                              setCommentImages(prev => [...prev, ev.target!.result as string]);
-                              showToast('图片添加成功');
-                            }
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-                  </label>
-
-                  <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">
-                    遵循社区公约 · 自动安全审核
-                  </span>
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
+                  <MessageSquare className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                  <span>遵循社区公约 · 仅限纯文字讨论（禁止表情与图片） · 自动安全审核</span>
                 </div>
 
                 <button
@@ -965,7 +887,7 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack, f
                                 autoFocus
                                 value={replyInput}
                                 onChange={(e) => setReplyInput(e.target.value)}
-                                placeholder={`回复 @${comment.userName}...`}
+                                placeholder={`回复 @${comment.userName}（仅限纯文字）...`}
                                 className="flex-1 px-3 py-2 bg-white border border-indigo-300 rounded-xl text-xs text-slate-900 outline-none focus:border-indigo-600 shadow-2xs"
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
@@ -1085,7 +1007,7 @@ export const DatasetDetail: React.FC<DatasetDetailProps> = ({ dataset, onBack, f
                                         autoFocus
                                         value={replyInput}
                                         onChange={(e) => setReplyInput(e.target.value)}
-                                        placeholder={`回复 @${rep.userName}...`}
+                                        placeholder={`回复 @${rep.userName}（仅限纯文字）...`}
                                         className="flex-1 px-3 py-1.5 bg-slate-50 border border-indigo-300 rounded-xl text-xs text-slate-900 outline-none focus:border-indigo-600 focus:bg-white transition"
                                         onKeyDown={(e) => {
                                           if (e.key === 'Enter') {

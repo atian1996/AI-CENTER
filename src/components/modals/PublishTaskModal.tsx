@@ -407,7 +407,7 @@ export const PublishTaskModal: React.FC<PublishTaskModalProps> = ({ isOpen, onCl
                   <span>发布须知：</span>
                 </div>
                 <p className="text-[11px] text-amber-800 leading-relaxed font-medium">
-                  发布任务需预付全部现金奖励至平台托管账户、任务审核通过后资金冻结、任务完成后自动结算、任务因违规被驳回则全额退还。
+                  发布任务需预付全部现金与积分奖励至平台托管账户，任务提交后资金与积分自动冻结托管；任务完成后自动结算，任务因违规被驳回或取消则全额原路解冻退还。
                 </p>
               </div>
 

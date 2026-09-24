@@ -33,6 +33,7 @@ import {
   SkillDownloadRecord,
   CommunityBoardItem
 } from '../types';
+import { validateTextOnlyComment } from '../utils/commentValidator';
 import { 
   initialUserProfile, 
   initialOnboardingTasks, 
@@ -1124,7 +1125,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addMyCustomImageComment = (imageId: string, commentText: string) => {
-    if (!commentText.trim()) return;
+    const textToSubmit = commentText.trim();
+    const validation = validateTextOnlyComment(textToSubmit);
+    if (!validation.valid) {
+      showToast(validation.message || '请输入评论内容');
+      return;
+    }
     setMyCustomImages(prev => prev.map(img => {
       if (img.id === imageId) {
         const newComment = {
@@ -1133,7 +1139,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           userAvatar: user.avatar,
           createdAtAgo: '刚刚',
           likes: 0,
-          content: commentText.trim()
+          content: textToSubmit
         };
         return {
           ...img,

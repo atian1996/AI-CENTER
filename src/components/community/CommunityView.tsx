@@ -42,11 +42,10 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowUp,
-  Smile,
-  Image as ImageIcon,
   Trash2,
   AlertCircle
 } from 'lucide-react';
+import { validateTextOnlyComment } from '../../utils/commentValidator';
 
 // 敏感词审核库
 const SENSITIVE_WORDS = [
@@ -64,9 +63,6 @@ const checkSensitiveContent = (text: string): string | null => {
   }
   return null;
 };
-
-// 常用评论表情合集
-const COMMON_EMOJIS = ['👍', '👏', '🔥', '🚀', '❤️', '💡', '🎉', '🤖', '💻', '🌟', '🎯', '💯', '🤝', '☕', '⚡', '🥳', '✨', '🙌', '💪', '🤔'];
 
 interface BoardConfig {
   id: 'all' | CommunityBoard;
@@ -139,12 +135,7 @@ export const CommunityView: React.FC = () => {
   const [isFloatingInput, setIsFloatingInput] = useState<boolean>(false);
   const [isFullInputModalOpen, setIsFullInputModalOpen] = useState<boolean>(false);
 
-  // 3. 评论输入附件（图片列表）与表情选择器
-  const [commentImages, setCommentImages] = useState<string[]>([]);
-  const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
-  const [showModalEmojiPicker, setShowModalEmojiPicker] = useState<boolean>(false);
-
-  // 4. 二级回复智能预览与展开状态：commentId -> boolean（默认折叠仅显示点赞数>10的前3条智能预览）
+  // 3. 二级回复智能预览与展开状态：commentId -> boolean（默认折叠仅显示点赞数>10的前3条智能预览）
   const [expandedRepliesMap, setExpandedRepliesMap] = useState<Record<string, boolean>>({});
   // 5. 二级回复展开后的分页页码：commentId -> number（展开后分页展示，每页10条，无需“加载更多回复”）
   const [repliesPageMap, setRepliesPageMap] = useState<Record<string, number>>({});
@@ -650,9 +641,6 @@ export const CommunityView: React.FC = () => {
     setExpandedRepliesMap({});
     setRepliesPageMap({});
     setReplyTarget(null);
-    setCommentImages([]);
-    setShowEmojiPicker(false);
-    setShowModalEmojiPicker(false);
     setIsFullInputModalOpen(false);
     setIsFloatingInput(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -696,11 +684,14 @@ export const CommunityView: React.FC = () => {
     return () => observer.disconnect();
   }, [viewMode, selectedPostId, visibleTopCommentsCount]);
 
-  // Add Top Level Comment (支持文字、表情、图片，含敏感词自动审核过滤)
-  const handleAddMainComment = (postId: string, customContent?: string, customImages?: string[]) => {
+  // Add Top Level Comment (严格纯文字规范：仅限文字，禁止表情和图片)
+  const handleAddMainComment = (postId: string, customContent?: string) => {
     const textToSubmit = (customContent !== undefined ? customContent : mainCommentInput).trim();
-    if (!textToSubmit) {
-      showToast('请输入评论内容');
+    
+    // 纯文字规则校验（禁止包含表情符号）
+    const validation = validateTextOnlyComment(textToSubmit);
+    if (!validation.valid) {
+      showToast(validation.message || '请输入评论内容');
       return;
     }
 
@@ -710,8 +701,6 @@ export const CommunityView: React.FC = () => {
       showToast(`评论未通过自动安全审核：包含敏感词【${sensitiveWord}】，请修改后重新提交`);
       return;
     }
-
-    const imagesToSubmit = customImages !== undefined ? customImages : commentImages;
 
     const newComment: LocalComment = {
       id: `c_${Date.now()}`,
@@ -723,8 +712,7 @@ export const CommunityView: React.FC = () => {
       timestamp: Date.now(),
       likesCount: 0,
       isLiked: false,
-      replies: [],
-      images: imagesToSubmit.length > 0 ? imagesToSubmit : undefined
+      replies: []
     };
 
     setCommentsMap(prev => {
@@ -736,9 +724,6 @@ export const CommunityView: React.FC = () => {
     });
 
     setMainCommentInput('');
-    setCommentImages([]);
-    setShowEmojiPicker(false);
-    setShowModalEmojiPicker(false);
     setIsFullInputModalOpen(false);
     showToast('评论发表成功！已展示在评论区最上方');
 
@@ -748,16 +733,20 @@ export const CommunityView: React.FC = () => {
     }
   };
 
-  // Add Reply to a Comment (or to a Reply in the secondary area)
+  // Add Reply to a Comment (严格纯文字规范：仅限文字，禁止表情)
   // 整个评论区只分两级，评论的回复和评论的回复的回复都按回复时间在二级区域往后排，含敏感词自动审核
   const handleAddReply = (postId: string, commentId: string, targetAuthor: string) => {
-    if (!replyInput.trim()) {
-      showToast('请输入回复内容');
+    const replyText = replyInput.trim();
+    
+    // 纯文字规则校验（禁止包含表情符号）
+    const validation = validateTextOnlyComment(replyText);
+    if (!validation.valid) {
+      showToast(validation.message?.replace('评论', '回复') || '请输入回复内容');
       return;
     }
 
     // 敏感词自动审核
-    const sensitiveWord = checkSensitiveContent(replyInput.trim());
+    const sensitiveWord = checkSensitiveContent(replyText);
     if (sensitiveWord) {
       showToast(`回复未通过自动安全审核：包含敏感词【${sensitiveWord}】，请修改后重新提交`);
       return;
@@ -768,7 +757,7 @@ export const CommunityView: React.FC = () => {
       author: user.name || '我的账号',
       avatar: user.avatar,
       authorTag: user.identityTag || '社区成员',
-      content: replyInput.trim(),
+      content: replyText,
       time: '刚刚',
       timestamp: Date.now(),
       replyToUser: targetAuthor,
@@ -1109,88 +1098,14 @@ export const CommunityView: React.FC = () => {
                 rows={3}
                 value={mainCommentInput}
                 onChange={(e) => setMainCommentInput(e.target.value)}
-                placeholder="发表你的见解，与全站开发者探讨交流（支持文字、表情和图片）..."
-                className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-500 transition leading-relaxed"
+                placeholder="发表你的见解，与全站开发者探讨交流（仅限纯文字，不可发表情与图片）..."
+                className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-500 transition leading-relaxed resize-none"
               />
 
-              {/* 图片预览列表（若添加了图片） */}
-              {commentImages.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {commentImages.map((imgUrl, imgIdx) => (
-                    <div key={imgIdx} className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs">
-                      <img src={imgUrl} alt="附件预览" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => setCommentImages(prev => prev.filter((_, i) => i !== imgIdx))}
-                        className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-rose-600 transition cursor-pointer"
-                        title="移除图片"
-                      >
-                        <X className="w-2.5 h-2.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* 表情快捷选择面板（若展开） */}
-              {showEmojiPicker && (
-                <div className="p-2.5 bg-white border border-indigo-100 rounded-xl shadow-xs flex flex-wrap gap-2 animate-fade-in">
-                  {COMMON_EMOJIS.map(emoji => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => setMainCommentInput(prev => prev + emoji)}
-                      className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-indigo-50 text-base transition cursor-pointer active:scale-90"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              )}
-
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {/* 表情按钮 */}
-                  <button
-                    type="button"
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    className={`p-1.5 rounded-lg border transition cursor-pointer flex items-center gap-1 text-xs ${
-                      showEmojiPicker 
-                        ? 'bg-amber-50 text-amber-600 border-amber-200' 
-                        : 'bg-white hover:bg-slate-100 text-slate-500 border-slate-200'
-                    }`}
-                    title="插入表情"
-                  >
-                    <Smile className="w-4 h-4 text-amber-500" />
-                    <span className="text-[11px] font-medium hidden sm:inline">表情</span>
-                  </button>
-
-                  {/* 图片上传按钮 */}
-                  <label className="p-1.5 rounded-lg border bg-white hover:bg-slate-100 text-slate-500 border-slate-200 transition cursor-pointer flex items-center gap-1 text-xs">
-                    <ImageIcon className="w-4 h-4 text-indigo-500" />
-                    <span className="text-[11px] font-medium hidden sm:inline">图片</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (ev) => {
-                            if (ev.target?.result) {
-                              setCommentImages(prev => [...prev, ev.target!.result as string]);
-                              showToast('图片添加成功');
-                            }
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-                  </label>
-                  <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">
-                    遵循社区公约 · 自动安全审核
-                  </span>
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
+                  <AlertCircle className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                  <span>遵循社区公约 · 仅限纯文字评论 · 自动安全审核</span>
                 </div>
 
                 <button
@@ -1350,7 +1265,7 @@ export const CommunityView: React.FC = () => {
                             autoFocus
                             value={replyInput}
                             onChange={(e) => setReplyInput(e.target.value)}
-                            placeholder={`回复 @${comment.author}...`}
+                            placeholder={`回复 @${comment.author}（仅限纯文字）...`}
                             className="flex-1 px-3 py-2 bg-white border border-indigo-300 rounded-xl text-xs text-slate-900 outline-none focus:border-indigo-600 shadow-2xs"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
@@ -1468,7 +1383,7 @@ export const CommunityView: React.FC = () => {
                                     autoFocus
                                     value={replyInput}
                                     onChange={(e) => setReplyInput(e.target.value)}
-                                    placeholder={`回复 @${rep.author}...`}
+                                    placeholder={`回复 @${rep.author}（仅限纯文字）...`}
                                     className="flex-1 px-3 py-1.5 bg-slate-50 border border-indigo-300 rounded-xl text-xs text-slate-900 outline-none focus:border-indigo-600 focus:bg-white transition"
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') {
@@ -1651,15 +1566,9 @@ export const CommunityView: React.FC = () => {
                 className="w-8 h-8 rounded-full object-cover shrink-0 ring-2 ring-indigo-200" 
               />
               <div className="flex-1 text-xs text-slate-400 group-hover:text-slate-600 transition truncate">
-                {mainCommentInput.trim() ? mainCommentInput : "发表见解，支持文字、表情与图片..."}
+                {mainCommentInput.trim() ? mainCommentInput : "发表见解，探讨交流（仅限纯文字）..."}
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="p-1.5 rounded-lg text-amber-500 bg-amber-50 hover:bg-amber-100 transition">
-                  <Smile className="w-4 h-4" />
-                </span>
-                <span className="p-1.5 rounded-lg text-indigo-500 bg-indigo-50 hover:bg-indigo-100 transition">
-                  <ImageIcon className="w-4 h-4" />
-                </span>
                 <div className="px-3.5 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs flex items-center gap-1 shadow-xs group-hover:bg-indigo-700 transition">
                   <Send className="w-3.5 h-3.5" />
                   <span>发表</span>
@@ -1681,7 +1590,7 @@ export const CommunityView: React.FC = () => {
           </button>
         )}
 
-        {/* 完整评论输入弹窗（点击悬浮输入框时唤起，支持文字、表情、图片上传，含敏感词安全审核） */}
+        {/* 完整评论输入弹窗（仅支持纯文字输入，含敏感词安全审核） */}
         {isFullInputModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
             <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-xl overflow-hidden animate-scale-up">
@@ -1692,7 +1601,7 @@ export const CommunityView: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">发表评论</h3>
-                    <p className="text-[11px] text-slate-400">支持多行文字、表情与图片附件</p>
+                    <p className="text-[11px] text-slate-400">仅限纯文字内容，不可发表情与图片</p>
                   </div>
                 </div>
                 <button
@@ -1710,89 +1619,16 @@ export const CommunityView: React.FC = () => {
                   autoFocus
                   value={mainCommentInput}
                   onChange={(e) => setMainCommentInput(e.target.value)}
-                  placeholder="在此输入你的见解，探讨技术细节..."
-                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-indigo-500 transition leading-relaxed font-sans"
+                  placeholder="在此输入你的见解，探讨技术细节（仅限纯文字）..."
+                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-indigo-500 transition leading-relaxed font-sans resize-none"
                 />
-
-                {/* 弹窗中的图片预览 */}
-                {commentImages.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {commentImages.map((imgUrl, idx) => (
-                      <div key={idx} className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs">
-                        <img src={imgUrl} alt="附件预览" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => setCommentImages(prev => prev.filter((_, i) => i !== idx))}
-                          className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-rose-600 transition cursor-pointer"
-                          title="移除图片"
-                        >
-                          <X className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* 弹窗中的表情选择器 */}
-                {showModalEmojiPicker && (
-                  <div className="p-2.5 bg-slate-50 border border-indigo-100 rounded-xl shadow-xs flex flex-wrap gap-2 animate-fade-in">
-                    {COMMON_EMOJIS.map(emoji => (
-                      <button
-                        key={emoji}
-                        type="button"
-                        onClick={() => setMainCommentInput(prev => prev + emoji)}
-                        className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white text-base transition cursor-pointer active:scale-90"
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-                )}
 
                 {/* 弹窗工具栏 */}
                 <div className="flex items-center justify-between pt-1">
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowModalEmojiPicker(!showModalEmojiPicker)}
-                      className={`p-2 rounded-xl border transition cursor-pointer flex items-center gap-1 text-xs ${
-                        showModalEmojiPicker
-                          ? 'bg-amber-50 text-amber-600 border-amber-200'
-                          : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
-                      }`}
-                    >
-                      <Smile className="w-4 h-4 text-amber-500" />
-                      <span className="text-[11px] font-medium">表情</span>
-                    </button>
-
-                    <label className="p-2 rounded-xl border bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200 transition cursor-pointer flex items-center gap-1 text-xs">
-                      <ImageIcon className="w-4 h-4 text-indigo-500" />
-                      <span className="text-[11px] font-medium">图片</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (ev) => {
-                              if (ev.target?.result) {
-                                setCommentImages(prev => [...prev, ev.target!.result as string]);
-                                showToast('图片添加成功');
-                              }
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                      />
-                    </label>
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
+                    <AlertCircle className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                    <span>仅限纯文字 · 禁止表情与图片 · 自动敏感词拦截</span>
                   </div>
-
-                  <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
-                    <AlertCircle className="w-3.5 h-3.5 text-indigo-500" />
-                    <span>含敏感词自动拦截</span>
-                  </span>
                 </div>
               </div>
 

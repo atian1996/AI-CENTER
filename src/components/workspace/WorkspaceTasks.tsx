@@ -279,6 +279,11 @@ export const WorkspaceTasks: React.FC = () => {
                         <div className="text-[11px] text-slate-400 font-medium">
                           {(task.pointsReward || 0) > 0 ? `+${task.pointsReward} 积分` : '赏金预算'}
                         </div>
+                        {(isAuditing || task.status === '进行中') && (
+                          <div className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-indigo-50 text-[10px] font-bold text-indigo-700 border border-indigo-200/80">
+                            <span>资金与积分托管中</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 

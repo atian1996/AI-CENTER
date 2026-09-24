@@ -589,7 +589,8 @@ export interface SkillPluginItem {
   requiredPermissions: string[];
   tags?: string[];
   
-  // 详情页 - 概述扩展
+  // 详情页 - 概述扩展 (Markdown 格式)
+  overviewMarkdown?: string; // 概述 (Markdown 编辑器生成内容)
   copyrightNotice?: string; // 知识产权声明
   licenseTerms?: {
     allowed: string[]; // 允许的项目

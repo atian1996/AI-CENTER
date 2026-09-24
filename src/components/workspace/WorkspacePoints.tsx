@@ -18,13 +18,14 @@ import {
   ChevronRight,
   Flame,
   Zap,
-  Info
+  Info,
+  Lock
 } from 'lucide-react';
 import { AccountTransaction, TransactionCategory } from '../../types';
 import { mockAccountTransactions, mockPointStoreItems } from '../../data/mockData';
 
 export const WorkspacePoints: React.FC = () => {
-  const { user, setUser, showToast } = useApp();
+  const { user, setUser, showToast, setWorkspaceSubTab } = useApp();
 
   // Tab State: 5 tabs as requested
   // 'all' | 'recharge' | 'expense' | 'points_earn' | 'points_spend'
@@ -52,6 +53,9 @@ export const WorkspacePoints: React.FC = () => {
   const currentBalance = user.balance ?? 25800.00;
   const currentPoints = user.points ?? 15000;
   const pointsWorthRmb = (currentPoints * 0.01).toFixed(2);
+  const frozenBalance = user.frozenBalance ?? 0;
+  const frozenPoints = user.frozenPoints ?? 0;
+  const frozenPointsWorthRmb = (frozenPoints * 0.01).toFixed(2);
 
   const presetAmounts = [30, 50, 100, 200, 500, 1000];
 
@@ -236,15 +240,24 @@ export const WorkspacePoints: React.FC = () => {
                 </div>
               </div>
 
-              <div className="text-[11px] text-slate-400 font-medium flex items-center gap-3 pt-2 border-t border-white/5">
-                <span>冻结资金：¥{user.frozenBalance ? user.frozenBalance.toFixed(2) : '0.00'}</span>
-                <span>•</span>
-                <span className="text-emerald-400 font-semibold">支持在线按量扣费与实例续费</span>
+              <div className="text-[11px] text-slate-300 font-medium flex flex-wrap items-center gap-2 sm:gap-3 pt-2 border-t border-white/10">
+                <span className="flex items-center gap-1.5">
+                  <span className="text-slate-400">冻结资金：</span>
+                  <strong className="text-cyan-300 font-mono font-bold">
+                    ¥{frozenBalance.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </strong>
+                </span>
+                <span className="text-white/20">•</span>
+                <span className="px-1.5 py-0.5 rounded bg-indigo-500/30 text-indigo-200 text-[10px] font-bold">
+                  发布任务托管
+                </span>
+                <span className="text-white/20">•</span>
+                <span className="text-emerald-400 font-medium">支持在线按量扣费与实例续费</span>
               </div>
             </div>
 
             {/* 右侧：积分 */}
-            <div className="space-y-3 flex flex-col justify-between">
+            <div className="space-y-4 flex flex-col justify-between">
               <div>
                 <div className="text-xs text-slate-300 font-bold uppercase tracking-wider flex items-center gap-2 mb-2">
                   <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
@@ -263,12 +276,20 @@ export const WorkspacePoints: React.FC = () => {
                 </div>
               </div>
 
-              {/* 积分规则文案提示 */}
-              <div className="p-3 rounded-xl bg-white/10 backdrop-blur-xs border border-white/10 text-xs text-amber-100/95">
-                <div className="flex items-center gap-2 font-bold text-amber-300 text-xs">
-                  <Sparkles className="w-3.5 h-3.5 shrink-0 text-amber-300" />
-                  <span>1积分=¥0.01 用于消费抵扣</span>
-                </div>
+              <div className="text-[11px] text-slate-300 font-medium flex flex-wrap items-center gap-2 sm:gap-3 pt-2 border-t border-white/10">
+                <span className="flex items-center gap-1.5">
+                  <span className="text-slate-400">冻结积分：</span>
+                  <strong className="text-amber-300 font-mono font-bold">
+                    {frozenPoints.toLocaleString()} 积分
+                  </strong>
+                  <span className="text-amber-200/80 text-[10px] font-mono">(=¥{frozenPointsWorthRmb})</span>
+                </span>
+                <span className="text-white/20">•</span>
+                <span className="px-1.5 py-0.5 rounded bg-amber-500/30 text-amber-200 text-[10px] font-bold">
+                  发布任务托管
+                </span>
+                <span className="text-white/20">•</span>
+                <span className="text-amber-300/90 font-medium">1积分=¥0.01 抵扣</span>
               </div>
             </div>
 
@@ -277,6 +298,56 @@ export const WorkspacePoints: React.FC = () => {
           {/* 背景光影 */}
           <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -left-12 -top-12 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        </div>
+
+        {/* 发布任务冻结资产 (资金与积分) 概览看板 */}
+        <div className="bg-slate-50/90 rounded-2xl p-4 sm:p-5 border border-slate-200/90 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0 shadow-2xs">
+              <Lock className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xs font-black text-slate-900">发布任务托管冻结概览</h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200/80">
+                  资金与积分双托管保护
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                在任务大厅发布悬赏任务时预扣的现金赏金与激励积分，任务进行中全程由平台托管；验收合格结算给接单开发者，驳回或取消则全额原路解冻返还。
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 sm:gap-6 shrink-0 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 pt-3 lg:pt-0 border-slate-200">
+            {/* 冻结资金展示 */}
+            <div className="text-left lg:text-right pr-4 border-r border-slate-200">
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">因发布任务冻结资金</div>
+              <div className="text-base font-black text-indigo-600 font-mono">
+                ¥{frozenBalance.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+            </div>
+
+            {/* 冻结积分展示 */}
+            <div className="text-left lg:text-right pr-4 border-r border-slate-200">
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">因发布任务冻结积分</div>
+              <div className="text-base font-black text-amber-600 font-mono flex items-baseline gap-1">
+                <span>{frozenPoints.toLocaleString()}</span>
+                <span className="text-xs font-bold text-slate-500">积分</span>
+                <span className="text-[10px] text-amber-700 font-mono ml-0.5">(=¥{frozenPointsWorthRmb})</span>
+              </div>
+            </div>
+
+            {/* 查看发布任务快捷按钮 */}
+            <button
+              onClick={() => setWorkspaceSubTab('my-tasks')}
+              className="px-3.5 py-2 rounded-xl bg-white hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 text-slate-700 border border-slate-200 text-xs font-bold transition flex items-center gap-1 shrink-0 cursor-pointer shadow-2xs group"
+              title="前往我的任务查看我发布的任务"
+            >
+              <span>查看发布任务</span>
+              <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -923,10 +994,11 @@ export const WorkspacePoints: React.FC = () => {
 
               {/* 抵扣与通用说明 */}
               <div className="space-y-1.5 pt-1 text-slate-600">
-                <div className="font-extrabold text-slate-900 text-xs">使用与抵扣机制说明</div>
+                <div className="font-extrabold text-slate-900 text-xs">使用、抵扣与资产冻结规则说明</div>
                 <ul className="space-y-1.5 list-disc pl-4 text-[11px] text-slate-600">
                   <li><strong>积分价值：</strong>1 积分等额折算 ¥0.01 元，可直接抵扣消费金额。</li>
                   <li><strong>积分有效期：</strong>平台赠送及赚取的积分长期有效，不设过期时间。</li>
+                  <li><strong>任务发布冻结资金与积分：</strong>在任务大厅发布悬赏任务时，预扣的现金赏金与积分奖励自动转入【冻结资金】与【冻结积分】托管池。在任务处于审核中或进行中期间，冻结资产不可挪用；任务验收通过后自动向接单开发者发放结算；若任务审核被驳回或取消，冻结的资金与积分将全额原路退还至您的账户。</li>
                 </ul>
               </div>
             </div>

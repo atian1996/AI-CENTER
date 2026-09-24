@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
+import { MarkdownEditor, DEFAULT_SKILL_OVERVIEW_TEMPLATE } from '../common/MarkdownEditor';
 import {
   ArrowLeft,
   Wrench,
@@ -14,7 +15,10 @@ import {
   Palette,
   Folder,
   FileArchive,
-  CheckCircle2
+  CheckCircle2,
+  Tag,
+  Plus,
+  X
 } from 'lucide-react';
 
 interface UserSkillCreateFormProps {
@@ -33,6 +37,13 @@ export const UserSkillCreateForm: React.FC<UserSkillCreateFormProps> = ({ onBack
   const [selectedPresetIcon, setSelectedPresetIcon] = useState('Zap');
   const [customIconUrl, setCustomIconUrl] = useState('');
   const [description, setDescription] = useState('');
+  
+  // Tags (最多 5 个，对应前台 skill 详情中顶部 skill 描述下方的几个标签)
+  const [tags, setTags] = useState<string[]>(['知识管理', '自动化']);
+  const [tagInput, setTagInput] = useState('');
+
+  // 概述 (Markdown 编辑器，对应前台 skill 详情中的概述内容)
+  const [overviewMarkdown, setOverviewMarkdown] = useState(DEFAULT_SKILL_OVERVIEW_TEMPLATE);
   
   // File package state
   const [fileUploaded, setFileUploaded] = useState(false);
@@ -129,6 +140,30 @@ export const UserSkillCreateForm: React.FC<UserSkillCreateFormProps> = ({ onBack
     imageInputRef.current?.click();
   };
 
+  const handleAddTag = (tagToAdd?: string) => {
+    const rawTag = (tagToAdd !== undefined ? tagToAdd : tagInput).trim();
+    if (!rawTag) return;
+
+    if (tags.length >= 5) {
+      showToast('最多可添加 5 个标签！');
+      return;
+    }
+
+    if (tags.includes(rawTag)) {
+      showToast('该标签已存在！');
+      return;
+    }
+
+    setTags(prev => [...prev, rawTag]);
+    if (tagToAdd === undefined) {
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (indexToRemove: number) => {
+    setTags(prev => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: { [key: string]: string } = {};
@@ -161,6 +196,8 @@ export const UserSkillCreateForm: React.FC<UserSkillCreateFormProps> = ({ onBack
         category,
         version: 'v1.0.0',
         description: description.trim() || '暂无详细描述信息',
+        tags: tags.length > 0 ? tags : ['知识管理'],
+        overviewMarkdown: overviewMarkdown.trim(),
         compatibleAgents: '全量 Agent 兼容',
         requiredPermissions: ['网络访问', '沙盒执行'],
         packageSize: '1.8 MB',
@@ -446,11 +483,121 @@ export const UserSkillCreateForm: React.FC<UserSkillCreateFormProps> = ({ onBack
             描述
           </label>
           <textarea
-            rows={4}
+            rows={3}
             value={description}
             onChange={e => setDescription(e.target.value)}
-            placeholder="请输入 Skill 描述，或使用下方从 SKILL.md 自动抓取的建议"
+            placeholder="请输入 Skill 描述，将展示在插件卡片与详情页顶部简介处"
             className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs font-medium focus:border-purple-500 focus:outline-hidden transition resize-none"
+          />
+        </div>
+
+        {/* 7. 标签 (最多5个) - 对应前台skill详情中，顶部skill描述下方的几个标签 */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <Tag className="w-3.5 h-3.5 text-purple-600" />
+              <span>Skill 标签</span>
+              <span className="text-[11px] font-normal text-slate-400 font-mono">
+                (最多添加 5 个，对应详情页顶部描述下方标签，当前 {tags.length}/5)
+              </span>
+            </label>
+            {tags.length >= 5 && (
+              <span className="text-[11px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                已达上限 5 个
+              </span>
+            )}
+          </div>
+
+          {/* Tags list */}
+          <div className="flex flex-wrap items-center gap-2 min-h-[38px] p-2 bg-slate-50/70 border border-slate-200 rounded-xl">
+            {tags.length === 0 ? (
+              <span className="text-xs text-slate-400 pl-1">暂无标签，请在下方输入或点击快捷推荐添加</span>
+            ) : (
+              tags.map((tag, idx) => (
+                <span
+                  key={idx}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-purple-200 text-purple-700 text-xs font-medium shadow-2xs group"
+                >
+                  <span>{tag}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(idx)}
+                    className="w-4 h-4 rounded-full hover:bg-purple-100 flex items-center justify-center text-purple-400 hover:text-purple-700 transition cursor-pointer"
+                    title="移除此标签"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))
+            )}
+          </div>
+
+          {/* Tag Input row */}
+          {tags.length < 5 && (
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={e => setTagInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  placeholder="输入自定义标签名称后按回车或点击添加 (如: 投资研究、数据清洗)"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder:text-slate-400 focus:border-purple-500 focus:outline-hidden transition"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => handleAddTag()}
+                className="px-4 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs font-bold flex items-center gap-1 transition cursor-pointer shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>添加标签</span>
+              </button>
+            </div>
+          )}
+
+          {/* Suggested tags */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+            <span className="text-[11px] text-slate-400">快捷添加:</span>
+            {['金融分析', '行业专业', '代码审查', '多维表格', '自动化', '办公效率', '知识管理', '研报生成']
+              .filter(t => !tags.includes(t))
+              .slice(0, 6)
+              .map(suggested => (
+                <button
+                  key={suggested}
+                  type="button"
+                  disabled={tags.length >= 5}
+                  onClick={() => handleAddTag(suggested)}
+                  className="px-2.5 py-0.5 rounded-md bg-slate-100 hover:bg-purple-50 text-slate-600 hover:text-purple-700 hover:border-purple-200 border border-slate-200/60 text-[11px] transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  + {suggested}
+                </button>
+              ))}
+          </div>
+        </div>
+
+        {/* 8. 概述 (Markdown 编辑器) - 对应前台skill详情中的概述中的内容 */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-purple-600" />
+              <span>Skill 概述 (Markdown 编辑器)</span>
+              <span className="text-[11px] font-normal text-slate-400">
+                (对应前台 Skill 详情页【概述】选项卡中渲染的内容)
+              </span>
+            </label>
+          </div>
+
+          <MarkdownEditor
+            value={overviewMarkdown}
+            onChange={setOverviewMarkdown}
+            theme="light"
+            placeholder="在此以 Markdown 格式编写 Skill 插件详细概述（知识产权、使用许可、免责声明、架构及核心模块说明）..."
           />
         </div>
 

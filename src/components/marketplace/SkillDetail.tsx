@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Markdown from 'react-markdown';
 import { SkillPluginItem, SkillFileNode, SkillCommentItem, SkillCommentReply } from '../../types';
 import { useApp } from '../../context/AppContext';
 import {
@@ -30,8 +31,6 @@ import {
   File,
   Sparkles,
   ArrowUp,
-  Image as ImageIcon,
-  Smile,
   X,
   Shield,
   Puzzle,
@@ -43,6 +42,7 @@ import {
   Award,
   MessageSquare
 } from 'lucide-react';
+import { validateTextOnlyComment } from '../../utils/commentValidator';
 
 interface SkillDetailProps {
   skill: SkillPluginItem;
@@ -125,8 +125,6 @@ export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initial
     '/scripts': true
   });
   const [copiedFileCode, setCopiedFileCode] = useState(false);
-
-  const COMMON_EMOJIS = ['👍', '🔥', '🎉', '❤️', '💡', '🚀', '👏', '😊', '💯', '✨'];
 
   // Comments Tab State
   const initialSkillComments: SkillCommentItem[] = (skill.comments && skill.comments.length > 0) ? skill.comments : [
@@ -220,8 +218,6 @@ export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initial
   const [commentSort, setCommentSort] = useState<'hot' | 'latest'>('hot');
   const [commentInput, setCommentInput] = useState('');
   const [comments, setComments] = useState<SkillCommentItem[]>(initialSkillComments);
-  const [commentImages, setCommentImages] = useState<string[]>([]);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [replyTarget, setReplyTarget] = useState<{ commentId: string; targetAuthor: string; replyId?: string } | null>(null);
   const [replyInput, setReplyInput] = useState('');
   const [expandedRepliesMap, setExpandedRepliesMap] = useState<Record<string, boolean>>({});
@@ -286,10 +282,12 @@ export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initial
     }
   };
 
-  // 添加一级评论
+  // 添加一级评论（严格纯文字规范：仅限文字，禁止表情和图片）
   const handleAddComment = () => {
-    if (!commentInput.trim()) {
-      showToast('请输入评论内容');
+    const textToSubmit = commentInput.trim();
+    const validation = validateTextOnlyComment(textToSubmit);
+    if (!validation.valid) {
+      showToast(validation.message || '请输入评论内容');
       return;
     }
 
@@ -301,24 +299,23 @@ export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initial
       rating: 5,
       time: '刚刚',
       timestamp: Date.now(),
-      content: commentInput.trim(),
+      content: textToSubmit,
       likes: 0,
       isLiked: false,
-      images: commentImages.length > 0 ? [...commentImages] : undefined,
       replies: []
     };
 
     setComments([newComment, ...comments]);
     setCommentInput('');
-    setCommentImages([]);
-    setShowEmojiPicker(false);
     showToast('评论发表成功！已展示在顶部');
   };
 
-  // 添加二级回复
+  // 添加二级回复（严格纯文字规范：仅限文字，禁止表情）
   const handleAddReply = (commentId: string, targetAuthor: string) => {
-    if (!replyInput.trim()) {
-      showToast('请输入回复内容');
+    const textToSubmit = replyInput.trim();
+    const validation = validateTextOnlyComment(textToSubmit);
+    if (!validation.valid) {
+      showToast(validation.message?.replace('评论', '回复') || '请输入回复内容');
       return;
     }
 
@@ -329,7 +326,7 @@ export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initial
       userRole: user.identityTag || '开发者',
       time: '刚刚',
       timestamp: Date.now(),
-      content: replyInput.trim(),
+      content: textToSubmit,
       replyToUser: targetAuthor,
       likes: 0,
       isLiked: false
@@ -603,13 +600,29 @@ export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initial
       {/* 3.1 TAB: 概述 (Overview) - Exact match to skill详情-概述.png */}
       {activeTab === 'overview' && (
         <div className="space-y-8 bg-white p-8 rounded-2xl border border-slate-200/80 shadow-2xs">
-          
-          {/* Main Title Header */}
-          <div className="space-y-1">
-            <h2 className="text-xl font-black text-slate-900 tracking-tight">
-              {skill.name} ({skill.id.replace('sk_', '')})
-            </h2>
-          </div>
+          {skill.overviewMarkdown ? (
+            <div className="space-y-6">
+              <div className="border-b border-slate-100 pb-4">
+                <h2 className="text-xl font-black text-slate-900 tracking-tight">
+                  {skill.name} ({skill.id.replace('sk_', '')})
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">
+                  版本: {skill.version} · 更新时间: {skill.updatedAt || '最近'} · 开发者: {skill.developer}
+                </p>
+              </div>
+
+              <div className="prose prose-slate max-w-none text-xs sm:text-sm text-slate-800 leading-relaxed font-normal">
+                <Markdown>{skill.overviewMarkdown}</Markdown>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Main Title Header */}
+              <div className="space-y-1">
+                <h2 className="text-xl font-black text-slate-900 tracking-tight">
+                  {skill.name} ({skill.id.replace('sk_', '')})
+                </h2>
+              </div>
 
           {/* Section: 知识产权声明 */}
           <div className="space-y-2">
@@ -820,6 +833,8 @@ export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initial
               </table>
             </div>
           </div>
+          </>
+        )}
 
         </div>
       )}
@@ -946,91 +961,16 @@ export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initial
               <textarea
                 value={commentInput}
                 onChange={e => setCommentInput(e.target.value.slice(0, 500))}
-                placeholder="分享您对该 Skill 插件的使用心得、优化建议或向作者提问（最多500字，支持表情与图片）..."
+                placeholder="分享您对该 Skill 插件的使用心得、优化建议或向作者提问（最多500字，仅限纯文字）..."
                 rows={3}
                 className="w-full p-3.5 rounded-xl bg-slate-50/50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-indigo-500 transition resize-none leading-relaxed"
               />
 
-              {/* 图片预览列表（若添加了图片） */}
-              {commentImages.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {commentImages.map((imgUrl, imgIdx) => (
-                    <div key={imgIdx} className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs">
-                      <img src={imgUrl} alt="附件预览" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => setCommentImages(prev => prev.filter((_, i) => i !== imgIdx))}
-                        className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-rose-600 transition cursor-pointer"
-                        title="移除图片"
-                      >
-                        <X className="w-2.5 h-2.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* 表情快捷选择面板（若展开） */}
-              {showEmojiPicker && (
-                <div className="p-2.5 bg-white border border-indigo-100 rounded-xl shadow-xs flex flex-wrap gap-2 animate-fade-in">
-                  {COMMON_EMOJIS.map(emoji => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => setCommentInput(prev => (prev + emoji).slice(0, 500))}
-                      className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-indigo-50 text-base transition cursor-pointer active:scale-90"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Bottom tools: Emojis, Image Upload & Submit Button */}
+              {/* Bottom tools: Text-only hint & Submit Button */}
               <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                <div className="flex items-center gap-2">
-                  {/* 表情按钮 */}
-                  <button
-                    type="button"
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    className={`p-1.5 rounded-lg border transition cursor-pointer flex items-center gap-1 text-xs ${
-                      showEmojiPicker 
-                        ? 'bg-amber-50 text-amber-600 border-amber-200' 
-                        : 'bg-white hover:bg-slate-100 text-slate-500 border-slate-200'
-                    }`}
-                    title="插入表情"
-                  >
-                    <Smile className="w-4 h-4 text-amber-500" />
-                    <span className="text-[11px] font-medium hidden sm:inline">表情</span>
-                  </button>
-
-                  {/* 图片上传按钮 */}
-                  <label className="p-1.5 rounded-lg border bg-white hover:bg-slate-100 text-slate-500 border-slate-200 transition cursor-pointer flex items-center gap-1 text-xs">
-                    <ImageIcon className="w-4 h-4 text-indigo-500" />
-                    <span className="text-[11px] font-medium hidden sm:inline">图片</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (ev) => {
-                            if (ev.target?.result) {
-                              setCommentImages(prev => [...prev, ev.target!.result as string]);
-                              showToast('图片添加成功');
-                            }
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-                  </label>
-
-                  <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">
-                    遵循公约 · 自动安全审核
-                  </span>
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                  <span>遵循公约 · 仅限纯文字评论（禁止表情与图片） · 自动安全审核</span>
                 </div>
 
                 {/* Submit Button */}
@@ -1218,7 +1158,7 @@ export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initial
                                 autoFocus
                                 value={replyInput}
                                 onChange={(e) => setReplyInput(e.target.value)}
-                                placeholder={`回复 @${comment.userName}...`}
+                                placeholder={`回复 @${comment.userName}（仅限纯文字）...`}
                                 className="flex-1 px-3 py-2 bg-white border border-indigo-300 rounded-xl text-xs text-slate-900 outline-none focus:border-indigo-600 shadow-2xs"
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
@@ -1338,7 +1278,7 @@ export const SkillDetail: React.FC<SkillDetailProps> = ({ skill, onBack, initial
                                         autoFocus
                                         value={replyInput}
                                         onChange={(e) => setReplyInput(e.target.value)}
-                                        placeholder={`回复 @${rep.userName}...`}
+                                        placeholder={`回复 @${rep.userName}（仅限纯文字）...`}
                                         className="flex-1 px-3 py-1.5 bg-slate-50 border border-indigo-300 rounded-xl text-xs text-slate-900 outline-none focus:border-indigo-600 focus:bg-white transition"
                                         onKeyDown={(e) => {
                                           if (e.key === 'Enter') {
