@@ -342,7 +342,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [onboardingTasks, setOnboardingTasks] = useState<OnboardingTask[]>(initialOnboardingTasks);
 
   const [notifications, setNotifications] = useState<AppNotification[]>(() => 
-    initialNotifications.filter(n => n.category !== ('system' as any) && n.type !== ('system' as any))
+    initialNotifications.filter(n => 
+      n.category !== ('system' as any) && 
+      n.type !== ('system' as any) &&
+      !n.title.includes('关注者') &&
+      !n.title.includes('@了您') &&
+      n.id !== 'n_comm_04' &&
+      n.id !== 'n_comm_05'
+    )
   );
   
   const [agents, setAgents] = useState<AgentItem[]>(() => 

@@ -35,7 +35,7 @@ export const WorkspaceNotifications: React.FC = () => {
   const tabs: { key: NotificationTabType; label: string; desc: string }[] = [
     { key: 'all', label: '全部消息', desc: '所有通知汇总，按时间倒序' },
     { key: 'business', label: '业务通知', desc: 'AI集市、任务大厅、算力工坊、赛事中心、账户相关' },
-    { key: 'interaction', label: '社区互动', desc: '社区帖子相关的互动通知' },
+    { key: 'interaction', label: '社区互动', desc: '社区帖子相关的互动通知（点赞、评论、回复、收藏、加精）' },
   ];
 
   // 业务子分类映射配置
@@ -103,6 +103,10 @@ export const WorkspaceNotifications: React.FC = () => {
       if (n.category === ('system' as any) || n.type === ('system' as any) || n.subCategory === ('system' as any)) {
         return false;
       }
+      // 明确排除关注者与@提醒类通知
+      if (n.title.includes('关注者') || n.title.includes('@了您')) {
+        return false;
+      }
       if (activeTab !== 'all') {
         const itemCategory = n.category || (n.type === 'interaction' ? 'interaction' : 'business');
         if (itemCategory !== activeTab) return false;
@@ -139,7 +143,12 @@ export const WorkspaceNotifications: React.FC = () => {
   }, [currentPageSafe, activeTab, paginatedItems, markNotificationsAsRead]);
 
   const totalUnreadCount = notifications.filter(n => 
-    !n.read && n.category !== ('system' as any) && n.type !== ('system' as any) && n.subCategory !== ('system' as any)
+    !n.read && 
+    n.category !== ('system' as any) && 
+    n.type !== ('system' as any) && 
+    n.subCategory !== ('system' as any) &&
+    !n.title.includes('关注者') &&
+    !n.title.includes('@了您')
   ).length;
 
   return (

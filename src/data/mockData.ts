@@ -180,17 +180,6 @@ export const initialNotifications: AppNotification[] = [
 
   // 11 ~ 20 (第2页条目，同样保留未读，验证翻页自动变已读)
   { 
-    id: 'n_comm_04', 
-    title: '👤 您有新的关注者', 
-    content: '用户 @视觉先锋 关注了您。', 
-    category: 'interaction',
-    subCategory: 'community',
-    type: 'interaction',
-    time: '3.5小时前', 
-    read: false, 
-    targetTab: 'community' 
-  },
-  { 
     id: 'n_biz_tsk_06', 
     title: '⏳ 您有任务待验收', 
     content: '您发布的「三维工业零件 CAD STEP 拓扑减面转换工具」已到期，目前有 2 份提交待验收，请尽快选择一份通过或全部驳回。', 
@@ -215,19 +204,6 @@ export const initialNotifications: AppNotification[] = [
     read: false, 
     actionLabel: '立即充值',
     actionType: 'recharge'
-  },
-  { 
-    id: 'n_comm_05', 
-    title: '📣 有人在帖子中@了您', 
-    content: '用户 @AI开源布道师 在《2026 年最具实用价值的代码 Agent 盘点》中@了您。', 
-    category: 'interaction',
-    subCategory: 'community',
-    type: 'interaction',
-    time: '6小时前', 
-    read: false, 
-    targetTab: 'community',
-    actionLabel: '查看讨论',
-    actionType: 'link'
   },
   { 
     id: 'n_biz_dts_02', 
