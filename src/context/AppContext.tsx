@@ -3113,7 +3113,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const toggleEssentialPost = (postId: string) => {
     const post = posts.find(p => p.id === postId);
-    const nextState = !post?.isEssential;
+    if (!post) return;
+    const nextState = !post.isEssential;
     setPosts(prev => prev.map(p => {
       if (p.id === postId) {
         return {
@@ -3123,7 +3124,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return p;
     }));
-    showToast(nextState ? '已将该帖子设置为【精华文章】' : '已取消该帖子的精华标志');
+
+    if (nextState) {
+      // 平台规则：帖子加精后奖励发帖人 10 积分，没有次数上限
+      const authorName = typeof post.author === 'string' ? post.author : ((post as any).author?.name || '');
+      const isCurrentUser = authorName === user.name || authorName.includes('你') || authorName === '极客小千';
+      if (isCurrentUser) {
+        setUser(u => ({
+          ...u,
+          points: (u.points || 0) + 10,
+          todayEarnedPoints: (u.todayEarnedPoints || 0) + 10
+        }));
+
+        const newNotice: AppNotification = {
+          id: `n_comm_essence_${Date.now()}`,
+          title: '✨ 您的帖子被加精',
+          content: `恭喜！您的帖子《${post.title}》已被设为精华，系统已奖励您 10 积分（无次数上限）。`,
+          category: 'interaction',
+          subCategory: 'community',
+          type: 'interaction',
+          time: '刚刚',
+          read: false,
+          targetTab: 'community'
+        };
+        setNotifications(prev => [newNotice, ...prev]);
+        showToast(`已将该帖子设为【精华文章】，奖励发帖人 10 积分（无上限）！`);
+      } else {
+        showToast(`已将该帖子设为【精华文章】，已自动奖励发帖人 @${authorName || '作者'} 10 积分（无上限）！`);
+      }
+    } else {
+      showToast('已取消该帖子的精华标志');
+    }
   };
 
   return (
