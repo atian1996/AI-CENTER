@@ -385,8 +385,8 @@ export const WorkspaceAssets: React.FC = () => {
   const [orchestratingAgent, setOrchestratingAgent] = useState<AgentItem | null>(null);
   const [activeAssetTab, setActiveAssetTab] = useState<'agents' | 'datasets' | 'skills'>('agents');
   
-  // Agent Sub-tab: 我创建的 vs 我订阅的
-  const [agentScopeTab, setAgentScopeTab] = useState<'created' | 'subscribed'>('created');
+  // Agent Sub-tab: 我创建的 vs 我订阅的 (默认展示我调用的)
+  const [agentScopeTab, setAgentScopeTab] = useState<'created' | 'subscribed'>('subscribed');
 
   // Dataset Sub-tab: 我上传的 vs 已下载的
   const [datasetScopeTab, setDatasetScopeTab] = useState<'created' | 'downloaded'>('created');
@@ -581,7 +581,8 @@ export const WorkspaceAssets: React.FC = () => {
 
         {/* Global Action Button */}
         <div>
-          {activeAssetTab === 'agents' && (
+          {/* 暂时隐藏创建 Agent 按钮 */}
+          {/* activeAssetTab === 'agents' && (
             <button
               onClick={() => openModal('createAgent')}
               className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black transition shadow-xs flex items-center gap-2 cursor-pointer"
@@ -589,7 +590,7 @@ export const WorkspaceAssets: React.FC = () => {
               <Plus className="w-4 h-4" />
               <span>创建 Agent</span>
             </button>
-          )}
+          ) */}
 
           {activeAssetTab === 'datasets' && (
             <button
@@ -616,7 +617,7 @@ export const WorkspaceAssets: React.FC = () => {
       {/* SubTabs bar */}
       <div className="flex items-center gap-2 border-b border-slate-200 text-xs font-extrabold">
         {[
-          { key: 'agents', label: '我的 Agent', count: userAgents.length, icon: Bot },
+          { key: 'agents', label: '我的 Agent', count: subscribedAgents.length, icon: Bot },
           { key: 'datasets', label: '我的数据集', count: datasets.length, icon: Database },
           { key: 'skills', label: '我的 Skill', count: skills.length, icon: Wrench },
         ].map((tab) => {
@@ -648,54 +649,7 @@ export const WorkspaceAssets: React.FC = () => {
       {activeAssetTab === 'agents' && (
         <div className="space-y-6">
           
-          {/* Sub-level Tabs: 我创建的 / 我调用的 */}
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-            <div className="flex items-center gap-2 bg-slate-100/80 p-1 rounded-xl">
-              <button
-                type="button"
-                onClick={() => setAgentScopeTab('created')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
-                  agentScopeTab === 'created'
-                    ? 'bg-white text-blue-600 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <span>我创建的</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                  agentScopeTab === 'created' ? 'bg-blue-50 text-blue-600' : 'bg-slate-200/70 text-slate-500'
-                }`}>
-                  {createdAgents.length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setAgentScopeTab('subscribed')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
-                  agentScopeTab === 'subscribed'
-                    ? 'bg-white text-blue-600 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <span>我调用的</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                  agentScopeTab === 'subscribed' ? 'bg-blue-50 text-blue-600' : 'bg-slate-200/70 text-slate-500'
-                }`}>
-                  {subscribedAgents.length}
-                </span>
-              </button>
-            </div>
-
-            {agentScopeTab === 'subscribed' && (
-              <button
-                onClick={() => setSelectedMainTab('marketplace')}
-                className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                <span>前往 Agent 商店体验更多 →</span>
-              </button>
-            )}
-          </div>
-
+          {/* Sub-level Tabs: 我创建的 / 我调用的 (按要求暂时隐藏，默认呈现我调用的 Agent) */}
           {/* Top Filter Bar */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-1">
             
@@ -801,44 +755,14 @@ export const WorkspaceAssets: React.FC = () => {
                 )}
               </div>
 
-              {/* Filter 4: 排序方式 最近修改 ∨ */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => { setShowSortDropdown(!showSortDropdown); setShowTypeDropdown(false); setShowSceneDropdown(false); setShowIndustryDropdown(false); }}
-                  className="px-3 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white flex items-center gap-1.5 transition cursor-pointer text-slate-700"
-                >
-                  <span>排序方式 <strong className="text-slate-900">{sortBy === 'recent_modified' ? '最近修改' : sortBy === 'recent_created' ? '最近创建' : '名称'}</strong></span>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                </button>
-
-                {showSortDropdown && (
-                  <div className="absolute left-0 top-10 z-40 w-36 bg-white border border-slate-200 rounded-xl shadow-lg py-1 text-xs animate-fade-in">
-                    {[
-                      { key: 'recent_modified', label: '最近修改' },
-                      { key: 'recent_created', label: '最近创建' },
-                      { key: 'name', label: '名称 A-Z' },
-                    ].map((item) => (
-                      <button
-                        key={item.key}
-                        onClick={() => { setSortBy(item.key); setShowSortDropdown(false); }}
-                        className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 cursor-pointer"
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
               {/* Search Box */}
-              <div className="relative min-w-[220px]">
+              <div className="relative min-w-[240px]">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={agentScopeTab === 'created' ? '搜索我创建的 Agent' : '搜索我订阅的 Agent'}
+                  placeholder="搜索Agent名称"
                   className="w-full pl-8 pr-3 py-1.5 bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-transparent focus:border-blue-500 rounded-xl text-xs text-slate-800 outline-none transition"
                 />
               </div>

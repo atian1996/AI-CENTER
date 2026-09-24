@@ -352,6 +352,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     )
   );
   
+  const INITIAL_PURCHASED_IDS = [
+    'ag_22',
+    'ag_new_01',
+    'ag_new_02',
+    'ag_new_03',
+    'ag_new_04',
+    'ag_new_08',
+    'ag_new_09',
+    'ag_new_10'
+  ];
+
   const [agents, setAgents] = useState<AgentItem[]>(() => 
     mockAgents.map(a => {
       const origForm = (a.techForm || a.appType || 'Agent') as string;
@@ -372,6 +383,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       return {
         ...a,
+        isPurchased: a.isPurchased || INITIAL_PURCHASED_IDS.includes(a.id),
         techForm: mappedForm as any,
         scene: sceneVal as any,
         industry: industryVal as any,
@@ -2006,7 +2018,96 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('trialCountLeft', String(trialCountLeft));
   }, [trialCountLeft]);
 
-  const [subscriptions, setSubscriptions] = useState<Record<string, AgentSubscriptionItem>>({});
+  const [subscriptions, setSubscriptions] = useState<Record<string, AgentSubscriptionItem>>({
+    ag_22: {
+      agentId: 'ag_22',
+      agentName: '企业客服Agent',
+      tier: 'year',
+      tierName: '企业年度订阅',
+      price: 2999,
+      tokenAmountVal: 5000000,
+      tokensLeftVal: 4620000,
+      expireDate: '2027-09-20',
+      subscribedAt: '2026-09-20'
+    },
+    ag_new_01: {
+      agentId: 'ag_new_01',
+      agentName: 'AI 图像提示词工程师',
+      tier: 'month',
+      tierName: '月度订阅',
+      price: 99,
+      tokenAmountVal: 500000,
+      tokensLeftVal: 385000,
+      expireDate: '2026-10-24',
+      subscribedAt: '2026-09-24'
+    },
+    ag_new_02: {
+      agentId: 'ag_new_02',
+      agentName: '结构化数据提取专家',
+      tier: 'quarter',
+      tierName: '季度订阅',
+      price: 269,
+      tokenAmountVal: 1500000,
+      tokensLeftVal: 1120000,
+      expireDate: '2026-12-24',
+      subscribedAt: '2026-09-24'
+    },
+    ag_new_03: {
+      agentId: 'ag_new_03',
+      agentName: '会议纪要与行动项生成器',
+      tier: 'month',
+      tierName: '月度订阅',
+      price: 69,
+      tokenAmountVal: 300000,
+      tokensLeftVal: 270000,
+      expireDate: '2026-10-24',
+      subscribedAt: '2026-09-24'
+    },
+    ag_new_04: {
+      agentId: 'ag_new_04',
+      agentName: '智能合同审核助手',
+      tier: 'year',
+      tierName: '法务年度订阅',
+      price: 1899,
+      tokenAmountVal: 3000000,
+      tokensLeftVal: 2890000,
+      expireDate: '2027-08-15',
+      subscribedAt: '2026-08-15'
+    },
+    ag_new_08: {
+      agentId: 'ag_new_08',
+      agentName: '深度投研研报速读器',
+      tier: 'quarter',
+      tierName: '金融机构季度订阅',
+      price: 599,
+      tokenAmountVal: 2000000,
+      tokensLeftVal: 1750000,
+      expireDate: '2026-11-30',
+      subscribedAt: '2026-08-30'
+    },
+    ag_new_09: {
+      agentId: 'ag_new_09',
+      agentName: '自动化单元测试编写助手',
+      tier: 'month',
+      tierName: '开发者月度订阅',
+      price: 129,
+      tokenAmountVal: 800000,
+      tokensLeftVal: 640000,
+      expireDate: '2026-10-18',
+      subscribedAt: '2026-09-18'
+    },
+    ag_new_10: {
+      agentId: 'ag_new_10',
+      agentName: '英语口语私教与发音润色',
+      tier: 'month',
+      tierName: '个人专业月卡',
+      price: 49,
+      tokenAmountVal: 300000,
+      tokensLeftVal: 210000,
+      expireDate: '2026-10-12',
+      subscribedAt: '2026-09-12'
+    }
+  });
   const [payPerTokenAgents, setPayPerTokenAgents] = useState<Record<string, boolean>>({});
 
   const setSandboxAgent = (agent: AgentItem | null) => {
@@ -3123,7 +3224,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return p;
     }));
-    showToast(nextState ? '已将该帖子设置为【精华文章】' : '已取消该帖子的精华标志');
+
+    if (nextState) {
+      // 帖子加精后奖励发帖人10积分，没有次数上限
+      const isCurrentUser = post?.author === user.name || post?.author === 'zj';
+      if (isCurrentUser) {
+        setUser(prev => ({ ...prev, points: prev.points + 10 }));
+        setNotifications(prev => [
+          {
+            id: `n_essential_${Date.now()}`,
+            title: '✨ 您的帖子被加精',
+            content: `您的帖子《${post?.title || '社区文章'}》已被管理员设为精华文章，恭喜获得 10 积分奖励！`,
+            category: 'interaction',
+            subCategory: 'community',
+            type: 'interaction',
+            time: '刚刚',
+            read: false,
+            targetTab: 'community',
+            targetId: postId
+          },
+          ...prev
+        ]);
+      }
+      showToast('已将该帖子设为【精华文章】，已向发帖人奖励 10 积分（无次数上限）');
+    } else {
+      showToast('已取消该帖子的精华标志');
+    }
   };
 
   return (

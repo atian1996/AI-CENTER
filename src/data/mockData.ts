@@ -486,8 +486,8 @@ export const initialNotifications: AppNotification[] = [
   },
   { 
     id: 'n_biz_tsk_07', 
-    title: '❌ 您的提交未通过验收', 
-    content: '您提交的「跨平台自动化回归测试框架」成果未通过验收。原因：缺少 Linux ARM64 交叉编译脚本。', 
+    title: '❌ 您的提交被驳回', 
+    content: '您提交的「跨平台自动化回归测试框架」成果已被驳回。驳回原因：缺少 Linux ARM64 交叉编译脚本。', 
     category: 'business',
     subCategory: 'task',
     type: 'business',
@@ -568,8 +568,8 @@ export const initialNotifications: AppNotification[] = [
   },
   { 
     id: 'n_biz_tsk_09', 
-    title: '❌ 您的提交未通过验收', 
-    content: '您提交的「高并发分布式限流中间件」成果未通过验收。发布人已驳回全部提交。', 
+    title: '❌ 您的提交被驳回', 
+    content: '您提交的「高并发分布式限流中间件」成果已被驳回。驳回原因：发布人已驳回全部提交。', 
     category: 'business',
     subCategory: 'task',
     type: 'business',
@@ -579,8 +579,8 @@ export const initialNotifications: AppNotification[] = [
   },
   { 
     id: 'n_biz_tsk_10', 
-    title: '📋 您的提交未被选中', 
-    content: '您提交的「物联网传感器流式采集网关」成果未被选中。感谢您的参与，期待下次合作。', 
+    title: '❌ 您的提交被驳回', 
+    content: '您提交的「物联网传感器流式采集网关」成果已被驳回。驳回原因：未被发布人选为最终验收方案。', 
     category: 'business',
     subCategory: 'task',
     type: 'business',

@@ -18,8 +18,7 @@ import {
   ChevronRight,
   Flame,
   Zap,
-  Info,
-  Lock
+  Info
 } from 'lucide-react';
 import { AccountTransaction, TransactionCategory } from '../../types';
 import { mockAccountTransactions, mockPointStoreItems } from '../../data/mockData';
@@ -298,56 +297,6 @@ export const WorkspacePoints: React.FC = () => {
           {/* 背景光影 */}
           <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -left-12 -top-12 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-        </div>
-
-        {/* 发布任务冻结资产 (资金与积分) 概览看板 */}
-        <div className="bg-slate-50/90 rounded-2xl p-4 sm:p-5 border border-slate-200/90 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0 shadow-2xs">
-              <Lock className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-xs font-black text-slate-900">发布任务托管冻结概览</h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200/80">
-                  资金与积分双托管保护
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                在任务大厅发布悬赏任务时预扣的现金赏金与激励积分，任务进行中全程由平台托管；验收合格结算给接单开发者，驳回或取消则全额原路解冻返还。
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4 sm:gap-6 shrink-0 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 pt-3 lg:pt-0 border-slate-200">
-            {/* 冻结资金展示 */}
-            <div className="text-left lg:text-right pr-4 border-r border-slate-200">
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">因发布任务冻结资金</div>
-              <div className="text-base font-black text-indigo-600 font-mono">
-                ¥{frozenBalance.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </div>
-            </div>
-
-            {/* 冻结积分展示 */}
-            <div className="text-left lg:text-right pr-4 border-r border-slate-200">
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">因发布任务冻结积分</div>
-              <div className="text-base font-black text-amber-600 font-mono flex items-baseline gap-1">
-                <span>{frozenPoints.toLocaleString()}</span>
-                <span className="text-xs font-bold text-slate-500">积分</span>
-                <span className="text-[10px] text-amber-700 font-mono ml-0.5">(=¥{frozenPointsWorthRmb})</span>
-              </div>
-            </div>
-
-            {/* 查看发布任务快捷按钮 */}
-            <button
-              onClick={() => setWorkspaceSubTab('my-tasks')}
-              className="px-3.5 py-2 rounded-xl bg-white hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 text-slate-700 border border-slate-200 text-xs font-bold transition flex items-center gap-1 shrink-0 cursor-pointer shadow-2xs group"
-              title="前往我的任务查看我发布的任务"
-            >
-              <span>查看发布任务</span>
-              <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </div>
         </div>
       </div>
 
@@ -980,6 +929,15 @@ export const WorkspacePoints: React.FC = () => {
                         <td className="p-2.5 font-mono font-black text-amber-600">+5</td>
                         <td className="p-2.5 text-slate-600 font-medium">每日上限3次</td>
                         <td className="p-2.5 pr-3 text-slate-500 text-[11px]">社区发帖</td>
+                      </tr>
+                      <tr className="hover:bg-amber-50/40 transition bg-amber-50/20">
+                        <td className="p-2.5 pl-3 font-bold text-slate-900 flex items-center gap-1">
+                          <span>帖子加精</span>
+                          <span className="text-[10px] px-1.5 py-0.2 bg-amber-100 text-amber-800 rounded font-black">奖励</span>
+                        </td>
+                        <td className="p-2.5 font-mono font-black text-amber-600">+10</td>
+                        <td className="p-2.5 text-slate-600 font-medium">无上限</td>
+                        <td className="p-2.5 pr-3 text-slate-500 text-[11px]">帖子被设为精华文章后自动发放发帖人</td>
                       </tr>
                       <tr className="hover:bg-amber-50/40 transition">
                         <td className="p-2.5 pl-3 font-bold text-slate-900">完成一次任务</td>

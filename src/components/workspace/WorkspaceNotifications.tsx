@@ -294,16 +294,43 @@ export const WorkspaceNotifications: React.FC = () => {
                       {config.label}
                     </span>
                     <h4 className="text-xs sm:text-sm font-extrabold text-slate-900">
-                      {n.title}
+                      {n.title.includes('未通过验收') || n.title.includes('未被选中') ? '❌ 您的提交被驳回' : n.title}
                     </h4>
                     {!n.read && (
                       <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" title="未读消息" />
                     )}
                   </div>
 
-                  <p className="text-xs text-slate-600 font-normal leading-relaxed whitespace-pre-line">
-                    {n.content}
-                  </p>
+                  {/* Notification Content with Reason Highlighting if present */}
+                  {(() => {
+                    let contentText = n.content;
+                    if (n.title.includes('未通过验收') || n.title.includes('未被选中') || n.title.includes('您的提交被驳回')) {
+                      contentText = contentText
+                        .replace('未通过验收。', '已被驳回。')
+                        .replace('未被选中。', '已被驳回。');
+                    }
+                    
+                    const hasReason = contentText.includes('驳回原因：') || contentText.includes('原因：');
+                    
+                    if (hasReason) {
+                      const parts = contentText.split(/(驳回原因：|原因：)/);
+                      return (
+                        <div className="text-xs text-slate-600 font-normal leading-relaxed">
+                          <span>{parts[0]}</span>
+                          <span className="inline-block mt-1 p-2 bg-rose-50/80 border border-rose-200/80 rounded-xl text-rose-800 text-[11px] font-medium w-full">
+                            <strong className="font-extrabold text-rose-700">驳回原因：</strong>
+                            {parts.slice(2).join('') || parts[2] || ''}
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <p className="text-xs text-slate-600 font-normal leading-relaxed whitespace-pre-line">
+                        {contentText}
+                      </p>
+                    );
+                  })()}
 
                   <div className="text-[11px] text-slate-400 font-medium pt-0.5">
                     {n.time}

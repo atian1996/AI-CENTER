@@ -94,9 +94,6 @@ export const WorkspaceTasks: React.FC = () => {
       if (undertakenFilter === '进行中') {
         return !isFinished;
       }
-      if (undertakenFilter === '已驳回') {
-        return isRejected;
-      }
       if (undertakenFilter === '已结束') {
         return isFinished;
       }
@@ -105,7 +102,7 @@ export const WorkspaceTasks: React.FC = () => {
   }, [myUndertakenTasks, undertakenFilter, user.name]);
 
   const publishedFilterList = ['全部', '审核中', '进行中', '已驳回', '已结束'];
-  const undertakenFilterList = ['全部', '进行中', '已驳回', '已结束'];
+  const undertakenFilterList = ['全部', '进行中', '已结束'];
 
   // If publishing or editing task, render UserTaskPublishForm
   if (isCreatingTask || editingTask) {
@@ -504,24 +501,34 @@ export const WorkspaceTasks: React.FC = () => {
                             {task.domain}
                           </span>
 
-                          {/* 列表项中的 通过验收 / 未通过验收 / 被驳回重提 / 进行中 显著标记 */}
+                          {/* 列表项中的 通过验收 / 未通过验收 / 被驳回 / 进行中 显著标记 */}
                           {isFinished ? (
-                            isWinner ? (
-                              <span className="px-3 py-0.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 shadow-2xs">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                                <span>通过验收</span>
+                            <>
+                              <span className="px-2.5 py-0.5 rounded-md text-[11px] font-extrabold bg-slate-500 text-white shadow-2xs">
+                                已结束
                               </span>
-                            ) : (
-                              <span className="px-3 py-0.5 rounded-full text-xs font-black bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1">
-                                <XCircle className="w-3.5 h-3.5 text-slate-400" />
-                                <span>未通过验收</span>
-                              </span>
-                            )
+                              {isWinner ? (
+                                <span className="px-3 py-0.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 shadow-2xs">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span>通过验收</span>
+                                </span>
+                              ) : (
+                                <span className="px-3 py-0.5 rounded-full text-xs font-black bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1">
+                                  <XCircle className="w-3.5 h-3.5 text-slate-400" />
+                                  <span>未通过验收</span>
+                                </span>
+                              )}
+                            </>
                           ) : isRejected ? (
-                            <span className="px-3 py-0.5 rounded-full text-xs font-black bg-rose-100 text-rose-700 border border-rose-200 flex items-center gap-1 shadow-2xs">
-                              <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
-                              <span>成果被驳回 (待修改重提)</span>
-                            </span>
+                            <>
+                              <span className="px-2.5 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-500 text-white shadow-2xs">
+                                进行中
+                              </span>
+                              <span className="px-3 py-0.5 rounded-full text-xs font-black bg-rose-100 text-rose-700 border border-rose-200 flex items-center gap-1 shadow-2xs">
+                                <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+                                <span>成果被驳回</span>
+                              </span>
+                            </>
                           ) : (
                             <span className="px-2.5 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-500 text-white shadow-2xs">
                               进行中
