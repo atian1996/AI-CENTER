@@ -1,16 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   LayoutDashboard,
   Cpu,
   Activity,
-  Layers,
-  FileText
+  Layers
 } from 'lucide-react';
-import { GoogleDriveExportModal } from '../modals/GoogleDriveExportModal';
 
 export const WorkspaceHeader: React.FC = () => {
-  const [driveExportOpen, setDriveExportOpen] = useState(false);
-
   return (
     <div className="bg-white border-b border-slate-200/80 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs">
       
@@ -37,24 +33,6 @@ export const WorkspaceHeader: React.FC = () => {
           </p>
         </div>
       </div>
-
-      {/* Right Action: Design Specification in Google Drive */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => setDriveExportOpen(true)}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 text-xs font-bold transition cursor-pointer shadow-2xs hover:shadow-xs"
-          title="生成系统全功能设计文档并保存至 Google Drive"
-        >
-          <FileText className="w-4 h-4 text-indigo-600" />
-          <span>系统设计文档 (Google Drive)</span>
-        </button>
-      </div>
-
-      {/* Google Drive Export Modal */}
-      <GoogleDriveExportModal
-        isOpen={driveExportOpen}
-        onClose={() => setDriveExportOpen(false)}
-      />
 
     </div>
   );

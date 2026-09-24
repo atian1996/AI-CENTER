@@ -982,15 +982,6 @@ export const WorkspacePoints: React.FC = () => {
                         <td className="p-2.5 pr-3 text-slate-500 text-[11px]">社区发帖</td>
                       </tr>
                       <tr className="hover:bg-amber-50/40 transition">
-                        <td className="p-2.5 pl-3 font-bold text-slate-900 flex items-center gap-1.5">
-                          <span>帖子加精</span>
-                          <span className="px-1 py-0.2 rounded text-[10px] font-extrabold bg-amber-100 text-amber-800">精</span>
-                        </td>
-                        <td className="p-2.5 font-mono font-black text-amber-600">+10</td>
-                        <td className="p-2.5 text-emerald-600 font-bold">没有上限</td>
-                        <td className="p-2.5 pr-3 text-slate-500 text-[11px]">帖子被管理员设为精华后奖励发帖人，无次数上限</td>
-                      </tr>
-                      <tr className="hover:bg-amber-50/40 transition">
                         <td className="p-2.5 pl-3 font-bold text-slate-900">完成一次任务</td>
                         <td className="p-2.5 font-mono font-black text-amber-600">+30</td>
                         <td className="p-2.5 text-slate-600 font-medium">不限</td>
@@ -1007,7 +998,6 @@ export const WorkspacePoints: React.FC = () => {
                 <ul className="space-y-1.5 list-disc pl-4 text-[11px] text-slate-600">
                   <li><strong>积分价值：</strong>1 积分等额折算 ¥0.01 元，可直接抵扣消费金额。</li>
                   <li><strong>积分有效期：</strong>平台赠送及赚取的积分长期有效，不设过期时间。</li>
-                  <li><strong>帖子加精奖励规则：</strong>社区技术或讨论帖子被管理员加精后，平台自动奖励发帖人 10 积分，该项奖励没有次数上限。</li>
                   <li><strong>任务发布冻结资金与积分：</strong>在任务大厅发布悬赏任务时，预扣的现金赏金与积分奖励自动转入【冻结资金】与【冻结积分】托管池。在任务处于审核中或进行中期间，冻结资产不可挪用；任务验收通过后自动向接单开发者发放结算；若任务审核被驳回或取消，冻结的资金与积分将全额原路退还至您的账户。</li>
                 </ul>
               </div>

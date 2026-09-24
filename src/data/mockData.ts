@@ -381,7 +381,7 @@ export const initialNotifications: AppNotification[] = [
   { 
     id: 'n_comm_07', 
     title: '✨ 您的帖子被加精', 
-    content: '您的帖子《vLLM推理加速与显存优化实战解析》已被加精，获得 10 积分奖励（没有次数上限）。', 
+    content: '您的帖子《vLLM推理加速与显存优化实战解析》已被加精，获得 100 积分奖励。', 
     category: 'interaction',
     subCategory: 'community',
     type: 'interaction',
@@ -4246,21 +4246,6 @@ export const mockAccountTransactions: AccountTransaction[] = [
     pointsAmountNum: 5,
     remark: '发布社区讨论帖子《关于大模型推理加速的实战经验分享》',
     pointsAmount: 5,
-    pointsBalanceAfter: 1355
-  },
-  {
-    id: 'tx_015',
-    time: '08-16 16:45',
-    type: '积分获取',
-    category: 'points_earn',
-    detail: '帖子加精',
-    amountText: '+10分',
-    balanceChangeText: '1,345→1,355分',
-    status: '成功',
-    source: '帖子加精',
-    pointsAmountNum: 10,
-    remark: '帖子《vLLM推理加速与显存优化实战解析》被设为精华（无次数上限）',
-    pointsAmount: 10,
     pointsBalanceAfter: 1355
   }
 ];

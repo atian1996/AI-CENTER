@@ -506,8 +506,7 @@ export const CommunityPostAdminView: React.FC = () => {
     addCommunityBoard, 
     updateCommunityBoard, 
     toggleCommunityBoardStatus, 
-    deleteCommunityBoard,
-    toggleEssentialPost
+    deleteCommunityBoard 
   } = useApp();
 
   // Filters
@@ -610,8 +609,14 @@ export const CommunityPostAdminView: React.FC = () => {
   const toggleEssential = (postId: string) => {
     const post = posts.find(p => p.id === postId);
     const nextState = !post?.isEssential;
-    toggleEssentialPost(postId);
+    setPosts(prev => prev.map(p => {
+      if (p.id === postId) {
+        return { ...p, isEssential: nextState };
+      }
+      return p;
+    }));
     setSelectedPost(prev => (prev && prev.id === postId ? { ...prev, isEssential: nextState } : prev));
+    showToast(nextState ? '已将该帖子设置为【精华文章】' : '已取消该帖子的精华标志');
   };
 
   // Toggle Lock (锁定 / 解锁)
