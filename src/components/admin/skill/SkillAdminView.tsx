@@ -291,24 +291,24 @@ export const SkillAdminView: React.FC<SkillAdminViewProps> = ({ activeSubMenu })
         {/* Form Container (Strictly matching "创建SKILL.png" with System Theme) */}
         <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
           
-          {/* 1. Skill 文件 * */}
+          {/* 1. Skill 压缩包文件 * */}
           <div className="space-y-2">
             <label className="block text-xs font-bold text-slate-300">
-              Skill 文件 <span className="text-rose-400">*</span>
+              Skill 压缩包文件 <span className="text-rose-400">*</span>
             </label>
 
             {/* Drag & Drop Upload Zone */}
             <div className="border-2 border-dashed border-slate-800 hover:border-indigo-500/60 bg-slate-950/70 hover:bg-slate-950 rounded-2xl p-8 text-center transition cursor-pointer space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700/60 flex items-center justify-center mx-auto text-indigo-400 shadow-inner">
-                <Upload className="w-6 h-6" />
+                <FileArchive className="w-6 h-6" />
               </div>
 
               <div className="space-y-1">
                 <p className="text-xs font-bold text-slate-200">
-                  拖拽文件夹或 zip 包到此处
+                  拖拽 ZIP 压缩包到此处，或点击按钮上传
                 </p>
                 <p className="text-[11px] text-slate-400">
-                  请确保文件夹或压缩包中包含 SKILL.md 文件（最多 200 个，总大小不超过 10.00 MB）
+                  请确保压缩包中包含 SKILL.md 核心指令文件（总大小不超过 10.00 MB）
                 </p>
               </div>
 
@@ -316,20 +316,11 @@ export const SkillAdminView: React.FC<SkillAdminViewProps> = ({ activeSubMenu })
               <div className="flex items-center justify-center gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={handleSimulateSelectFolder}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
-                >
-                  <Folder className="w-4 h-4" />
-                  <span>选择文件夹</span>
-                </button>
-
-                <button
-                  type="button"
                   onClick={handleSimulateSelectZip}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-xs"
                 >
                   <FileArchive className="w-4 h-4" />
-                  <span>选择 zip 文件</span>
+                  <span>选择 ZIP 压缩包</span>
                 </button>
               </div>
             </div>

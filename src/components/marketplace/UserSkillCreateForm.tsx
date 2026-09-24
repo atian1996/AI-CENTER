@@ -169,7 +169,7 @@ export const UserSkillCreateForm: React.FC<UserSkillCreateFormProps> = ({ onBack
     const newErrors: { [key: string]: string } = {};
 
     if (!fileUploaded) {
-      newErrors.file = '请选择文件夹或上传 ZIP 压缩包！';
+      newErrors.file = '请上传 ZIP 压缩包！';
     }
 
     if (!slug.trim()) {
@@ -269,41 +269,30 @@ export const UserSkillCreateForm: React.FC<UserSkillCreateFormProps> = ({ onBack
           onChange={handleImageChange}
         />
 
-        {/* 1. 文件/文件夹包选择 */}
+        {/* 1. Skill 压缩包选择 */}
         <div className="space-y-2">
           <label className="block text-xs font-bold text-slate-700">
-            选择文件 / 文件夹包 <span className="text-rose-500">*</span>
+            选择 ZIP 压缩包 <span className="text-rose-500">*</span>
           </label>
           <div 
             onDragOver={e => e.preventDefault()}
             onDrop={handleDrop}
-            className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-1 rounded-2xl border border-dashed border-purple-200 bg-purple-50/20"
+            className="p-1 rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/20"
           >
             <button
               type="button"
-              onClick={handleTriggerFolderSelect}
-              className="p-4 rounded-2xl border border-slate-200 bg-white hover:bg-purple-50/50 hover:border-purple-300 text-left transition cursor-pointer flex items-center gap-3 group shadow-2xs"
-            >
-              <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
-                <Folder className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-xs font-black text-slate-900">选择文件夹</div>
-                <div className="text-[10px] text-slate-400 mt-0.5">点击选择包含 SKILL.md 的文件夹</div>
-              </div>
-            </button>
-
-            <button
-              type="button"
               onClick={handleTriggerZipSelect}
-              className="p-4 rounded-2xl border border-slate-200 bg-white hover:bg-indigo-50/50 hover:border-indigo-300 text-left transition cursor-pointer flex items-center gap-3 group shadow-2xs"
+              className="w-full p-5 rounded-2xl border border-slate-200 bg-white hover:bg-indigo-50/50 hover:border-indigo-300 text-left transition cursor-pointer flex items-center gap-4 group shadow-2xs"
             >
-              <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
-                <FileArchive className="w-5 h-5" />
+              <div className="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
+                <FileArchive className="w-6 h-6" />
               </div>
-              <div>
-                <div className="text-xs font-black text-slate-900">选择 ZIP / 压缩包</div>
-                <div className="text-[10px] text-slate-400 mt-0.5">解压并校验 SKILL.md 结构，支持拖拽到此处</div>
+              <div className="flex-1">
+                <div className="text-xs font-black text-slate-900 flex items-center gap-2">
+                  <span>选择 ZIP / 压缩包</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200 font-bold">推荐</span>
+                </div>
+                <div className="text-[11px] text-slate-400 mt-1">自动解压并校验 SKILL.md 结构，支持点击选择或直接拖拽 ZIP 文件到此处</div>
               </div>
             </button>
           </div>

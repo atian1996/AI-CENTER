@@ -1075,6 +1075,92 @@ export const mockRichTasks: TaskItem[] = [
     bountyUnit: '¥'
   },
 
+  // [我接单 - 已结束 - 接单但未提交成果]
+  {
+    id: 'tsk_und_unsubmitted_expired',
+    title: '基于 vLLM 的大模型投机采样推理解析与高并发压测优化',
+    taskType: '接单任务',
+    brief: '针对 70B 级别开源大模型优化 Speculative Decoding 投机采样加速，并完成压测报告交付',
+    domain: 'AI模型与数据',
+    difficulty: '中等',
+    description: `<h3>【项目背景】</h3><p>为了在大规模生产环境中降低大模型并发推理延迟与 GPU 显存开销，需在 vLLM 架构下部署 Qwen2.5-72B 与轻量级草稿模型（Draft Model），实现 Speculative Decoding 投机采样加速并进行基准评测。</p>`,
+    acceptanceCriteria: `<h3>【验收标准】</h3><ol><li>在 8*A100 环境下，吞吐量提升 ≥ 2.2x，首字延迟 (TTFT) 降低 30% 以上；</li><li>提供完整的 Benchmark 压测对比脚本与测试报告 Markdown 文档；</li><li>提供容器化 Dockerfile 及一键启动配置说明。</li></ol>`,
+    cashReward: 7800,
+    pointsReward: 500,
+    totalCashReward: 7800,
+    totalPointsReward: 500,
+    startTime: '2026-07-20 00:00:00',
+    endTime: '2026-08-10 23:59:59',
+    remainingDays: 0,
+    publisher: '智算云海实验室',
+    publisherAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80',
+    publishTime: '2026-07-20 10:00:00',
+    status: '已结束',
+    winner: {
+      username: '算力性能先锋队',
+      userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+      passTime: '2026-08-09 16:20:00',
+      notes: '压测数据详实，投机采样加速比实测达到 2.38x，交付源码完整严谨，验收通过！'
+    },
+    acceptedCount: 3,
+    submittedCount: 2,
+    verifiedCount: 1,
+    takers: [
+      {
+        id: 'tk_unsub_1',
+        taskId: 'tsk_und_unsubmitted_expired',
+        username: '极客小千 (你)',
+        userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-07-25 14:30:00',
+        status: '已接单'
+      },
+      {
+        id: 'tk_unsub_2',
+        taskId: 'tsk_und_unsubmitted_expired',
+        username: '算力性能先锋队',
+        userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-07-22 09:15:00',
+        status: '已验收',
+        submissionId: 'sub_unsub_win'
+      },
+      {
+        id: 'tk_unsub_3',
+        taskId: 'tsk_und_unsubmitted_expired',
+        username: '并发架构社',
+        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        takeTime: '2026-07-23 16:40:00',
+        status: '已提交',
+        submissionId: 'sub_unsub_3'
+      }
+    ],
+    submissions: [
+      {
+        id: 'sub_unsub_win',
+        taskId: 'tsk_und_unsubmitted_expired',
+        username: '算力性能先锋队',
+        userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+        submitTime: '2026-08-07 18:00:00',
+        notes: '提供 vLLM Speculative Decoding 压测报告与一键配置 Dockerfile，支持多种 Draft 策略。',
+        files: [{ id: 'f_unsub_win', name: 'vllm_speculative_decoding_benchmark.tar.gz', size: '24.6 MB' }],
+        status: '已通过',
+        verifiedTime: '2026-08-09 16:20:00'
+      },
+      {
+        id: 'sub_unsub_3',
+        taskId: 'tsk_und_unsubmitted_expired',
+        username: '并发架构社',
+        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        submitTime: '2026-08-08 20:30:00',
+        notes: '交付 vLLM 压测框架脚本与图表分析。',
+        files: [{ id: 'f_unsub_3', name: 'perf_report.pdf', size: '5.2 MB' }],
+        status: '已驳回',
+        rejectReason: '未被采纳：另一参赛方案性能指标更高且提供了完整容器化环境。'
+      }
+    ],
+    bounty: 7800,
+    bountyUnit: '¥'
+  },
+
 
   // =========================================================================
   // 2. 我发布的任务 (My Published Tasks) - 涵盖 审核中/进行中/已驳回/已结束
