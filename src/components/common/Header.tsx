@@ -117,16 +117,6 @@ export const Header: React.FC = () => {
         {/* Right Controls Area */}
         <div className="flex items-center gap-3 shrink-0">
           
-          {/* Google Drive Export Design Doc Button */}
-          <button
-            onClick={() => setDriveExportOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 text-indigo-700 text-xs font-bold transition cursor-pointer shadow-xs"
-            title="生成系统全功能设计文档并同步至 Google Drive"
-          >
-            <FileText className="w-3.5 h-3.5 text-indigo-600" />
-            <span className="hidden sm:inline">设计文档</span>
-          </button>
-
           {/* Points Balance Button */}
           <button
             onClick={() => {
