@@ -19,10 +19,8 @@ import {
   Trophy,
   Users,
   Wallet,
-  ShieldCheck,
-  FileText
+  ShieldCheck
 } from 'lucide-react';
-import { GoogleDriveExportModal } from '../modals/GoogleDriveExportModal';
 
 export const Header: React.FC = () => {
   const { 
@@ -43,7 +41,6 @@ export const Header: React.FC = () => {
   const [notifOpen, setNotifOpen] = useState(false);
   const [popupNotifications, setPopupNotifications] = useState<AppNotification[]>([]);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [driveExportOpen, setDriveExportOpen] = useState(false);
 
   const handleToggleNotif = () => {
     if (!notifOpen) {
@@ -280,17 +277,6 @@ export const Header: React.FC = () => {
 
                 <div className="py-1">
                   <button
-                    onClick={() => {
-                      setDriveExportOpen(true);
-                      setUserMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-indigo-50 text-indigo-700 text-left transition font-bold text-xs cursor-pointer"
-                  >
-                    <FileText className="w-4 h-4 text-indigo-600" />
-                    <span>设计文档 (Google Drive)</span>
-                  </button>
-
-                  <button
                     id="header-user-admin-btn"
                     onClick={() => {
                       enterAdminMode();
@@ -326,12 +312,6 @@ export const Header: React.FC = () => {
         </div>
 
       </div>
-
-      {/* Google Drive Design Specification Modal */}
-      <GoogleDriveExportModal 
-        isOpen={driveExportOpen} 
-        onClose={() => setDriveExportOpen(false)} 
-      />
     </header>
   );
 };

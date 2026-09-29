@@ -32,9 +32,11 @@ import {
 interface ModelDetailProps {
   model: ModelItem;
   onBack: () => void;
+  fromTitle?: string;
 }
 
-export const ModelDetail: React.FC<ModelDetailProps> = ({ model, onBack }) => {
+export const ModelDetail: React.FC<ModelDetailProps> = ({ model, onBack, fromTitle }) => {
+  const effectiveFromTitle = fromTitle || '模型广场';
   const { showToast, agents, openAgentDetail } = useApp();
 
   // 匹配使用该模型的 Agent 列表
@@ -212,7 +214,7 @@ for chunk in response:
           className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:border-indigo-300 text-slate-700 hover:text-indigo-600 text-xs font-bold transition shadow-2xs cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>返回模型广场</span>
+          <span>返回{effectiveFromTitle}</span>
         </button>
       </div>
 

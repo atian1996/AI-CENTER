@@ -806,7 +806,9 @@ export const WorkspaceAssets: React.FC = () => {
                       if (agentScopeTab === 'created') {
                         setOrchestratingAgent(ag);
                       } else {
-                        const targetUrl = ag.trialUrl || (ag.id === 'ag_22' || ag.name.includes('企业客服') ? 'http://127.0.0.1:5173/' : `${window.location.origin}${window.location.pathname}?trial=${ag.id}`);
+                        const targetUrl = (ag.id === 'ag_22' || ag.name.includes('企业客服'))
+                          ? 'https://agent001-six.vercel.app/'
+                          : (ag.trialUrl || `${window.location.origin}${window.location.pathname}?trial=${ag.id}`);
                         window.open(targetUrl, '_blank');
                       }
                     }}
@@ -877,7 +879,9 @@ export const WorkspaceAssets: React.FC = () => {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              const targetUrl = ag.trialUrl || (ag.id === 'ag_22' || ag.name.includes('企业客服') ? 'http://127.0.0.1:5173/' : `${window.location.origin}${window.location.pathname}?trial=${ag.id}`);
+                              const targetUrl = (ag.id === 'ag_22' || ag.name.includes('企业客服'))
+                                ? 'https://agent001-six.vercel.app/'
+                                : (ag.trialUrl || `${window.location.origin}${window.location.pathname}?trial=${ag.id}`);
                               window.open(targetUrl, '_blank');
                             }}
                             className="text-[10px] font-bold px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md transition cursor-pointer shrink-0 ml-1 shadow-2xs"

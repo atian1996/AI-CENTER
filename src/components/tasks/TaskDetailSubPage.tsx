@@ -40,6 +40,11 @@ import {
 } from 'lucide-react';
 import { SubmitResultModal } from './SubmitResultModal';
 import { TaskVerificationModal } from './TaskVerificationModal';
+import { AgentDetailSubPage } from '../marketplace/AgentDetailSubPage';
+import { ModelDetail } from '../marketplace/ModelDetail';
+import { DatasetDetail } from '../marketplace/DatasetDetail';
+import { SkillDetail } from '../marketplace/SkillDetail';
+import { AgentItem, ModelItem, DatasetItem, SkillPluginItem } from '../../types';
 
 interface TaskDetailSubPageProps {
   taskId: string;
@@ -62,6 +67,8 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
     skills,
     openAgentDetail,
     openModelDetail,
+    downloadDataset,
+    downloadSkill,
     setCreateComputeModalOpen
   } = useApp();
 
@@ -71,6 +78,53 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
   const [activeTab, setActiveTab] = useState<'intro' | 'recommended' | 'takers'>('intro');
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
   const [verifyModalOpen, setVerifyModalOpen] = useState(false);
+  const [activeResourceDetail, setActiveResourceDetail] = useState<
+    | { type: 'agent'; data: AgentItem }
+    | { type: 'model'; data: ModelItem }
+    | { type: 'dataset'; data: DatasetItem }
+    | { type: 'skill'; data: SkillPluginItem }
+    | null
+  >(null);
+
+  // If a recommended resource detail is open, render its exact AI Marketplace detail subpage
+  if (activeResourceDetail) {
+    if (activeResourceDetail.type === 'agent') {
+      return (
+        <AgentDetailSubPage
+          agent={activeResourceDetail.data}
+          onBack={() => setActiveResourceDetail(null)}
+          fromTitle="任务详情"
+        />
+      );
+    }
+    if (activeResourceDetail.type === 'model') {
+      return (
+        <ModelDetail
+          model={activeResourceDetail.data}
+          onBack={() => setActiveResourceDetail(null)}
+          fromTitle="任务详情"
+        />
+      );
+    }
+    if (activeResourceDetail.type === 'dataset') {
+      return (
+        <DatasetDetail
+          dataset={activeResourceDetail.data}
+          onBack={() => setActiveResourceDetail(null)}
+          fromTitle="任务详情"
+        />
+      );
+    }
+    if (activeResourceDetail.type === 'skill') {
+      return (
+        <SkillDetail
+          skill={activeResourceDetail.data}
+          onBack={() => setActiveResourceDetail(null)}
+          fromTitle="任务详情"
+        />
+      );
+    }
+  }
 
   const task = tasks.find(t => t.id === taskId);
 
@@ -112,6 +166,19 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
 
   const handleTake = () => {
     takeTask(task.id);
+  };
+
+  const handleAgentTrial = (ag: AgentItem) => {
+    if (ag.id === 'ag_22' || ag.name.includes('企业客服') || ag.trialUrl) {
+      const targetUrl = (ag.id === 'ag_22' || ag.name.includes('企业客服'))
+        ? 'https://agent001-six.vercel.app/'
+        : (ag.trialUrl || 'https://agent001-six.vercel.app/');
+      showToast(`正在打开【${ag.name}】独立在线体验系统...`);
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    const trialUrl = `${window.location.origin}${window.location.pathname}?trial=${ag.id}`;
+    window.open(trialUrl, '_blank');
   };
 
   const getDomainIcon = (domain: string) => {
@@ -568,13 +635,13 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
 
                   <div className="relative z-10 pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
                     <button
-                      onClick={() => openAgentDetail(ag)}
+                      onClick={() => setActiveResourceDetail({ type: 'agent', data: ag })}
                       className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
                     >
                       查看详情
                     </button>
                     <button
-                      onClick={() => openAgentDetail(ag)}
+                      onClick={() => handleAgentTrial(ag)}
                       className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-md shadow-indigo-200 hover:shadow-lg transition cursor-pointer flex items-center gap-1.5"
                     >
                       <span>快速试用</span>
@@ -635,13 +702,13 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
 
                   <div className="relative z-10 pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
                     <button
-                      onClick={() => openModelDetail(m)}
+                      onClick={() => setActiveResourceDetail({ type: 'model', data: m })}
                       className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
                     >
                       查看详情
                     </button>
                     <button
-                      onClick={() => openModelDetail(m)}
+                      onClick={() => setActiveResourceDetail({ type: 'model', data: m })}
                       className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs shadow-md shadow-purple-200 hover:shadow-lg transition cursor-pointer flex items-center gap-1.5"
                     >
                       <span>API文档</span>
@@ -702,13 +769,13 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
 
                   <div className="relative z-10 pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
                     <button
-                      onClick={() => showToast(`查看数据集详情：${d.name}`)}
+                      onClick={() => setActiveResourceDetail({ type: 'dataset', data: d })}
                       className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
                     >
                       查看详情
                     </button>
                     <button
-                      onClick={() => showToast(`已开始下载数据集【${d.name}】`)}
+                      onClick={() => downloadDataset(d)}
                       className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-200 hover:shadow-lg transition cursor-pointer flex items-center gap-1.5"
                     >
                       <span>下载</span>
@@ -769,13 +836,13 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
 
                   <div className="relative z-10 pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
                     <button
-                      onClick={() => showToast(`查看Skill说明：${sk.name}`)}
+                      onClick={() => setActiveResourceDetail({ type: 'skill', data: sk })}
                       className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
                     >
                       查看详情
                     </button>
                     <button
-                      onClick={() => showToast(`Skill【${sk.name}】自动安装配置完成！`)}
+                      onClick={() => downloadSkill(sk)}
                       className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold text-xs shadow-md shadow-amber-200 hover:shadow-lg transition cursor-pointer flex items-center gap-1.5"
                     >
                       <span>安装</span>
@@ -813,30 +880,9 @@ export const TaskDetailSubPage: React.FC<TaskDetailSubPageProps> = ({ taskId, on
                     <p className="text-xs text-slate-300 leading-relaxed font-normal max-w-2xl">
                       建议镜像：<span className="text-cyan-300 font-bold">{task.recommendedResources?.environment?.image || 'Ubuntu 22.04 LTS (PyTorch 2.0 / CUDA 11.8)'}</span>。发布人推荐在此同款算力环境与依赖库下开箱调试，保障实验数据与最终交付指标的高度一致。
                     </p>
-
-                    <div className="flex flex-wrap items-center gap-3 pt-1 text-xs">
-                      <span className="px-3 py-1 rounded-xl bg-white/5 border border-white/10 text-slate-200 font-medium flex items-center gap-1.5">
-                        <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-                        高吞吐 GPU 显存
-                      </span>
-                      <span className="px-3 py-1 rounded-xl bg-white/5 border border-white/10 text-slate-200 font-medium flex items-center gap-1.5">
-                        <Zap className="w-3.5 h-3.5 text-amber-400" />
-                        开箱即用无缝挂载
-                      </span>
-                      <span className="px-3 py-1 rounded-xl bg-white/5 border border-white/10 text-slate-200 font-medium flex items-center gap-1.5">
-                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                        云端持久化存储
-                      </span>
-                    </div>
                   </div>
 
                   <div className="relative z-10 flex items-center gap-3 shrink-0 self-end md:self-center">
-                    <button
-                      onClick={() => showToast('已查看建议的 GPU 算力及镜像配置')}
-                      className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition cursor-pointer border border-white/10"
-                    >
-                      查看详情
-                    </button>
                     <button
                       onClick={() => setCreateComputeModalOpen(true)}
                       className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition cursor-pointer flex items-center gap-2"

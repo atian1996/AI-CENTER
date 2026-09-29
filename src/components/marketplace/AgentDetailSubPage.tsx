@@ -30,12 +30,15 @@ interface AgentDetailSubPageProps {
   userSubscription?: AgentSubscriptionItem;
   isPayPerTokenMode?: boolean;
   trialCountLeft?: number;
+  fromTitle?: string;
 }
 
 export const AgentDetailSubPage: React.FC<AgentDetailSubPageProps> = ({
   agent,
-  onBack
+  onBack,
+  fromTitle
 }) => {
+  const effectiveFromTitle = fromTitle || 'Agent 商店';
   const { showToast, user, models, openModelDetail } = useApp();
   const [activeTab, setActiveTab] = useState<'intro' | 'docs' | 'guide' | 'reviews'>('intro');
 
@@ -61,8 +64,10 @@ export const AgentDetailSubPage: React.FC<AgentDetailSubPageProps> = ({
 
   // Launch full-screen trial page in a new tab
   const handleLaunchTrial = () => {
-    if (agent.trialUrl || agent.id === 'ag_22' || agent.name.includes('企业客服')) {
-      const targetUrl = agent.trialUrl || 'http://127.0.0.1:5173/';
+    if (agent.id === 'ag_22' || agent.name.includes('企业客服') || agent.trialUrl) {
+      const targetUrl = (agent.id === 'ag_22' || agent.name.includes('企业客服'))
+        ? 'https://agent001-six.vercel.app/'
+        : (agent.trialUrl || 'https://agent001-six.vercel.app/');
       showToast(`正在打开【${agent.name}】独立在线体验系统...`);
       window.open(targetUrl, '_blank', 'noopener,noreferrer');
       return;
@@ -123,7 +128,7 @@ export const AgentDetailSubPage: React.FC<AgentDetailSubPageProps> = ({
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-indigo-600 hover:border-indigo-200 text-xs font-bold transition shadow-xs cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>返回 Agent 商店</span>
+          <span>返回{effectiveFromTitle}</span>
         </button>
 
         <div className="flex items-center gap-3">

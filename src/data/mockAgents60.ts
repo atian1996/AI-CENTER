@@ -19,7 +19,7 @@ export const mock60Agents: AgentItem[] = [
     industry: '通用',
     servicedCount: 3800,
     developer: '企服全能通',
-    trialUrl: 'http://127.0.0.1:5173/',
+    trialUrl: 'https://agent001-six.vercel.app/',
     giftTokenText: '新用户赠送 10万Token体验额度（7天有效）',
     capabilityDesc: [
       '支持企业 API/SDK 接入，全渠道同步客户历史互动与身份权限',
