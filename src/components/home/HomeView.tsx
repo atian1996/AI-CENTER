@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { TaskItem } from '../../types';
+import { TaskItem, AgentItem } from '../../types';
 import { TaskDetailSubPage } from '../tasks/TaskDetailSubPage';
 import { 
   Bot, 
@@ -152,6 +152,9 @@ export const HomeView: React.FC = () => {
     openCompetitionDetail,
     openAgentDetail,
     openModelDetail,
+    openDatasetDetail,
+    openSkillDetail,
+    setCreateComputePreset,
     setSandboxAgent,
     showToast
   } = useApp();
@@ -175,6 +178,21 @@ export const HomeView: React.FC = () => {
       !!task.winner ||
       (task.submissions || []).some(s => s.status === '已通过')
     );
+  };
+
+  // Agent 试用启动逻辑（与 AI 集市保持一致）
+  const handleLaunchAgentTrial = (ag: AgentItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (ag.id === 'ag_22' || ag.name.includes('企业客服') || ag.trialUrl) {
+      const targetUrl = (ag.id === 'ag_22' || ag.name.includes('企业客服'))
+        ? 'https://agent001-six.vercel.app/'
+        : (ag.trialUrl || 'https://agent001-six.vercel.app/');
+      showToast(`正在打开【${ag.name}】独立在线体验系统...`);
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    const trialUrl = `${window.location.origin}${window.location.pathname}?trial=${ag.id}`;
+    window.open(trialUrl, '_blank');
   };
 
   // 领域定义及主题色（与任务大厅保持一致）
@@ -260,6 +278,9 @@ export const HomeView: React.FC = () => {
           title: s.name,
           availableCards: s.stock ?? Math.floor(Math.random() * 8 + 2),
           hourlyPrice: s.hourlyPrice,
+          dayPrice: s.dayPrice || Math.round(s.hourlyPrice * 24 * 0.95),
+          weekPrice: s.weekPrice || Math.round(s.hourlyPrice * 24 * 7 * 0.85),
+          monthPrice: s.monthPrice || Math.round(s.hourlyPrice * 24 * 30 * 0.75),
           topBorderColor: borderColors[idx % borderColors.length],
           gpuModel: s.gpuModel,
           vram: `${s.vram} 显存`,
@@ -275,6 +296,9 @@ export const HomeView: React.FC = () => {
         title: 'PRO 6000 96GB',
         availableCards: 7,
         hourlyPrice: 6.19,
+        dayPrice: 145,
+        weekPrice: 987,
+        monthPrice: 4011,
         topBorderColor: 'border-t-amber-500',
         gpuModel: 'RTX PRO 6000',
         vram: '96GB 显存',
@@ -287,6 +311,9 @@ export const HomeView: React.FC = () => {
         title: 'RTX 5090 32GB',
         availableCards: 12,
         hourlyPrice: 4.88,
+        dayPrice: 110,
+        weekPrice: 750,
+        monthPrice: 3100,
         topBorderColor: 'border-t-emerald-600',
         gpuModel: 'NVIDIA RTX 5090',
         vram: '32GB 显存',
@@ -299,6 +326,9 @@ export const HomeView: React.FC = () => {
         title: 'A100 SXM4 80GB',
         availableCards: 5,
         hourlyPrice: 12.50,
+        dayPrice: 280,
+        weekPrice: 1900,
+        monthPrice: 7900,
         topBorderColor: 'border-t-purple-600',
         gpuModel: 'NVIDIA A100',
         vram: '80GB 显存',
@@ -311,6 +341,9 @@ export const HomeView: React.FC = () => {
         title: 'RTX 4090 24GB',
         availableCards: 18,
         hourlyPrice: 2.99,
+        dayPrice: 68,
+        weekPrice: 460,
+        monthPrice: 1900,
         topBorderColor: 'border-t-indigo-600',
         gpuModel: 'NVIDIA RTX 4090',
         vram: '24GB 显存',
@@ -566,8 +599,13 @@ export const HomeView: React.FC = () => {
       price: '开源免费',
       icon: '⚡',
       onClick: () => {
-        setActiveTab('marketplace');
-        setMarketplaceTab('skill');
+        const target = skills.find(s => s.id === 'sk_01' || s.name.includes('价值投资')) || skills[0];
+        if (target) {
+          openSkillDetail(target);
+        } else {
+          setActiveTab('marketplace');
+          setMarketplaceTab('skill');
+        }
       }
     },
     {
@@ -772,7 +810,6 @@ export const HomeView: React.FC = () => {
           {/* 3. 启用算力 */}
           <button
             onClick={() => {
-              setActiveTab('compute');
               setCreateComputeModalOpen(true);
             }}
             className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-cyan-400 hover:shadow-lg hover:shadow-cyan-500/10 hover:-translate-y-0.5 transition-all shadow-2xs flex flex-col justify-between text-left cursor-pointer group relative overflow-hidden"
@@ -980,19 +1017,31 @@ export const HomeView: React.FC = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4.5">
             {agents.slice(0, 8).map((ag) => {
-              const isSubscribed = !!subscriptions[ag.id];
+              const hasUsed = !!subscriptions[ag.id] || ag.isPurchased || ag.isUsed;
+              const displayScenarios: string[] = 
+                ag.categoryTags && ag.categoryTags.length > 0 
+                  ? ag.categoryTags 
+                  : (ag.scene ? [ag.scene] : []);
+              const displayIndustries: string[] = 
+                ag.industryTags && ag.industryTags.length > 0 
+                  ? ag.industryTags 
+                  : (ag.industry ? [ag.industry] : []);
+              const freeTokensText = ag.freeTokenQuota 
+                ? `${(ag.freeTokenQuota >= 10000 ? (ag.freeTokenQuota / 10000) + '万' : (ag.freeTokenQuota / 1000) + 'k')} Token`
+                : '5万 Token';
+
               return (
                 <div
                   key={ag.id}
                   onClick={() => openAgentDetail(ag)}
-                  className="p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-3 cursor-pointer group"
+                  className="p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-3 cursor-pointer group"
                 >
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xl shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-2xs">
+                        <div className="w-11 h-11 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xl shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-2xs">
                           {ag.avatar && ag.avatar.startsWith('http') ? (
                             <img src={ag.avatar} alt={ag.name} className="w-full h-full object-cover" />
                           ) : (
@@ -1003,37 +1052,75 @@ export const HomeView: React.FC = () => {
                           <h4 className="text-sm font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
                             {ag.name}
                           </h4>
-                          <span className="text-[10px] text-slate-400 font-medium">
-                            {ag.techForm || ag.appType || '智能体'}
-                          </span>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[10px] text-indigo-700 bg-indigo-50 font-bold px-1.5 py-0.2 rounded border border-indigo-100/70">
+                              {ag.techForm || ag.appType || 'Agent'}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium truncate">
+                              {freeTokensText}免费
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      {isSubscribed && (
-                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-1.5 py-0.5 rounded-md shrink-0">
-                          已订阅
+                      {hasUsed ? (
+                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[10px] font-bold px-1.5 py-0.5 rounded-md shrink-0 flex items-center gap-0.5">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>使用过</span>
+                        </span>
+                      ) : (
+                        <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-bold px-1.5 py-0.5 rounded-md shrink-0">
+                          即开即用
                         </span>
                       )}
                     </div>
 
-                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal min-h-[32px]">
-                      {ag.description || '高效大模型赋能的智能体应用，即开即用。'}
-                    </p>
+                    {/* Tags line */}
+                    <div className="flex flex-wrap items-center gap-1">
+                      {displayScenarios.slice(0, 1).map((sc, idx) => (
+                        <span key={`sc-${idx}`} className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-cyan-50 text-cyan-700 border border-cyan-100/70">
+                          {sc}
+                        </span>
+                      ))}
+                      {displayIndustries.slice(0, 1).map((ind, idx) => (
+                        <span key={`ind-${idx}`} className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200/60">
+                          {ind}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Slogan highlight box */}
+                    <div className="text-xs text-slate-600 pl-2 border-l-2 border-indigo-500 bg-slate-50/70 p-2 rounded-r-lg line-clamp-2 h-13 leading-relaxed font-normal">
+                      {ag.slogan || ag.description?.slice(0, 45) || '极高阶人工智能自动化代理助手'}
+                    </div>
                   </div>
 
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-1.5">
-                      <div className="flex items-center text-amber-500 font-bold">
+                  <div className="space-y-2.5 pt-2 border-t border-slate-100">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1 text-amber-500 font-bold">
                         <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        <span className="ml-1 text-xs">{(ag.rating ?? 5.0).toFixed(1)}</span>
+                        <span>{(ag.rating ?? 5.0).toFixed(1)}</span>
+                        <span className="text-[10px] text-slate-400 font-normal">({ag.ratingCount ?? 120})</span>
                       </div>
-                      <span className="text-[10px] text-indigo-600 font-bold">
-                        {(ag.subscribersCount ?? ag.usageCount ?? 128).toLocaleString()}人使用
+                      <span className="text-[11px] text-indigo-600 font-extrabold">
+                        {(ag.callUsersCount ?? ag.subscribersCount ?? ag.usageCount ?? 128).toLocaleString()}人调用
                       </span>
                     </div>
 
-                    <span className="font-bold text-xs text-indigo-600">
-                      {ag.priceText || (ag.priceType === 'free' ? '免费体验' : ag.priceType === 'points' ? `${ag.priceValue}积分/次` : `¥${ag.priceValue || 0.01}/次`)}
-                    </span>
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <button
+                        onClick={(e) => handleLaunchAgentTrial(ag, e)}
+                        className="flex-1 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <Play className="w-3 h-3 fill-indigo-600" />
+                        <span>立即体验</span>
+                      </button>
+                      <button
+                        onClick={() => openAgentDetail(ag)}
+                        className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+                      >
+                        详情
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -1068,8 +1155,6 @@ export const HomeView: React.FC = () => {
               <div
                 key={m.id}
                 onClick={() => {
-                  setActiveTab('marketplace');
-                  setMarketplaceTab('model');
                   openModelDetail(m);
                 }}
                 className="p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-3 cursor-pointer group"
@@ -1138,8 +1223,7 @@ export const HomeView: React.FC = () => {
                 <div
                   key={ds.id}
                   onClick={() => {
-                    setActiveTab('marketplace');
-                    setMarketplaceTab('dataset');
+                    openDatasetDetail(ds);
                   }}
                   className="p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-emerald-400 hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-3 cursor-pointer group"
                 >
@@ -1205,8 +1289,7 @@ export const HomeView: React.FC = () => {
               <div
                 key={sk.id}
                 onClick={() => {
-                  setActiveTab('marketplace');
-                  setMarketplaceTab('skill');
+                  openSkillDetail(sk);
                 }}
                 className="p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-cyan-400 hover:shadow-xl hover:shadow-cyan-500/5 hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-3 cursor-pointer group"
               >
@@ -1484,7 +1567,11 @@ export const HomeView: React.FC = () => {
             {availableRentalCards.slice(0, 4).map((card) => (
               <div
                 key={card.id}
-                className={`p-5 rounded-2xl border border-slate-200/80 bg-white ${card.topBorderColor} border-t-4 hover:border-cyan-400 hover:shadow-xl hover:shadow-cyan-500/5 hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-3 group`}
+                onClick={() => {
+                  setCreateComputePreset({ card });
+                  setCreateComputeModalOpen(true);
+                }}
+                className={`p-5 rounded-2xl border border-slate-200/80 bg-white ${card.topBorderColor} border-t-4 hover:border-cyan-400 hover:shadow-xl hover:shadow-cyan-500/5 hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-3 group cursor-pointer`}
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -1515,8 +1602,9 @@ export const HomeView: React.FC = () => {
                 </div>
 
                 <button
-                  onClick={() => {
-                    setActiveTab('compute');
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCreateComputePreset({ card });
                     setCreateComputeModalOpen(true);
                   }}
                   className="w-full py-2 rounded-xl bg-cyan-50 hover:bg-cyan-600 text-cyan-700 hover:text-white font-bold text-xs transition border border-cyan-200 cursor-pointer"

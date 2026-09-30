@@ -216,6 +216,7 @@ export interface AgentItem {
   trialUrl?: string; // 外部免费试用或独立体验页面URL
   categoryTags?: string[];
   industryTags?: string[];
+  isUsed?: boolean;
 }
 
 // Agent 订阅套餐定义
@@ -548,6 +549,7 @@ export interface SkillCommentItem {
 export interface SkillPluginItem {
   id: string;
   name: string;
+  icon?: string;
   repoPath?: string; // 如 "@user_a38fd8a2/valuation-analysis", "google/live-web-search"
   category: string; // '知识管理' | '办公效率' | '内容创作' | '设计多媒体' | '数据分析' | '开发编程' | '行业专业' | 'AI Agent' | '自动化'
   source?: string; // 'SkillHub' | '官方' | '开源社区'

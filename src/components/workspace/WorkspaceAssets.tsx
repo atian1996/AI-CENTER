@@ -148,16 +148,174 @@ const SkillReadOnlyModal: React.FC<{
   );
 };
 
-// 只读 Dataset 详情弹窗组件
+// 只读 Dataset 详情弹窗组件 (严格参考设计稿规范构建)
 const DatasetReadOnlyModal: React.FC<{
   dataset: DatasetItem;
   onClose: () => void;
   onDownload?: (ds: DatasetItem) => void;
-}> = ({ dataset, onClose }) => {
+}> = ({ dataset, onClose, onDownload }) => {
+  const statusDisplay = (dataset as any).status || '已下架';
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case '已上架':
+        return <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/70">已上架</span>;
+      case '待审核':
+        return <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200/70">待审核</span>;
+      case '已驳回':
+        return <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200/70">已驳回</span>;
+      case '未上架':
+        return <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">未上架</span>;
+      default:
+        return <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">已下架</span>;
+    }
+  };
+
+  const domainTags = dataset.domainTags && dataset.domainTags.length > 0 
+    ? dataset.domainTags 
+    : ['商业', '数据挖掘', '零售分析'];
+
+  const introText = dataset.description || dataset.brief || 'PowerBI零售数据分析实战这本书作者提供的数据集，涵盖中型连锁品牌门店销售、会员生命周期、库存流转等多维度真实商业脱敏数据。示例数据可以在Excel中直接处理，完整数据建议使用R/Python或者PowerBI等工具。';
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-      <div className="bg-white rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-y-auto p-6 relative shadow-2xl">
-        <DatasetDetail dataset={dataset} onBack={onClose} />
+    <div 
+      onClick={onClose}
+      className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in"
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl border border-slate-200/80 p-7 space-y-5 animate-scale-in"
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            {/* Left Icon */}
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 shadow-2xs">
+              <Database className="w-6 h-6" />
+            </div>
+            
+            {/* Title & Badges */}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200/70">
+                  数据集详情 (只读)
+                </span>
+                {getStatusBadge(statusDisplay)}
+              </div>
+              <h3 className="text-lg font-black text-slate-900 mt-1 tracking-tight truncate">
+                {dataset.name}
+              </h3>
+            </div>
+          </div>
+
+          {/* Close X */}
+          <button 
+            onClick={onClose}
+            className="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition cursor-pointer shrink-0"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* 6 Meta Grid Cards (3 cols x 2 rows) */}
+        <div className="grid grid-cols-3 gap-3">
+          {/* 1. 模态类型 */}
+          <div className="bg-slate-50/80 rounded-2xl p-3.5 border border-slate-100/90 flex flex-col justify-between">
+            <span className="text-xs text-slate-400 font-medium mb-1.5">模态类型</span>
+            <div>
+              <span className="px-2.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600 font-bold text-xs inline-block">
+                {dataset.modalityCategory || '表格'}
+              </span>
+            </div>
+          </div>
+
+          {/* 2. 任务类型 */}
+          <div className="bg-slate-50/80 rounded-2xl p-3.5 border border-slate-100/90 flex flex-col justify-between">
+            <span className="text-xs text-slate-400 font-medium mb-1.5">任务类型</span>
+            <span className="text-xs font-bold text-slate-800 truncate">
+              {dataset.taskType || '表格回归'}
+            </span>
+          </div>
+
+          {/* 3. 数据大小 */}
+          <div className="bg-slate-50/80 rounded-2xl p-3.5 border border-slate-100/90 flex flex-col justify-between">
+            <span className="text-xs text-slate-400 font-medium mb-1.5">数据大小</span>
+            <span className="text-xs font-bold text-slate-800 font-mono truncate">
+              {dataset.fileSize || dataset.scale || '267.5 MB'}
+            </span>
+          </div>
+
+          {/* 4. 文件格式 */}
+          <div className="bg-slate-50/80 rounded-2xl p-3.5 border border-slate-100/90 flex flex-col justify-between">
+            <span className="text-xs text-slate-400 font-medium mb-1.5">文件格式</span>
+            <span className="text-xs font-bold text-slate-800 font-mono truncate">
+              {dataset.fileFormats || (dataset as any).format || '.csv, .xlsx'}
+            </span>
+          </div>
+
+          {/* 5. 开源协议 */}
+          <div className="bg-slate-50/80 rounded-2xl p-3.5 border border-slate-100/90 flex flex-col justify-between">
+            <span className="text-xs text-slate-400 font-medium mb-1.5">开源协议</span>
+            <span className="text-xs font-bold text-slate-800 truncate">
+              {dataset.license || 'CC0 公共领域共享'}
+            </span>
+          </div>
+
+          {/* 6. 更新时间 */}
+          <div className="bg-slate-50/80 rounded-2xl p-3.5 border border-slate-100/90 flex flex-col justify-between">
+            <span className="text-xs text-slate-400 font-medium mb-1.5">更新时间</span>
+            <span className="text-xs font-bold text-slate-800 font-mono truncate">
+              {dataset.updatedAt || '2026/08/07 14:20'}
+            </span>
+          </div>
+        </div>
+
+        {/* Category Domain Tags */}
+        <div className="flex flex-wrap items-center gap-2 pt-0.5">
+          {domainTags.map((tag, idx) => (
+            <span 
+              key={idx}
+              className="px-2.5 py-1 rounded-lg bg-indigo-50/80 text-indigo-700 text-xs font-bold border border-indigo-100/70"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+
+        {/* Data Introduction */}
+        <div className="space-y-2">
+          <h4 className="text-xs font-black text-slate-900">数据简介</h4>
+          <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-100/90 text-xs text-slate-600 leading-relaxed font-normal">
+            {introText}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+          <span className="text-xs text-slate-400 font-medium">
+            下载次数: {dataset.downloadCount ?? 9}
+          </span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onClose}
+              className="px-5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
+            >
+              关闭
+            </button>
+            <button
+              onClick={() => {
+                if (onDownload) {
+                  onDownload(dataset);
+                }
+                onClose();
+              }}
+              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-sm hover:shadow-md"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>下载数据集</span>
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   );

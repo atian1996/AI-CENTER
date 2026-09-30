@@ -148,6 +148,12 @@ interface AppContextType {
   detailModel: ModelItem | null;
   setDetailModel: React.Dispatch<React.SetStateAction<ModelItem | null>>;
   openModelDetail: (model: ModelItem) => void;
+  detailDataset: DatasetItem | null;
+  setDetailDataset: React.Dispatch<React.SetStateAction<DatasetItem | null>>;
+  openDatasetDetail: (dataset: DatasetItem) => void;
+  detailSkill: SkillPluginItem | null;
+  setDetailSkill: React.Dispatch<React.SetStateAction<SkillPluginItem | null>>;
+  openSkillDetail: (skill: SkillPluginItem) => void;
   selectedCompareModels: ModelItem[];
   toggleCompareModel: (model: ModelItem) => void;
   clearCompareModels: () => void;
@@ -2132,6 +2138,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setDetailModel(model);
   };
 
+  const [detailDataset, setDetailDataset] = useState<DatasetItem | null>(null);
+  const openDatasetDetail = (dataset: DatasetItem) => {
+    setDetailDataset(dataset);
+  };
+
+  const [detailSkill, setDetailSkill] = useState<SkillPluginItem | null>(null);
+  const openSkillDetail = (skill: SkillPluginItem) => {
+    setDetailSkill(skill);
+  };
+
   const [selectedCompareModels, setSelectedCompareModels] = useState<ModelItem[]>([]);
 
   // Competitions
@@ -3337,6 +3353,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       detailModel,
       setDetailModel,
       openModelDetail,
+      detailDataset,
+      setDetailDataset,
+      openDatasetDetail,
+      detailSkill,
+      setDetailSkill,
+      openSkillDetail,
       selectedCompareModels,
       toggleCompareModel,
       clearCompareModels,

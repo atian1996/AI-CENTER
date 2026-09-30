@@ -22,6 +22,8 @@ import { SubscribeModal } from './components/marketplace/SubscribeModal';
 import { QuotaExhaustedModal } from './components/marketplace/QuotaExhaustedModal';
 import { ModelTryoutModal } from './components/modals/ModelTryoutModal';
 import { ModelDetailModal } from './components/modals/ModelDetailModal';
+import { DatasetDetailModal } from './components/modals/DatasetDetailModal';
+import { SkillDetailModal } from './components/modals/SkillDetailModal';
 import { ModelCompareBar } from './components/modals/ModelCompareBar';
 import { Toast } from './components/common/Toast';
 import { AgentTrialPageView } from './components/marketplace/AgentTrialPageView';
@@ -47,6 +49,10 @@ const AppContent: React.FC = () => {
     setTrialCountLeft,
     detailModel,
     setDetailModel,
+    detailDataset,
+    setDetailDataset,
+    detailSkill,
+    setDetailSkill,
     setTryoutModel,
     publishTaskModalOpen,
     setPublishTaskModalOpen,
@@ -118,6 +124,23 @@ const AppContent: React.FC = () => {
             }}
           />
         )}
+
+        <ModelDetailModal
+          model={detailModel}
+          isOpen={!!detailModel}
+          onClose={() => setDetailModel(null)}
+          onOpenTryout={(model) => setTryoutModel(model)}
+        />
+        <DatasetDetailModal
+          dataset={detailDataset}
+          isOpen={!!detailDataset}
+          onClose={() => setDetailDataset(null)}
+        />
+        <SkillDetailModal
+          skill={detailSkill}
+          isOpen={!!detailSkill}
+          onClose={() => setDetailSkill(null)}
+        />
 
         {/* Toast Component */}
         <Toast />
@@ -224,6 +247,16 @@ const AppContent: React.FC = () => {
         isOpen={!!detailModel}
         onClose={() => setDetailModel(null)}
         onOpenTryout={(model) => setTryoutModel(model)}
+      />
+      <DatasetDetailModal
+        dataset={detailDataset}
+        isOpen={!!detailDataset}
+        onClose={() => setDetailDataset(null)}
+      />
+      <SkillDetailModal
+        skill={detailSkill}
+        isOpen={!!detailSkill}
+        onClose={() => setDetailSkill(null)}
       />
       <ModelCompareBar />
       <Toast />
